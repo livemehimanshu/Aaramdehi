@@ -1,5 +1,6 @@
 import React from 'react'
 import {Link} from "react-router-dom";
+import Search from "../search";
  const Header = () => {
   return (
    <header>
@@ -21,26 +22,28 @@ import {Link} from "react-router-dom";
               </ul>
          </div>
  
- 
  </div>
-     
+ </div>
+        </div> 
      <div className="header py-3 ">
        <div className="container flex items-center justify-between">
 
-         <div className="col1">
+         <div className="col1 w-[25%]">
           <Link to="/home" ><img src="/logo.png"/></Link>
          </div>
 
-         <div className="col1"></div>
+         <div className="col2 w-[45%]">
+             <Search />
+         </div>
 
-         <div className="col1"></div>
+         <div className="col3 w-[30%]"></div>
 
        </div>
      </div>
 
 
-      </div>
-    </div>
+   
+    
    </header>
   )
 }

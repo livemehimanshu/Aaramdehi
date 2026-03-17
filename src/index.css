@@ -14,8 +14,23 @@ body{
   background-color: #f5f0f0;
 
 }
-.container{width: 90%; margin: auto;}
+.container{
+  width: 95%;
+  margin: auto;
+}
 
+/* Mobile responsive container */
+@media (min-width: 640px) {
+  .container {
+    width: 90%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    width: 85%;
+  }
+}
 
 .link:hover{
   color:#ff5252;

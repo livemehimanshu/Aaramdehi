@@ -8,6 +8,11 @@ import { IoIosArrowRoundDown, IoIosArrowForward } from "react-icons/io";
 const Navbar = () => {
   const [isOpenCatPanel, setIsopencatpanel] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [openMobileSubmenu, setOpenMobileSubmenu] = useState(null);
+
+  const toggleMobileSubmenu = (index) => {
+    setOpenMobileSubmenu((current) => (current === index ? null : index));
+  };
 
   // Categories Data
   const categories = [
@@ -51,19 +56,15 @@ const Navbar = () => {
             <Button className='!text-black gap-2 !py-4 w-full !justify-start' onClick={() => setIsopencatpanel(!isOpenCatPanel)}>
               <HiMiniBars3CenterLeft className='text-[18px]' />
               Shop By Category
-              <IoIosArrowRoundDown className='text-[18px] ml-auto' />
+             
             </Button>
           </div>
 
-          <div className="md:hidden">
-            <Button className='!text-black' onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
-              <HiMiniBars3 className='text-[18px]' />
-            </Button>
-          </div>
+        
 
           {/* Desktop Navigation */}
-          <div className="flex-grow">
-            <ul className={`hidden md:flex items-center gap-1 ${isMobileMenuOpen ? 'flex flex-col absolute top-full left-0 w-full bg-white shadow-md p-4 z-10' : ''}`}>
+          <div className="flex-grow relative">
+            <ul className="hidden md:flex items-center gap-1">
               <li className='list-none'>
                 <Link to='/' className="link"><Button className='!text-black'>Home</Button></Link>
               </li>
@@ -88,6 +89,45 @@ const Navbar = () => {
                 </li>
               ))}
             </ul>
+
+            {/* Mobile Navigation (visible when menu is open) */}
+            {isMobileMenuOpen && (
+              <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg z-40">
+                <ul className="flex flex-col gap-1 p-4">
+                  <li className='list-none border-b pb-2'>
+                    <Link to='/' className="block text-base font-semibold text-gray-700 hover:text-red-500">
+                      Home
+                    </Link>
+                  </li>
+
+                  {categories.map((cat, index) => (
+                    <li key={index} className='list-none border-b pb-2'>
+                      <button
+                        type="button"
+                        onClick={() => toggleMobileSubmenu(index)}
+                        className="w-full flex items-center justify-between text-left text-gray-700 hover:text-red-500 font-semibold"
+                        aria-expanded={openMobileSubmenu === index}
+                        aria-controls={`mobile-cat-${index}`}
+                      >
+                        {cat.title}
+                        <IoIosArrowForward className={`transition-transform ${openMobileSubmenu === index ? 'rotate-90' : ''}`} />
+                      </button>
+                      {openMobileSubmenu === index && (
+                        <ul id={`mobile-cat-${index}`} className="mt-2 pl-4 flex flex-col gap-1">
+                          {cat.subItems.map((sub) => (
+                            <li key={sub}>
+                              <Link to="/" className="block text-sm text-gray-600 hover:text-red-500">
+                                {sub}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
         </div>

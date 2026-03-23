@@ -2,8 +2,11 @@ import React, { useState } from 'react';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import Categorypanel from './categorypanel';
-import { HiMiniBars3CenterLeft, HiMiniBars3 } from "react-icons/hi2";
+import { HiMiniBars3CenterLeft } from "react-icons/hi2";
 import { IoIosArrowRoundDown, IoIosArrowForward } from "react-icons/io";
+
+// --- बदला गया: अब डेटा आपकी Central फ़ाइल से आ रहा है ---
+import { categoriesData } from '../../categorydata/categoryData';
 
 const Navbar = () => {
   const [isOpenCatPanel, setIsopencatpanel] = useState(false);
@@ -14,37 +17,7 @@ const Navbar = () => {
     setOpenMobileSubmenu((current) => (current === index ? null : index));
   };
 
-  // Categories Data
-  const categories = [
-    {
-      title: "Handicraft Home Furnishings",
-      subItems: ["Handicraft Cushions", "Handicraft Bolster", "Handicraft King Size Bed Sheet", "Handicraft Queen Size Bed Sheet", "Rectangle Handicraft Table Cloth"]
-    },
-    {
-      title: "Satin Cushions",
-      subItems: ["Take A Nap Satin Cushion", "Bouncy Satin Cushion", "Hard Satin Cushion", "Soft Satin Cushion", "EasePuff Satin Cushion"]
-    },
-    {
-      title: "Satin Bolsters",
-      subItems: ["Bouncy Satin Bolster", "Hard Satin Bolster", "Soft Satin Bolster", "Vibrant Satin Bolster"]
-    },
-    {
-      title: "Satin Pillows",
-      subItems: ["Amazing Satin Pillow", "Brazeel Big Satin Pillow", "Brazeel Small Satin Pillow", "Ease Puff Satin Pillow", "Paris Big Satin Pillow"]
-    },
-    {
-      title: "Cotton Pillows",
-      subItems: ["Cozy Gold Embroidered Cotton Pillows", "Cozy Gold Soft Cotton Pillows", "Harmony Cotton Pillow", "Relaxed Nap Plain Cotton Pillow", "Relaxed Nap Printed Cotton Pillow"]
-    },
-    {
-      title: "Bed Sheets",
-      subItems: ["3D Bed Sheet", "5D Bed sheet", "Cotton Bed Sheet", "Embroidered Bed Sheet", "Satin Bed Sheet"]
-    },
-    {
-      title: "Floor Door Mat",
-      subItems: ["Anti Slip Door Mat", "Designer Door Mat"]
-    }
-  ];
+  // --- बदला गया: 'const categories = [...]' को यहाँ से हटा दिया गया है ---
 
   return (
     <>
@@ -56,11 +29,8 @@ const Navbar = () => {
             <Button className='!text-black gap-2 !py-4 w-full !justify-start' onClick={() => setIsopencatpanel(!isOpenCatPanel)}>
               <HiMiniBars3CenterLeft className='text-[18px]' />
               Shop By Category
-             
             </Button>
           </div>
-
-        
 
           {/* Desktop Navigation */}
           <div className="flex-grow relative">
@@ -70,7 +40,8 @@ const Navbar = () => {
               </li>
 
               {/* Dynamic Dropdowns */}
-              {categories.map((cat, index) => (
+              {/* --- बदला गया: अब 'categoriesData' पर map चल रहा है --- */}
+              {categoriesData.map((cat, index) => (
                 <li key={index} className='list-none relative group py-4'>
                   <Button className='!text-black group-hover:!text-[#ff5252] !capitalize'>
                     {cat.title} <IoIosArrowRoundDown className='ml-1' />
@@ -100,20 +71,20 @@ const Navbar = () => {
                     </Link>
                   </li>
 
-                  {categories.map((cat, index) => (
+                  {/* --- बदला गया: मोबाइल मेनू भी 'categoriesData' का इस्तेमाल कर रहा है --- */}
+                  {categoriesData.map((cat, index) => (
                     <li key={index} className='list-none border-b pb-2'>
                       <button
                         type="button"
                         onClick={() => toggleMobileSubmenu(index)}
                         className="w-full flex items-center justify-between text-left text-gray-700 hover:text-red-500 font-semibold"
                         aria-expanded={openMobileSubmenu === index}
-                        aria-controls={`mobile-cat-${index}`}
                       >
                         {cat.title}
                         <IoIosArrowForward className={`transition-transform ${openMobileSubmenu === index ? 'rotate-90' : ''}`} />
                       </button>
                       {openMobileSubmenu === index && (
-                        <ul id={`mobile-cat-${index}`} className="mt-2 pl-4 flex flex-col gap-1">
+                        <ul className="mt-2 pl-4 flex flex-col gap-1">
                           {cat.subItems.map((sub) => (
                             <li key={sub}>
                               <Link to="/" className="block text-sm text-gray-600 hover:text-red-500">

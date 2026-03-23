@@ -1,11 +1,11 @@
 import React from 'react'
 import { Button } from '@mui/material';
 import Hero from '../../slider/hero';
-import PromoSection from '../Home/PromoSection';
+import PromoSection from '../../banneradds/PromoSection';
 import PopularProducts from '../../slider/PopularProducts';
 import LatestProducts from '../../slider/LatestProducts';
-import Footer from '../../Footer/Footer';
-import RecentlyViewed from './RecentlyViewed';
+
+import RecentlyViewed from '../../banneradds/RecentlyViewed';
 
  const Home = () => {
   return (
@@ -19,8 +19,7 @@ import RecentlyViewed from './RecentlyViewed';
       {/* 3. Latest Products Section */}
       <RecentlyViewed />
       <LatestProducts />
-      {/* 3. इसके नीचे आप बाकी के सेक्शन्स डाल सकते हैं */}
-      <Footer />
+      
     </main>
   )
 }

@@ -1,86 +1,87 @@
 import React, { useState } from 'react';
-import { FiPlus, FiMinus } from 'react-icons/fi';
-import { IoIosArrowForward } from "react-icons/io";
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Slider from '@mui/material/Slider';
+import { FiChevronDown, FiChevronLeft } from 'react-icons/fi';
 
-// --- बदला गया: अब हम डेटा को आपकी बनाई हुई नई फ़ाइल से ला रहे हैं ---
-import { categoriesData } from '../categorydata/categoryData'; 
+const Sidebar = ({ onPriceChange }) => { // onPriceChange प्रॉप जोड़ा गया है
+  const [priceRange, setPriceRange] = useState([0, 10000]);
 
-const Sidebar = () => {
-  // --- बदला गया: 'const categories = [...]' को यहाँ से हटा दिया गया है क्योंकि अब डेटा ऊपर Import हो रहा है ---
-
-  const [openCategory, setOpenCategory] = useState(null);
-
-  const toggleCategory = (index) => {
-    setOpenCategory(openCategory === index ? null : index);
+  const handlePriceChange = (event, newValue) => {
+    setPriceRange(newValue);
+    // पैरेंट कंपोनेंट को मैक्सिमम प्राइस (index 1) भेजें
+    if (onPriceChange) {
+      onPriceChange(newValue[1]);
+    }
   };
 
+  const filterSections = [
+    { title: "COLOR", options: ["White", "Blue", "Red", "Beige"] },
+    { title: "FILLING MATERIAL", options: ["Fiber", "Cotton", "Memory Foam"] },
+    { title: "PACK OF", options: ["Pack of 1", "Pack of 2", "Pack of 4"] },
+    { title: "EXTERNAL MATERIAL", options: ["Cotton", "Satin", "Velvet"] },
+    { title: "PATTERN", options: ["Solid", "Printed", "Striped"] },
+    { title: "DISCOUNT", options: ["10% or more", "20% or more", "50% or more"] },
+  ];
+
   return (
-    <div className="w-full bg-white font-sans text-[#212121] border shadow-sm">
-      <div className="p-4 border-b bg-gray-50">
-        <h2 className="text-lg font-bold uppercase text-gray-700 tracking-wide">Filters</h2>
+    <div className="bg-white shadow-sm border rounded-sm w-full font-sans overflow-hidden">
+      <div className="p-4 border-b">
+        <h2 className="text-lg font-bold text-gray-800">Filters</h2>
       </div>
 
-      {/* --- CATEGORIES SECTION --- */}
-      <div className="p-2">
-        <h3 className="text-[12px] font-bold uppercase text-gray-400 mb-4 px-2 mt-2">Product Categories</h3>
-        
-        <div className="space-y-1">
-          {/* --- बदला गया: 'categories.map' की जगह अब 'categoriesData.map' का इस्तेमाल हो रहा है --- */}
-          {categoriesData.map((cat, index) => (
-            <div key={index} className="border-b last:border-0 border-gray-100 pb-1">
-              
-              {/* Main Item Row */}
-              <div 
-                className="flex items-center justify-between p-2 cursor-pointer hover:bg-gray-50 rounded-md transition-all group"
-                onClick={() => toggleCategory(index)}
-              >
-                <span className={`text-sm font-medium transition-colors ${openCategory === index ? 'text-[#ff5252]' : 'text-gray-700'}`}>
-                  {cat.title}
-                </span>
-                
-                {/* Plus/Minus Icon Button */}
-                <div className="w-6 h-6 flex items-center justify-center rounded border border-gray-200 group-hover:border-[#ff5252] group-hover:text-[#ff5252]">
-                  {openCategory === index ? (
-                    <FiMinus className="text-[14px]" />
-                  ) : (
-                    <FiPlus className="text-[14px]" />
-                  )}
-                </div>
-              </div>
-
-              {/* Sub-Items (Accordion Content) */}
-              <div 
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  openCategory === index ? 'max-h-[500px] opacity-100 mt-1' : 'max-h-0 opacity-0'
-                }`}
-              >
-                <ul className="pl-4 pr-2 space-y-1 pb-2">
-                  {cat.subItems.map((sub, i) => (
-                    <li 
-                      key={i} 
-                      className="text-[13px] text-gray-500 hover:text-[#ff5252] cursor-pointer flex items-center py-1.5 transition-colors"
-                    >
-                      <IoIosArrowForward className="mr-1 text-[10px]" />
-                      {sub}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          ))}
+      <div className="p-4 border-b">
+        <h3 className="text-[12px] font-bold text-gray-500 uppercase mb-3">Categories</h3>
+        <div className="space-y-2">
+          <div className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-blue-600">
+            <FiChevronLeft className="mr-1" /> Home Furnishings
+          </div>
+          <div className="text-sm font-bold text-gray-900 ml-8">Pillows</div>
         </div>
       </div>
 
-      {/* --- PRICE RANGE --- */}
-      <div className="p-4 border-t mt-4">
-        <h3 className="text-[12px] font-bold uppercase text-gray-400 mb-6">Price</h3>
-        <input type="range" className="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#ff5252]" min="0" max="5000" />
-        <div className="flex items-center justify-between mt-4">
-          <div className="border p-1 px-3 text-[13px] rounded bg-white w-20 text-center">Min</div>
-          <span className="text-gray-400 text-sm">to</span>
-          <div className="border p-1 px-3 text-[13px] rounded bg-white w-24 font-bold text-center">₹5000+</div>
+      {/* Price Slider Section */}
+      <div className="p-4 border-b">
+        <h3 className="text-[12px] font-bold text-gray-500 uppercase mb-4">Price</h3>
+        <div className="px-2">
+          <Slider
+            value={priceRange}
+            onChange={handlePriceChange}
+            valueLabelDisplay="auto"
+            min={0}
+            max={10000}
+            sx={{ color: '#2874f0' }}
+          />
+          <div className="flex items-center justify-between gap-2 mt-2">
+            <div className="border p-1 text-xs w-full text-center rounded-sm">Min</div>
+            <span className="text-gray-400 text-xs">to</span>
+            <div className="border p-1 text-xs w-full text-center font-bold rounded-sm">₹{priceRange[1]}+</div>
+          </div>
         </div>
       </div>
+
+    
+
+      {filterSections.map((section, index) => (
+        <Accordion key={index} disableGutters elevation={0} square className="border-b before:hidden">
+          <AccordionSummary expandIcon={<FiChevronDown className="text-gray-400" />}>
+            <span className="text-[12px] font-bold text-gray-800 uppercase">{section.title}</span>
+          </AccordionSummary>
+          <AccordionDetails className="pt-0">
+            {section.options.map((option, i) => (
+              <FormControlLabel
+                key={i}
+                className="w-full"
+                control={<Checkbox size="small" sx={{ '&.Mui-checked': { color: '#2874f0' } }} />}
+                label={<span className="text-sm text-gray-700">{option}</span>}
+              />
+            ))}
+          </AccordionDetails>
+        </Accordion>
+      ))}
     </div>
   );
 };

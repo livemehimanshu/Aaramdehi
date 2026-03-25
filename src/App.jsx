@@ -6,6 +6,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import Home from '../component/Pages/Home/index.jsx'
 
 import ProductListing from '../component/Pages/ProductListing/index.jsx'
+import  ProductDetailsPage from '../component/Pages/productpage/ProductDetailsPage.jsx'
 
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
  <Routes>
       <Route path="/" element={<Home/>}/>
       <Route path="/product" element={<ProductListing/>}/>
+      <Route path="/product/:id" element={<ProductDetailsPage />} />
     
  </Routes>
  <Footer/>

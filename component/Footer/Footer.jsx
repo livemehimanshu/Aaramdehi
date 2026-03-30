@@ -91,7 +91,7 @@ const NewsletterFooter = () => {
       {/* 3. Bottom Copyright Bar */}
       <div className="bg-[#f6f6f6] py-6">
         <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-gray-500 text-[13px]">© 2026 - Ecommerce Template</p>
+          <p className="text-gray-500 text-[13px]">© 2026 - AaramDehi </p>
           <img src="https://demo.codezeel.com/prestashop/PRS21/PRS210502/img/cms/payment.png" alt="Payments" className="h-6 object-contain" />
         </div>
       </div>

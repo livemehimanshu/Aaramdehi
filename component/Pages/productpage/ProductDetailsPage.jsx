@@ -1,176 +1,225 @@
-import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import Slider from "react-slick";
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom'; // Navigation के लिए
 import { 
-  FiShoppingCart, FiMapPin, FiChevronRight, 
-  FiTag, FiInfo, FiHeart 
+  FiHeart, FiShoppingCart, FiPlus, FiMinus, FiCheck, FiArrowRight 
 } from 'react-icons/fi';
-import { 
-  BsThunderboltFill, BsShieldCheck, BsCashStack, 
-  BsArrowCounterclockwise 
-} from 'react-icons/bs';
-import { AiFillStar } from 'react-icons/ai';
-
-// Slider CSS
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import { BsLightningCharge } from 'react-icons/bs';
+import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
+import PopularProduct from '../../slider/PopularProducts'; 
 
 const ProductDetailsPage = () => {
-  const { id } = useParams();
-  const [selectedImage, setSelectedImage] = useState("");
-  const [product, setProduct] = useState(null);
+  const navigate = useNavigate(); // Navigation function
 
-  // आपकी थीम के कलर्स: Primary: #1e3a8a (Deep Blue), Secondary: #f59e0b (Amber/Gold)
-  
-  const ALL_PRODUCTS = [
-    { 
-      id: 1, 
-      name: "Aaramdehi Luxury White Microfiber Pillow (Set of 2)", 
-      price: 5949, 
-      oldPrice: 8999, 
-      discount: "33% OFF",
-      rating: 4.2, 
-      reviews: "2,450", 
-      images: [
-        "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg?q=90",
-        "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/g/h/7/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgbvngwzsz.jpeg?q=90"
-      ],
-      highlights: ["Ultra Soft Microfiber", "Hypoallergenic Material", "Breathable Fabric", "Machine Washable"]
-    }
-    // अन्य प्रोडक्ट्स...
+  // 1. DATA
+  const productData = {
+    id: "main-pillow-001",
+    brand: "Aaramdehi Premium",
+    name: "Luxury Microfiber Soft Pillow (Pack of 2)",
+    description: "Experience ultimate comfort with Aaramdehi's signature microfiber pillows. Designed for back, side, and stomach sleepers with pure organic materials.",
+    images: [
+      "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg?q=90",
+      "https://rukminim2.flixcart.com/image/1086/1086/k7f26kw0/bolster/v/j/z/plain-bolster-white-1-bolster-white-satin-plain-white-fiber-original-imafpnzdqghvggym.jpeg?q=70"
+    ],
+    sizes: [
+      { label: 'Standard', dimensions: '17" x 27"', price: 949, oldPrice: 1599 },
+      { label: 'King', dimensions: '20" x 36"', price: 1249, oldPrice: 1999 }
+    ]
+  };
+
+  const relatedItems = [
+    { id: 101, name: "Cotton Pillow Cover (Pair)", price: 299, image: "https://rukminim2.flixcart.com/image/612/612/xif0q/pillow-covers/original-imahfzhgzff9ay8h.jpeg" },
+    { id: 102, name: "Fragrant Mogra Spray", price: 150, image: "https://rukminim2.flixcart.com/image/612/612/k7f26kw0/air-freshner.jpeg" }
   ];
 
-  useEffect(() => {
-    const found = ALL_PRODUCTS.find(p => p.id === Number(id)) || ALL_PRODUCTS[0];
-    setProduct(found);
-    setSelectedImage(found.images[0]);
-    window.scrollTo(0, 0);
-  }, [id]);
+  // 2. STATES
+  const [selectedImage, setSelectedImage] = useState(productData.images[0]);
+  const [selectedSize, setSelectedSize] = useState(productData.sizes[0]);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedBundle, setSelectedBundle] = useState([productData.id, 101, 102]);
+  const [wishlist, setWishlist] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviews, setReviews] = useState([
+    { id: 1, user: "Mukul Bhardwaj", rating: 5, date: "24 March 2026", comment: "Quality is top-notch! The standard size fits perfectly.", helpful: 12 }
+  ]);
+  const [newReview, setNewReview] = useState({ user: "", rating: 5, comment: "" });
 
-  if (!product) return null;
+  // 3. HANDLERS
+  const bundleTotal = useMemo(() => {
+    let total = selectedSize.price;
+    relatedItems.forEach(item => {
+      if (selectedBundle.includes(item.id)) total += item.price;
+    });
+    return total;
+  }, [selectedBundle, selectedSize]);
+
+  const toggleBundleItem = (id) => {
+    if (id === productData.id) return;
+    setSelectedBundle(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleReviewSubmit = (e) => {
+    e.preventDefault();
+    setReviews([{ ...newReview, id: Date.now(), date: "Today", helpful: 0 }, ...reviews]);
+    setShowReviewForm(false);
+    setNewReview({ user: "", rating: 5, comment: "" });
+  };
 
   return (
-    <div className="bg-[#fafafa] min-h-screen pb-20 font-sans">
-      <div className="container mx-auto p-4 lg:px-20">
+    <div className="bg-white min-h-screen font-sans text-gray-900 overflow-x-hidden">
+      
+      {/* --- CONTENT CONTAINER --- */}
+      <div className="container mx-auto px-4 md:px-12 lg:px-24 py-6 md:py-10">
         
-        {/* Breadcrumb */}
-        <nav className="text-[12px] text-gray-500 flex items-center gap-1 mb-4">
-          Home <FiChevronRight/> Bedroom <FiChevronRight/> <span className="text-blue-900 font-semibold">Pillows</span>
-        </nav>
-
-        <div className="flex flex-col lg:flex-row gap-10 bg-white p-6 rounded-lg shadow-sm">
-          
-          {/* 1. LEFT: Image Gallery */}
-          <div className="lg:w-[45%]">
-            <div className="sticky top-10">
-              <div className="border border-gray-100 rounded-lg overflow-hidden relative group bg-white">
+        {/* PRODUCT TOP SECTION (Gallery + Info) */}
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
+          <div className="lg:w-1/2 flex flex-col md:flex-row gap-4">
+            <div className="order-2 md:order-1 flex md:flex-col gap-3 overflow-x-auto pb-2 shrink-0">
+              {productData.images.map((img, i) => (
                 <img 
-                  src={selectedImage} 
-                  alt={product.name} 
-                  className="w-full h-[500px] object-contain transition-transform duration-700 group-hover:scale-110"
+                  key={i} src={img} onClick={() => setSelectedImage(img)}
+                  className={`w-16 h-20 md:w-20 md:h-24 border-2 rounded-xl cursor-pointer object-cover ${selectedImage === img ? 'border-blue-900 scale-105' : 'border-gray-100'}`} 
                 />
-                <button className="absolute top-4 right-4 p-2 bg-white/80 rounded-full shadow-sm hover:text-red-500 transition-colors">
-                  <FiHeart className="text-xl" />
-                </button>
-              </div>
-
-              {/* Action Buttons with Aaramdehi Gold & Blue */}
-              <div className="flex gap-4 mt-6">
-                <button className="flex-1 bg-blue-900 hover:bg-blue-950 text-white font-bold py-4 rounded-md uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-100">
-                   <FiShoppingCart className="text-xl" /> Add to Cart
-                </button>
-                <button className="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-md uppercase tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-amber-100">
-                   <BsThunderboltFill className="text-xl" /> Buy Now
-                </button>
-              </div>
+              ))}
+            </div>
+            <div className="order-1 md:order-2 flex-1 bg-gray-50 rounded-[20px] md:rounded-[30px] h-[350px] md:h-[550px] flex items-center justify-center relative border border-gray-100">
+              <img src={selectedImage} className="max-h-[85%] object-contain mix-blend-multiply" alt="product" />
+              <button onClick={() => setWishlist(!wishlist)} className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg">
+                <FiHeart className={wishlist ? 'fill-red-500 text-red-500' : 'text-gray-300'} />
+              </button>
             </div>
           </div>
 
-          {/* 2. RIGHT: Product Content */}
-          <div className="lg:w-[55%] space-y-6">
+          <div className="lg:w-1/2 space-y-5">
             <div>
-              <h1 className="text-2xl font-semibold text-gray-800 leading-tight">
-                {product.name}
-              </h1>
-              <div className="flex items-center gap-3 mt-3">
-                 <div className="bg-green-600 text-white text-xs px-2 py-1 rounded flex items-center gap-1 font-bold">
-                   {product.rating} <AiFillStar />
-                 </div>
-                 <span className="text-sm text-gray-400 font-medium">{product.reviews} Ratings</span>
-                 <span className="text-blue-900 text-xs font-bold px-2 py-1 bg-blue-50 rounded">Aaramdehi Certified</span>
-              </div>
+              <p className="text-blue-900 font-black text-[10px] uppercase tracking-[3px] mb-1">{productData.brand}</p>
+              <h1 className="text-2xl md:text-4xl font-black text-gray-900 leading-tight">{productData.name}</h1>
             </div>
-
-            {/* Price Info */}
-            <div className="py-4 border-y border-gray-50">
-              <div className="flex items-center gap-4">
-                <span className="text-4xl font-bold text-gray-900">₹{product.price.toLocaleString()}</span>
-                <span className="text-gray-400 line-through text-xl font-light">₹{product.oldPrice.toLocaleString()}</span>
-                <span className="text-amber-600 font-bold text-lg bg-amber-50 px-2 py-1 rounded">{product.discount}</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-2 font-medium">Free delivery and inclusive of all taxes</p>
+            <div className="bg-blue-50/50 p-4 rounded-2xl w-fit flex items-center gap-4">
+              <span className="text-3xl font-black text-blue-900">₹{selectedSize.price}</span>
+              <span className="text-gray-400 line-through text-sm font-bold italic">₹{selectedSize.oldPrice}</span>
             </div>
-
-            {/* Offers Section */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-gray-700 flex items-center gap-2 underline decoration-amber-400">
-                <FiTag className="text-amber-500" /> Exclusive Offers
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="p-3 border border-dashed border-blue-200 rounded-md bg-blue-50/30">
-                  <p className="text-xs font-bold text-blue-900 uppercase">First Order</p>
-                  <p className="text-[11px] text-gray-600 mt-1">Use code <span className="font-bold">WELCOME10</span> for extra 10% off.</p>
+            <p className="text-gray-500 text-sm leading-relaxed italic border-t pt-4">{productData.description}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-b pb-6">
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Size</p>
+                <div className="flex gap-2">
+                  {productData.sizes.map((s) => (
+                    <button key={s.label} onClick={() => setSelectedSize(s)} 
+                      className={`flex-1 py-3 rounded-xl text-[11px] font-black border-2 ${selectedSize.label === s.label ? 'bg-blue-900 text-white border-blue-900 shadow-lg' : 'bg-white text-gray-600 border-gray-100'}`}>
+                      {s.label} <span className="block text-[8px] opacity-60">{s.dimensions}</span>
+                    </button>
+                  ))}
                 </div>
-                <div className="p-3 border border-dashed border-amber-200 rounded-md bg-amber-50/30">
-                  <p className="text-xs font-bold text-amber-900 uppercase">Bank Offer</p>
-                  <p className="text-[11px] text-gray-600 mt-1">Flat ₹500 off on UPI transactions above ₹2000.</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Quantity</p>
+                <div className="flex items-center border-2 border-gray-100 rounded-xl h-[52px] bg-white">
+                  <button onClick={() => setQuantity(Math.max(1, quantity-1))} className="flex-1 h-full flex items-center justify-center border-r"><FiMinus/></button>
+                  <span className="flex-1 text-center font-black">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity+1)} className="flex-1 h-full flex items-center justify-center border-l"><FiPlus/></button>
                 </div>
               </div>
             </div>
-
-            {/* Delivery Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-sm font-bold text-gray-600">
-                <FiMapPin className="text-blue-900" /> Check Availability
-              </div>
-              <div className="flex items-center border-b-2 border-gray-200 focus-within:border-blue-900 transition-colors pb-1 w-full max-w-xs">
-                <input type="text" placeholder="Enter Pincode" className="bg-transparent outline-none text-sm font-semibold text-gray-900 w-full" />
-                <button className="text-blue-900 font-bold text-sm px-4">Check</button>
-              </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button className="flex-1 bg-black text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest active:scale-95 transition-all">
+                 <FiShoppingCart size={18}/> Add to Cart
+              </button>
+              <button className="flex-1 bg-blue-900 text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest shadow-xl shadow-blue-100 active:scale-95 transition-all">
+                 <BsLightningCharge size={18}/> Buy Now
+              </button>
             </div>
-
-            {/* Trust Badges */}
-            <div className="flex justify-between items-center py-6 bg-gray-50 rounded-xl px-4 border border-gray-100">
-               <div className="flex flex-col items-center gap-1">
-                  <BsArrowCounterclockwise className="text-xl text-blue-900" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">10 Days Return</span>
-               </div>
-               <div className="flex flex-col items-center gap-1">
-                  <BsCashStack className="text-xl text-blue-900" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">COD Available</span>
-               </div>
-               <div className="flex flex-col items-center gap-1">
-                  <BsShieldCheck className="text-xl text-blue-900" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Premium Quality</span>
-               </div>
-            </div>
-
-            {/* Highlights */}
-            <div className="space-y-3">
-              <p className="text-sm font-bold text-gray-700 uppercase tracking-widest">Why choose Aaramdehi?</p>
-              <div className="grid grid-cols-2 gap-y-3">
-                {product.highlights.map((h, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-gray-600">
-                    <div className="w-1.5 h-1.5 bg-amber-500 rounded-full"></div>
-                    {h}
-                  </div>
-                ))}
-              </div>
-            </div>
-
           </div>
         </div>
+
+        {/* --- COMBO BUNDLE --- */}
+        <div className="mt-20">
+          <h2 className="text-xl font-black uppercase tracking-tighter mb-6">Frequently Bought Together</h2>
+          <div className="bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center gap-8">
+            <div className="flex items-center gap-4">
+               <img src={productData.images[0]} className="w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl border-2 border-blue-900 p-1" />
+               <FiPlus className="text-gray-300" />
+               {relatedItems.map(item => (
+                 <React.Fragment key={item.id}>
+                    <img src={item.image} onClick={() => toggleBundleItem(item.id)}
+                      className={`w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl cursor-pointer transition-all ${selectedBundle.includes(item.id) ? 'opacity-100 ring-2 ring-blue-900' : 'opacity-30'}`} />
+                    {item.id === 101 && <FiPlus className="text-gray-300" />}
+                 </React.Fragment>
+               ))}
+            </div>
+            <div className="w-full lg:pl-10 lg:border-l flex flex-col md:flex-row items-center justify-between gap-6">
+               <div className="text-center md:text-left">
+                  <p className="text-[10px] font-black text-gray-400 tracking-widest mb-1 uppercase">Total Bundle</p>
+                  <p className="text-4xl font-black text-blue-900">₹{bundleTotal.toLocaleString()}</p>
+               </div>
+               <button className="w-full md:w-auto bg-blue-900 text-white px-8 py-4 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-lg active:scale-95">
+                  Add Bundle to Cart
+               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* --- REVIEWS SECTION --- */}
+        <div className="mt-20 border-t pt-16">
+          <div className="flex flex-col lg:flex-row gap-12">
+            <div className="lg:w-1/3 space-y-6">
+              <h2 className="text-3xl font-black tracking-tighter uppercase">Happy Sleepers</h2>
+              <div className="flex items-center gap-4 bg-gray-50 p-6 rounded-3xl">
+                <span className="text-5xl font-black text-blue-900">4.8</span>
+                <div>
+                   <div className="flex text-amber-400 text-lg"><AiFillStar/><AiFillStar/><AiFillStar/><AiFillStar/><AiFillStar/></div>
+                   <p className="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-widest">{reviews.length} Verified Reviews</p>
+                </div>
+              </div>
+              <button onClick={() => setShowReviewForm(!showReviewForm)} className="w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest border-2 border-blue-900 text-blue-900 hover:bg-blue-900 hover:text-white transition-all">
+                {showReviewForm ? "Cancel" : "Post a Review"}
+              </button>
+              {showReviewForm && (
+                <form onSubmit={handleReviewSubmit} className="p-6 bg-white border-2 border-blue-50 rounded-3xl shadow-xl space-y-4">
+                  <input type="text" placeholder="Your Name" required className="w-full p-3 bg-gray-50 rounded-xl" value={newReview.user} onChange={e => setNewReview({...newReview, user: e.target.value})} />
+                  <textarea placeholder="Share your experience..." rows="3" required className="w-full p-3 bg-gray-50 rounded-xl" value={newReview.comment} onChange={e => setNewReview({...newReview, comment: e.target.value})}></textarea>
+                  <button type="submit" className="w-full bg-blue-900 text-white py-4 rounded-xl font-black text-[10px] uppercase">Post Review</button>
+                </form>
+              )}
+            </div>
+            <div className="lg:w-2/3 space-y-6">
+              {reviews.map(rev => (
+                <div key={rev.id} className="p-6 bg-gray-50/50 rounded-[25px] border border-gray-100 space-y-3">
+                  <div className="flex justify-between items-start">
+                    <div><p className="font-black text-gray-900 uppercase">{rev.user}</p></div>
+                    <span className="text-[10px] font-bold text-gray-300 uppercase">{rev.date}</span>
+                  </div>
+                  <p className="text-gray-600 italic leading-relaxed">"{rev.comment}"</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+      </div> {/* Container End */}
+
+      {/* --- FULL WIDTH TRENDING SECTION --- */}
+      <div className="mt-24 bg-[#f8f9fb] py-20 w-full overflow-hidden border-t">
+        <div className="container mx-auto px-4 md:px-12 lg:px-24 mb-10">
+           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+             <div>
+               <h2 className="text-3xl md:text-5xl font-black text-gray-900 uppercase tracking-tighter leading-none">You Might<br/> Also Love</h2>
+               <p className="text-blue-900 font-bold text-xs tracking-[4px] mt-4 uppercase">Handpicked for You</p>
+             </div>
+             {/* --- WORKING VIEW ALL BUTTON --- */}
+             <button 
+               onClick={() => navigate('/all-products')} // यहाँ अपने shop page का route डालें
+               className="group flex items-center gap-2 text-[10px] font-black text-blue-900 uppercase tracking-widest hover:gap-4 transition-all"
+             >
+               View All Products <FiArrowRight className="text-lg transition-transform" />
+             </button>
+           </div>
+        </div>
+        
+        <div className="w-full"> 
+          <PopularProduct />
+        </div>
       </div>
+
     </div>
   );
 };

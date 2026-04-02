@@ -6,6 +6,7 @@ import Home from '../component/Pages/Home/index.jsx'
 import ProductListing from '../component/Pages/ProductListing/index.jsx'
 import ProductDetailsPage from '../component/Pages/productpage/ProductDetailsPage.jsx'
 import Auth from '../component/Pages/Home/auth.jsx' // Auth पेज यहाँ इम्पोर्ट करें
+import { BlogList, BlogDetail } from '../../Aaramdehi/component/Pages/blog/blog.jsx';
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
           {/* हमने दोनों के लिए एक ही कंपोनेंट रखा है क्योंकि उसमें टॉगल बटन है */}
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
+          <Route path="/product" element={<ProductListing />} />
+          <Route path="/blog" element={<BlogList />} />
+<Route path="/blog/:slug" element={<BlogDetail />} />
         </Routes>
         <Footer/>
       </BrowserRouter>

@@ -6,6 +6,7 @@ import {
 import { BsLightningCharge } from 'react-icons/bs';
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
 import PopularProduct from '../../slider/PopularProducts'; 
+import allproduct from '../ProductListing/index';
 
 const ProductDetailsPage = () => {
   const navigate = useNavigate(); // Navigation function
@@ -207,11 +208,11 @@ const ProductDetailsPage = () => {
              </div>
              {/* --- WORKING VIEW ALL BUTTON --- */}
              <button 
-               onClick={() => navigate('/all-products')} // यहाँ अपने shop page का route डालें
+               onClick={() => navigate('/product')} // यहाँ '/product' लिखें जो आपके App.js का route है
                className="group flex items-center gap-2 text-[10px] font-black text-blue-900 uppercase tracking-widest hover:gap-4 transition-all"
-             >
-               View All Products <FiArrowRight className="text-lg transition-transform" />
-             </button>
+>
+  View All Products <FiArrowRight className="text-lg transition-transform" />
+</button>
            </div>
         </div>
         

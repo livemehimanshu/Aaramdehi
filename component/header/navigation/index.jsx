@@ -5,7 +5,7 @@ import Categorypanel from './categorypanel';
 import { HiMiniBars3CenterLeft } from "react-icons/hi2";
 import { IoIosArrowRoundDown, IoIosArrowForward } from "react-icons/io";
 
-// --- बदला गया: अब डेटा आपकी Central फ़ाइल से आ रहा है ---
+// Central Data
 import { categoriesData } from '../../categorydata/categoryData';
 
 const Navbar = () => {
@@ -16,8 +16,6 @@ const Navbar = () => {
   const toggleMobileSubmenu = (index) => {
     setOpenMobileSubmenu((current) => (current === index ? null : index));
   };
-
-  // --- बदला गया: 'const categories = [...]' को यहाँ से हटा दिया गया है ---
 
   return (
     <>
@@ -32,7 +30,7 @@ const Navbar = () => {
             </Button>
           </div>
 
-          {/* Desktop Navigation */}
+          {/* Navigation Section */}
           <div className="flex-grow relative">
             <ul className="hidden md:flex items-center gap-1">
               <li className='list-none'>
@@ -40,14 +38,12 @@ const Navbar = () => {
               </li>
 
               {/* Dynamic Dropdowns */}
-              {/* --- बदला गया: अब 'categoriesData' पर map चल रहा है --- */}
               {categoriesData.map((cat, index) => (
                 <li key={index} className='list-none relative group py-4'>
                   <Button className='!text-black group-hover:!text-[#ff5252] !capitalize'>
                     {cat.title} <IoIosArrowRoundDown className='ml-1' />
                   </Button>
                   
-                  {/* Submenu (Hidden by default, shown on hover) */}
                   <ul className="absolute top-full left-0 min-w-[200px] bg-white shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
                     {cat.subItems.map((sub, i) => (
                       <li key={i} className="border-b last:border-0">
@@ -59,9 +55,17 @@ const Navbar = () => {
                   </ul>
                 </li>
               ))}
+
+              {/* --- ADDED: BLOG OPTION FOR DESKTOP --- */}
+              <li className='list-none'>
+                <Link to='/blog' className="link">
+                  <Button className='!text-black hover:!text-[#ff5252]'>Blog</Button>
+                </Link>
+              </li>
             </ul>
 
-            {/* Mobile Navigation (visible when menu is open) */}
+            {/* Mobile Navigation */}
+            {/* Button to toggle Mobile Menu (Agar aapne add kiya ho toh) */}
             {isMobileMenuOpen && (
               <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg z-40">
                 <ul className="flex flex-col gap-1 p-4">
@@ -71,14 +75,12 @@ const Navbar = () => {
                     </Link>
                   </li>
 
-                  {/* --- बदला गया: मोबाइल मेनू भी 'categoriesData' का इस्तेमाल कर रहा है --- */}
                   {categoriesData.map((cat, index) => (
-                    <li key={index} className='list-none border-b pb-2'>
+                    <li key={index} className='list-none border-b pb-2 text-gray-700'>
                       <button
                         type="button"
                         onClick={() => toggleMobileSubmenu(index)}
-                        className="w-full flex items-center justify-between text-left text-gray-700 hover:text-red-500 font-semibold"
-                        aria-expanded={openMobileSubmenu === index}
+                        className="w-full flex items-center justify-between text-left hover:text-red-500 font-semibold"
                       >
                         {cat.title}
                         <IoIosArrowForward className={`transition-transform ${openMobileSubmenu === index ? 'rotate-90' : ''}`} />
@@ -96,11 +98,17 @@ const Navbar = () => {
                       )}
                     </li>
                   ))}
+
+                  {/* --- ADDED: BLOG OPTION FOR MOBILE --- */}
+                  <li className='list-none border-b pb-2 pt-1'>
+                    <Link to='/blog' className="block text-base font-semibold text-gray-700 hover:text-red-500">
+                      Blog
+                    </Link>
+                  </li>
                 </ul>
               </div>
             )}
           </div>
-
         </div>
       </nav>
 

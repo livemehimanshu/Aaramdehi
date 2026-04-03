@@ -1,18 +1,42 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
+import { Link } from 'react-router-dom';
+import { getRecentlyViewed } from '../../src/data/recentlyViewedUtils';
 import 'swiper/css';
 import 'swiper/css/navigation';
 
+// ===== RECENTLY VIEWED PRODUCTS SECTION =====
+// Flipkart ke tarah - jab user products view karte hain toh yeh section show hota hai
+// Ismein last 10 viewed products carousel mein dikhte hain
+
 const RecentlyViewed = () => {
-  const items = [
-    { id: 1, name: "Monitors", image: "https://rukminim2.flixcart.com/image/150/150/xif0q/monitor/s/g/u/-original-imagz6zgvj7gz96f.jpeg?q=70" },
-    { id: 2, name: "Mobiles", image: "https://rukminim2.flixcart.com/image/150/150/xif0q/mobile/k/l/l/-original-imagtc5fz9zz9vg6.jpeg?q=70" },
-    { id: 3, name: "Amplifiers & AV Receivers", image: "https://rukminim2.flixcart.com/image/150/150/k7m89zk0/amplifier/h/z/v/p-30-pioneer-original-imafptyhzztyyz9f.jpeg?q=70" },
-    { id: 4, name: "Mobile Cables", image: "https://rukminim2.flixcart.com/image/150/150/xif0q/data-cable/u/f/n/-original-imagh2vubshszr9e.jpeg?q=70" },
-    { id: 5, name: "Protein Supplement", image: "https://rukminim2.flixcart.com/image/150/150/xif0q/protein-supplement/g/x/v/0-5-creatine-monohydrate-muscleblaze-original-imagz7zgvj7gz96f.jpeg?q=70" },
-    { id: 6, name: "Headphones", image: "https://rukminim2.flixcart.com/image/150/150/xif0q/headphone/p/y/v/-original-imagz7zgvj7gz96f.jpeg?q=70" },
-  ];
+  // State: Jo products user ne recently view kiye hain
+  const [recentProducts, setRecentProducts] = useState([]);
+
+  // useEffect: Component load hone par recently viewed products load karna
+  useEffect(() => {
+    // localStorage se recently viewed products lana
+    const loadRecentlyViewed = () => {
+      const products = getRecentlyViewed();
+      setRecentProducts(products);
+    };
+
+    loadRecentlyViewed();
+
+    // Jab khi aur component se "recentlyViewedUpdated" event ho tab update karna
+    window.addEventListener("recentlyViewedUpdated", loadRecentlyViewed);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("recentlyViewedUpdated", loadRecentlyViewed);
+    };
+  }, []);
+
+  // Agar koi product nahi dekha gaya hai toh component hide karna
+  if (recentProducts.length === 0) {
+    return null;
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -20,7 +44,7 @@ const RecentlyViewed = () => {
       <div className="bg-gradient-to-r from-[#e3f2fd] to-white rounded-md border border-gray-200 p-5 relative shadow-sm">
         
         <h2 className="text-lg font-bold text-gray-800 mb-4">
-          Himanshu, still looking for these?
+          Recently Viewed Products
         </h2>
 
         <Swiper
@@ -36,20 +60,25 @@ const RecentlyViewed = () => {
           }}
           className="recent-slider"
         >
-          {items.map((item) => (
+          {recentProducts.map((item) => (
             <SwiperSlide key={item.id}>
-              <div className="bg-white border border-gray-100 rounded-lg p-3 h-full flex flex-col items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
-                <div className="w-full aspect-square flex items-center justify-center p-2">
-                  <img 
-                    src={item.image} 
-                    alt={item.name} 
-                    className="max-w-full max-h-full object-contain"
-                  />
+              <Link to={`/product/${item.id}`}>
+                <div className="bg-white border border-gray-100 rounded-lg p-3 h-full flex flex-col items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+                  <div className="w-full aspect-square flex items-center justify-center p-2">
+                    <img 
+                      src={item.image} 
+                      alt={item.name} 
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                  <p className="text-[12px] text-gray-700 font-semibold text-center mt-2 line-clamp-2">
+                    {item.name}
+                  </p>
+                  <p className="text-[11px] text-red-500 font-bold mt-1">
+                    ₹{(item.price || item.newPrice || 0).toLocaleString()}
+                  </p>
                 </div>
-                <p className="text-[12px] text-gray-500 font-medium text-center mt-2 line-clamp-1">
-                  {item.name}
-                </p>
-              </div>
+              </Link>
             </SwiperSlide>
           ))}
         </Swiper>

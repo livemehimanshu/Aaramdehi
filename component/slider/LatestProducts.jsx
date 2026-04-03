@@ -3,19 +3,26 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { IoClose, IoStar, IoStarOutline, IoHeartOutline, IoSyncOutline } from "react-icons/io5";
-import ProductCard from './ProductCard'; 
+import ProductCard from './ProductCard';
+import { addToRecentlyViewed } from '../../src/data/recentlyViewedUtils';
 
 // Swiper Styles
 import 'swiper/css';
 import 'swiper/css/navigation';
 
-const LatestProducts = () => {
-  // --- Quick View States ---
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [quantity, setQuantity] = useState(1);
+// ===== LATEST PRODUCTS SECTION =====
+// Home page par jo latest/newest products dikhte hain
+// ProductCard component use karta hai aur quick modal bhi hai
 
+const LatestProducts = () => {
+  // --- STATES ---
+  const [selectedProduct, setSelectedProduct] = useState(null); // Modal mein jo product show hona hai
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal open/close
+  const [quantity, setQuantity] = useState(1); // Modal mein select quantity
+
+  // Latest products ka data
   const products = [
+    // Database se ye data aaya hai
     { id: 1, brand: "Home", name: "Black Kitchen Tool", rating: 4, oldPrice: "25.00", newPrice: "19.00", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=300", description: "High-quality black kitchen tools for modern homes." },
     { id: 2, brand: "Accessories", name: "Classic Silver Watch", rating: 5, oldPrice: "120.00", newPrice: "89.00", image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300", description: "Elegant silver watch with premium leather straps." },
     { id: 3, brand: "Tech", name: "Smart Google Home", rating: 4.5, oldPrice: "55.00", newPrice: "45.00", image: "https://images.unsplash.com/photo-1589492477829-5e65395b66cc?q=80&w=300", description: "Voice-controlled smart home assistant." },
@@ -25,9 +32,34 @@ const LatestProducts = () => {
 
   // --- Modal Handler ---
   const handleOpenModal = (product) => {
+    // Track recently viewed
+    addToRecentlyViewed(product);
     setSelectedProduct(product);
     setQuantity(1);
     setIsModalOpen(true);
+  };
+
+  const handleIncrement = () => setQuantity(q => q + 1);
+  const handleDecrement = () => quantity > 1 && setQuantity(q => q - 1);
+
+  // Add to Cart Handler
+  const handleAddToCart = () => {
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const productWithQty = { ...selectedProduct, qty: quantity };
+    const isExist = cart.find(item => item.id === selectedProduct.id);
+
+    if (isExist) {
+      cart = cart.map(item => 
+        item.id === selectedProduct.id ? { ...item, qty: item.qty + quantity } : item
+      );
+    } else {
+      cart.push(productWithQty);
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event("cartUpdated"));
+    alert(`${selectedProduct.name} added to cart!`);
+    setIsModalOpen(false);
   };
 
   return (
@@ -126,12 +158,14 @@ const LatestProducts = () => {
               {/* Functional Quantity */}
               <div className="flex gap-4 mb-8">
                 <div className="flex items-center border border-gray-200 h-14 bg-white">
-                  <button onClick={() => quantity > 1 && setQuantity(quantity - 1)} className="px-5 h-full hover:bg-gray-50 font-black border-r text-gray-400">－</button>
+                  <button onClick={handleDecrement} className="px-5 h-full hover:bg-gray-50 font-black border-r text-gray-400">－</button>
                   <span className="w-12 text-center font-black">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity + 1)} className="px-5 h-full hover:bg-gray-50 font-black border-l text-gray-400">＋</button>
+                  <button onClick={handleIncrement} className="px-5 h-full hover:bg-gray-50 font-black border-l text-gray-400">＋</button>
                 </div>
                 
-                <button className="flex-1 bg-red-500 text-white h-14 px-8 font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl shadow-red-500/20 active:translate-y-1">
+                <button 
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-red-500 text-white h-14 px-8 font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-xl shadow-red-500/20 active:translate-y-1">
                   Add to Cart
                 </button>
               </div>

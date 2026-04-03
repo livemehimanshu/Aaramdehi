@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom'; // Navigation के लिए
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Navigation ke liye
 import { 
   FiHeart, FiShoppingCart, FiPlus, FiMinus, FiCheck, FiArrowRight 
 } from 'react-icons/fi';
@@ -7,44 +7,45 @@ import { BsLightningCharge } from 'react-icons/bs';
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
 import PopularProduct from '../../slider/PopularProducts'; 
 import allproduct from '../ProductListing/index';
+import { productDetailsData, relatedItemsData } from '../../../src/data/productDetails';
+import { addToRecentlyViewed } from '../../../src/data/recentlyViewedUtils';
+
+// ===== PRODUCT DETAILS PAGE =====
+// Single product ka detailed page - images, sizes, prices, reviews, bundle offers, everything
+// Ismein product ko recently viewed mein add bhi karte ho
 
 const ProductDetailsPage = () => {
   const navigate = useNavigate(); // Navigation function
 
-  // 1. DATA
-  const productData = {
-    id: "main-pillow-001",
-    brand: "Aaramdehi Premium",
-    name: "Luxury Microfiber Soft Pillow (Pack of 2)",
-    description: "Experience ultimate comfort with Aaramdehi's signature microfiber pillows. Designed for back, side, and stomach sleepers with pure organic materials.",
-    images: [
-      "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg?q=90",
-      "https://rukminim2.flixcart.com/image/1086/1086/k7f26kw0/bolster/v/j/z/plain-bolster-white-1-bolster-white-satin-plain-white-fiber-original-imafpnzdqghvggym.jpeg?q=70"
-    ],
-    sizes: [
-      { label: 'Standard', dimensions: '17" x 27"', price: 949, oldPrice: 1599 },
-      { label: 'King', dimensions: '20" x 36"', price: 1249, oldPrice: 1999 }
-    ]
-  };
+  // --- DATA ---
+  // Centralized data folder se product ka complete data lana
+  const productData = productDetailsData["main-pillow-001"];
+  const relatedItems = relatedItemsData;
 
-  const relatedItems = [
-    { id: 101, name: "Cotton Pillow Cover (Pair)", price: 299, image: "https://rukminim2.flixcart.com/image/612/612/xif0q/pillow-covers/original-imahfzhgzff9ay8h.jpeg" },
-    { id: 102, name: "Fragrant Mogra Spray", price: 150, image: "https://rukminim2.flixcart.com/image/612/612/k7f26kw0/air-freshner.jpeg" }
-  ];
+  // useEffect: Jab page load ho tab product ko recently viewed mein add karna
+  useEffect(() => {
+    // Track recently viewed
+    const productToTrack = {
+      id: productData.id,
+      name: productData.name,
+      brand: productData.brand,
+      price: productData.sizes[0].price,
+      image: productData.images[0]
+    };
+    addToRecentlyViewed(productToTrack);
+  }, [productData.id]);
 
-  // 2. STATES
-  const [selectedImage, setSelectedImage] = useState(productData.images[0]);
-  const [selectedSize, setSelectedSize] = useState(productData.sizes[0]);
-  const [quantity, setQuantity] = useState(1);
-  const [selectedBundle, setSelectedBundle] = useState([productData.id, 101, 102]);
-  const [wishlist, setWishlist] = useState(false);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [reviews, setReviews] = useState([
-    { id: 1, user: "Mukul Bhardwaj", rating: 5, date: "24 March 2026", comment: "Quality is top-notch! The standard size fits perfectly.", helpful: 12 }
-  ]);
-  const [newReview, setNewReview] = useState({ user: "", rating: 5, comment: "" });
+  // --- STATES ---
+  const [selectedImage, setSelectedImage] = useState(productData.images[0]); // Gallery mein selected image
+  const [selectedSize, setSelectedSize] = useState(productData.sizes[0]); // Selected size
+  const [quantity, setQuantity] = useState(1); // Add to cart mein quantity
+  const [selectedBundle, setSelectedBundle] = useState([productData.id, 101, 102]); // Bundle offer mein selected items
+  const [wishlist, setWishlist] = useState(false); // Wishlist mein hai ya nahi
+  const [showReviewForm, setShowReviewForm] = useState(false); // Review form open/close
+  const [reviews, setReviews] = useState(productData.reviews); // Sabhi reviews
+  const [newReview, setNewReview] = useState({ user: "", rating: 5, comment: "" }); // Naya review likhne ke liye
 
-  // 3. HANDLERS
+  // useMemo: Bundle mein total price calculate karna
   const bundleTotal = useMemo(() => {
     let total = selectedSize.price;
     relatedItems.forEach(item => {

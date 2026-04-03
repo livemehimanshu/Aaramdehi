@@ -1,8 +1,45 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Rating } from '@mui/material';
-import { FiHeart } from 'react-icons/fi';
+import { FiHeart, FiShoppingCart } from 'react-icons/fi';
+
+// ===== PRODUCT CARD COMPONENT =====
+// Yeh ek single product card hai jo Popular/Latest Products mein dikhta hai
+// Ismein add to cart button aur wishlist button hote hain
 
 const ProductCard = ({ product }) => {
+  // State: Jab user "Add to Cart" dabe toh "Added" show hone ke liye
+  const [isAdded, setIsAdded] = useState(false);
+
+  // Function: Product ko cart mein add karna
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // localStorage se existing cart data lao
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    // Check karo kya yeh product pehle se cart mein hai?
+    const isExist = cart.find(item => item.id === product.id);
+
+    if (isExist) {
+      // Agar hai toh quantity increase karo
+      cart = cart.map(item => 
+        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
+      );
+    } else {
+      // Agar nahi hai toh naya product add karo qty=1 ke saath
+      cart.push({ ...product, qty: 1 });
+    }
+
+    // localStorage mein updated cart save karo
+    localStorage.setItem("cart", JSON.stringify(cart));
+    // Event trigger karo Header ko notify karne ke liye (badge update hone ke liye)
+    window.dispatchEvent(new Event("cartUpdated"));
+    
+    // Green "Added" state dikhao 1.5 seconds ke liye
+    setIsAdded(true);
+    setTimeout(() => setIsAdded(false), 1500);
+  };
+
   return (
     <div className="group bg-white rounded-sm p-4 relative transition-all duration-300 cursor-pointer hover:shadow-[0_2px_12px_0_rgba(0,0,0,0.16)] border border-transparent hover:border-gray-100 h-full flex flex-col">
       
@@ -55,8 +92,18 @@ const ProductCard = ({ product }) => {
       </div>
 
       {/* Size/Variants - Optional but looks good on hover */}
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-2">
-        <p className="text-[11px] text-gray-500 italic">Free delivery</p>
+      <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-4 flex gap-2">
+        <button 
+          onClick={handleAddToCart}
+          className={`flex-1 py-2 px-3 rounded-sm text-[12px] font-bold uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${
+            isAdded 
+              ? 'bg-green-500 text-white' 
+              : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+          }`}
+        >
+          <FiShoppingCart size={14} />
+          {isAdded ? 'Added ✓' : 'Add to Cart'}
+        </button>
       </div>
     </div>
   );

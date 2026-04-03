@@ -1,34 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { IoCloseOutline, IoTrashOutline, IoAddOutline, IoRemoveOutline } from "react-icons/io5";
 
+// ===== CART DRAWER COMPONENT =====
+// Yeh component right side se slide out hota hai jab cart icon click hote ho
+// Ismein cart ke sabhi items dikhte hain, quantity change kar sakte ho, delete kar sakte ho
+
 const CartDrawer = ({ isOpen, onClose }) => {
-  // Demo Data - Asli project mein ye Redux ya Context se aayega
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "Mens Cotton Casual Short Sleeve T-Shirts",
-      price: 86.00,
-      qty: 1,
-      image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200"
-    }
-  ]);
+  // localStorage se cart items load karna
+  const [cartItems, setCartItems] = useState([]); // Cart mein jo products hain
+  const [shipping] = useState(50); // Shipping charges (fixed ₹50)
 
-  const [shipping] = useState(7.00);
+  // useEffect: Component load hone par localStorage ko sync karna
+  useEffect(() => {
+    // localStorage se cart data lana
+    const loadCart = () => {
+      const cart = JSON.parse(localStorage.getItem("cart")) || [];
+      setCartItems(cart);
+    };
 
-  // Function: Quantity badhane ke liye
+    loadCart();
+
+    // Jab kisi aur component se cart update ho toh yeh component bhi update ho
+    window.addEventListener("cartUpdated", loadCart);
+
+    // Cleanup: component unmount hone par listener remove karna
+    return () => {
+      window.removeEventListener("cartUpdated", loadCart);
+    };
+  }, []);
+
+  // Function: Cart mein item ki quantity increase/decrease karna
+  // id = product ki id, delta = kitna increase/decrease karna
   const updateQty = (id, delta) => {
-    setCartItems(prev => prev.map(item => 
+    const updatedCart = cartItems.map(item => 
       item.id === id ? { ...item, qty: Math.max(1, item.qty + delta) } : item
-    ));
+    );
+    setCartItems(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    // Event trigger karo Header ko notify karne ke liye
+    window.dispatchEvent(new Event("cartUpdated"));
   };
 
-  // Function: Item delete karne ke liye
+  // Function: Cart se item completely remove karna
   const removeItem = (id) => {
-    setCartItems(prev => prev.filter(item => item.id !== id));
+    const updatedCart = cartItems.filter(item => item.id !== id);
+    setCartItems(updatedCart);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+    // Event trigger karo Header ko notify karne ke liye
+    window.dispatchEvent(new Event("cartUpdated"));
   };
 
-  // Calculations
-  const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.qty), 0);
+  // Calculations: Subtotal aur Total
+  const subtotal = cartItems.reduce((acc, item) => acc + ((item.price || item.newPrice || 0) * item.qty), 0);
   const total = cartItems.length > 0 ? subtotal + shipping : 0;
 
   return (
@@ -67,7 +90,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                         <IoTrashOutline size={18} />
                       </button>
                     </div>
-                    <p className="text-orange-600 font-bold mt-1">${item.price.toFixed(2)}</p>
+                    <p className="text-orange-600 font-bold mt-1">₹{(item.price || item.newPrice || 0).toLocaleString()}</p>
                   </div>
 
                   {/* Quantity Selector */}
@@ -94,15 +117,15 @@ const CartDrawer = ({ isOpen, onClose }) => {
             <div className="space-y-2 mb-4">
               <div className="flex justify-between text-sm text-gray-600 font-medium">
                 <span>Subtotal:</span>
-                <span className="text-gray-900 font-bold">${subtotal.toFixed(2)}</span>
+                <span className="text-gray-900 font-bold">₹{subtotal.toLocaleString()}</span>
               </div>
               <div className="flex justify-between text-sm text-gray-600 font-medium">
                 <span>Shipping:</span>
-                <span className="text-gray-900 font-bold">${shipping.toFixed(2)}</span>
+                <span className="text-gray-900 font-bold">₹{shipping.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-gray-200 mt-2">
                 <span className="text-base font-bold text-gray-800 uppercase">Total:</span>
-                <span className="text-xl font-bold text-orange-600">${total.toFixed(2)}</span>
+                <span className="text-xl font-bold text-orange-600">₹{total.toLocaleString()}</span>
               </div>
             </div>
 

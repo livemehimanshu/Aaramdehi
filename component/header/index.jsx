@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from "react-router-dom";
 import Search from "../search";
 import Navigation from './navigation';
@@ -11,25 +11,52 @@ import { CiHeart } from "react-icons/ci";
 import Tooltip from '@mui/material/Tooltip';
 import CartDrawer from '../CartDrawer/CartDrawer'; 
 
+// ===== HEADER COMPONENT =====
+// Yeh top header hai jismein logo, search, login, cart, wishlist sab dikhta hai
+// Ismein CartDrawer open/close logic bhi hai
+
+// Badge ka style customize - cart icon pe red circle number show karne ke liye
 const StyledBadge = styled(Badge)(({ theme }) => ({
   '& .MuiBadge-badge': {
     right: -3,
     top: 13,
     border: `2px solid white`,
     padding: '0 4px',
-    backgroundColor: '#dc2626',
+    backgroundColor: '#dc2626', // Red color
     color: 'white'
   },
 }));
 
 const Header = () => {
-  // --- Drawer Control State ---
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  // --- STATE MANAGEMENT ---
+  const [isCartOpen, setIsCartOpen] = useState(false); // Cart drawer open/close
+  const [cartCount, setCartCount] = useState(0); // Cart mein kitne items hain
 
-  // Drawer open karne ka function
+  // Function: Cart drawer ko toggle karna (open/close)
   const toggleCartDrawer = () => {
     setIsCartOpen(!isCartOpen);
   };
+
+  // Function: Cart mein items ki count update karna
+  // Jab product add/remove hote hauction toh count change ho
+  const updateCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    setCartCount(cart.length); // Cart mein total items ka count
+  };
+
+  // useEffect: Component load hone par aur jab cart update ho
+  useEffect(() => {
+    // Initial cart count set karna
+    updateCartCount();
+
+    // Jab "cartUpdated" event fire hote hain tab count update karna
+    window.addEventListener("cartUpdated", updateCartCount);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("cartUpdated", updateCartCount);
+    };
+  }, []);
 
   return (
     <>
@@ -112,7 +139,7 @@ const Header = () => {
                     className='!p-1.5 md:!p-2'
                     onClick={toggleCartDrawer} // Drawer Open logic
                   >
-                    <StyledBadge badgeContent={4} color="error">
+                    <StyledBadge badgeContent={cartCount} color="error">
                       <IoCartOutline size={24} />
                     </StyledBadge>
                   </IconButton>

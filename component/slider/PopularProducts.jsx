@@ -3,33 +3,84 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { IoClose, IoHeartOutline, IoSyncOutline, IoStar, IoStarOutline } from "react-icons/io5";
 
-// Swiper Styles
+// Utils and Styles
+// Note: Ensure this path is correct based on your folder structure
+import { addToRecentlyViewed } from '../../src/data/recentlyViewedUtils'; 
 import 'swiper/css';
 import 'swiper/css/navigation';
 
 const PopularProducts = () => {
+    // --- STATE MANAGEMENT ---
     const [activeTab, setActiveTab] = useState('PILLOWS');
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // --- Modal & Quantity States ---
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [quantity, setQuantity] = useState(1);
 
     const tabs = ['PILLOWS', 'BOLSTERS', 'CUSHIONS', 'ACCESSORIES', 'WELLNESS'];
 
-    // 1. DATA FETCHING (Using your Aaramdehi Collection)
+    // useEffect: Fetching dummy data based on active category
     useEffect(() => {
         const getProducts = async () => {
             setLoading(true);
             // Simulated API Data
             const dummyData = [
-                { id: 1, brand: "Aaramdehi Premium", name: "Luxury Microfiber Soft Pillow (Pack of 2)", rating: 4.5, oldPrice: 1599, newPrice: 949, stock: 147, image: "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg", description: "Experience ultimate comfort with Aaramdehi's signature microfiber pillows. Designed for all types of sleepers with pure organic materials." },
-                { id: 2, brand: "Aaramdehi Comfort", name: "Satin Plain White Fiber Bolster", rating: 4.2, oldPrice: 1299, newPrice: 849, stock: 85, image: "https://rukminim2.flixcart.com/image/1086/1086/k7f26kw0/bolster/v/j/z/plain-bolster-white-1-bolster-white-satin-plain-white-fiber-original-imafpnzdqghvggym.jpeg", description: "Our satin bolsters provide perfect cylindrical support for your diwan or bed. High-density fiber ensures long shape life." },
-                { id: 3, brand: "Aaramdehi Essence", name: "Fragrant Mogra Sleep Spray (100ml)", rating: 4.9, oldPrice: 250, newPrice: 150, stock: 200, image: "https://rukminim2.flixcart.com/image/612/612/k7f26kw0/air-freshner/mogra-natural.jpeg", description: "Infused with the calming scent of fresh Mogra flowers. Spritz on your pillow before bed for a relaxing sleep." },
-                { id: 4, brand: "Aaramdehi Health", name: "Memory Foam Orthopedic Pillow", rating: 4.7, oldPrice: 2499, newPrice: 1299, stock: 45, image: "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/l/u/x/16-orthopaedic-memory-foam-pillow-original-imahfzhggh.jpeg", description: "Scientifically designed to relieve neck pain. Adapts to your body heat and weight for personalized support." },
-                { id: 5, brand: "Aaramdehi Decor", name: "Decorative Floral Sofa Cushion", rating: 4.4, oldPrice: 599, newPrice: 299, stock: 120, image: "https://rukminim2.flixcart.com/image/1086/1086/xif0q/cushion/s/o/f/decorative-floral-original-imahfzhg44.jpeg", description: "Add a touch of elegance to your living room with our premium vibrant floral pattern cushions." }
+                { 
+                    id: 1, 
+                    brand: "Aaramdehi Premium", 
+                    name: "Luxury Microfiber Soft Pillow (Pack of 2)", 
+                    rating: 4.5, 
+                    oldPrice: 1599, 
+                    newPrice: 949, 
+                    stock: 147, 
+                    image: "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg", 
+                    description: "Experience ultimate comfort with Aaramdehi's signature microfiber pillows. Designed for all types of sleepers with pure organic materials." 
+                },
+                { 
+                    id: 2, 
+                    brand: "Aaramdehi Comfort", 
+                    name: "Satin Plain White Fiber Bolster", 
+                    rating: 4.2, 
+                    oldPrice: 1299, 
+                    newPrice: 849, 
+                    stock: 85, 
+                    image: "https://rukminim2.flixcart.com/image/1086/1086/k7f26kw0/bolster/v/j/z/plain-bolster-white-1-bolster-white-satin-plain-white-fiber-original-imafpnzdqghvggym.jpeg", 
+                    description: "Our satin bolsters provide perfect cylindrical support for your diwan or bed. High-density fiber ensures long shape life." 
+                },
+                { 
+                    id: 3, 
+                    brand: "Aaramdehi Essence", 
+                    name: "Fragrant Mogra Sleep Spray (100ml)", 
+                    rating: 4.9, 
+                    oldPrice: 250, 
+                    newPrice: 150, 
+                    stock: 200, 
+                    image: "https://rukminim2.flixcart.com/image/612/612/k7f26kw0/air-freshner/mogra-natural.jpeg", 
+                    description: "Infused with the calming scent of fresh Mogra flowers. Spritz on your pillow before bed for a relaxing sleep." 
+                },
+                { 
+                    id: 4, 
+                    brand: "Aaramdehi Health", 
+                    name: "Memory Foam Orthopedic Pillow", 
+                    rating: 4.7, 
+                    oldPrice: 2499, 
+                    newPrice: 1299, 
+                    stock: 45, 
+                    image: "https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/l/u/x/16-orthopaedic-memory-foam-pillow-original-imahfzhggh.jpeg", 
+                    description: "Scientifically designed to relieve neck pain. Adapts to your body heat and weight for personalized support." 
+                },
+                { 
+                    id: 5, 
+                    brand: "Aaramdehi Decor", 
+                    name: "Decorative Floral Sofa Cushion", 
+                    rating: 4.4, 
+                    oldPrice: 599, 
+                    newPrice: 299, 
+                    stock: 120, 
+                    image: "https://rukminim2.flixcart.com/image/1086/1086/xif0q/cushion/s/o/f/decorative-floral-original-imahfzhg44.jpeg", 
+                    description: "Add a touch of elegance to your living room with our premium vibrant floral pattern cushions." 
+                }
             ];
             setProducts(dummyData);
             setLoading(false);
@@ -39,13 +90,35 @@ const PopularProducts = () => {
 
     // --- Handlers ---
     const handleQuickView = (product) => {
+        if (typeof addToRecentlyViewed === 'function') {
+            addToRecentlyViewed(product);
+        }
         setSelectedProduct(product);
-        setQuantity(1); // Reset quantity on open
+        setQuantity(1); 
         setIsModalOpen(true);
     };
 
     const handleIncrement = () => setQuantity(q => q + 1);
     const handleDecrement = () => quantity > 1 && setQuantity(q => q - 1);
+
+    const handleAddToCart = () => {
+        let cart = JSON.parse(localStorage.getItem("cart")) || [];
+        const productWithQty = { ...selectedProduct, qty: quantity };
+        const isExist = cart.find(item => item.id === selectedProduct.id);
+
+        if (isExist) {
+            cart = cart.map(item => 
+                item.id === selectedProduct.id ? { ...item, qty: item.qty + quantity } : item
+            );
+        } else {
+            cart.push(productWithQty);
+        }
+
+        localStorage.setItem("cart", JSON.stringify(cart));
+        window.dispatchEvent(new Event("cartUpdated"));
+        alert(`${selectedProduct.name} added to cart!`);
+        setIsModalOpen(false);
+    };
 
     return (
         <section className="py-12 bg-gray-50 min-h-screen relative font-sans">
@@ -75,7 +148,7 @@ const PopularProducts = () => {
 
                 {/* Swiper Slider */}
                 {loading ? (
-                    <div className="h-64 flex items-center justify-center font-bold text-gray-400">Loading Aaramdehi Collection...</div>
+                    <div className="h-64 flex items-center justify-center font-bold text-gray-400 italic">Loading Aaramdehi Collection...</div>
                 ) : (
                     <Swiper
                         modules={[Navigation]}
@@ -122,10 +195,6 @@ const PopularProducts = () => {
                         {/* Left: Image Section */}
                         <div className="md:w-1/2 p-8 bg-[#fcfcfc] flex items-center justify-center border-r relative">
                             <img src={selectedProduct.image} alt={selectedProduct.name} className="max-h-[400px] object-contain mix-blend-multiply" />
-                            <div className="absolute bottom-6 left-6 flex gap-2">
-                                <div className="w-14 h-14 border-2 border-red-500 p-1 bg-white cursor-pointer"><img src={selectedProduct.image} className="w-full h-full object-contain" /></div>
-                                <div className="w-14 h-14 border border-gray-200 p-1 bg-white cursor-pointer opacity-50 hover:opacity-100 transition-all"><img src={selectedProduct.image} className="w-full h-full object-contain" /></div>
-                            </div>
                         </div>
 
                         {/* Right: Product Details Section */}
@@ -151,25 +220,6 @@ const PopularProducts = () => {
                                 <span className="text-xl text-gray-200 line-through font-bold">₹{selectedProduct.oldPrice}</span>
                             </div>
 
-                            {/* Options: Colors & Sizes */}
-                            <div className="flex gap-10 mb-8">
-                                <div>
-                                    <h4 className="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Select Size</h4>
-                                    <div className="flex gap-2">
-                                        {['S', 'M', 'L'].map(sz => (
-                                            <button key={sz} className="w-10 h-10 border border-gray-200 text-[10px] font-black hover:border-red-500 hover:text-red-500 transition-all uppercase">{sz}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 className="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Select Color</h4>
-                                    <div className="flex gap-3 pt-2">
-                                        <div className="w-5 h-5 rounded-full bg-gray-400 ring-2 ring-offset-2 ring-gray-400 cursor-pointer"></div>
-                                        <div className="w-5 h-5 rounded-full bg-black hover:ring-2 ring-offset-2 ring-black transition-all cursor-pointer"></div>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Quantity & Add to Cart */}
                             <div className="flex gap-4 mb-8">
                                 <div className="flex items-center border border-gray-200 h-14 rounded-sm bg-white">
@@ -178,7 +228,9 @@ const PopularProducts = () => {
                                     <button onClick={handleIncrement} className="px-5 h-full hover:bg-gray-50 font-black transition-all text-gray-400">＋</button>
                                 </div>
                                 
-                                <button className="flex-1 bg-red-500 text-white h-14 px-8 font-black uppercase text-xs tracking-[2px] hover:bg-black transition-all shadow-xl shadow-red-500/20 active:translate-y-1">
+                                <button 
+                                    onClick={handleAddToCart}
+                                    className="flex-1 bg-red-500 text-white h-14 px-8 font-black uppercase text-xs tracking-[2px] hover:bg-black transition-all shadow-xl shadow-red-500/20 active:translate-y-1">
                                     Add to Cart
                                 </button>
                             </div>
@@ -192,7 +244,7 @@ const PopularProducts = () => {
                 </div>
             )}
 
-            {/* Custom Styles */}
+            {/* Custom Swiper Styles */}
             <style>{`
                 .popular-products-swiper .swiper-button-next,
                 .popular-products-swiper .swiper-button-prev {

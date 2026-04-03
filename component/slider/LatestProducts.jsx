@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { IoClose, IoStar, IoStarOutline, IoHeartOutline, IoSyncOutline } from "react-icons/io5";
+import { IoClose, IoStar, IoStarOutline, IoHeartOutline, IoHeart, IoSyncOutline } from "react-icons/io5";
 import ProductCard from './ProductCard';
+import { ALL_PRODUCTS_DATA } from '../../src/data/products';
 import { addToRecentlyViewed } from '../../src/data/recentlyViewedUtils';
 
 // Swiper Styles
@@ -19,16 +20,45 @@ const LatestProducts = () => {
   const [selectedProduct, setSelectedProduct] = useState(null); // Modal mein jo product show hona hai
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal open/close
   const [quantity, setQuantity] = useState(1); // Modal mein select quantity
+  const [isInWishlist, setIsInWishlist] = useState(false); // Check if product in wishlist
+  const [isInCompare, setIsInCompare] = useState(false); // Check if product in compare
 
-  // Latest products ka data
-  const products = [
-    // Database se ye data aaya hai
-    { id: 1, brand: "Home", name: "Black Kitchen Tool", rating: 4, oldPrice: "25.00", newPrice: "19.00", image: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=300", description: "High-quality black kitchen tools for modern homes." },
-    { id: 2, brand: "Accessories", name: "Classic Silver Watch", rating: 5, oldPrice: "120.00", newPrice: "89.00", image: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=300", description: "Elegant silver watch with premium leather straps." },
-    { id: 3, brand: "Tech", name: "Smart Google Home", rating: 4.5, oldPrice: "55.00", newPrice: "45.00", image: "https://images.unsplash.com/photo-1589492477829-5e65395b66cc?q=80&w=300", description: "Voice-controlled smart home assistant." },
-    { id: 4, brand: "Audio", name: "White Studio Speaker", rating: 4, oldPrice: "99.00", newPrice: "75.00", image: "https://images.unsplash.com/photo-1541339907198-e08756edd810?q=80&w=300", description: "Crystal clear audio for your studio and home." },
-    { id: 5, brand: "Decor", name: "Modern Hanging Lamp", rating: 5, oldPrice: "40.00", newPrice: "32.00", image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?q=80&w=300", description: "Modern lighting solutions for a cozy atmosphere." },
-  ];
+  // Real products database se data aaya hai
+  const products = ALL_PRODUCTS_DATA;
+
+  // --- WISHLIST SYNC (Product ko wishlist mein check karna) ---
+  const syncWishlistState = useCallback(() => {
+    if (!selectedProduct) return;
+    const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+    const isPresent = wishlist.some(item => String(item.id) === String(selectedProduct.id));
+    setIsInWishlist(isPresent);
+  }, [selectedProduct]);
+
+  // --- COMPARE SYNC (Product ko compare mein check karna) ---
+  const syncCompareState = useCallback(() => {
+    if (!selectedProduct) return;
+    const compare = JSON.parse(localStorage.getItem("compare")) || [];
+    const isPresent = compare.some(item => String(item.id) === String(selectedProduct.id));
+    setIsInCompare(isPresent);
+  }, [selectedProduct]);
+
+  // useEffect: Modal khulne par wishlist aur compare status check karna
+  useEffect(() => {
+    if (isModalOpen) {
+      syncWishlistState();
+      syncCompareState();
+    }
+  }, [isModalOpen, syncWishlistState, syncCompareState]);
+
+  // Event listeners for live updates
+  useEffect(() => {
+    window.addEventListener("wishlistUpdated", syncWishlistState);
+    window.addEventListener("compareUpdated", syncCompareState);
+    return () => {
+      window.removeEventListener("wishlistUpdated", syncWishlistState);
+      window.removeEventListener("compareUpdated", syncCompareState);
+    };
+  }, [syncWishlistState, syncCompareState]);
 
   // --- Modal Handler ---
   const handleOpenModal = (product) => {
@@ -60,6 +90,78 @@ const LatestProducts = () => {
     window.dispatchEvent(new Event("cartUpdated"));
     alert(`${selectedProduct.name} added to cart!`);
     setIsModalOpen(false);
+  };
+
+  // --- WISHLIST TOGGLE HANDLER ---
+  const handleToggleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+      const isPresent = wishlist.some(item => String(item.id) === String(selectedProduct.id));
+
+      if (isPresent) {
+        wishlist = wishlist.filter(item => String(item.id) !== String(selectedProduct.id));
+        console.log("❌ Removed from Wishlist:", selectedProduct.name);
+      } else {
+        wishlist.push({
+          id: selectedProduct.id,
+          name: selectedProduct.name,
+          brand: selectedProduct.brand || "Aaramdehi",
+          price: selectedProduct.price || selectedProduct.newPrice || 0,
+          image: selectedProduct.image,
+          rating: selectedProduct.rating || 5
+        });
+        console.log("❤️ Added to Wishlist:", selectedProduct.name);
+      }
+
+      localStorage.setItem("wishlist", JSON.stringify(wishlist));
+      window.dispatchEvent(new Event("wishlistUpdated"));
+      syncWishlistState();
+    } catch (error) {
+      console.error("Wishlist error:", error);
+    }
+  };
+
+  // --- COMPARE TOGGLE HANDLER ---
+  const handleToggleCompare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    try {
+      let compare = JSON.parse(localStorage.getItem("compare")) || [];
+      const isPresent = compare.some(item => String(item.id) === String(selectedProduct.id));
+
+      // Maximum 3 products constraint
+      if (!isPresent && compare.length >= 3) {
+        alert("⚠️ Maximum 3 products allowed for comparison!");
+        return;
+      }
+
+      if (isPresent) {
+        compare = compare.filter(item => String(item.id) !== String(selectedProduct.id));
+        console.log("⚖️ Removed from Compare:", selectedProduct.name);
+      } else {
+        compare.push({
+          id: selectedProduct.id,
+          name: selectedProduct.name,
+          brand: selectedProduct.brand || "Aaramdehi",
+          price: selectedProduct.price || selectedProduct.newPrice || 0,
+          oldPrice: selectedProduct.oldPrice || 0,
+          image: selectedProduct.image,
+          rating: selectedProduct.rating || 5,
+          category: selectedProduct.category || "Uncategorized"
+        });
+        console.log("⚖️ Added to Compare:", selectedProduct.name);
+      }
+
+      localStorage.setItem("compare", JSON.stringify(compare));
+      window.dispatchEvent(new Event("compareUpdated"));
+      syncCompareState();
+    } catch (error) {
+      console.error("Compare error:", error);
+    }
   };
 
   return (
@@ -149,7 +251,7 @@ const LatestProducts = () => {
               </div>
 
               <div className="flex items-center gap-4 mb-6">
-                <span className="text-4xl font-black text-red-500">₹{selectedProduct.newPrice}</span>
+                <span className="text-4xl font-black text-red-500">₹{selectedProduct.price || selectedProduct.newPrice}</span>
                 <span className="text-xl text-gray-200 line-through font-bold">₹{selectedProduct.oldPrice}</span>
               </div>
 
@@ -171,8 +273,24 @@ const LatestProducts = () => {
               </div>
 
               <div className="flex gap-8 border-t pt-6">
-                <button className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-400 hover:text-red-500 transition-all"><IoHeartOutline size={16}/> Wishlist</button>
-                <button className="flex items-center gap-2 text-[10px] font-black uppercase text-gray-400 hover:text-red-500 transition-all"><IoSyncOutline size={16}/> Compare</button>
+                <button 
+                  onClick={handleToggleWishlist}
+                  className={`flex items-center gap-2 text-[10px] font-black uppercase transition-all tracking-widest ${
+                    isInWishlist ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                  }`}
+                >
+                  {isInWishlist ? <IoHeart size={16}/> : <IoHeartOutline size={16}/>}
+                  {isInWishlist ? 'Remove Wishlist' : 'Add Wishlist'}
+                </button>
+                <button 
+                  onClick={handleToggleCompare}
+                  className={`flex items-center gap-2 text-[10px] font-black uppercase transition-all tracking-widest ${
+                    isInCompare ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'
+                  }`}
+                >
+                  <IoSyncOutline size={16}/> 
+                  {isInCompare ? 'Remove Compare' : 'Add Compare'}
+                </button>
               </div>
             </div>
           </div>

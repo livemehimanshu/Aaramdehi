@@ -1,108 +1,119 @@
-import React, { useState } from 'react';
-import { Rating } from '@mui/material';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
+import { IoHeart } from 'react-icons/io5';
 
-// ===== PRODUCT CARD COMPONENT =====
-// Yeh ek single product card hai jo Popular/Latest Products mein dikhta hai
-// Ismein add to cart button aur wishlist button hote hain
-
-const ProductCard = ({ product }) => {
-  // State: Jab user "Add to Cart" dabe toh "Added" show hone ke liye
+const ProductCard = ({ product, onOpenModal }) => {
   const [isAdded, setIsAdded] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
-  // Function: Product ko cart mein add karna
+  // --- 1. WISHLIST SYNC LOGIC ---
+  const syncWishlist = useCallback(() => {
+    if (!product) return;
+    const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+    // String comparison safe rehta hai hamesha
+    const isPresent = wishlist.some(item => String(item.id) === String(product.id));
+    setIsInWishlist(isPresent);
+  }, [product]);
+
+  useEffect(() => {
+    syncWishlist();
+    // Modal ya Header se change ho toh card update ho jaye
+    window.addEventListener("wishlistUpdated", syncWishlist);
+    return () => window.removeEventListener("wishlistUpdated", syncWishlist);
+  }, [syncWishlist]);
+
+  // --- 2. TOGGLE WISHLIST (Fix) ---
+  const handleToggleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // Yeh sabse zaruri hai taaki card ka modal na khul jaye
+
+    try {
+      let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+      const isPresent = wishlist.some(item => String(item.id) === String(product.id));
+
+      if (isPresent) {
+        wishlist = wishlist.filter(item => String(item.id) !== String(product.id));
+      } else {
+        // Wahi keys use karein jo modal mein kar rahe hain
+        wishlist.push({
+          id: product.id,
+          name: product.name,
+          brand: product.brand || "Aaramdehi",
+          price: product.price || product.newPrice || 0,
+          image: product.image,
+          rating: product.rating || 5
+        });
+      }
+
+      localStorage.setItem("wishlist", JSON.stringify(wishlist));
+      
+      // Sabko batao ki update ho gaya hai
+      window.dispatchEvent(new Event("wishlistUpdated"));
+      syncWishlist(); // Local update
+    } catch (err) {
+      console.error("Wishlist error in Card:", err);
+    }
+  };
+
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
-    // localStorage se existing cart data lao
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    // Check karo kya yeh product pehle se cart mein hai?
-    const isExist = cart.find(item => item.id === product.id);
+    const isExist = cart.find(item => String(item.id) === String(product.id));
 
     if (isExist) {
-      // Agar hai toh quantity increase karo
-      cart = cart.map(item => 
-        item.id === product.id ? { ...item, qty: item.qty + 1 } : item
-      );
+      cart = cart.map(item => String(item.id) === String(product.id) ? { ...item, qty: (item.qty || 1) + 1 } : item);
     } else {
-      // Agar nahi hai toh naya product add karo qty=1 ke saath
       cart.push({ ...product, qty: 1 });
     }
 
-    // localStorage mein updated cart save karo
     localStorage.setItem("cart", JSON.stringify(cart));
-    // Event trigger karo Header ko notify karne ke liye (badge update hone ke liye)
     window.dispatchEvent(new Event("cartUpdated"));
-    
-    // Green "Added" state dikhao 1.5 seconds ke liye
     setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 1500);
+    setTimeout(() => setIsAdded(false), 2000);
   };
 
   return (
-    <div className="group bg-white rounded-sm p-4 relative transition-all duration-300 cursor-pointer hover:shadow-[0_2px_12px_0_rgba(0,0,0,0.16)] border border-transparent hover:border-gray-100 h-full flex flex-col">
-      
-      {/* Wishlist Icon */}
-      <button className="absolute top-3 right-3 z-10 text-gray-300 hover:text-red-500 transition-colors">
-        <FiHeart size={18} />
+    <div 
+      className="group bg-white rounded-sm p-4 relative transition-all duration-300 border border-transparent hover:border-gray-100 hover:shadow-xl h-full flex flex-col overflow-hidden cursor-pointer"
+      onClick={() => onOpenModal && onOpenModal(product)} 
+    >
+      {/* WISHLIST BUTTON - Z-Index aur Event Handling yahan fix hai */}
+      <button 
+        type="button"
+        onClick={handleToggleWishlist}
+        className="absolute top-3 right-3 z-[100] p-2 rounded-full bg-white/90 shadow-md transition-all active:scale-75 hover:bg-gray-50 border border-gray-100"
+      >
+        {isInWishlist ? (
+          <IoHeart size={20} className="text-red-500 scale-110" />
+        ) : (
+          <FiHeart size={20} className="text-gray-300 hover:text-red-500" />
+        )}
       </button>
 
-      {/* Image Section */}
-      <div className="relative overflow-hidden aspect-[3/4] mb-4 flex items-center justify-center">
-        <img 
-          src={product.image} 
-          alt={product.name} 
-          className="max-w-full max-h-full object-contain transform transition-transform duration-500 group-hover:scale-105"
-        />
+      <div className="relative aspect-square mb-4 flex items-center justify-center p-2 bg-gray-50/10 rounded">
+        <img src={product.image} alt={product.name} className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition-all duration-500" />
       </div>
 
-      {/* Product Info */}
-      <div className="flex flex-col flex-grow">
-        {/* Brand Name - Flipkart uses Gray & Small */}
-        <h4 className="text-[12px] text-gray-400 font-medium uppercase mb-1 tracking-tight">
-          {product.brand}
-        </h4>
-        
-        {/* Product Title - Flipkart uses dark gray & normal weight */}
-        <h3 className="text-[14px] text-[#212121] leading-tight mb-2 group-hover:text-[#2874f0] line-clamp-2 min-h-[35px]">
+      <div className="flex flex-col flex-grow text-left">
+        <h4 className="text-[10px] text-gray-400 font-black uppercase mb-1 tracking-widest">{product.brand || "Aaramdehi"}</h4>
+        <h3 className="text-[13px] text-gray-900 font-bold leading-tight mb-2 line-clamp-2 group-hover:text-blue-600">
           {product.name}
         </h3>
-        
-        {/* Rating Section */}
-        <div className="flex items-center gap-2 mb-2">
-          <div className="bg-[#388e3c] text-white text-[11px] font-bold px-1.5 py-0.5 rounded-sm flex items-center gap-0.5">
-            {product.rating} <span className="text-[10px]">★</span>
-          </div>
-          <span className="text-gray-400 text-[12px] font-medium">(1,234)</span>
-        </div>
-
-        {/* Pricing Section - The most important part for UI */}
-        <div className="flex items-center gap-2 mt-auto">
-          <span className="text-[16px] font-bold text-[#212121]">
-            ₹{product.newPrice}
-          </span>
-          <span className="text-[13px] text-gray-400 line-through">
-            ₹{product.oldPrice}
-          </span>
-          <span className="text-[13px] font-bold text-[#388e3c]">
-            60% off
-          </span>
+        <div className="mt-auto">
+          <span className="text-[16px] font-black">₹{(product.price || product.newPrice || 0).toLocaleString()}</span>
         </div>
       </div>
 
-      {/* Size/Variants - Optional but looks good on hover */}
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity mt-4 flex gap-2">
+      <div className="mt-4 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
         <button 
           onClick={handleAddToCart}
-          className={`flex-1 py-2 px-3 rounded-sm text-[12px] font-bold uppercase tracking-wide transition-all duration-300 flex items-center justify-center gap-2 ${
-            isAdded 
-              ? 'bg-green-500 text-white' 
-              : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+          className={`w-full py-2.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all ${
+            isAdded ? 'bg-green-600 text-white' : 'bg-blue-900 text-white hover:bg-black'
           }`}
         >
-          <FiShoppingCart size={14} />
-          {isAdded ? 'Added ✓' : 'Add to Cart'}
+          <FiShoppingCart className="inline mr-2" />
+          {isAdded ? 'Added' : 'Add to Cart'}
         </button>
       </div>
     </div>

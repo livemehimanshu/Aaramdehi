@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Sidebar from '../../Sidebar'; 
 import Pagination from '@mui/material/Pagination';
@@ -18,7 +18,22 @@ const ProductListing = () => {
   const [maxPrice, setMaxPrice] = useState(10000); // Max price filter
   const [sortBy, setSortBy] = useState('relevance'); // Sorting option
   const [page, setPage] = useState(1); // Current page number
-  const [wishlist, setWishlist] = useState([]); // Wishlist mein jo items hain
+  const [wishlist, setWishlist] = useState([]); // Wishlist mein jo items hain localStorage se load honge
+
+  // --- LOAD WISHLIST FROM LOCALSTORAGE ON MOUNT ---
+  useEffect(() => {
+    const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+    setWishlist(savedWishlist);
+
+    // Event listener: jab dusre component se wishlist update ho toh yahan bhi update ho
+    const handleWishlistUpdate = () => {
+      const updatedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+      setWishlist(updatedWishlist);
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () => window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+  }, []);
 
   // Function: Product ko dekhne par recently viewed mein add karna
   const handleProductView = (product) => {
@@ -41,11 +56,31 @@ const ProductListing = () => {
     alert(`${product.name} added to Aaramdehi cart!`);
   };
 
-  // Function: Wishlist mein item add/remove karna
-  const toggleWishlist = (e, id) => {
+  // Function: Wishlist mein item add/remove karna localStorage se
+  const toggleWishlist = (e, product) => {
     e.preventDefault(); 
     e.stopPropagation();
-    setWishlist(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+
+    // localStorage se wishlist nikalo
+    let wishlistData = JSON.parse(localStorage.getItem("wishlist")) || [];
+    
+    // Check karo ke product already wishlist mein hai ya nahi
+    const isInWishlist = wishlistData.some(item => item.id === product.id);
+
+    if (isInWishlist) {
+      // Agar already hai toh remove karo
+      wishlistData = wishlistData.filter(item => item.id !== product.id);
+    } else {
+      // Agar nahi hai toh add karo pura product
+      wishlistData.push(product);
+    }
+
+    // localStorage mein save karo
+    localStorage.setItem("wishlist", JSON.stringify(wishlistData));
+    
+    // Update state aur event bhejo dusre components ko
+    setWishlist(wishlistData);
+    window.dispatchEvent(new Event("wishlistUpdated"));
   };
 
   // useMemo: Calculate jo products dikhane hain based on filter, sort, pagination
@@ -90,8 +125,8 @@ const ProductListing = () => {
                   <img src={item.image} className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" alt={item.name}/>
                 </Link>
                 
-                <button onClick={(e) => toggleWishlist(e, item.id)} className="absolute top-5 right-5 z-20">
-                  {wishlist.includes(item.id) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}
+                <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20">
+                  {wishlist.some(w => w.id === item.id) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}
                 </button>
 
                 <div className="absolute bottom-[-60px] group-hover:bottom-4 left-0 right-0 flex justify-center gap-2 transition-all duration-500">

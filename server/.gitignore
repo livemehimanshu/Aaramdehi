@@ -1,0 +1,4 @@
+.vercel
+.env*.local
+serviceAccountKey.json
+config/serviceAccountKey.json

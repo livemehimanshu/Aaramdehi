@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Demo</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f3f4f6; color: #111827; padding: 24px; }
+    input { width: 100%; max-width: 480px; padding: 12px 14px; border-radius: 12px; border: 1px solid #d1d5db; font-size: 16px; }
+    #res { margin-top: 16px; white-space: pre-wrap; background: #ffffff; border: 1px solid #d1d5db; border-radius: 12px; padding: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Search Engine Demo</h1>
+  <input type="text" id="q" oninput="runSearch()" placeholder="Search..." />
+  <div id="res">Type to search and see results here.</div>
+
+  <script>
+    async function runSearch() {
+      const q = document.getElementById('q').value;
+      if (!q.trim()) {
+        document.getElementById('res').textContent = 'Type to search and see results here.';
+        return;
+      }
+      try {
+        const response = await fetch('http://127.0.0.1:8000/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: q,
+            user_context: { category: 'bedroom' }
+          })
+        });
+        const data = await response.json();
+        document.getElementById('res').textContent = JSON.stringify(data.results, null, 2);
+      } catch (error) {
+        document.getElementById('res').textContent = 'Error: ' + error;
+      }
+    }
+  </script>
+</body>
+</html>

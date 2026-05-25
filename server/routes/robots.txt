@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /temp/
+
+# Sitemap location
+Sitemap: https://aaramdehi.com/api/seo/sitemap.xml

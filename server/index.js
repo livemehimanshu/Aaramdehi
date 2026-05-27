@@ -157,7 +157,7 @@ async function syncAIProductsToPython() {
         const pythonResponse = await fetch(pythonUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(mappedProducts),
+            body: JSON.stringify({ products: mappedProducts }), // Wrapped in object for Python Pydantic consistency
             // Prevent hanging the server if Python service is slow
             signal: AbortSignal.timeout(5000) 
         });
@@ -203,17 +203,23 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 8000;
 
-app.listen(PORT, async () => {
-    console.log(`🚀 Server live at: http://localhost:${PORT}`);
-    console.log(`🔥 Connected to Firebase Realtime Database`);
+/**
+ * ✅ Production/Vercel Readiness
+ * app.listen should not run on Vercel as it manages the runtime.
+ * Startup sync is moved to a manual admin trigger to avoid serverless timeouts.
+ */
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    app.listen(PORT, async () => {
+        console.log(`🚀 Local Server: http://localhost:${PORT}`);
+        try {
+            setTimeout(async () => {
+                const syncedCount = await syncAIProductsToPython();
+                console.log(`✅ Local startup sync: ${syncedCount} products indexed.`);
+            }, 2000);
+        } catch (err) {
+            console.warn(`⚠️ Startup sync failed: ${err.message}`);
+        }
+    });
+}
 
-    try {
-        // Wait 2 seconds for Python engine to be ready
-        setTimeout(async () => {
-            const syncedCount = await syncAIProductsToPython();
-            console.log(`✅ Startup sync completed: ${syncedCount} products indexed to Python AI Search.`);
-        }, 2000);
-    } catch (startupErr) {
-        console.warn(`⚠️ Startup AI sync failed: ${startupErr.message}`);
-    }
-});
+export default app; // Required for Vercel Node.js runtime

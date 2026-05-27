@@ -44,7 +44,7 @@ export const createProduct = async (req, res) => {
         let images = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
-                // ✅ Organization: Added 'products' folder
+                // ✅ Corrected: Added 'products' folder name to utility call
                 const uploadResult = await uploadImageCloudinary(file.buffer, "products");
                 if (uploadResult.success) {
                     images.push({
@@ -184,7 +184,8 @@ export const updateProduct = async (req, res) => {
         if (req.files && req.files.length > 0) {
             const newImages = [];
             for (const file of req.files) {
-                const uploadResult = await uploadImageCloudinary(file.buffer);
+                // ✅ Fix: Standardized to 'products' folder
+                const uploadResult = await uploadImageCloudinary(file.buffer, "products");
                 if (uploadResult.success) {
                     newImages.push({ url: uploadResult.url, alt: name || "product image" });
                 }

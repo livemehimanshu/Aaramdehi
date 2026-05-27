@@ -1,32 +1,14 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "Aaramdehi/package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "source": "/api/(.*)",
+      "destination": "/server/index.js"
     },
     {
-      "src": "server/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "my_search_engine/main.py",
-      "use": "@vercel/python"
+      "source": "/search-api/(.*)",
+      "destination": "/my_search_engine/main.py"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/search/(.*)",
-      "dest": "my_search_engine/main.py"
-    },
-    {
-      "src": "/api/v1/(.*)",
-      "dest": "server/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "Aaramdehi/$1"
-    }
-  ]
+  "cleanUrls": true
 }

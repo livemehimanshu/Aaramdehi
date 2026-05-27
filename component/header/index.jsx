@@ -6,7 +6,7 @@ import Navigation from './navigation';
 import Badge from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
-import { IoCartOutline, IoPersonOutline, IoLogOutOutline } from "react-icons/io5";
+import { IoCartOutline, IoPersonOutline, IoLogOutOutline, IoSearchOutline } from "react-icons/io5";
 import { IoIosGitCompare } from "react-icons/io";
 import { CiHeart } from "react-icons/ci";
 // ✅ Firebase Auth imports add karein
@@ -50,6 +50,7 @@ const Header = ({ hideNav = false }) => {
   const [navCategories, setNavCategories] = useState([]); // Navigation bar ke liye categories
   const [showProfileMenu, setShowProfileMenu] = useState(false); // Profile dropdown menu
   const [siteLogo, setSiteLogo] = useState(null); // Dynamic site logo
+  const [showMobileSearch, setShowMobileSearch] = useState(false); // Mobile search toggle
 
   // Function: Cart drawer ko toggle karna (open/close)
   const toggleCartDrawer = () => {
@@ -219,7 +220,7 @@ const Header = ({ hideNav = false }) => {
     <>
       <header className='sticky top-0 z-50 bg-white shadow-sm'>
         {/* --- TOP STRIP --- */}
-        <div className="top-strip py-2 border-b border-gray-200 block">
+        <div className="top-strip py-2 border-b border-gray-200 hidden md:block">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap items-center justify-between text-gray-500 gap-3">
               <div className="flex flex-wrap items-center gap-3">
@@ -260,17 +261,17 @@ const Header = ({ hideNav = false }) => {
               </Link>
             </div>
 
-            {/* Search */}
-            <div className="flex-1 min-w-0 max-w-full">
+            {/* Search (hidden on very small screens) */}
+            <div className="flex-1 min-w-0 max-w-full hidden sm:block">
               <Search />
             </div>
 
             {/* Icons & Auth */}
             <div className="flex items-center gap-1 md:gap-4 relative">
               
-              {/* Desktop - Login/Register or Profile */}
+              {/* Auth - show text on sm+; collapse on mobile */}
               {!user ? (
-                <div className='flex items-center gap-3 text-[13px] font-black uppercase tracking-tight'>
+                <div className='hidden sm:flex items-center gap-3 text-[13px] font-black uppercase tracking-tight'>
                   <IoPersonOutline size={20} className='text-gray-700' />
                   <Link to='/login' className='hover:text-red-600 transition'>Login</Link>
                   <span className='text-gray-300'>/</span>
@@ -291,7 +292,7 @@ const Header = ({ hideNav = false }) => {
                     ) : (
                       <IoPersonOutline size={24} className='text-gray-700' />
                     )}
-                    <span className='text-[13px] font-bold'>{user.name?.split(' ')[0]}</span>
+                    <span className='text-[13px] font-bold hidden sm:inline'>{user.name?.split(' ')[0]}</span>
                   </button>
                 </div>
               )}
@@ -330,12 +331,19 @@ const Header = ({ hideNav = false }) => {
               <div className="flex items-center gap-0 md:gap-1">
                 {/* Compare */}
                 <Tooltip title="Compare">
-                  <Link to="/compare" className='!p-1.5 md:!p-2 flex items-center justify-center'>
+                  <Link to="/compare" className='!p-1.5 md:!p-2 hidden md:flex items-center justify-center'>
                     <StyledBadge badgeContent={compareCount} color="error">
                       <IoIosGitCompare size={22} className='text-gray-700' />
                     </StyledBadge>
                   </Link>
                 </Tooltip>
+
+                {/* Mobile Search Toggle */}
+                <div className="sm:hidden">
+                  <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="p-2">
+                    <IoSearchOutline size={20} className='text-gray-700' />
+                  </button>
+                </div>
 
                 {/* Wishlist - Click to open Wishlist Drawer */}
                 <Tooltip title="Wishlist">
@@ -365,6 +373,15 @@ const Header = ({ hideNav = false }) => {
           </div>
 
         </div>
+
+        {/* Mobile Search Bar (toggle) */}
+        {showMobileSearch && (
+          <div className="sm:hidden px-4 py-2 border-b border-gray-100 bg-white">
+            <div className="max-w-full">
+              <Search />
+            </div>
+          </div>
+        )}
 
         {!hideNav && <Navigation categories={navCategories} />} {/* ✅ Categories pass kiye */}
       </header>

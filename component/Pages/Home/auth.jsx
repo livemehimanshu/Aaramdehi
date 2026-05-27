@@ -75,6 +75,13 @@ const Auth = () => {
             setAttempts(0); 
         } catch (error) {
             const errorMsg = error.response?.data?.message || error.message;
+            
+            // ✅ Verification Check: Redirect to OTP if needed
+            if (error.response?.data?.needsVerification) {
+                alert("Identity Unverified: Redirecting to Verification Hub.");
+                return navigate('/verify-email', { state: { email: formData.email } });
+            }
+
             setAttempts(prev => prev + 1);
             
             if (attempts >= 4) {

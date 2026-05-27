@@ -66,9 +66,8 @@ const corsOptions = {
             'https://aaramdehi.co.in',
             'https://www.aaramdehi.co.in', // ✅ Explicitly allow www subdomain
             'http://aaramdehi.co.in', // Added non-https just in case
-            'https://aaramdehi-fortend-82zmvg9np-17hshriv-5129s-projects.vercel.app',
-            'https://aaramdehi-fortend-17hshriv-5129-17hshriv-5129s-projects.vercel.app',
-            'https://aaramdehi-fortend-pecubx8al-17hshriv-5129s-projects.vercel.app', // ✅ Naya link add kiya
+            // ✅ Dynamic Vercel Detection
+            origin && origin.endsWith('.vercel.app') ? origin : null,
             /\.vercel\.app$/, 
             process.env.FRONTEND_URL // Vercel Dashboard mein ise bhi set karein
         ].filter(Boolean);

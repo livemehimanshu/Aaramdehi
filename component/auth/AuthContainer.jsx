@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline, IoArrowBack, IoCheckmarkOutline, IoPersonOutline } from "react-icons/io5";
 import { useNavigate, useLocation } from 'react-router-dom';
+import { signupAPI as registerAPI, verifyOTPAPI, loginAPI } from '../../src/api/authAndAdminApi';
 
 const AuthContainer = () => {
     const navigate = useNavigate();
@@ -15,24 +16,26 @@ const AuthContainer = () => {
     const [otpValues, setOtpValues] = useState(['', '', '', '', '', '']);
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
-    const [userEmail, setUserEmail] = useState(''); // Track email for password reset
+    const [forgotEmail, setForgotEmail] = useState(''); // Track email for OTP flow
 
     // Set initial view based on route
     useEffect(() => {
-        if (location.pathname === '/register') {
+        // Only set view on initial load, don't override manual setView('otp')
+        if (location.pathname === '/register' && view === 'login') {
             setView('register');
-        } else {
+        } else if (location.pathname === '/login' && view === 'register') {
             setView('login');
         }
-    }, [location.pathname]);
+    }, [location.pathname]); // Removed view dependency to prevent loops
 
     // Validate email format
     const validateEmail = (emailValue) => {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue) || /^\d{10}$/.test(emailValue);
     };
 
+
     // Handle Login
-    const handleLogin = () => {
+    const handleLogin = async () => {
         const newErrors = {};
 
         if (!email) {
@@ -51,21 +54,29 @@ const AuthContainer = () => {
 
         if (Object.keys(newErrors).length === 0) {
             setLoading(true);
-
-            // Simulate API call
-            setTimeout(() => {
-                localStorage.setItem('authToken', 'user_' + Math.random().toString(36).substr(2, 9));
-                localStorage.setItem('userEmail', email);
-                window.dispatchEvent(new Event('userLoggedIn'));
-
-                navigate('/');
+            try {
+                const response = await loginAPI(email, password);
+                
+                if (response.success) {
+                    // ✅ Store as consistent 'userData' object for AdminRoute
+                    localStorage.setItem('accessToken', response.accessToken);
+                    localStorage.setItem('userData', JSON.stringify(response.user));
+                    
+                    window.dispatchEvent(new Event('userLoggedIn'));
+                    navigate('/');
+                } else {
+                    setErrors({ email: response.message || 'Login failed' });
+                }
+            } catch (error) {
+                setErrors({ email: error.response?.data?.message || 'Login failed. Please try again.' });
+            } finally {
                 setLoading(false);
-            }, 1500);
+            }
         }
     };
 
     // Handle Registration
-    const handleRegister = () => {
+    const handleRegister = async () => {
         const newErrors = {};
 
         if (!fullName.trim()) {
@@ -94,17 +105,34 @@ const AuthContainer = () => {
 
         if (Object.keys(newErrors).length === 0) {
             setLoading(true);
+            
+            // Deriving mobile from email if it's a number, or using a placeholder
+            const isPhone = /^\d{10}$/.test(email);
 
-            // Simulate API call
-            setTimeout(() => {
-                localStorage.setItem('authToken', 'user_' + Math.random().toString(36).substr(2, 9));
-                localStorage.setItem('userEmail', email);
-                localStorage.setItem('userName', fullName);
-                window.dispatchEvent(new Event('userLoggedIn'));
+            try {
+                const response = await registerAPI({
+                    name: fullName,
+                    email: email,
+                    password: password,
+                    confirmPassword: confirmPassword,
+                    mobile: isPhone ? email : "0000000000" // Backend requires mobile
+                });
 
-                navigate('/');
+                if (response.success) {
+                    // Show success and switch to email verification view
+                    setErrors({ success: 'Registration successful! Check your email for OTP.' });
+
+                    setForgotEmail(email); // Use forgotEmail state to store registration email
+                    setView('otp');
+                    setOtpValues(['', '', '', '', '', '']);
+                } else {
+                    setErrors({ email: response.message || 'Registration failed' });
+                }
+            } catch (error) {
+                setErrors({ email: error.response?.data?.message || 'Registration failed. Please try again.' });
+            } finally {
                 setLoading(false);
-            }, 1500);
+            }
         }
     };
 
@@ -121,15 +149,8 @@ const AuthContainer = () => {
         setErrors(newErrors);
 
         if (Object.keys(newErrors).length === 0) {
-            setLoading(true);
-
-            // Simulate API call
-            setTimeout(() => {
-                setUserEmail(email);
-                setView('otp');
-                setLoading(false);
-                setOtpValues(['', '', '', '', '', '']);
-            }, 1500);
+            // Forgot password flow is coming soon
+            setErrors({ email: 'Forgot password feature is coming soon! Please contact support.' });
         }
     };
 
@@ -157,26 +178,39 @@ const AuthContainer = () => {
     };
 
     // Handle OTP Verification
-    const handleVerifyOtp = () => {
-        const otp = otpValues.join('');
+    const handleVerifyOtp = async () => {
+        const otp = otpValues.join('').trim();
 
         if (!otp || otp.length < 6) {
             setErrors({ otp: 'Please enter all 6 digits' });
             return;
         }
 
-        setLoading(true);
+        console.log(`📤 Sending OTP to backend: "${otp}"`);
 
-        // Simulate API call
-        setTimeout(() => {
-            if (otp === '123456') { // Demo OTP
-                setView('resetPassword');
-                setLoading(false);
+        setLoading(true);
+        try {
+            // ✅ Pass both email and otp to the API
+            const response = await verifyOTPAPI(forgotEmail, otp);
+
+            if (response.success) {
+                // ✅ Correctly access response properties
+                localStorage.setItem('accessToken', response.accessToken);
+                localStorage.setItem('userData', JSON.stringify(response.user));
+                window.dispatchEvent(new Event('userLoggedIn'));
+                
+                alert("Verification successful!");
+                navigate(response.user.role === 'ADMIN' ? '/admin' : '/');
             } else {
-                setErrors({ otp: 'Invalid OTP. Try again.' });
-                setLoading(false);
+                setErrors({ otp: response.message || 'Invalid OTP. Please check the email and try again.' });
             }
-        }, 1500);
+        } catch (error) {
+            console.error('OTP Error:', error);
+            const errorMsg = error.response?.data?.message || error.message || 'OTP verification failed. Please try again.';
+            setErrors({ otp: errorMsg });
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Handle Password Reset
@@ -326,6 +360,12 @@ const AuthContainer = () => {
                         </div>
 
                         <div className="space-y-5">
+                            {/* Success Message */}
+                            {errors.success && view !== 'otp' && ( // Only show success if not on OTP page
+                                <div className="bg-green-50 border border-green-200 rounded-md p-3">
+                                    <p className="text-green-700 text-sm font-medium">{errors.success}</p>
+                                </div>
+                            )}
                             {/* Full Name Input */}
                             <div>
                                 <label className="text-sm font-bold text-gray-700 block mb-2">Full Name</label>
@@ -562,12 +602,7 @@ const AuthContainer = () => {
                                 ))}
                             </div>
 
-                            {errors.otp && <p className="text-center text-red-500 text-sm">{errors.otp}</p>}
-
-                            {/* Demo OTP Hint */}
-                            <p className="text-center text-xs text-gray-500 bg-gray-50 p-3 rounded">
-                                Demo OTP: <span className="font-bold text-gray-700">123456</span>
-                            </p>
+                            {errors.otp && <p className="text-center text-red-500 text-sm font-medium">{errors.otp}</p>}
 
                             {/* Verify Button */}
                             <button
@@ -581,7 +616,7 @@ const AuthContainer = () => {
                             {/* Resend OTP */}
                             <p className="text-center text-sm text-gray-600">
                                 Didn't receive OTP?{' '}
-                                <button className="text-red-500 font-bold hover:text-red-600">Resend</button>
+                                <button onClick={handleForgotPassword} className="text-red-500 font-bold hover:text-red-600">Resend</button>
                             </p>
                         </div>
                     </div>
@@ -609,7 +644,7 @@ const AuthContainer = () => {
                                     <IoLockClosedOutline className="absolute left-4 top-3.5 text-gray-400" size={20} />
                                     <input
                                         id="newPassword"
-                                        type="password"
+                                        type={showPassword ? 'text' : 'password'}
                                         placeholder="Enter new password"
                                         onChange={() => setErrors({ ...errors, newPassword: '' })}
                                         className={`w-full pl-12 pr-4 py-3 border rounded-md text-sm focus:outline-none transition-colors ${
@@ -617,6 +652,12 @@ const AuthContainer = () => {
                                                 ? 'border-red-500 focus:border-red-600 bg-red-50'
                                                 : 'border-gray-300 focus:border-red-500 bg-white'
                                         }`}
+                                    />
+                                    <button
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
                                     />
                                 </div>
                                 {errors.newPassword && <p className="text-red-500 text-xs mt-1">{errors.newPassword}</p>}
@@ -629,7 +670,7 @@ const AuthContainer = () => {
                                     <IoLockClosedOutline className="absolute left-4 top-3.5 text-gray-400" size={20} />
                                     <input
                                         id="confirmPassword"
-                                        type="password"
+                                        type={showConfirmPassword ? 'text' : 'password'}
                                         placeholder="Confirm password"
                                         onChange={() => setErrors({ ...errors, confirmPassword: '' })}
                                         className={`w-full pl-12 pr-4 py-3 border rounded-md text-sm focus:outline-none transition-colors ${
@@ -637,6 +678,12 @@ const AuthContainer = () => {
                                                 ? 'border-red-500 focus:border-red-600 bg-red-50'
                                                 : 'border-gray-300 focus:border-red-500 bg-white'
                                         }`}
+                                    />
+                                    <button
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                        className="absolute right-4 top-3.5 text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showConfirmPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
                                     />
                                 </div>
                                 {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}

@@ -1,0 +1,3 @@
+/* Minimal styles placeholder for App */
+:root { --bg: #fff }
+body { background: var(--bg) }

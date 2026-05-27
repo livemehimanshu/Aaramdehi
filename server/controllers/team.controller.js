@@ -1,38 +1,42 @@
-import Team from "../models/team.model.js";
+import { findAll, findByQuery, findById, create, updateById, deleteById } from "../config/db.js";
 import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
+
+const parseInteger = (value, fallback) => {
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
 
 // Get all team members
 export const getAllTeamMembers = async (req, res) => {
   try {
-    const { page = 1, limit = 10, isActive, designation } = req.query;
-    let filter = {};
+    const page = parseInteger(req.query.page, 1);
+    const limit = parseInteger(req.query.limit, 10);
+    const { isActive, designation } = req.query;
+
+    let members = await findAll('team');
 
     if (isActive !== undefined) {
-      filter.isActive = isActive === "true";
+      const active = String(isActive).toLowerCase() === 'true';
+      members = members.filter(member => Boolean(member.isActive) === active);
     }
 
     if (designation) {
-      filter.designation = designation;
+      members = members.filter(member => member.designation === designation);
     }
 
-    const skip = (page - 1) * limit;
-    const members = await Team.find(filter)
-      .populate("reportingTo", "firstName lastName email")
-      .populate("createdBy", "name email")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Team.countDocuments(filter);
+    members = members.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const total = members.length;
+    const startIndex = (page - 1) * limit;
+    const paginated = members.slice(startIndex, startIndex + limit);
 
     return res.json({
       success: true,
       message: "Team members fetched successfully",
-      data: members,
+      data: paginated,
       pagination: {
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         pages: Math.ceil(total / limit),
       },
     });
@@ -48,9 +52,7 @@ export const getAllTeamMembers = async (req, res) => {
 export const getTeamMemberById = async (req, res) => {
   try {
     const { id } = req.params;
-    const member = await Team.findById(id)
-      .populate("reportingTo")
-      .populate("createdBy", "name email");
+    const member = await findById('team', id);
 
     if (!member) {
       return res.status(404).json({
@@ -99,9 +101,8 @@ export const createTeamMember = async (req, res) => {
       });
     }
 
-    // Check if email already exists
-    const existingMember = await Team.findOne({ email });
-    if (existingMember) {
+    const existingMember = await findByQuery('team', 'email', email.toLowerCase().trim());
+    if (existingMember?.length > 0) {
       return res.status(400).json({
         success: false,
         message: "Email already exists",
@@ -112,8 +113,7 @@ export const createTeamMember = async (req, res) => {
     let profileImagePublicId = "";
 
     if (req.file) {
-      // ✅ FIX: req.file.buffer pass karein, req.file.path nahi
-      const fileToUpload = req.file.buffer; 
+      const fileToUpload = req.file.buffer;
       if (!fileToUpload) {
         return res.status(400).json({ success: false, message: "Profile image file content is missing. Ensure Multer uses memoryStorage." });
       }
@@ -127,10 +127,10 @@ export const createTeamMember = async (req, res) => {
       profileImagePublicId = uploadResult.public_id;
     }
 
-    const member = new Team({
+    const member = await create('team', {
       firstName,
       lastName,
-      email,
+      email: email.toLowerCase().trim(),
       phone: phone || "",
       designation,
       department: department || "",
@@ -139,18 +139,14 @@ export const createTeamMember = async (req, res) => {
       bio: bio || "",
       reportingTo: reportingTo || null,
       permissions: permissions || [],
-      startDate: startDate || new Date(),
+      startDate: startDate || new Date().toISOString(),
       salary: salary || null,
       workingHours: workingHours || { startTime: "09:00", endTime: "17:00" },
       socialMedia: socialMedia || {},
       emergencyContact: emergencyContact || {},
-      createdBy: req.user.id,
-      // ✅ FIX: createdBy ko robust banayein
-      createdBy: req.user?._id || req.user?.id || req.userId,
+      createdBy: req.userId || null,
       isActive: true,
     });
-
-    await member.save();
 
     return res.status(201).json({
       success: true,
@@ -186,7 +182,7 @@ export const updateTeamMember = async (req, res) => {
       emergencyContact,
     } = req.body;
 
-    const member = await Team.findById(id);
+    const member = await findById('team', id);
 
     if (!member) {
       return res.status(404).json({
@@ -195,33 +191,32 @@ export const updateTeamMember = async (req, res) => {
       });
     }
 
-    if (email && email !== member.email) {
-      const existingMember = await Team.findOne({ email });
-      if (existingMember) {
+    const updatePayload = {};
+    if (email && email.toLowerCase().trim() !== member.email) {
+      const existingMember = await findByQuery('team', 'email', email.toLowerCase().trim());
+      if (existingMember?.length > 0) {
         return res.status(400).json({
           success: false,
           message: "Email already exists",
         });
       }
-      member.email = email;
+      updatePayload.email = email.toLowerCase().trim();
     }
-
-    if (firstName) member.firstName = firstName;
-    if (lastName) member.lastName = lastName;
-    if (phone !== undefined) member.phone = phone;
-    if (designation) member.designation = designation;
-    if (department !== undefined) member.department = department;
-    if (bio !== undefined) member.bio = bio;
-    if (reportingTo !== undefined) member.reportingTo = reportingTo;
-    if (permissions) member.permissions = permissions;
-    if (isActive !== undefined) member.isActive = isActive;
-    if (salary !== undefined) member.salary = salary;
-    if (workingHours) member.workingHours = workingHours;
-    if (socialMedia) member.socialMedia = socialMedia;
-    if (emergencyContact) member.emergencyContact = emergencyContact;
+    if (firstName) updatePayload.firstName = firstName;
+    if (lastName) updatePayload.lastName = lastName;
+    if (phone !== undefined) updatePayload.phone = phone;
+    if (designation) updatePayload.designation = designation;
+    if (department !== undefined) updatePayload.department = department;
+    if (bio !== undefined) updatePayload.bio = bio;
+    if (reportingTo !== undefined) updatePayload.reportingTo = reportingTo;
+    if (permissions !== undefined) updatePayload.permissions = permissions;
+    if (isActive !== undefined) updatePayload.isActive = isActive;
+    if (salary !== undefined) updatePayload.salary = salary;
+    if (workingHours !== undefined) updatePayload.workingHours = workingHours;
+    if (socialMedia !== undefined) updatePayload.socialMedia = socialMedia;
+    if (emergencyContact !== undefined) updatePayload.emergencyContact = emergencyContact;
 
     if (req.file) {
-      // ✅ FIX: req.file.buffer pass karein, req.file.path nahi
       const fileToUpload = req.file.buffer;
       if (!fileToUpload) {
         return res.status(400).json({ success: false, message: "Profile image file content is missing for update. Ensure Multer uses memoryStorage." });
@@ -231,20 +226,18 @@ export const updateTeamMember = async (req, res) => {
         fileToUpload,
         "team_profiles"
       );
-      // ✅ FIX: secure_url ki jagah url property use karein
-      member.profileImage = uploadResult.url;
-      member.profileImagePublicId = uploadResult.public_id;
+      updatePayload.profileImage = uploadResult.url;
+      updatePayload.profileImagePublicId = uploadResult.public_id;
     }
 
-    await member.save();
+    const updatedMember = await updateById('team', id, updatePayload);
 
     return res.json({
       success: true,
       message: "Team member updated successfully",
-      data: member,
+      data: updatedMember,
     });
   } catch (error) {
-    // ✅ FIX: Detailed error message
     console.error("🔥 updateTeamMember Controller Error:", error);
     return res.status(500).json({
       success: false,
@@ -257,7 +250,7 @@ export const updateTeamMember = async (req, res) => {
 export const deleteTeamMember = async (req, res) => {
   try {
     const { id } = req.params;
-    const member = await Team.findByIdAndDelete(id);
+    const member = await findById('team', id);
 
     if (!member) {
       return res.status(404).json({
@@ -265,6 +258,8 @@ export const deleteTeamMember = async (req, res) => {
         message: "Team member not found",
       });
     }
+
+    await deleteById('team', id);
 
     return res.json({
       success: true,
@@ -281,27 +276,24 @@ export const deleteTeamMember = async (req, res) => {
 // Get team stats
 export const getTeamStats = async (req, res) => {
   try {
-    const totalMembers = await Team.countDocuments();
-    const activeMembers = await Team.countDocuments({ isActive: true });
-    const inactiveMembers = await Team.countDocuments({ isActive: false });
+    const members = await findAll('team');
+    const totalMembers = members.length;
+    const activeMembers = members.filter(member => Boolean(member.isActive)).length;
+    const inactiveMembers = members.filter(member => !Boolean(member.isActive)).length;
 
-    const byDesignation = await Team.aggregate([
-      {
-        $group: {
-          _id: "$designation",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+    const byDesignation = Object.values(members.reduce((acc, member) => {
+      const key = member.designation || 'Unknown';
+      acc[key] = acc[key] || { _id: key, count: 0 };
+      acc[key].count += 1;
+      return acc;
+    }, {}));
 
-    const byDepartment = await Team.aggregate([
-      {
-        $group: {
-          _id: "$department",
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+    const byDepartment = Object.values(members.reduce((acc, member) => {
+      const key = member.department || 'Unknown';
+      acc[key] = acc[key] || { _id: key, count: 0 };
+      acc[key].count += 1;
+      return acc;
+    }, {}));
 
     return res.json({
       success: true,

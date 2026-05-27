@@ -1,124 +1,208 @@
-import React from 'react';
-import { IoSearch, IoFilterOutline } from "react-icons/io5";
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Package, Truck, CheckCircle, XCircle, Clock, Search, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
+import { auth } from '../../src/api/firebase.js';
+import { onAuthStateChanged } from 'firebase/auth'; // Assuming Firebase auth is used for user ID
+import { api } from '../../src/utils/authUtils'; // Centralized Axios instance
 
 const MyOrders = () => {
-  // Aaramdehi (Home Furnishing) related dummy data
-  const orders = [
-    {
-      id: "ORD12345",
-      name: "Luxury Velvet 3-Seater Sofa Set - Royal Blue",
-      price: "24,999",
-      status: "Delivered",
-      date: "Mar 28, 2026",
-      image: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=200&q=80", // Sofa Image
-      desc: "Delivered on Mar 28. Your item has been delivered successfully."
-    },
-    {
-      id: "ORD12346",
-      name: "Solid Oak Wood King Size Bed with Storage",
-      price: "45,500",
-      status: "Cancelled",
-      date: "Apr 02, 2026",
-      image: "https://images.unsplash.com/photo-1505693419148-ad3097f98751?w=200&q=80", // Bed Image
-      desc: "Cancelled on Apr 02. Refund has been initiated."
-    },
-    {
-      id: "ORD12347",
-      name: "Modern Geometric Pattern Cotton Rug (5x7 ft)",
-      price: "3,200",
-      status: "On the way",
-      date: "Expected by Apr 10",
-      image: "https://images.unsplash.com/photo-1575414003591-ece8d0416c7a?w=200&q=80", // Rug Image
-      desc: "Your item is out for delivery."
-    }
-  ];
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [user, setUser] = useState(null); // Firebase user object
+    const [searchTerm, setSearchTerm] = useState('');
 
-  return (
-    <div className="flex-1 md:ml-4 flex flex-col gap-4">
-      {/* Search & Mobile Filter Bar */}
-      <div className="bg-white p-2 md:p-0 flex flex-col md:flex-row gap-3">
-        <div className="relative flex-1">
-          <input 
-            type="text" 
-            placeholder="Search your orders here" 
-            className="w-full p-2.5 pl-4 pr-12 border rounded-sm text-sm focus:outline-none focus:border-blue-500 shadow-sm"
-          />
-          <button className="absolute right-0 top-0 h-full px-4 bg-[#2874f0] text-white rounded-r-sm flex items-center gap-2 font-bold text-sm hover:bg-blue-700 transition-colors">
-            <IoSearch size={20} className="md:hidden" />
-            <span className="hidden md:inline flex items-center gap-2">
-              <IoSearch size={18} /> Search Orders
-            </span>
-          </button>
-        </div>
-        
-        {/* Mobile Only Filter Button */}
-        <button className="md:hidden flex items-center justify-center gap-2 p-2 border rounded-sm text-sm font-medium text-gray-600 bg-white">
-          <IoFilterOutline size={18} /> Filters
-        </button>
-      </div>
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                setUser(firebaseUser);
+            } else {
+                setUser(null);
+                setLoading(false);
+                setError("Please log in to view your orders.");
+            }
+        });
 
-      <div className="flex flex-col gap-3 pb-8">
-        {orders.map((order) => (
-          <div 
-            key={order.id} 
-            className="bg-white p-4 md:p-6 border border-gray-100 rounded-sm flex flex-col md:flex-row md:items-center justify-between hover:shadow-md transition-shadow cursor-pointer gap-4"
-          >
-            {/* Product Section */}
-            <div className="flex gap-4 md:gap-8 items-start md:items-center">
-              <div className="w-20 h-20 md:w-24 md:h-24 bg-gray-50 rounded-sm overflow-hidden flex-shrink-0 p-1">
-                <img 
-                  src={order.image} 
-                  alt={order.name} 
-                  className="w-full h-full object-cover mix-blend-multiply" 
-                />
-              </div>
-              
-              <div className="flex-1 md:w-64 lg:w-80">
-                <h3 className="text-sm font-medium text-gray-800 line-clamp-2 leading-relaxed">
-                  {order.name}
-                </h3>
-                <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-wide">
-                  Order ID: {order.id}
-                </p>
-              </div>
+        return () => unsubscribe();
+    }, []);
 
-              <div className="hidden md:block w-24">
-                <p className="text-sm font-bold text-gray-900">₹{order.price}</p>
-              </div>
-            </div>
+    useEffect(() => {
+        const fetchMyOrders = async () => {
+            if (!user) return; // Don't fetch if user is not logged in
 
-            {/* Mobile Price Display */}
-            <div className="md:hidden border-t pt-2 mt-1">
-               <p className="text-sm font-bold text-gray-900">Amount Paid: ₹{order.price}</p>
-            </div>
-
-            {/* Status Section */}
-            <div className="flex items-start md:items-center gap-3 md:min-w-[220px]">
-              <div className={`mt-1.5 md:mt-0 w-2.5 h-2.5 rounded-full flex-shrink-0 ${
-                order.status === 'Cancelled' ? 'bg-red-500' : 
-                order.status === 'Delivered' ? 'bg-green-500' : 'bg-blue-500'
-              }`}></div>
-              
-              <div className="flex flex-col">
-                <p className="text-sm font-bold text-gray-800">
-                  {order.status} on {order.date}
-                </p>
-                <p className="text-xs text-gray-500 mt-0.5 leading-tight">
-                  {order.desc}
-                </p>
+            try {
+                setLoading(true);
+                setError(null);
+                // Assuming a new endpoint /api/order/my-orders that filters by authenticated user
+                const response = await api.get(`/order/my-orders`);
                 
-                {order.status === 'Delivered' && (
-                  <button className="text-blue-600 text-[11px] font-bold mt-2 flex items-center gap-1 hover:underline">
-                    ★ Rate & Review Product
-                  </button>
-                )}
-              </div>
+                if (response.data.success) {
+                    setOrders(response.data.data || []);
+                } else {
+                    setError(response.data.message || "Failed to fetch orders.");
+                }
+            } catch (err) {
+                console.error("Error fetching user orders:", err);
+                setError(err.response?.data?.message || `Network Error: ${err.message}. Please check if the backend is running.`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (user) {
+            fetchMyOrders();
+        }
+    }, [user]); // Re-fetch when user object changes (i.e., on login/logout)
+
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'Processing': return <Clock size={16} className="text-yellow-500" />;
+            case 'Shipped': return <Truck size={16} className="text-blue-500" />;
+            case 'Delivered': return <CheckCircle size={16} className="text-emerald-500" />;
+            case 'Cancelled': return <XCircle size={16} className="text-red-500" />;
+            default: return <Package size={16} className="text-gray-500" />;
+        }
+    };
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'Processing': return 'bg-yellow-500/10 text-yellow-500';
+            case 'Shipped': return 'bg-blue-500/10 text-blue-500';
+            case 'Delivered': return 'bg-emerald-500/10 text-emerald-500';
+            case 'Cancelled': return 'bg-red-500/10 text-red-500';
+            default: return 'bg-gray-500/10 text-gray-500';
+        }
+    };
+
+    const filteredOrders = orders.filter(order =>
+        order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.orderItems.some(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+
+    if (loading) {
+        return (
+            <div className="flex flex-col justify-center items-center h-64 bg-white rounded-lg shadow-sm">
+                <Loader2 className="animate-spin text-blue-500" size={32} />
+                <p className="mt-3 text-gray-600">Loading your orders...</p>
             </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8 text-center text-rose-500 flex flex-col items-center gap-4 bg-white rounded-lg shadow-sm">
+                <AlertCircle size={48} />
+                <p className="font-bold text-lg">{error}</p>
+                {!user && (
+                    <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all">
+                        Login Now
+                    </Link>
+                )}
+                {user && ( // Allow retry if user is logged in but fetch failed
+                    <button onClick={() => setUser(user)} className="bg-gray-800 px-6 py-2 rounded-lg text-white font-bold hover:bg-gray-700 transition-all flex items-center gap-2">
+                        <RefreshCw size={16} /> Retry Fetching
+                    </button>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white p-4 md:p-8 rounded-lg shadow-sm">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">My Orders</h2>
+
+            <div className="mb-6 relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                    type="text"
+                    placeholder="Search by Order ID or Product Name..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+
+            {filteredOrders.length === 0 ? (
+                <div className="text-center py-10 text-gray-500">
+                    <Package size={48} className="mx-auto mb-4" />
+                    <p className="text-lg font-semibold">No orders found.</p>
+                    <p className="text-sm mt-2">Looks like you haven't placed any orders yet.</p>
+                    <Link to="/products" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-all">
+                        Start Shopping
+                    </Link>
+                </div>
+            ) : (
+                <>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                        <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                            <thead>
+                                <tr className="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                    <th className="py-3 px-4 border-b">Order ID</th>
+                                    <th className="py-3 px-4 border-b">Date</th>
+                                    <th className="py-3 px-4 border-b">Items</th>
+                                    <th className="py-3 px-4 border-b">Total</th>
+                                    <th className="py-3 px-4 border-b">Status</th>
+                                    <th className="py-3 px-4 border-b">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredOrders.map(order => (
+                                    <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50">
+                                        <td className="py-3 px-4 text-sm font-medium text-blue-600">{order.orderNumber}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
+                                        <td className="py-3 px-4 text-sm text-gray-700">
+                                            {order.orderItems.map(item => (
+                                                <p key={item.productId} className="truncate max-w-[200px]">{item.name} (x{item.quantity})</p>
+                                            ))}
+                                        </td>
+                                        <td className="py-3 px-4 text-sm font-semibold text-gray-800">₹{order.totalAmount.toLocaleString()}</td>
+                                        <td className="py-3 px-4">
+                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
+                                                {getStatusIcon(order.orderStatus)} {order.orderStatus}
+                                            </span>
+                                        </td>
+                                        <td className="py-3 px-4 text-sm">
+                                            <Link to={`/order-details/${order._id}`} className="text-blue-600 hover:underline">View Details</Link>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-4">
+                        {filteredOrders.map(order => (
+                            <div key={order._id} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="text-md font-bold text-blue-600">Order #{order.orderNumber}</h3>
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
+                                        {getStatusIcon(order.orderStatus)} {order.orderStatus}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-gray-500 mb-3">{new Date(order.createdAt).toLocaleDateString()}</p>
+                                <div className="border-t border-gray-100 pt-3 mt-3 space-y-2">
+                                    {order.orderItems.map(item => (
+                                        <div key={item.productId} className="flex items-center gap-3">
+                                            <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded" />
+                                            <p className="text-sm text-gray-700 flex-1">{item.name} (x{item.quantity})</p>
+                                            <p className="text-sm font-semibold text-gray-800">₹{(item.price * item.quantity).toLocaleString()}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="flex justify-between items-center border-t border-gray-100 pt-3 mt-3">
+                                    <p className="text-sm font-bold text-gray-800">Total:</p>
+                                    <p className="text-lg font-bold text-gray-900">₹{order.totalAmount.toLocaleString()}</p>
+                                </div>
+                                <Link to={`/order-details/${order._id}`} className="mt-4 block text-center text-blue-600 hover:underline text-sm">View Details</Link>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+        </div>
+    );
 };
 
 export default MyOrders;

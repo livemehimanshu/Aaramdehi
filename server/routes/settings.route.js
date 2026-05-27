@@ -9,9 +9,13 @@ import {
   getSettingsByCategory,
   bulkUpdateSettings,
   resetSetting,
+  getPublicSettings,
 } from "../controllers/settings.controller.js";
 
 const router = express.Router();
+
+// Public route - expose only public settings (no auth)
+router.get("/public", getPublicSettings);
 
 // Admin routes
 router.get("/", isAuthenticatedUser, isAdmin, getAllSettings);

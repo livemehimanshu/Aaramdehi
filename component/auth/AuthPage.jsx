@@ -1,345 +1,348 @@
-import React, { useState } from 'react';
-import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline, IoArrowBack } from 'react-icons/io5';
-import { useNavigate } from 'react-router-dom';
-import { loginAPI, signupAPI, forgotPasswordAPI, verifyOTPAPI, resetPasswordAPI } from '../../src/api/authAndAdminApi.js';
+import React, { useState, useEffect } from 'react';
+import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline, IoArrowBack, IoCallOutline, IoPersonOutline } from 'react-icons/io5';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, signupSchema, forgotPasswordSchema, resetPasswordSchema } from '../../src/schemas/validationSchemas';
+import toast from 'react-hot-toast';
+import { loginAPI, signupAPI, forgotPasswordAPI, verifyOTPAPI, resetPasswordAPI } from '../../src/api/authAndAdminApi';
 
 const AuthPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [view, setView] = useState('login'); // login, signup, forgot, otp, reset
     const [showPassword, setShowPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
+    const [otpFlow, setOtpFlow] = useState('signup'); // 'signup' ya 'forgot-password'
 
-    // Login state
-    const [loginData, setLoginData] = useState({ email: '', password: '' });
+    useEffect(() => {
+        const path = location.pathname.toLowerCase();
+        if (path.includes('/signup') || path.includes('/register')) {
+            setView('signup');
+        } else if (path.includes('/login')) {
+            setView('login');
+        }
+    }, [location.pathname]);
 
-    // Signup state
-    const [signupData, setSignupData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        password: '',
-        confirmPassword: ''
+    // --- States ---
+    const [forgotEmail, setForgotEmail] = useState('');
+    const [otp, setOtp] = useState('');
+
+    // ✅ Setup React Hook Form for Login
+    const { 
+        register: loginRegister, 
+        handleSubmit: handleLoginSubmit, 
+        formState: { errors: loginErrors } 
+    } = useForm({
+        resolver: zodResolver(loginSchema)
     });
 
-    // Forgot password state
-    const [forgotEmail, setForgotEmail] = useState('');
-    const [resetToken, setResetToken] = useState('');
-    const [otp, setOtp] = useState('');
-    const [newPassword, setNewPassword] = useState('');
+    // ✅ Setup React Hook Form for Signup
+    const { 
+        register: signupRegister, 
+        handleSubmit: handleSignupSubmit, 
+        formState: { errors: signupErrors },
+        getValues: getSignupValues
+    } = useForm({
+        resolver: zodResolver(signupSchema)
+    });
 
-    // ====== LOGIN ======
-    const handleLogin = async () => {
+    // ✅ Setup React Hook Form for Forgot Password
+    const { 
+        register: forgotRegister, 
+        handleSubmit: handleForgotSubmit, 
+        formState: { errors: forgotErrors } 
+    } = useForm({
+        resolver: zodResolver(forgotPasswordSchema)
+    });
+
+    // ✅ Setup React Hook Form for Reset Password
+    const { 
+        register: resetRegister, 
+        handleSubmit: handleResetSubmit, 
+        formState: { errors: resetErrors } 
+    } = useForm({
+        resolver: zodResolver(resetPasswordSchema)
+    });
+
+    // ====== LOGIN LOGIC ======
+    const onLogin = async (data) => {
         try {
             setLoading(true);
-            const response = await loginAPI(loginData.email, loginData.password);
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('userEmail', response.data.email);
+            const response = await loginAPI(data.email.toLowerCase().trim(), data.password);
             
-            // Redirect based on role
-            if (response.data.role === 'admin') {
+            // Backend se milne wale tokens aur user details save karein
+            localStorage.setItem('accessToken', response.accessToken);
+            localStorage.setItem('userData', JSON.stringify(response.user));
+            toast.success(`Welcome back, ${response.user.name}!`);
+
+            if (response.user.role.toUpperCase() === 'ADMIN') {
                 navigate('/admin');
             } else {
                 navigate('/');
             }
         } catch (error) {
-            setErrors({ submit: error.message });
-        } finally {
-            setLoading(false);
-        }
-    };
+            const errorData = error.response?.data || {};
+            const message = typeof errorData.message === 'string' ? errorData.message : "Invalid Email or Password";
 
-    // ====== SIGNUP ======
-    const handleSignup = async () => {
-        try {
-            const newErrors = {};
-            if (!signupData.name) newErrors.name = 'Name required';
-            if (!signupData.password) newErrors.password = 'Password required';
-            if (signupData.password !== signupData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
-
-            if (Object.keys(newErrors).length > 0) {
-                setErrors(newErrors);
-                return;
+            if (errorData?.needsVerification) {
+                setForgotEmail(data.email.toLowerCase().trim());
+                setOtpFlow('signup');
+                setView('otp');
+                toast.error(message);
+            } else {
+                toast.error(message);
             }
-
-            setLoading(true);
-            const response = await signupAPI(signupData);
-            localStorage.setItem('token', response.token);
-            localStorage.setItem('userEmail', response.data.email);
-            navigate('/');
-        } catch (error) {
-            setErrors({ submit: error.message });
         } finally {
             setLoading(false);
         }
     };
 
-    // ====== FORGOT PASSWORD ======
-    const handleForgotPassword = async () => {
+    // ====== SIGNUP LOGIC ======
+    const onSignup = async (data) => {
         try {
             setLoading(true);
-            const response = await forgotPasswordAPI(forgotEmail);
+            await signupAPI({
+                name: data.fullName.trim(),
+                email: data.email.toLowerCase().trim(),
+                mobile: data.phone || "0000000000",
+                password: data.password,
+                confirmPassword: data.confirmPassword
+            });
+
+            setForgotEmail(data.email.toLowerCase().trim());
+            setOtpFlow('signup');
+            setOtp('');
             setView('otp');
-            setErrors({});
+            toast.success("OTP sent to your email!");
         } catch (error) {
-            setErrors({ submit: error.message });
+            toast.error(error.response?.data?.message || "Signup failed. Please check your details.");
         } finally {
             setLoading(false);
         }
     };
 
-    // ====== VERIFY OTP ======
+    // ====== FORGOT & RESET LOGIC ======
+    const onForgotPassword = async (data) => {
+        try {
+            setLoading(true);
+            const response = await forgotPasswordAPI(data.email.toLowerCase().trim());
+            setForgotEmail(data.email.toLowerCase().trim());
+            setOtpFlow('forgot-password');
+            setView('otp');
+            toast.success("Reset OTP sent to your email!");
+        } catch (error) {
+            const msg = error.response?.data?.message;
+            toast.error(typeof msg === 'string' ? msg : "Email not found");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleVerifyOTP = async () => {
         try {
             setLoading(true);
-            const response = await verifyOTPAPI(forgotEmail, otp);
-            setResetToken(response.resetToken);
-            setView('reset');
-            setErrors({});
+            // Use trimmed OTP value from state
+            const cleanOtp = otp.trim();
+            if (!cleanOtp || cleanOtp.length < 6) {
+                toast.error("Please enter a valid 6-digit OTP");
+                return;
+            }
+            
+            // For signup, verify OTP and auto-login
+            if (otpFlow === 'signup') {
+                const response = await verifyOTPAPI(forgotEmail.toLowerCase().trim(), cleanOtp); // Corrected to use cleanOtp
+                if (response.user) {
+                    localStorage.setItem('accessToken', response.accessToken);
+                    localStorage.setItem('userData', JSON.stringify(response.user));
+                    toast.success("Account verified successfully!");
+                    
+                    if (response.user.role === 'ADMIN') {
+                        navigate('/admin');
+                    } else {
+                        navigate('/');
+                    }
+                }
+                toast.success("OTP Verified!");
+            } else {
+                setView('reset');
+                toast.success("Please set your new password");
+            }
         } catch (error) {
-            setErrors({ submit: error.message });
+            const msg = error.response?.data?.message;
+            toast.error(typeof msg === 'string' ? msg : "Invalid OTP");
         } finally {
             setLoading(false);
         }
     };
 
-    // ====== RESET PASSWORD ======
-    const handleResetPassword = async () => {
+    const onResetPassword = async (data) => {
         try {
             setLoading(true);
-            await resetPasswordAPI(forgotEmail, resetToken, newPassword, newPassword);
-            alert('Password reset successful. Please login.');
-            setView('login');
-            setErrors({});
+            if (!forgotEmail) {
+                toast.error("Session expired. Please start again.");
+                setView('forgot');
+                return;
+            }
+
+            const response = await resetPasswordAPI(
+                forgotEmail.toLowerCase().trim(), 
+                otp.trim(), 
+                data.newPassword, 
+                data.confirmNewPassword
+            );
+            
+            if (response.success) {
+                toast.success('Password updated! Please login.');
+                setOtp('');
+                setForgotEmail('');
+                setView('login');
+            }
         } catch (error) {
-            setErrors({ submit: error.message });
+            const msg = error.response?.data?.message;
+            toast.error(typeof msg === 'string' ? msg : "Reset failed. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <section className="min-h-screen bg-gradient-to-b from-gray-100 to-white flex items-center justify-center px-4">
-            <div className="w-full max-w-md">
+        <section className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                
                 {/* LOGIN VIEW */}
                 {view === 'login' && (
-                    <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-100">
-                        <div className="mb-8">
-                            <h1 className="text-3xl font-black text-gray-900 text-center">Aaramdehi</h1>
-                            <p className="text-gray-600 text-center text-sm mt-2">Login to Your Account</p>
+                    <div className="animate-in fade-in duration-500">
+                        <div className="text-center mb-8">
+                            <h1 className="text-4xl font-black text-red-500">Aaramdehi</h1>
+                            <p className="text-gray-500 mt-2 font-medium">Welcome back, login to continue</p>
                         </div>
-
-                        <div className="space-y-5">
-                            <div>
-                                <label className="text-sm font-bold text-gray-700 block mb-2">Email</label>
-                                <div className="relative">
-                                    <IoMailOutline className="absolute left-4 top-3.5 text-gray-400" size={20} />
-                                    <input
-                                        type="text"
-                                        placeholder="Enter email"
-                                        value={loginData.email}
-                                        onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                                        className={`w-full pl-12 pr-4 py-3 border rounded-md focus:outline-none ${errors.email ? 'border-red-500' : 'border-gray-300 focus:border-red-500'}`}
-                                    />
-                                </div>
-                                {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                        <form onSubmit={handleLoginSubmit(onLogin)} className="space-y-4">
+                            <div className="relative">
+                                <IoMailOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <input
+                                    type="email"
+                                    placeholder="Email Address"
+                                    {...loginRegister('email')}
+                                    className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all ${loginErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                                />
+                                {loginErrors.email && <p className="text-red-500 text-[10px] mt-1 font-bold">{loginErrors.email.message}</p>}
                             </div>
-
-                            <div>
-                                <label className="text-sm font-bold text-gray-700 block mb-2">Password</label>
-                                <div className="relative">
-                                    <IoLockClosedOutline className="absolute left-4 top-3.5 text-gray-400" size={20} />
-                                    <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        placeholder="Enter password"
-                                        value={loginData.password}
-                                        onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                                        className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-red-500"
-                                    />
-                                    <button
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-3.5 text-gray-400"
-                                    >
-                                        {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
-                                    </button>
-                                </div>
+                            <div className="relative">
+                                <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Password"
+                                    {...loginRegister('password')}
+                                    className={`w-full pl-12 pr-12 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all ${loginErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                                />
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-gray-400">
+                                    {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
+                                </button>
                             </div>
-
-                            <button
-                                onClick={() => setView('forgot')}
-                                className="text-red-500 text-sm font-bold hover:text-red-600"
-                            >
-                                Forgot Password?
+                            {loginErrors.password && <p className="text-red-500 text-[10px] mt-1 font-bold">{loginErrors.password.message}</p>}
+                            <button type="button" onClick={() => setView('forgot')} className="text-red-500 text-sm font-bold block ml-auto hover:underline">Forgot Password?</button>
+                            <button type="submit" disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50">
+                                {loading ? 'Checking...' : 'Sign In'}
                             </button>
-
-                            {errors.submit && <p className="text-red-500 text-sm">{errors.submit}</p>}
-
-                            <button
-                                onClick={handleLogin}
-                                disabled={loading}
-                                className="w-full bg-red-500 text-white py-3 rounded-md font-bold hover:bg-red-600 disabled:opacity-50"
-                            >
-                                {loading ? 'Signing In...' : 'Sign In'}
-                            </button>
-
-                            <div className="flex items-center gap-4 my-6">
-                                <div className="flex-1 h-px bg-gray-200"></div>
-                                <span className="text-gray-600 text-sm">New to Aaramdehi?</span>
-                                <div className="flex-1 h-px bg-gray-200"></div>
-                            </div>
-
-                            <button
-                                onClick={() => setView('signup')}
-                                className="w-full border-2 border-gray-300 text-gray-900 py-3 rounded-md font-bold hover:border-red-500 hover:text-red-500"
-                            >
-                                Create Account
-                            </button>
-                        </div>
+                            <p className="text-center text-sm text-gray-600 mt-6">
+                                Don't have an account? <button onClick={() => setView('signup')} className="text-red-500 font-bold hover:underline">Create Account</button>
+                            </p>
+                        </form>
                     </div>
                 )}
 
                 {/* SIGNUP VIEW */}
                 {view === 'signup' && (
-                    <div className="bg-white rounded-lg shadow-lg p-8 border border-gray-100">
-                        <button
-                            onClick={() => { setView('login'); setErrors({}); }}
-                            className="flex items-center gap-2 text-gray-600 text-sm font-bold mb-6 hover:text-gray-900"
-                        >
+                    <div className="animate-in slide-in-from-right duration-500">
+                        <button onClick={() => setView('login')} className="flex items-center gap-2 text-gray-500 text-sm font-bold mb-6 hover:text-red-500 transition-colors">
                             <IoArrowBack size={18} /> Back to Login
                         </button>
+                        <h2 className="text-2xl font-black text-gray-800 mb-6">Join Aaramdehi</h2>
+                        <form onSubmit={handleSignupSubmit(onSignup)} className="space-y-4">
+                            <div className="relative">
+                                <IoPersonOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <input type="text" placeholder="Full Name" {...signupRegister('fullName')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.fullName ? 'border-red-500' : 'border-gray-200'}`} />
+                            </div>
+                            {signupErrors.fullName && <p className="text-red-500 text-[10px] font-bold">{signupErrors.fullName.message}</p>}
 
-                        <div className="mb-8">
-                            <h1 className="text-2xl font-black text-gray-900">Create Account</h1>
-                        </div>
+                            <div className="relative">
+                                <IoMailOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <input type="email" placeholder="Email Address" {...signupRegister('email')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.email ? 'border-red-500' : 'border-gray-200'}`} />
+                            </div>
+                            {signupErrors.email && <p className="text-red-500 text-[10px] font-bold">{signupErrors.email.message}</p>}
 
-                        <div className="space-y-4">
-                            <input
-                                type="text"
-                                placeholder="Full Name"
-                                value={signupData.name}
-                                onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-red-500"
-                            />
-                            <input
-                                type="email"
-                                placeholder="Email"
-                                value={signupData.email}
-                                onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-red-500"
-                            />
-                            <input
-                                type="tel"
-                                placeholder="Phone"
-                                value={signupData.phone}
-                                onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-red-500"
-                            />
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                placeholder="Password"
-                                value={signupData.password}
-                                onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-red-500"
-                            />
-                            <input
-                                type={showPassword ? 'text' : 'password'}
-                                placeholder="Confirm Password"
-                                value={signupData.confirmPassword}
-                                onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
-                                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-red-500"
-                            />
+                            <div className="relative">
+                                <IoCallOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <input type="tel" placeholder="Mobile Number" {...signupRegister('phone')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.phone ? 'border-red-500' : 'border-gray-200'}`} />
+                            </div>
+                            {signupErrors.phone && <p className="text-red-500 text-[10px] font-bold">{signupErrors.phone.message}</p>}
 
-                            {errors.submit && <p className="text-red-500 text-sm">{errors.submit}</p>}
+                            <div className="relative">
+                                <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <input type="password" placeholder="Create Password" {...signupRegister('password')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.password ? 'border-red-500' : 'border-gray-200'}`} />
+                            </div>
+                            {signupErrors.password && <p className="text-red-500 text-[10px] font-bold">{signupErrors.password.message}</p>}
 
-                            <button
-                                onClick={handleSignup}
-                                disabled={loading}
-                                className="w-full bg-red-500 text-white py-3 rounded-md font-bold hover:bg-red-600 disabled:opacity-50"
-                            >
-                                {loading ? 'Creating...' : 'Create Account'}
+                            <div className="relative">
+                                <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <input type="password" placeholder="Confirm Password" {...signupRegister('confirmPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'}`} />
+                            </div>
+                            {signupErrors.confirmPassword && <p className="text-red-500 text-[10px] font-bold">{signupErrors.confirmPassword.message}</p>}
+
+                            <button type="submit" disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 transition-all active:scale-95 disabled:opacity-50">
+                                {loading ? 'Registering...' : 'Create My Account'}
                             </button>
-                        </div>
+                        </form>
                     </div>
                 )}
 
-                {/* FORGOT PASSWORD VIEW */}
-                {view === 'forgot' && (
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <button
-                            onClick={() => { setView('login'); setErrors({}); }}
-                            className="flex items-center gap-2 text-gray-600 text-sm font-bold mb-6"
-                        >
-                            <IoArrowBack size={18} /> Back
-                        </button>
+                {/* FORGOT/OTP/RESET VIEWS (Compact) */}
+                {(view === 'forgot' || view === 'otp' || view === 'reset') && (
+                    <div className="space-y-6">
+                        <button type="button" onClick={() => setView('login')} className="flex items-center gap-2 text-gray-500 font-bold hover:text-red-500 transition-colors"><IoArrowBack /> Back</button>
+                        <h2 className="text-2xl font-bold">{view === 'forgot' ? 'Reset Password' : view === 'otp' ? 'Verify OTP' : 'New Password'}</h2>
                         
-                        <h2 className="text-2xl font-bold mb-4">Reset Password</h2>
-                        <input
-                            type="email"
-                            placeholder="Enter your email"
-                            value={forgotEmail}
-                            onChange={(e) => setForgotEmail(e.target.value)}
-                            className="w-full px-4 py-3 border rounded-md mb-4 focus:outline-none focus:border-red-500"
-                        />
+                        {view === 'forgot' && (
+                            <form onSubmit={handleForgotSubmit(onForgotPassword)} className="space-y-4">
+                                <input type="email" placeholder="Enter Email" {...forgotRegister('email')} className={`w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-red-500 ${forgotErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-200'}`} />
+                                {forgotErrors.email && <p className="text-red-500 text-[10px] font-bold">{forgotErrors.email.message}</p>}
+                                <button type="submit" disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-200 transition-all">
+                                    {loading ? 'Processing...' : 'Send OTP'}
+                                </button>
+                            </form>
+                        )}
 
-                        {errors.submit && <p className="text-red-500 text-sm mb-4">{errors.submit}</p>}
-
-                        <button
-                            onClick={handleForgotPassword}
-                            disabled={loading}
-                            className="w-full bg-red-500 text-white py-3 rounded-md font-bold hover:bg-red-600 disabled:opacity-50"
-                        >
-                            {loading ? 'Sending...' : 'Send OTP'}
-                        </button>
-                    </div>
-                )}
-
-                {/* OTP VIEW */}
-                {view === 'otp' && (
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <h2 className="text-2xl font-bold mb-4">Enter OTP</h2>
-                        <p className="text-gray-600 text-sm mb-4">OTP sent to {forgotEmail}</p>
-                        <input
-                            type="text"
-                            placeholder="6-digit OTP"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            className="w-full px-4 py-3 border rounded-md mb-4 focus:outline-none focus:border-red-500"
-                            maxLength="6"
-                        />
-
-                        {errors.submit && <p className="text-red-500 text-sm mb-4">{errors.submit}</p>}
-
-                        <button
-                            onClick={handleVerifyOTP}
-                            disabled={loading}
-                            className="w-full bg-red-500 text-white py-3 rounded-md font-bold hover:bg-red-600 disabled:opacity-50"
-                        >
-                            {loading ? 'Verifying...' : 'Verify OTP'}
-                        </button>
-                    </div>
-                )}
-
-                {/* RESET PASSWORD VIEW */}
-                {view === 'reset' && (
-                    <div className="bg-white rounded-lg shadow-lg p-8">
-                        <h2 className="text-2xl font-bold mb-4">Create New Password</h2>
-                        <input
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="New Password"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full px-4 py-3 border rounded-md mb-4 focus:outline-none focus:border-red-500"
-                        />
-
-                        {errors.submit && <p className="text-red-500 text-sm mb-4">{errors.submit}</p>}
-
-                        <button
-                            onClick={handleResetPassword}
-                            disabled={loading}
-                            className="w-full bg-red-500 text-white py-3 rounded-md font-bold hover:bg-red-600 disabled:opacity-50"
-                        >
-                            {loading ? 'Resetting...' : 'Reset Password'}
-                        </button>
+                        {view === 'otp' && (
+                            <div className="space-y-4">
+                                <p className="text-sm text-gray-500">OTP sent to: {forgotEmail}</p>
+                                <input type="text" maxLength="6" placeholder="6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full p-4 text-center text-2xl tracking-[1rem] font-bold border rounded-xl outline-none" />
+                                <button onClick={handleVerifyOTP} disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-200 transition-all">
+                                    {loading ? 'Verifying...' : 'Verify OTP'}
+                                </button>
+                            </div>
+                        )}
+                        
+                        {view === 'reset' && (
+                            <form onSubmit={handleResetSubmit(onResetPassword)} className="space-y-4">
+                                <div className="relative">
+                                    <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                    <input type="password" placeholder="New Password" {...resetRegister('newPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${resetErrors.newPassword ? 'border-red-500 bg-red-50' : 'border-gray-200'}`} />
+                                </div>
+                                {resetErrors.newPassword && <p className="text-red-500 text-[10px] font-bold">{resetErrors.newPassword.message}</p>}
+                                
+                                <div className="relative">
+                                    <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                    <input type="password" placeholder="Confirm Password" {...resetRegister('confirmNewPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${resetErrors.confirmNewPassword ? 'border-red-500 bg-red-50' : 'border-gray-200'}`} />
+                                </div>
+                                {resetErrors.confirmNewPassword && <p className="text-red-500 text-[10px] font-bold">{resetErrors.confirmNewPassword.message}</p>}
+                                
+                                <button type="submit" disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-200 transition-all">
+                                    {loading ? 'Updating...' : 'Update Password'}
+                                </button>
+                            </form>
+                        )}
                     </div>
                 )}
             </div>

@@ -4,8 +4,8 @@ import { Navigation } from 'swiper/modules';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { IoClose, IoStar, IoStarOutline, IoHeartOutline, IoHeart, IoSyncOutline } from "react-icons/io5";
 import ProductCard from './ProductCard';
-import { ALL_PRODUCTS_DATA } from '../../src/data/products';
 import { addToRecentlyViewed } from '../../src/data/recentlyViewedUtils';
+import { getAllProductsAPI } from '../../src/api/authAndAdminApi';
 
 // Swiper Styles
 import 'swiper/css';
@@ -17,20 +17,41 @@ import 'swiper/css/navigation';
 
 const LatestProducts = () => {
   // --- STATES ---
+  const [products, setProducts] = useState([]); // Dynamic products from DB
+  const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null); // Modal mein jo product show hona hai
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal open/close
   const [quantity, setQuantity] = useState(1); // Modal mein select quantity
   const [isInWishlist, setIsInWishlist] = useState(false); // Check if product in wishlist
   const [isInCompare, setIsInCompare] = useState(false); // Check if product in compare
 
-  // Real products database se data aaya hai
-  const products = ALL_PRODUCTS_DATA;
+  // useEffect: Component load hone par latest products fetch karna
+  useEffect(() => {
+    const fetchLatest = async () => {
+      try {
+        setLoading(true);
+        // Fetch newest products (sort by createdAt descending, limit to 10)
+        const res = await getAllProductsAPI({ sort: '-createdAt', limit: 10 });
+        if (res && res.success && Array.isArray(res.data)) {
+          setProducts(res.data);
+        } else if (Array.isArray(res)) {
+          setProducts(res);
+        }
+      } catch (error) {
+        console.error("Error fetching latest products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLatest();
+  }, []);
 
   // --- WISHLIST SYNC (Product ko wishlist mein check karna) ---
   const syncWishlistState = useCallback(() => {
     if (!selectedProduct) return;
     const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-    const isPresent = wishlist.some(item => String(item.id) === String(selectedProduct.id));
+    const productId = selectedProduct._id || selectedProduct.id;
+    const isPresent = wishlist.some(item => String(item.id) === String(productId));
     setIsInWishlist(isPresent);
   }, [selectedProduct]);
 
@@ -38,7 +59,8 @@ const LatestProducts = () => {
   const syncCompareState = useCallback(() => {
     if (!selectedProduct) return;
     const compare = JSON.parse(localStorage.getItem("compare")) || [];
-    const isPresent = compare.some(item => String(item.id) === String(selectedProduct.id));
+    const productId = selectedProduct._id || selectedProduct.id;
+    const isPresent = compare.some(item => String(item.id) === String(productId));
     setIsInCompare(isPresent);
   }, [selectedProduct]);
 
@@ -75,15 +97,17 @@ const LatestProducts = () => {
   // Add to Cart Handler
   const handleAddToCart = () => {
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    const productWithQty = { ...selectedProduct, qty: quantity };
-    const isExist = cart.find(item => item.id === selectedProduct.id);
+    const productId = selectedProduct._id || selectedProduct.id;
+    const isExist = cart.find(item => String(item.id) === String(productId));
 
     if (isExist) {
       cart = cart.map(item => 
-        item.id === selectedProduct.id ? { ...item, qty: item.qty + quantity } : item
+        String(item.id) === String(productId) ? { ...item, qty: item.qty + quantity } : item
       );
     } else {
-      cart.push(productWithQty);
+      const price = selectedProduct.sellingPrice || selectedProduct.price || selectedProduct.newPrice || 0;
+      cart.push({ ...selectedProduct, qty: quantity, id: productId, price });
+      if (price === 0) console.warn("LatestProducts: Product added with 0 price", selectedProduct);
     }
 
     localStorage.setItem("cart", JSON.stringify(cart));
@@ -99,20 +123,22 @@ const LatestProducts = () => {
     
     try {
       let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-      const isPresent = wishlist.some(item => String(item.id) === String(selectedProduct.id));
+      const productId = selectedProduct._id || selectedProduct.id;
+      const isPresent = wishlist.some(item => String(item.id) === String(productId));
 
       if (isPresent) {
-        wishlist = wishlist.filter(item => String(item.id) !== String(selectedProduct.id));
+        wishlist = wishlist.filter(item => String(item.id) !== String(productId));
         console.log("❌ Removed from Wishlist:", selectedProduct.name);
       } else {
         wishlist.push({
-          id: selectedProduct.id,
+          id: productId,
           name: selectedProduct.name,
           brand: selectedProduct.brand || "Aaramdehi",
-          price: selectedProduct.price || selectedProduct.newPrice || 0,
-          image: selectedProduct.image,
+          price: selectedProduct.sellingPrice || selectedProduct.price || selectedProduct.newPrice || 0,
+          image: selectedProduct.thumbnail || (selectedProduct.images && selectedProduct.images[0]?.url) || selectedProduct.image,
           rating: selectedProduct.rating || 5
         });
+        if (wishlist[wishlist.length - 1].price === 0) console.warn("LatestProducts: Wishlist price 0");
         console.log("❤️ Added to Wishlist:", selectedProduct.name);
       }
 
@@ -131,7 +157,8 @@ const LatestProducts = () => {
     
     try {
       let compare = JSON.parse(localStorage.getItem("compare")) || [];
-      const isPresent = compare.some(item => String(item.id) === String(selectedProduct.id));
+      const productId = selectedProduct._id || selectedProduct.id;
+      const isPresent = compare.some(item => String(item.id) === String(productId));
 
       // Maximum 3 products constraint
       if (!isPresent && compare.length >= 3) {
@@ -140,16 +167,16 @@ const LatestProducts = () => {
       }
 
       if (isPresent) {
-        compare = compare.filter(item => String(item.id) !== String(selectedProduct.id));
+        compare = compare.filter(item => String(item.id) !== String(productId));
         console.log("⚖️ Removed from Compare:", selectedProduct.name);
       } else {
         compare.push({
-          id: selectedProduct.id,
+          id: productId,
           name: selectedProduct.name,
           brand: selectedProduct.brand || "Aaramdehi",
-          price: selectedProduct.price || selectedProduct.newPrice || 0,
-          oldPrice: selectedProduct.oldPrice || 0,
-          image: selectedProduct.image,
+          price: selectedProduct.sellingPrice || selectedProduct.price || selectedProduct.newPrice || 0,
+          oldPrice: selectedProduct.mrp || selectedProduct.oldPrice || 0,
+          image: selectedProduct.thumbnail || (selectedProduct.images && selectedProduct.images[0]?.url) || selectedProduct.image,
           rating: selectedProduct.rating || 5,
           category: selectedProduct.category || "Uncategorized"
         });
@@ -163,6 +190,8 @@ const LatestProducts = () => {
       console.error("Compare error:", error);
     }
   };
+
+  if (loading) return <div className="container mx-auto px-4 py-10 text-center text-slate-500 font-bold animate-pulse uppercase tracking-widest">Loading New Arrivals...</div>;
 
   return (
     <div className="container mx-auto px-4 py-10 font-sans relative">
@@ -220,7 +249,7 @@ const LatestProducts = () => {
         }}
       >
         {products.map((product) => (
-          <SwiperSlide key={product.id}>
+          <SwiperSlide key={product._id || product.id}>
             {/* Click Wrapper to open Modal */}
             <div onClick={() => handleOpenModal(product)} className="cursor-pointer">
                 <ProductCard product={product} />
@@ -237,7 +266,7 @@ const LatestProducts = () => {
             <button onClick={() => setIsModalOpen(false)} className="absolute right-4 top-4 text-2xl text-gray-400 hover:text-red-500 z-50 bg-gray-100 rounded-full p-1"><IoClose /></button>
 
             <div className="md:w-1/2 p-10 bg-[#f9f9f9] flex items-center justify-center border-r">
-              <img src={selectedProduct.image} alt={selectedProduct.name} className="max-h-[350px] object-contain transition-transform duration-500 hover:scale-110" />
+              <img src={selectedProduct.thumbnail || (selectedProduct.images && selectedProduct.images[0]?.url) || selectedProduct.image || "https://placehold.co/400x400?text=Product"} alt={selectedProduct.name} className="max-h-[350px] object-contain transition-transform duration-500 hover:scale-110" />
             </div>
 
             <div className="md:w-1/2 p-10 overflow-y-auto">
@@ -251,8 +280,8 @@ const LatestProducts = () => {
               </div>
 
               <div className="flex items-center gap-4 mb-6">
-                <span className="text-4xl font-black text-red-500">₹{selectedProduct.price || selectedProduct.newPrice}</span>
-                <span className="text-xl text-gray-200 line-through font-bold">₹{selectedProduct.oldPrice}</span>
+                <span className="text-4xl font-black text-red-500">₹{(selectedProduct.sellingPrice || selectedProduct.price || selectedProduct.newPrice || 0).toLocaleString()}</span>
+                <span className="text-xl text-gray-200 line-through font-bold">₹{(selectedProduct.mrp || selectedProduct.oldPrice || 0).toLocaleString()}</span>
               </div>
 
               <p className="text-sm text-gray-500 leading-relaxed mb-8">{selectedProduct.description || "Premium quality product from our latest collection."}</p>

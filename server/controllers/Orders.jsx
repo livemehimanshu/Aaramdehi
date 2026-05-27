@@ -57,7 +57,7 @@ const Orders = () => {
                                     <div className="flex items-center gap-4">
                                         <div className="w-16 h-16 bg-gray-50 rounded-xl overflow-hidden border border-gray-100">
                                             <img 
-                                                src={order.orderItems[0]?.image || 'https://via.placeholder.com/100'} 
+                                                src={order.orderItems[0]?.image || 'https://placehold.co/100x100?text=📦'} 
                                                 alt="product" 
                                                 className="w-full h-full object-cover"
                                             />

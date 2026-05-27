@@ -1,16 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { FcGoogle } from "react-icons/fc";
+import { useLocation, useNavigate } from 'react-router-dom';
 import { IoEyeOutline, IoEyeOffOutline, IoShieldCheckmarkOutline, IoWarningOutline } from "react-icons/io5";
+// APIs import
+import { loginAPI, signupAPI } from '../../../../src/api/authAndAdminApi.js';
 
 const Auth = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const [isLogin, setIsLogin] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     
-    // --- Security States ---
+    // Updated to match backend fields: name, email, mobile, password, confirmPassword
+    const [formData, setFormData] = useState({ 
+        name: '', 
+        email: '', 
+        mobile: '', 
+        password: '', 
+        confirmPassword: '' 
+    });
+    
     const [attempts, setAttempts] = useState(0); 
     const [isLocked, setIsLocked] = useState(false);
 
@@ -18,49 +27,62 @@ const Auth = () => {
         setIsLogin(location.pathname === '/register' ? false : true);
     }, [location]);
 
-    // 1. Input Sanitization (XSS Attack Prevention)
     const sanitizeInput = (str) => str.replace(/[<>]/g, ""); 
-
-    // 2. Strong Password Validation
-    const isStrongPassword = (pw) => {
-        return /[A-Z]/.test(pw) && /[0-9]/.test(pw) && /[^A-Za-z0-9]/.test(pw);
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (isLocked) return alert("System Locked! Too many attempts. Wait 30 seconds.");
+        if (isLocked) return alert("CRITICAL: System Locked! Wait 30 seconds.");
 
         const cleanEmail = sanitizeInput(formData.email);
         const cleanName = sanitizeInput(formData.name);
 
-        // Security Checks
+        // Basic Security Validation
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) return alert("Invalid Identity Format!");
-        if (formData.password.length < 8 || !isStrongPassword(formData.password)) {
-            return alert("Security Requirement: 8+ chars, 1 Uppercase, 1 Number, 1 Special Char.");
-        }
+        if (formData.password.length < 6) return alert("Security Requirement: Minimum 6 characters.");
 
         setLoading(true);
         
         try {
-            // Mocking secure API call
-            await new Promise(resolve => setTimeout(resolve, 2000)); 
-            
-            // Simulation of a failed attempt
-            if(formData.password === "12345678") {
-                throw new Error("Brute force detected");
-            }
+            if (isLogin) {
+                // ====== LOGIN EXECUTION ======
+                const response = await loginAPI(cleanEmail, formData.password);
+                localStorage.setItem('accessToken', response.accessToken);
+                localStorage.setItem('userData', JSON.stringify(response.user));
+                
+                // ✅ Dispatch event taaki Header turant update ho jaye
+                window.dispatchEvent(new Event("userDataUpdated"));
 
-            alert(isLogin ? "Encrypted Session Established!" : "Account Initialized & Encrypted!");
+                alert("Encrypted Session Established!");
+                navigate(response.user.role === 'ADMIN' ? '/admin' : '/');
+            } else {
+                // ====== SIGNUP EXECUTION ======
+                if (formData.password !== formData.confirmPassword) {
+                    throw new Error("Passwords do not match!");
+                }
+
+                await signupAPI({
+                    name: cleanName,
+                    email: cleanEmail,
+                    mobile: formData.mobile,
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword
+                });
+
+                alert("Account Initialized! Check email for OTP.");
+                setIsLogin(true); // Login par bhej do signup ke baad
+            }
             setAttempts(0); 
         } catch (error) {
+            const errorMsg = error.response?.data?.message || error.message;
             setAttempts(prev => prev + 1);
+            
             if (attempts >= 4) {
                 setIsLocked(true);
-                setTimeout(() => { setIsLocked(false); setAttempts(0); }, 30000); // 30s Lock
-                alert("CRITICAL: Brute Force detected. Access Revoked for 30s.");
+                setTimeout(() => { setIsLocked(false); setAttempts(0); }, 30000);
+                alert("CRITICAL: Intrusion detected. Access Revoked for 30s.");
             } else {
-                alert(`Access Denied! ${5 - attempts} attempts remaining.`);
+                alert(`Access Denied: ${errorMsg}. ${4 - attempts} attempts left.`);
             }
         } finally {
             setLoading(false);
@@ -68,10 +90,8 @@ const Auth = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#060606] flex items-center justify-center p-4 font-sans relative overflow-hidden">
-            {/* Background Security Pulse */}
+        <div className="min-h-screen bg-[#060606] flex items-center justify-center p-4 font-sans relative overflow-hidden text-white">
             <div className={`absolute inset-0 transition-opacity duration-1000 ${isLocked ? 'bg-red-900/20 opacity-100' : 'opacity-0'}`}></div>
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-red-500/5 blur-[120px] rounded-full"></div>
             
             <div className={`bg-[#0d0d0d] w-full max-w-[450px] border ${isLocked ? 'border-red-600' : 'border-white/5'} rounded-sm shadow-2xl p-8 md:p-12 z-10 transition-all duration-500`}>
                 <div className="text-center mb-8">
@@ -84,51 +104,43 @@ const Auth = () => {
                     </div>
                 </div>
 
-                <form className="space-y-5" onSubmit={handleSubmit}>
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     {!isLogin && (
-                        <div>
-                            <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest block mb-1">Owner Alias</label>
-                            <input 
-                                type="text" 
-                                disabled={isLocked}
-                                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                                className="w-full h-12 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-white text-sm font-mono"
-                                placeholder="Enter Name"
-                                required
-                            />
-                        </div>
+                        <>
+                            <div>
+                                <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest block mb-1">Owner Alias</label>
+                                <input type="text" disabled={isLocked} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full h-11 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-sm font-mono" placeholder="Full Name" required />
+                            </div>
+                            <div>
+                                <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest block mb-1">Secure Line (Mobile)</label>
+                                <input type="tel" disabled={isLocked} onChange={(e) => setFormData({...formData, mobile: e.target.value})} className="w-full h-11 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-sm font-mono" placeholder="Mobile Number" required />
+                            </div>
+                        </>
                     )}
 
                     <div>
                         <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest block mb-1">Identity (Email)</label>
-                        <input 
-                            type="email" 
-                            disabled={isLocked}
-                            onChange={(e) => setFormData({...formData, email: e.target.value})}
-                            className="w-full h-12 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-white text-sm font-mono"
-                            placeholder="user@aaramdehi.com"
-                            required
-                        />
+                        <input type="email" disabled={isLocked} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full h-11 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-sm font-mono" placeholder="user@aaramdehi.com" required />
                     </div>
 
                     <div className="relative">
                         <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest block mb-1">Access Key</label>
-                        <input 
-                            type={showPassword ? "text" : "password"} 
-                            disabled={isLocked}
-                            onChange={(e) => setFormData({...formData, password: e.target.value})}
-                            className="w-full h-12 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-white text-sm font-mono"
-                            placeholder="••••••••"
-                            required
-                        />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[34px] text-gray-600 hover:text-red-500 transition-colors">
+                        <input type={showPassword ? "text" : "password"} disabled={isLocked} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full h-11 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-sm font-mono" placeholder="••••••••" required />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-[32px] text-gray-600 hover:text-red-500 transition-colors">
                             {showPassword ? <IoEyeOffOutline size={18}/> : <IoEyeOutline size={18}/>}
                         </button>
                     </div>
 
+                    {!isLogin && (
+                        <div className="relative">
+                            <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest block mb-1">Confirm Access Key</label>
+                            <input type="password" disabled={isLocked} onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})} className="w-full h-11 bg-[#141414] border border-white/5 px-4 focus:border-red-600 outline-none transition-all text-sm font-mono" placeholder="••••••••" required />
+                        </div>
+                    )}
+
                     <button 
-                        disabled={loading || isLocked}
-                        className={`w-full h-12 font-black uppercase text-xs tracking-[2px] transition-all shadow-xl 
+                        disabled={loading || isLocked} // ✅ Prevent double submission
+                        className={`w-full h-12 font-black uppercase text-xs tracking-[2px] transition-all shadow-xl mt-4
                         ${isLocked ? 'bg-gray-800 text-gray-500 cursor-not-allowed' : 
                           loading ? 'bg-red-900 animate-pulse' : 'bg-red-600 text-white hover:bg-white hover:text-black'}`}
                     >
@@ -144,6 +156,7 @@ const Auth = () => {
                 </p>
             </div>
         </div>
+        
     );
 };
 

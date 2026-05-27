@@ -11,7 +11,7 @@ STOP_WORDS = set([
     'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were', 'will', 'with',
     'hai', 'ko', 'ka', 'ke', 'ki', 'mein', 'me', 'main', 'aur', 'ek', 'se', 'par', 'bhi', 'ya', 'yeh', 'woh', 'jo', 'jab', 'tab', 'kya', 'kyun', 'kaise', 'kon', 'kaha', 'kabhi', 'har', 'sabhi', 'apna', 'apne', 'apni', 'hum', 'tum', 'unka', 'unki', 'unke', 'mera', 'meri', 'mere', 'tera', 'teri', 'tere', 'usko', 'uska', 'uski', 'uske', 'ismein', 'usmein', 'yahan', 'wahan', 'idhar', 'udhar', 'lekin', 'magar', 'aur', 'fir', 'phir', 'toh', 'tabhi', 'jabki', 'jaisa', 'jaise', 'jaisi', 'aisa', 'aise', 'aisi', 'kuch', 'kisi', 'kuchh', 'kisi', 'sab', 'sabhi', 'kya', 'kaun', 'kaise', 'kabhi', 'kahin', 'kaunse', 'kis', 'kisne', 'kiske', 'kiski'])
 class EngineItem:
-    __slots__ = ('id', 'title', 'category', 'is_essential', 'base_score', 'search_text', 'thumbnail', 'sellingPrice', 'tokens', 'norm_tokens')
+    __slots__ = ('id', 'title', 'category', 'is_essential', 'base_score', 'search_text', 'thumbnail', 'sellingPrice', 'tokens', 'norm_tokens', 'title_lower')
 
     def __init__(self, id, title, category, is_essential, thumbnail=None, sellingPrice=0):
         self.id = id
@@ -22,13 +22,13 @@ class EngineItem:
         self.sellingPrice = sellingPrice
         self.base_score = 1.0
         self.search_text = f"{title} {category}".lower()
+        self.title_lower = title.lower()
         
         # Pre-calculate tokens and normalized versions for performance
         self.tokens = self.search_text.split()
         self.norm_tokens = [re.sub(r'(.)\1+', r'\1', t) for t in self.tokens]
 
 class MultiversalEngine:
-    __slots__ = ('items', 'category_index', 'history', 'top_k', 'max_history')
 
     def __init__(self, catalog: list, top_k: int = 5):
         self.items = []
@@ -52,11 +52,15 @@ class MultiversalEngine:
         score = item.base_score
         is_match = False
 
-        FUZZY_THRESHOLD = 0.7 
+        FUZZY_THRESHOLD = 0.7
+        
+        # 0. Global Search Fix: Category boost instead of strict filter
+        if category and item.category.lower() == category.lower():
+            score += 5.0 # Give items in current category a head start
 
-        # Boost score if the category in user_context matches the item's category
-        if category and item.category == category:
-            score *= 2.0
+        # 1. Full Title Match (High Priority)
+        if " ".join(query_terms) in item.title_lower:
+            score += 15.0
 
         # Further boost for essential items during early morning hours (existing logic)
         if datetime.now().hour < 6 and item.is_essential:
@@ -80,6 +84,10 @@ class MultiversalEngine:
                     is_match = True
                     continue
 
+                # Faster check: If the term isn't even remotely similar to any token, skip difflib
+                if not any(term[0] == t[0] or term[-1] == t[-1] for t in item.tokens):
+                    continue
+
                 # 3. Token-level Fuzzy Matching
                 ratios = [difflib.SequenceMatcher(None, term, token).ratio() for token in item.tokens]
                 best_ratio = max(ratios) if ratios else 0
@@ -97,11 +105,11 @@ class MultiversalEngine:
                 # 4. Extreme Typo Match (Normalized matching)
                 for norm_token in item.norm_tokens:
                     if norm_term == norm_token:
-                        score += 5.0
+                        score += 8.0 # Boost normalized exact match (e.g. pilows -> pilos match pillow -> pilo)
                         is_match = True
                         break
-                    elif difflib.SequenceMatcher(None, norm_term, norm_token).ratio() > 0.85:
-                        score += 2.0
+                    elif difflib.SequenceMatcher(None, norm_term, norm_token).ratio() > 0.80:
+                        score += 5.0 # Higher boost for very close fuzzy matches
                         is_match = True
                         break
 
@@ -122,10 +130,8 @@ class MultiversalEngine:
             if key == 'category':
                 category = val
 
-        candidates = self.category_index.get(category, self.items)
-
         scored = []
-        for item in candidates:
+        for item in self.items: # Search through ALL items
             score, is_match = self._score_item(item, query_terms, norm_query_terms, category)
             if not query_terms or is_match:
                 scored.append({

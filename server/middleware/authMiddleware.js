@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import UserModel from '../models/user.model.js';
+import { findById } from '../config/db.js';
 
 export const isAuthenticatedUser = async (req, res, next) => {
     try {
@@ -10,9 +10,15 @@ export const isAuthenticatedUser = async (req, res, next) => {
         }
 
         const decodedData = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        
-        req.user = await UserModel.findById(decodedData.id).select('-password -forgot_password_otp -forgot_password_expiry');
-        req.userId = decodedData.id; 
+        const user = await findById('users', decodedData.id);
+
+        if (!user) {
+            return res.status(401).json({ message: 'User not found', success: false });
+        }
+
+        const { password, forgot_password_otp, forgot_password_expiry, ...safeUser } = user;
+        req.user = safeUser;
+        req.userId = decodedData.id;
         next();
     } catch (error) {
         if (error.name === 'JsonWebTokenError') return res.status(401).json({ message: 'Invalid Token, please login again', success: false });

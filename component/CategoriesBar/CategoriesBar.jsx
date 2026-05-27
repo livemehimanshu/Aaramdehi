@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     IoHeartOutline, 
     IoBedOutline, 
@@ -7,15 +7,57 @@ import {
     IoShirtOutline
 } from "react-icons/io5";
 import { Link } from 'react-router-dom';
+import { getActiveCategoriesAPI } from '../../src/api/authAndAdminApi';
+
+// Map category names to icons
+const categoryIcons = {
+    'Bedroom': IoBedOutline,
+    'Living Room': IoAppsOutline,
+    'Kitchen': IoCheckmarkCircleOutline,
+    'Lighting': IoHeartOutline,
+    'Decor': IoShirtOutline,
+    'Pillows': IoHeartOutline,
+    'Mattress': IoBedOutline,
+    'Cushions': IoAppsOutline,
+    'Bedsheets': IoCheckmarkCircleOutline,
+    'Wellness': IoShirtOutline,
+};
 
 const CategoriesBar = () => {
-    const categories = [
+    const [categories, setCategories] = useState([
         { id: 1, name: 'Mattress', icon: IoBedOutline, path: '/category/mattress' },
         { id: 2, name: 'Pillows', icon: IoHeartOutline, path: '/category/pillows' },
         { id: 3, name: 'Cushions', icon: IoAppsOutline, path: '/category/cushions' },
         { id: 4, name: 'Bedsheets', icon: IoCheckmarkCircleOutline, path: '/category/bedsheets' },
         { id: 5, name: 'Wellness', icon: IoShirtOutline, path: '/category/wellness' },
-    ];
+    ]); // Default categories as fallback
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    const fetchCategories = async () => {
+        try {
+            setLoading(true);
+            const response = await getActiveCategoriesAPI();
+            
+            if (response.success && response.data && Array.isArray(response.data)) {
+                const fetchedCategories = response.data.map((cat, index) => ({
+                    id: cat._id || index,
+                    name: cat.name,
+                    icon: categoryIcons[cat.name] || IoAppsOutline,
+                    path: `/category/${(cat.slug || cat.name).toLowerCase().replace(/\s+/g, '-')}`
+                }));
+                setCategories(fetchedCategories);
+            }
+        } catch (error) {
+            console.log('Using default categories (API fetch failed)');
+            // Keep default categories as fallback
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <section className="bg-white border-b border-gray-100">

@@ -29,7 +29,7 @@ import userRouter from './routes/user.route.js';
 import productRouter from './routes/product.route.js';
 import seoRouter from './routes/seo.route.js';
 import bannerRouter from './routes/banner.route.js';
-import categoryRouter from './routes/category.route.js';
+import categoryRouter from './routes/category.routes.js'; // ✅ Use version with root '/' handler
 import couponRouter from './routes/coupon.route.js';
 import appointmentRouter from './routes/appointment.route.js';
 import analyticsRouter from './routes/analytics.route.js';
@@ -46,7 +46,7 @@ const app = express();
 // Brute force attacks on admin panels ko rokne ke liye
 const adminLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, 
-    max: 50000, // Further increased for development environment
+    max: 100000, // ✅ Increased to handle larger traffic bursts
     message: {
         success: false,
         message: "Too many requests. Please try again later.",
@@ -132,40 +132,48 @@ async function syncAIProductsToPython() {
     const products = await findAll('products');
     const productsList = Array.isArray(products) ? products : Object.values(products || {});
 
-    if (!productsList || productsList.length === 0) {
-        throw new Error("No products found in Firebase to sync.");
+    const mappedProducts = productsList
+        .filter(p => p && typeof p === 'object') // ✅ Filter out nulls or invalid entries
+        .map((p) => {
+            // Ensure all fields are defined to prevent JSON nulls
+            return {
+                id: String(p._id || p.id || ""),
+                title: String(p.name || p.title || p.productName || "Untitled Product"),
+                category: String(typeof p.category === 'string' ? p.category : (p.category?.name || p.category?.label || "General")),
+                sellingPrice: parseFloat(p.sellingPrice || p.price || p.mrp || 0),
+                thumbnail: String(p.thumbnail || (p.images && p.images[0]?.url) || ""),
+                is_essential: Boolean(p.is_essential || p.essential || false)
+            };
+        })
+        .filter(p => p.id && p.title !== "Untitled Product"); // ✅ Final safety check
+
+    if (mappedProducts.length === 0) {
+        console.warn("⚠️ No valid products found in Firebase to sync.");
+        return 0;
     }
 
-    const mappedProducts = productsList.map((p, index) => {
-        const categoryValue = typeof p?.category === 'object'
-            ? (p.category?.name || p.category?.label || "General")
-            : (p?.category || "General");
-        const sellingPrice = Number(p?.sellingPrice ?? p?.price ?? p?.mrp ?? 0);
+    try {
+        const pythonUrl = process.env.PYTHON_SEARCH_URL || 'http://127.0.0.1:8001/api/sync-catalog';
+        const pythonResponse = await fetch(pythonUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(mappedProducts),
+            // Prevent hanging the server if Python service is slow
+            signal: AbortSignal.timeout(5000) 
+        });
 
-        return {
-            id: String(p?._id ?? p?.id ?? p?.key ?? `product_${index}`),
-            title: p?.name || p?.title || p?.productName || p?.label || "Untitled Product",
-            category: categoryValue || "General",
-            sellingPrice: Number.isFinite(sellingPrice) ? sellingPrice : 0,
-            thumbnail: p?.thumbnail || p?.image || (Array.isArray(p?.images) ? (p.images[0]?.url || p.images[0]) : "") || "",
-            is_essential: Boolean(p?.is_essential ?? p?.essential ?? false),
-            description: p?.description || p?.desc || "",
-        };
-    });
+        if (!pythonResponse.ok) {
+            const errorBody = await pythonResponse.text();
+            console.warn(`⚠️ AI Search Sync failed with status ${pythonResponse.status}: ${errorBody}`);
+            return 0;
+        }
 
-    const pythonUrl = process.env.PYTHON_SEARCH_URL || 'http://127.0.0.1:8001/api/sync-catalog';
-    const pythonResponse = await fetch(pythonUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mappedProducts)
-    });
-
-    if (!pythonResponse.ok) {
-        const errorBody = await pythonResponse.text();
-        throw new Error(`AI Search Sync Failed: ${pythonResponse.status} ${pythonResponse.statusText} - ${errorBody}`);
+        return mappedProducts.length;
+    } catch (err) {
+        // Log error but don't throw, allowing the caller (Order process) to continue
+        console.error("❌ AI Search Engine Offline or Unreachable:", err.message);
+        return 0;
     }
-
-    return mappedProducts.length;
 }
 
 // ✅ Helper: Sync catalog with Python AI Search
@@ -200,8 +208,11 @@ app.listen(PORT, async () => {
     console.log(`🔥 Connected to Firebase Realtime Database`);
 
     try {
-        const syncedCount = await syncAIProductsToPython();
-        console.log(`✅ Startup sync completed: ${syncedCount} products indexed to Python AI Search.`);
+        // Wait 2 seconds for Python engine to be ready
+        setTimeout(async () => {
+            const syncedCount = await syncAIProductsToPython();
+            console.log(`✅ Startup sync completed: ${syncedCount} products indexed to Python AI Search.`);
+        }, 2000);
     } catch (startupErr) {
         console.warn(`⚠️ Startup AI sync failed: ${startupErr.message}`);
     }

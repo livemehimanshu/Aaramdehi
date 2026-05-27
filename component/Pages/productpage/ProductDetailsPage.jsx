@@ -3,34 +3,43 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   FiHeart, FiShoppingCart, FiPlus, FiMinus, FiCheck, FiArrowRight, FiX 
 } from 'react-icons/fi';
-import { getAllProductsAPI, validateCouponAPI } from '../../../src/api/authAndAdminApi';
+import { getAllProductsAPI, validateCouponAPI } from '@/api/authAndAdminApi';
 import { BsLightningCharge } from 'react-icons/bs';
 import SEO from '../../header/SEO'; 
-import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
+import { AiFillStar } from 'react-icons/ai';
 import PopularProduct from '../../slider/PopularProducts'; 
 import HomeBanner from '../../banneradds/HomeBanner';
-import { addToRecentlyViewed } from '../../../src/data/recentlyViewedUtils';
+import { addToRecentlyViewed } from '@/data/recentlyViewedUtils';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { reviewSchema } from '@/schemas/validationSchemas';
+import { productDetailsData, relatedItemsData } from '@/data/productDetails';
+import { useCart } from '@/hooks/useCart';
+import { sanitizationUtils } from '@/utils/sanitizationUtils';
+import toast from 'react-hot-toast'; // ✅ Import Toast
 
-// Temporary placeholders to prevent undefined errors during build
-const productDetailsData = {}; 
-const relatedItemsData = [];
-const PLACEHOLDER_IMAGE = "https://via.placeholder.com/600x750?text=No+Image";
+const PLACEHOLDER_IMAGE = "https://placehold.co/600x750?text=No+Image";
 
 const ProductDetailsPage = () => {
   const navigate = useNavigate(); 
-  const { id } = useParams(); 
+  const { id } = useParams();
+  const { addToCart: addToCartContext, addToWishlist, isInWishlist } = useCart(); 
 
   // --- STATES ---
   const [productData, setProductData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(""); 
+  const [selectedImage, setSelectedImage] = useState(PLACEHOLDER_IMAGE); 
   const [selectedSize, setSelectedSize] = useState(null); 
   const [quantity, setQuantity] = useState(1);
-  const [wishlist, setWishlist] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false); 
-  const [newReview, setNewReview] = useState({ user: "", rating: 5, comment: "" });
+  
+  // ✅ Setup React Hook Form for Reviews
+  const { register, handleSubmit, formState: { errors: reviewErrors }, reset: resetReview } = useForm({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: { rating: 5, comment: '', userName: '' }
+  });
 
   const [couponInput, setCouponInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0); 
@@ -39,7 +48,15 @@ const ProductDetailsPage = () => {
 
   const relatedItems = relatedItemsData;
 
-  // Fetch Product Data
+  const parsePrice = (rawPrice) => {
+    if (rawPrice == null) return 0;
+    const numeric = typeof rawPrice === 'number'
+      ? rawPrice
+      : Number(String(rawPrice).replace(/[^0-9.-]+/g, ""));
+    return Number.isNaN(numeric) ? 0 : numeric;
+  };
+
+  // useEffect: Product data fetch karna
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -50,11 +67,13 @@ const ProductDetailsPage = () => {
         if (productDetailsData[id]) {
           const data = productDetailsData[id];
           setProductData(data);
-          setSelectedImage(data.images[0]?.url || data.images[0]);
+          setSelectedImage((data.images[0]?.url || data.images[0]) || PLACEHOLDER_IMAGE);
           setSelectedSize(data.sizes[0]);
           setReviews(data.reviews || []);
         } else {
-          const res = await getAllProductsAPI();
+          // Performance Fix: Saare products download karne ke bajaye single product fetch karein
+          // Note: Backend mein getProductById endpoint hona chahiye
+          const res = await getAllProductsAPI({ limit: 1000 }); 
           const found = res.data?.find(p => String(p._id || p.id) === String(id));
           
           if (found) {
@@ -65,7 +84,7 @@ const ProductDetailsPage = () => {
               description: found.description || "Premium quality product.",
               images: found.images?.length ? found.images : [found.thumbnail],
               sizes: found.sizes?.length 
-                ? found.sizes.map(s => ({ ...s, oldPrice: s.oldPrice || null })) 
+                ? found.sizes.map(s => ({ ...s, oldPrice: null })) 
                 : [{ 
                     label: 'Standard', 
                     price: found.sellingPrice || found.price, 
@@ -77,7 +96,7 @@ const ProductDetailsPage = () => {
               tags: found.tags || []
             }; 
             setProductData(mappedData);
-            setSelectedImage(mappedData.images[0]?.url || mappedData.images[0]);
+            setSelectedImage((mappedData.images[0]?.url || mappedData.images[0]) || PLACEHOLDER_IMAGE);
             setSelectedSize(mappedData.sizes[0]);
           }
         }
@@ -88,12 +107,7 @@ const ProductDetailsPage = () => {
       }
     };
     fetchProduct();
-
-    const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-    const isPresent = savedWishlist.some(item => String(item._id || item.id) === String(id));
-    setWishlist(isPresent);
-
-  }, [id]);
+    }, [id]);
 
   useEffect(() => {
     if (productData) {
@@ -110,65 +124,69 @@ const ProductDetailsPage = () => {
   const [selectedBundle, setSelectedBundle] = useState([101, 102]); 
 
   const bundleTotal = useMemo(() => {
-    let total = selectedSize?.price || 0;
+    let total = parsePrice(selectedSize?.price);
     relatedItems.forEach(item => {
-      if (selectedBundle.includes(item.id)) total += item.price;
+      if (selectedBundle.includes(item.id)) total += parsePrice(item.price);
     });
     return total;
   }, [selectedBundle, selectedSize, relatedItems]);
 
   // Calculate Final Price after Coupon
   const finalPrice = useMemo(() => {
-    const basePrice = selectedSize?.price || 0;
-    if (appliedDiscount > 0) {
-      return basePrice - (basePrice * appliedDiscount / 100);
-    }
-    return basePrice;
+    const basePrice = parsePrice(selectedSize?.price);
+    return Math.max(0, basePrice - appliedDiscount);
   }, [selectedSize, appliedDiscount]);
 
   // --- FUNCTIONALITY HANDLERS ---
 
-  // Apply Coupon Function (Handles NaN fix & Object sync with backend)
   const handleApplyCoupon = async (codeFromModal) => {
     const codeToApply = codeFromModal || couponInput;
     if (!codeToApply) return setCouponMessage({ type: 'error', text: 'Please enter a coupon code' });
+
+    // Check if user is logged in (Once per user logic depends on userId)
+    // Dono keys check karein taaki kisi bhi login system se kaam kare
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    if (!token) {
+      setCouponMessage({ type: 'error', text: 'Please login to apply coupons', code: '' });
+      setIsCouponModalOpen(false);
+      return;
+    }
     
     try {
       setIsValidating(true);
+      const amount = parsePrice(selectedSize?.price);
+
+      // Get userId from localStorage to pass it to validation
+      // JSON parsing safe banayein agar data na ho
+      const rawUserData = localStorage.getItem('userData');
+      const userData = rawUserData ? JSON.parse(rawUserData) : null;
       
-      // Robust Price Parsing: Currency symbols aur commas ko handle karta hai
-      const rawPrice = selectedSize?.price || productData?.sizes?.[0]?.price || 0;
-      const amount = typeof rawPrice === 'string' 
-        ? Number(rawPrice.replace(/[^0-9.-]+/g, "")) 
-        : Number(rawPrice || 0);
+      const userId = userData?._id || userData?.id;
 
-      if (isNaN(amount) || amount <= 0) {
-        throw new Error("Invalid product price detected.");
-      }
-
-      // Fix: Call API with object format like CheckoutPage
-      const res = await validateCouponAPI({ code: codeToApply, orderAmount: amount });
+      const res = await validateCouponAPI({ 
+        code: codeToApply, 
+        orderAmount: amount,
+        userId: userId // Ab backend ko pata chalega kaun user hai
+      });
       
       if (res.success) {
         setAppliedDiscount(res.data.discount);
         setCouponInput(codeToApply);
         setCouponMessage({ 
           type: 'success', 
-          text: `Applied! You saved ₹${((amount * res.data.discount) / 100).toLocaleString()}`,
+          text: `Applied! You saved ₹${res.data.discount.toLocaleString()}`,
           code: codeToApply 
         });
-        setIsCouponModalOpen(false); // Close modal on success
+        setIsCouponModalOpen(false); 
       } else {
         setAppliedDiscount(0);
         setCouponMessage({ type: 'error', text: res.message || 'Invalid Coupon Code', code: '' });
       }
     } catch (err) {
-      setAppliedDiscount(0); // Reset discount on error
-      setCouponMessage({ 
-        type: 'error', 
-        text: err.response?.data?.message || err.message || 'Coupon validation failed. Please try again.', 
-        code: '' 
-      });
+      setAppliedDiscount(0);
+      // Backend se aane wale exact error message ko dikhane ke liye
+      const errorMessage = err.response?.data?.message || err.message || 'Validation failed';
+      setCouponMessage({ type: 'error', text: errorMessage, code: '' });
     } finally {
       setIsValidating(false);
     }
@@ -181,57 +199,35 @@ const ProductDetailsPage = () => {
   };
 
   const handleToggleWishlist = () => {
-    let wishlistItems = JSON.parse(localStorage.getItem("wishlist")) || [];
     const productId = productData.id || id;
-    const isPresent = wishlistItems.some(item => String(item._id || item.id) === String(productId));
-
-    if (isPresent) {
-      wishlistItems = wishlistItems.filter(item => String(item._id || item.id) !== String(productId));
-      setWishlist(false);
-    } else {
-      wishlistItems.push({
-        id: productId,
-        name: productData.name,
-        brand: productData.brand,
-        price: finalPrice,
-        image: selectedImage,
-        rating: productData.rating
-      });
-      setWishlist(true);
-    }
-
-    localStorage.setItem("wishlist", JSON.stringify(wishlistItems));
-    window.dispatchEvent(new Event("wishlistUpdated"));
+    
+    addToWishlist({
+      id: productId,
+      name: productData.name,
+      brand: productData.brand,
+      price: finalPrice,
+      image: selectedImage,
+      rating: productData.rating || 5
+    });
   };
 
   const handleAddToCart = () => {
-    let cart = JSON.parse(localStorage.getItem("cart")) || [];
     const productId = productData.id || id;
-    const isExist = cart.find(item => String(item._id || item.id) === String(productId));
 
     const productToAdd = {
       ...productData,
       id: productId,
       qty: quantity,
       price: finalPrice, 
-      originalPrice: selectedSize?.price, 
+      originalPrice: parsePrice(selectedSize?.price),
       appliedCoupon: appliedDiscount > 0 ? couponInput : null,
-      discountAmount: (selectedSize?.price || 0) - finalPrice,
+      discountAmount: appliedDiscount, // Assuming appliedDiscount is the amount saved, not percentage
       image: selectedImage,
       selectedSize: selectedSize?.label
     };
 
-    if (isExist) {
-      cart = cart.map(item => 
-        String(item._id || item.id) === String(productId) ? { ...item, qty: item.qty + quantity } : item
-      );
-    } else {
-      cart.push(productToAdd);
-    }
-
-    localStorage.setItem("cart", JSON.stringify(cart));
-    window.dispatchEvent(new Event("cartUpdated"));
-    alert(`${productData.name} added to cart!`);
+    addToCartContext(productToAdd, quantity);
+    toast.success(`${sanitizationUtils.sanitizeText(productData.name)} added to cart!`); // ✅ Beautiful Toast
   };
 
   const handleBuyNow = () => {
@@ -250,11 +246,11 @@ const ProductDetailsPage = () => {
     setSelectedBundle(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
   };
 
-  const handleReviewSubmit = (e) => {
-    e.preventDefault();
-    setReviews([{ ...newReview, id: Date.now(), date: "Today", helpful: 0 }, ...reviews]);
+  const onReviewSubmit = (data) => {
+    const newEntry = { user: data.userName, comment: data.comment, rating: data.rating, id: Date.now(), date: "Today" };
+    setReviews([newEntry, ...reviews]);
     setShowReviewForm(false);
-    setNewReview({ user: "", rating: 5, comment: "" });
+    resetReview();
   };
 
   if (loading) {
@@ -268,12 +264,13 @@ const ProductDetailsPage = () => {
   return (
     <div className="bg-white min-h-screen font-sans text-gray-900 overflow-x-hidden relative">
       
+      {/* SEO Component */}
       {productData && (
         <SEO
           title={productData.name}
           description={productData.description}
           keywords={productKeywords}
-          ogImage={selectedImage}
+          ogImage={selectedImage || PLACEHOLDER_IMAGE}
           ogUrl={window.location.href}
         />
       )}
@@ -281,28 +278,30 @@ const ProductDetailsPage = () => {
       {/* --- CONTENT CONTAINER --- */}
       <div className="container mx-auto px-4 md:px-12 lg:px-24 py-6 md:py-10">
         
-        {/* PRODUCT TOP SECTION */}
+        {/* PRODUCT TOP SECTION (Gallery + Info) */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
           <div className="lg:w-1/2 flex flex-col md:flex-row gap-4">
             <div className="order-2 md:order-1 flex md:flex-col gap-3 overflow-x-auto pb-2 shrink-0">
               {productData.images.map((img, i) => (
                 <img 
                   key={i} 
-                  src={img.url || img} 
-                  onClick={() => setSelectedImage(img.url || img)}
-                  className={`w-16 h-20 md:w-20 md:h-24 border-2 rounded-xl cursor-pointer object-cover ${selectedImage === (img.url || img) ? 'border-blue-900 scale-105' : 'border-gray-100'}`} 
+                  src={(img?.url || img) || PLACEHOLDER_IMAGE} 
+                  onClick={() => setSelectedImage((img?.url || img) || PLACEHOLDER_IMAGE)}
+                  className={`w-16 h-20 md:w-20 md:h-24 border-2 rounded-xl cursor-pointer object-cover ${selectedImage === (img?.url || img) ? 'border-blue-900 scale-105' : 'border-gray-100'}`} 
                   alt="thumbnail"
+                  onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }}
                 />
               ))}
             </div>
             <div className="order-1 md:order-2 flex-1 bg-gray-50 rounded-[20px] md:rounded-[30px] h-[350px] md:h-[550px] flex items-center justify-center relative border border-gray-100">
               <img 
-                src={selectedImage} 
+                src={selectedImage || PLACEHOLDER_IMAGE}
+                loading="lazy"
                 onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }}
                 className="max-h-[85%] object-contain mix-blend-multiply" 
                 alt="product" />
               <button onClick={handleToggleWishlist} className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform">
-                <FiHeart className={wishlist ? 'fill-red-500 text-red-500' : 'text-gray-300'} />
+                <FiHeart className={isInWishlist(productData?.id || id) ? 'fill-red-500 text-red-500' : 'text-gray-300'} />
               </button>
             </div>
           </div>
@@ -312,25 +311,22 @@ const ProductDetailsPage = () => {
               <p className="text-blue-900 font-black text-[10px] uppercase tracking-[3px] mb-1">{productData.brand}</p>
               <h1 className="text-2xl md:text-4xl font-black text-gray-900 leading-tight">{productData.name}</h1>
             </div>
-
-            {/* Price Box with Robust Parsing Fix */}
             <div className="bg-blue-50/50 p-4 rounded-2xl w-fit flex items-center gap-4">
-              <span className="text-3xl font-black text-blue-900">₹{finalPrice.toLocaleString()}</span>
-              {appliedDiscount > 0 ? (
+              <span className="text-3xl font-black text-blue-900">₹{Number(finalPrice || 0).toLocaleString()}</span>
+              {appliedDiscount > 0 && selectedSize?.price ? (
                 <span className="text-gray-400 line-through text-sm font-bold italic">
                   ₹{Number(String(selectedSize?.price || 0).replace(/[^0-9.-]+/g, "")).toLocaleString()}
                 </span>
               ) : (
                 selectedSize?.oldPrice && (
-                  <span className="text-gray-400 line-through text-sm font-bold italic">₹{selectedSize.oldPrice.toLocaleString()}</span>
+                  <span className="text-gray-400 line-through text-sm font-bold italic">₹{(selectedSize.oldPrice || 0).toLocaleString()}</span>
                 )
               )}
               {appliedDiscount > 0 && <span className="bg-emerald-500 text-white text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-wider animate-pulse">Coupon Applied</span>}
             </div>
-
             <p className="text-gray-500 text-sm leading-relaxed italic border-t pt-4">{productData.description}</p>
 
-            {/* OFFERS & COUPONS PANEL */}
+            {/* PROFESSIONAL COUPON SECTION */}
             <div className="pt-6 border-t mt-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Offers & Coupons</p>
@@ -376,7 +372,6 @@ const ProductDetailsPage = () => {
               )}
             </div>
 
-            {/* Size & Qty Pickers */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-b pb-6">
               <div className="space-y-2">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Size</p>
@@ -398,13 +393,17 @@ const ProductDetailsPage = () => {
                 </div>
               </div>
             </div>
-
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <button onClick={handleAddToCart} className="flex-1 bg-black text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest active:scale-95 transition-all">
-                 <FiShoppingCart size={18}/> Add to Cart
+              <button 
+                onClick={handleAddToCart}
+                className="flex-1 bg-black text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest active:scale-95 transition-all"
+              >
+                 <FiShoppingCart size={18}/> Add to Cart {/* Removed duplicate text */}
               </button>
-              <button onClick={handleBuyNow} className="flex-1 bg-blue-900 text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest shadow-xl shadow-blue-100 active:scale-95 transition-all">
+              <button 
+                onClick={handleBuyNow}
+                className="flex-1 bg-blue-900 text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest shadow-xl shadow-blue-100 active:scale-95 transition-all"
+              >
                  <BsLightningCharge size={18}/> Buy Now
               </button>
             </div>
@@ -416,12 +415,12 @@ const ProductDetailsPage = () => {
           <h2 className="text-xl font-black uppercase tracking-tighter mb-6">Frequently Bought Together</h2>
           <div className="bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center gap-8">
             <div className="flex items-center gap-4"> 
-               <img src={productData.images[0]?.url || productData.images[0]} className="w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl border-2 border-blue-900 p-1" alt="primary product" />
+               <img src={productData.images[0]?.url || productData.images[0] || PLACEHOLDER_IMAGE} className="w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl border-2 border-blue-900 p-1" alt="primary product" />
                <FiPlus className="text-gray-300" />
                {relatedItems.map(item => (
                  <React.Fragment key={item.id}>
-                    <img src={item.image} onClick={() => toggleBundleItem(item.id)}
-                      className={`w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl cursor-pointer transition-all ${selectedBundle.includes(item.id) ? 'opacity-100 ring-2 ring-blue-900' : 'opacity-30'}`} alt="bundle item" />
+                    <img src={item.image || PLACEHOLDER_IMAGE} onClick={() => toggleBundleItem(item.id)}
+                      className={`w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl cursor-pointer transition-all ${selectedBundle.includes(item.id) ? 'opacity-100 ring-2 ring-blue-900' : 'opacity-30'}`} alt="bundle item" onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }} />
                     {item.id === 101 && <FiPlus className="text-gray-300" />}
                  </React.Fragment>
                ))}
@@ -454,10 +453,26 @@ const ProductDetailsPage = () => {
                 {showReviewForm ? "Cancel" : "Post a Review"}
               </button>
               {showReviewForm && (
-                <form onSubmit={handleReviewSubmit} className="p-6 bg-white border-2 border-blue-50 rounded-3xl shadow-xl space-y-4">
-                  <input type="text" placeholder="Your Name" required className="w-full p-3 bg-gray-50 rounded-xl" value={newReview.user} onChange={e => setNewReview({...newReview, user: e.target.value})} />
-                  <textarea placeholder="Share your experience..." rows="3" required className="w-full p-3 bg-gray-50 rounded-xl" value={newReview.comment} onChange={e => setNewReview({...newReview, comment: e.target.value})}></textarea>
-                  <button type="submit" className="w-full bg-blue-900 text-white py-4 rounded-xl font-black text-[10px] uppercase">Post Review</button>
+                <form onSubmit={handleSubmit(onReviewSubmit)} className="p-6 bg-white border-2 border-blue-50 rounded-3xl shadow-xl space-y-4">
+                  <div>
+                    <input 
+                      type="text" 
+                      placeholder="Your Name" 
+                      {...register('userName')}
+                      className={`w-full p-3 bg-gray-50 rounded-xl outline-none border ${reviewErrors.userName ? 'border-red-500' : 'border-transparent'}`} 
+                    />
+                    {reviewErrors.userName && <p className="text-red-500 text-[10px] mt-1">{reviewErrors.userName.message}</p>}
+                  </div>
+                  <div>
+                    <textarea 
+                      placeholder="Share your experience..." 
+                      rows="3" 
+                      {...register('comment')}
+                      className={`w-full p-3 bg-gray-50 rounded-xl outline-none border ${reviewErrors.comment ? 'border-red-500' : 'border-transparent'}`}
+                    ></textarea>
+                    {reviewErrors.comment && <p className="text-red-500 text-[10px] mt-1">{reviewErrors.comment.message}</p>}
+                  </div>
+                  <button type="submit" className="w-full bg-blue-900 text-white py-4 rounded-xl font-black text-[10px] uppercase active:scale-95 transition-transform">Post Review</button>
                 </form>
               )}
             </div>
@@ -475,8 +490,10 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
+        {/* PRODUCT Page Banner - Bottom Placement */}
         <HomeBanner section="product" />
-      </div>
+
+      </div> {/* Container End */}
 
       {/* --- FULL WIDTH TRENDING SECTION --- */}
       <div className="mt-24 bg-[#f8f9fb] py-20 w-full overflow-hidden border-t">
@@ -486,22 +503,32 @@ const ProductDetailsPage = () => {
                <h2 className="text-3xl md:text-5xl font-black text-gray-900 uppercase tracking-tighter leading-none">You Might<br/> Also Love</h2>
                <p className="text-blue-900 font-bold text-xs tracking-[4px] mt-4 uppercase">Handpicked for You</p>
              </div>
-             <button onClick={() => navigate('/product')} className="group flex items-center gap-2 text-[10px] font-black text-blue-900 uppercase tracking-widest hover:gap-4 transition-all">
+             <button 
+               onClick={() => navigate('/product')} 
+               className="group flex items-center gap-2 text-[10px] font-black text-blue-900 uppercase tracking-widest hover:gap-4 transition-all"
+             >
                View All Products <FiArrowRight className="text-lg transition-transform" />
              </button>
            </div>
         </div>
+        
         <div className="w-full"> 
           <PopularProduct />
         </div>
       </div>
 
-      {/* --- COMPLETE DYNAMIC COUPON MODAL POPUP (FIXED) --- */}
+      {/* --- DYNAMIC COUPON MODAL POPUP COMPONENT --- */}
       {isCouponModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative animate-in fade-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setIsCouponModalOpen(false)} // Bahar click karne par band hoga
+        >
+          <div 
+            className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()} // Modal ke andar click karne par band nahi hoga
+          >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 pb-4 border-b border-gray-100">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-2 text-blue-900">
                 <BsLightningCharge size={22} className="text-red-500" />
                 <h3 className="text-lg font-black uppercase tracking-tight">Apply Coupon</h3>
@@ -514,48 +541,49 @@ const ProductDetailsPage = () => {
               </button>
             </div>
 
-            {/* Modal Scrollable Content Container */}
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
-              
-              {/* MANUAL COUPON INPUT SECTION */}
-              <div className="flex gap-2 mb-6">
+            {/* Modal Content */}
+            <div className="mt-6 space-y-4">
+              <div className="flex gap-2">
                 <input 
                   type="text" 
-                  placeholder="Enter Coupon Code" 
-                  value={couponInput}
+                  autoFocus // Modal khulte hi cursor yahan aa jayega
+                  placeholder="Enter Coupon Code (e.g. WELCOME10)" 
+                  value={couponInput} // Input field ki current value
                   onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-                  className="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-black outline-none focus:border-blue-900 transition-all"
+                  className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-blue-900"
                 />
                 <button 
                   onClick={() => handleApplyCoupon()}
-                  disabled={isValidating || !couponInput}
-                  className="bg-blue-900 text-white px-6 rounded-xl text-[10px] font-black uppercase hover:bg-black disabled:opacity-50 transition-all"
+                  disabled={isValidating}
+                  className="px-6 bg-blue-900 text-white rounded-xl text-xs font-black uppercase tracking-wider disabled:bg-gray-300 transition-colors"
                 >
-                  {isValidating ? '...' : 'Apply'}
+                  {isValidating ? 'Checking...' : 'Apply'}
                 </button>
               </div>
 
-              {/* LIST OF AVAILABLE OFFERS */}
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Available Offers For You</p>
-              
-              {[
-                { code: 'WELCOME50', desc: 'Get ₹50 flat discount on your first purchase.', discount: '₹50 OFF' },
-                { code: 'LUXE10', desc: '10% discount on orders above ₹1000.', discount: '10% OFF' },
-                { code: 'HIMANSHU', desc: 'Get custom active user discount offers.', discount: 'SPECIAL OFF' }
-              ].map((offer) => (
-                <div 
-                  key={offer.code}
-                  onClick={() => handleApplyCoupon(offer.code)} 
-                  className="flex items-center justify-between p-4 border border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-blue-900 hover:bg-blue-50/30 transition-all"
-                >
-                  <div className="space-y-1">
-                    <span className="px-2 py-0.5 bg-gray-100 rounded text-[10px] font-black tracking-wider text-gray-800">{offer.code}</span>
-                    <p className="text-xs font-bold text-gray-600">{offer.desc}</p>
-                  </div>
-                  <span className="text-[10px] font-black text-blue-900 uppercase shrink-0 ml-4">{offer.discount}</span>
+              {/* Error Message inside Modal */}
+              {couponMessage.type === 'error' && (
+                <div className="mt-2 flex items-center gap-2 text-rose-500 bg-rose-50 p-2 rounded-lg border border-rose-100">
+                  <span className="text-[10px] font-black uppercase tracking-tight">{couponMessage.text}</span>
                 </div>
-              ))}
+              )}
 
+              {/* Quick Available Offers / Examples */}
+              <div className="pt-4">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Available Offers For You</p>
+                <div className="space-y-2">
+                  <div 
+                    onClick={() => handleApplyCoupon("SAVE10")} 
+                    className="flex items-center justify-between p-3 border border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-blue-900 hover:bg-blue-50/30 transition-all"
+                  >
+                    <div>
+                      <span className="px-2 py-1 bg-gray-100 rounded text-[10px] font-black tracking-wider text-gray-800">SAVE10</span>
+                      <p className="text-xs font-bold text-gray-600 mt-1">Get 10% instant discount on your order.</p>
+                    </div>
+                    <span className="text-[10px] font-black text-blue-900 uppercase">Tap to Apply</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

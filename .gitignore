@@ -17,13 +17,5 @@ env/
 # Vercel
 .vercel
 *.json
-server/aaramdehi-*.json# 1. Saari harmless files ko stage karein
-git add .
-
-# 2. Ek naya clean commit banayein
-git commit -m "Remove service account secrets and update paths"
-
-# 3. GitHub par push karein
-git push origin main
-*.json
 server/aaramdehi-*.json
+server/config/serviceAccountKey.json

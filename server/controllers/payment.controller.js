@@ -1,77 +1,74 @@
-import Payment from "../models/payment.model.js";
+import { findAll, findById, create, updateById, deleteById } from "../config/db.js";
 
-// Get all payments
+const parseInteger = (value, fallback) => {
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? fallback : parsed;
+};
+
 export const getAllPayments = async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, paymentMethod } = req.query;
-    let filter = {};
+    const page = parseInteger(req.query.page, 1);
+    const limit = parseInteger(req.query.limit, 10);
+    const { status, paymentMethod } = req.query;
+
+    let payments = await findAll('payments');
 
     if (status) {
-      filter.status = status;
+      payments = payments.filter(payment => payment.status === status);
     }
-
     if (paymentMethod) {
-      filter.paymentMethod = paymentMethod;
+      payments = payments.filter(payment => payment.paymentMethod === paymentMethod);
     }
 
-    const skip = (page - 1) * limit;
-    const payments = await Payment.find(filter)
-      .populate("orderId", "orderNumber")
-      .populate("userId", "name email")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Payment.countDocuments(filter);
+    payments = payments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const total = payments.length;
+    const startIndex = (page - 1) * limit;
+    const paginated = payments.slice(startIndex, startIndex + limit);
 
     return res.json({
       success: true,
       message: "Payments fetched successfully",
-      data: payments,
+      data: paginated,
       pagination: {
         total,
-        page: parseInt(page),
-        limit: parseInt(limit),
-        pages: Math.ceil(total / limit),
-      },
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };
 
-// Get payment by ID
 export const getPaymentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const payment = await Payment.findById(id)
-      .populate("orderId")
-      .populate("userId", "name email phone");
+    const payment = await findById('payments', id);
 
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Payment not found",
+        message: "Payment not found"
       });
     }
 
     return res.json({
       success: true,
       message: "Payment fetched successfully",
-      data: payment,
+      data: payment
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };
 
-// Create payment
 export const createPayment = async (req, res) => {
   try {
     const {
@@ -89,11 +86,11 @@ export const createPayment = async (req, res) => {
     if (!orderId || !userId || !paymentMethod || !amount || !transactionId || !paymentGateway) {
       return res.status(400).json({
         success: false,
-        message: "Required fields are missing",
+        message: "Required fields are missing"
       });
     }
 
-    const payment = new Payment({
+    const payment = await create('payments', {
       orderId,
       userId,
       paymentMethod,
@@ -104,125 +101,111 @@ export const createPayment = async (req, res) => {
       status: "pending",
       cardDetails: cardDetails || null,
       upiId: upiId || null,
+      createdBy: req.userId || null
     });
-
-    await payment.save();
 
     return res.status(201).json({
       success: true,
       message: "Payment created successfully",
-      data: payment,
+      data: payment
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };
 
-// Update payment status
 export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, transactionId, gatewayResponse, errorMessage } = req.body;
-
-    const payment = await Payment.findById(id);
+    const payment = await findById('payments', id);
 
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Payment not found",
+        message: "Payment not found"
       });
     }
 
-    if (status) payment.status = status;
-    if (transactionId) payment.transactionId = transactionId;
-    if (gatewayResponse) payment.gatewayResponse = gatewayResponse;
-    if (errorMessage) payment.errorMessage = errorMessage;
+    const updatePayload = {};
+    if (status) updatePayload.status = status;
+    if (transactionId) updatePayload.transactionId = transactionId;
+    if (gatewayResponse) updatePayload.gatewayResponse = gatewayResponse;
+    if (errorMessage) updatePayload.errorMessage = errorMessage;
+    if (status === "completed") updatePayload.paymentDate = new Date().toISOString();
 
-    if (status === "completed") {
-      payment.paymentDate = new Date();
-    }
-
-    await payment.save();
+    const updatedPayment = await updateById('payments', id, updatePayload);
 
     return res.json({
       success: true,
       message: "Payment updated successfully",
-      data: payment,
+      data: updatedPayment
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };
 
-// Retry payment
 export const retryPayment = async (req, res) => {
   try {
     const { id } = req.params;
-    const payment = await Payment.findById(id);
+    const payment = await findById('payments', id);
 
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Payment not found",
+        message: "Payment not found"
       });
     }
 
     if (payment.status === "completed") {
       return res.status(400).json({
         success: false,
-        message: "Cannot retry a completed payment",
+        message: "Cannot retry a completed payment"
       });
     }
 
-    payment.retryCount += 1;
-    payment.status = "pending";
-    payment.nextRetryDate = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours later
-
-    await payment.save();
+    const updatedPayment = await updateById('payments', id, {
+      retryCount: (Number(payment.retryCount) || 0) + 1,
+      status: "pending",
+      nextRetryDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    });
 
     return res.json({
       success: true,
       message: "Payment retry scheduled successfully",
-      data: payment,
+      data: updatedPayment
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };
 
-// Get payment statistics
 export const getPaymentStats = async (req, res) => {
   try {
-    const totalPayments = await Payment.countDocuments();
-    const completedPayments = await Payment.countDocuments({
-      status: "completed",
-    });
-    const pendingPayments = await Payment.countDocuments({ status: "pending" });
-    const failedPayments = await Payment.countDocuments({ status: "failed" });
+    const payments = await findAll('payments');
+    const totalPayments = payments.length;
+    const completedPayments = payments.filter(payment => payment.status === 'completed').length;
+    const pendingPayments = payments.filter(payment => payment.status === 'pending').length;
+    const failedPayments = payments.filter(payment => payment.status === 'failed').length;
+    const totalAmount = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
 
-    const totalAmount = await Payment.aggregate([
-      { $match: { status: "completed" } },
-      { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
-
-    const paymentsByMethod = await Payment.aggregate([
-      {
-        $group: {
-          _id: "$paymentMethod",
-          count: { $sum: 1 },
-          amount: { $sum: "$amount" },
-        },
-      },
-    ]);
+    const paymentsByMethod = payments.reduce((acc, payment) => {
+      const method = payment.paymentMethod || 'Unknown';
+      if (!acc[method]) acc[method] = { _id: method, count: 0, amount: 0 };
+      acc[method].count += 1;
+      acc[method].amount += Number(payment.amount || 0);
+      return acc;
+    }, {});
 
     return res.json({
       success: true,
@@ -232,39 +215,40 @@ export const getPaymentStats = async (req, res) => {
         completedPayments,
         pendingPayments,
         failedPayments,
-        totalAmount: totalAmount[0]?.total || 0,
-        paymentsByMethod,
-      },
+        totalAmount,
+        paymentsByMethod: Object.values(paymentsByMethod)
+      }
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };
 
-// Delete payment
 export const deletePayment = async (req, res) => {
   try {
     const { id } = req.params;
-    const payment = await Payment.findByIdAndDelete(id);
+    const payment = await findById('payments', id);
 
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: "Payment not found",
+        message: "Payment not found"
       });
     }
 
+    await deleteById('payments', id);
+
     return res.json({
       success: true,
-      message: "Payment deleted successfully",
+      message: "Payment deleted successfully"
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message
     });
   }
 };

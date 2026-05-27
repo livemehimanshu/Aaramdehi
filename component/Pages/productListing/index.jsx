@@ -3,24 +3,90 @@ import { Link } from 'react-router-dom';
 import Sidebar from '../../Sidebar'; 
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
-import { AiFillStar, AiOutlineHeart, AiFillHeart, AiOutlineEye } from 'react-icons/ai';
+import { AiFillStar, AiOutlineHeart, AiFillHeart, AiOutlineEye, AiOutlineRight } from 'react-icons/ai';
 import { FiShoppingCart } from 'react-icons/fi'; 
 import { BsLightningCharge } from 'react-icons/bs'; 
-import { ALL_PRODUCTS_DATA } from '../../../src/data/products'; // ✅ NOTE: In a real app, this should come from an API call
 import { addToRecentlyViewed } from '../../../src/data/recentlyViewedUtils';
-import { useCart } from '../../../src/hooks/useCart';
-
-// ===== PRODUCT LISTING PAGE =====
+import AaramdehiAdBanner from '../../header/AaramdehiAdBanner'; // Ad Banner import kiya
+import HomeBanner from '../../banneradds/HomeBanner'; // Import HomeBanner
+import SEO from '../../header/SEO'; // SEO Component Import Kiya
+import { getAllProductsAPI, getActiveCategoriesAPI } from '../../../src/api/authAndAdminApi';
 // Yeh page sare products ko grid format mein show karta hai
 // Ismein filtering, sorting, pagination, wishlist, cart sab features hain
 
+const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product+Not+Found";
+
 const ProductListing = () => {
   // --- STATE MANAGEMENT ---
+  const [products, setProducts] = useState([]); // Database products
+  const [categories, setCategories] = useState([]); // Database categories
+  const [selectedCategory, setSelectedCategory] = useState('All'); // Category filter state
+  const [activeFilters, setActiveFilters] = useState({ brands: [], rating: 0, inStock: false });
+  const [loading, setLoading] = useState(true); // Loading state
   const [maxPrice, setMaxPrice] = useState(10000); // Max price filter
   const [sortBy, setSortBy] = useState('relevance'); // Sorting option
   const [page, setPage] = useState(1); // Current page number
+  const [wishlist, setWishlist] = useState([]); // Wishlist mein jo items hain localStorage se load honge
 
-  const { addToCart, wishlist, addToWishlist, removeFromWishlist, isInWishlist } = useCart();
+  useEffect(() => {
+    // --- FETCH PRODUCTS FROM DATABASE ---
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await getAllProductsAPI({ limit: 100 }); // Saare products mangwayein
+        
+        // Handle both object with data property and direct array
+        if (res && res.success && Array.isArray(res.data)) {
+          setProducts(res.data);
+          console.log("📦 Products loaded:", res.data);
+        } else if (Array.isArray(res)) {
+          setProducts(res);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProducts();
+
+    // --- FETCH CATEGORIES FROM DATABASE ---
+    const loadCategories = async () => {
+      try {
+        const res = await getActiveCategoriesAPI();
+        
+        if (res && (res.success || res.data) && Array.isArray(res.data)) {
+          setCategories(res.data);
+        } else if (Array.isArray(res)) {
+          setCategories(res);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+    loadCategories();
+
+    // --- LOAD WISHLIST FROM LOCALSTORAGE ---
+    const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+    setWishlist(savedWishlist);
+
+    // Event listener: jab dusre component se wishlist update ho toh yahan bhi update ho (for wishlist icon)
+    const handleWishlistUpdate = () => {
+      const updatedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
+      setWishlist(updatedWishlist);
+    };
+
+    window.addEventListener("wishlistUpdated", handleWishlistUpdate);
+    return () => window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
+  }, []);
+
+  // Debugging: Log data whenever it changes
+  useEffect(() => {
+    if (categories.length > 0) {
+      console.log("✅ Categories loaded in ProductListing:", categories);
+    }
+  }, [categories]);
 
   // Function: Product ko dekhne par recently viewed mein add karna
   const handleProductView = (product) => {
@@ -29,64 +95,194 @@ const ProductListing = () => {
 
   // Function: Product ko cart mein add karna
   const handleAddToCart = (product) => {
-    addToCart(product, 1);
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const productId = product._id || product.id; // Prioritize _id from Firebase, fallback to id
+    const isExist = cart.find(item => String(item.id) === String(productId)); // Compare with item.id in cart
+
+    if (isExist) {
+      cart = cart.map(item => String(item.id) === String(productId) ? { ...item, qty: (item.qty || 1) + 1 } : item); // Use item.id for consistency in cart array
+    } else {
+      cart.push({ ...product, qty: 1, id: productId, price: product.sellingPrice || product.price || product.newPrice || product.oldPrice || 0 }); // Consistent ID: Use id for cart, and ensure price is captured
+      if (cart[cart.length - 1].price === 0) {
+        console.warn("Product added to cart with 0 price from ProductListing:", product.name, "Original product:", product);
+          }
+    }
+
+    localStorage.setItem("cart", JSON.stringify(cart));
+    window.dispatchEvent(new Event("cartUpdated"));
     alert(`${product.name} added to Aaramdehi cart!`);
   };
 
+  // Function: Wishlist mein item add/remove karna localStorage se
   const toggleWishlist = (e, product) => {
     e.preventDefault(); 
     e.stopPropagation();
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+
+    // localStorage se wishlist nikalo
+    let wishlistData = JSON.parse(localStorage.getItem("wishlist")) || [];
+    const productId = product._id || product.id;
+    
+    const isInWishlist = wishlistData.some(item => String(item.id) === String(productId)); // Compare with item.id in wishlist
+
+    if (isInWishlist) {
+      // Agar already hai toh remove karo
+      wishlistData = wishlistData.filter(item => String(item.id) !== String(productId)); // Use item.id for consistency in wishlist array
     } else {
-      addToWishlist(product);
+      const productToSave = { // Ensure id is present for wishlist
+        id: productId,
+        name: product.name,
+        brand: product.brand || "Aaramdehi",
+        price: product.sellingPrice || product.price || product.newPrice || product.oldPrice || 0, // Robust price selection
+        oldPrice: product.mrp || product.oldPrice || 0,
+        rating: product.rating || 5,
+        image: product.thumbnail || (product.images && product.images[0]?.url) || product.image, // Robust image selection
+        category: product.category || "Uncategorized"
+      };
+      wishlistData.push(productToSave);
+      if (wishlistData[wishlistData.length - 1].price === 0) {
+        console.warn("Product added to wishlist with 0 price from ProductListing:", product.name, "Original product:", product);
+      }
+    }
+
+    // localStorage mein save karo
+    localStorage.setItem("wishlist", JSON.stringify(wishlistData));
+    
+    // Update state aur event bhejo dusre components ko
+    setWishlist(wishlistData);
+    window.dispatchEvent(new Event("wishlistUpdated"));
+  };
+
+  // Filter Handler for Sidebar
+  const handleFilterChange = (type, value, checked) => {
+    setPage(1); // Reset to first page on filter change
+    if (type === 'brand') {
+      setActiveFilters(prev => ({
+        ...prev,
+        brands: checked ? [...prev.brands, value] : prev.brands.filter(b => b !== value)
+      }));
+    } else if (type === 'rating') {
+      setActiveFilters(prev => ({ ...prev, rating: checked ? value : 0 }));
+    } else if (type === 'availability') {
+      setActiveFilters(prev => ({ ...prev, inStock: checked }));
     }
   };
 
-  // useMemo: Calculate jo products dikhane hain based on filter, sort, pagination
-  const currentItems = useMemo(() => {
-    // Pehle price filter apply karo
-    let data = ALL_PRODUCTS_DATA.filter(product => product.price <= maxPrice);
+  // 1. Pehle data ko filter aur sort karo (Pagination se pehle)
+  const filteredData = useMemo(() => {
+    let data = products;
+
+    // ✅ Stock Availability Filter
+    if (activeFilters.inStock) {
+      data = data.filter(p => p.stock > 0);
+    }
+
+    // ✅ Brand Filter
+    if (activeFilters.brands.length > 0) {
+      data = data.filter(p => activeFilters.brands.includes(p.brand));
+    }
+
+    // ✅ Rating Filter
+    if (activeFilters.rating > 0) {
+      data = data.filter(p => (p.ratings?.average || 0) >= activeFilters.rating);
+    }
+
+    // ✅ Improved Filtering: 'All' ko skip karein aur strings ko trim/lowercase match karein
+    if (selectedCategory && selectedCategory !== 'All') {
+      data = data.filter(product => {
+        const catName = typeof product.category === 'object' ? product.category?.name : String(product.category);
+        return catName?.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+      });
+    }
+
+    // 2. Price filter apply karo
+    data = data.filter(product => Number(product.sellingPrice || product.price) <= maxPrice);
     // Phir sorting apply karo
-    if (sortBy === 'lowToHigh') data = [...data].sort((a, b) => a.price - b.price);
-    if (sortBy === 'highToLow') data = [...data].sort((a, b) => b.price - a.price);
-    // Phir pagination apply karo (8 products per page)
+    if (sortBy === 'lowToHigh') data = [...data].sort((a, b) => (a.sellingPrice || a.price) - (b.sellingPrice || b.price));
+    if (sortBy === 'highToLow') data = [...data].sort((a, b) => (b.sellingPrice || b.price) - (a.sellingPrice || a.price));
+    if (sortBy === 'newest') data = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    return data;
+  }, [products, selectedCategory, maxPrice, sortBy, activeFilters]);
+
+  // 2. Ab current page ke items nikalo
+  const currentItems = useMemo(() => {
     const startIndex = (page - 1) * 8;
-    return data.slice(startIndex, startIndex + 8);
-  }, [maxPrice, sortBy, page]);
+    return filteredData.slice(startIndex, startIndex + 8);
+  }, [filteredData, page]);
 
   return (
     <div className="flex bg-[#f4f7f9] min-h-screen p-4 lg:p-8 gap-8 mt-20">
+      {/* ✅ SEO Optimizer implementation */}
+      <SEO 
+        title={selectedCategory === 'All' ? 'Premium Furniture Collection' : `${selectedCategory} Collection`}
+        description={`Explore the best ${selectedCategory} at Aaramdehi. Quality furniture designed for comfort and elegance.`}
+        keywords={`${selectedCategory}, Aaramdehi furniture, home decor online`}
+      />
+
       <aside className="hidden lg:block w-[280px] sticky top-24 h-fit">
-         <Sidebar onPriceChange={(val) => setMaxPrice(val)} />
+         <Sidebar 
+            categories={categories} 
+            selectedCategory={selectedCategory}
+            onCategoryChange={(cat) => {setSelectedCategory(cat); setPage(1);}} 
+            onPriceChange={(val) => setMaxPrice(val)} 
+            onFilterChange={handleFilterChange}
+         />
       </aside>
 
       <main className="flex-1 space-y-6">
+        {/* ✅ CATEGORY Page Banner (Moved inside main for better alignment) */}
+        <HomeBanner section="category" />
+
+        {/* ✅ Dynamic Ad Banner */}
+        <AaramdehiAdBanner />
+
+        {/* ✅ Breadcrumbs */}
+        <nav className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+            <Link to="/" className="hover:text-blue-600 transition">Home</Link>
+            <AiOutlineRight size={10} />
+            <span className="text-gray-800">{selectedCategory}</span>
+        </nav>
+
         <div className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-gray-100">
-          <h2 className="font-black text-blue-900 text-xl tracking-tight uppercase">Premium Collection</h2>
+          {/* ✅ Dynamic Title: Selected category ke hisaab se change hoga */}
+          <h2 className="font-black text-blue-900 text-xl tracking-tight uppercase">
+            {selectedCategory === 'All' ? 'Premium Collection' : selectedCategory}
+          </h2>
+          
           <select 
             onChange={(e) => {setSortBy(e.target.value); setPage(1);}}
             className="text-xs font-black bg-gray-50 border-none outline-none py-2 px-4 rounded-xl text-gray-600 cursor-pointer"
           >
             <option value="relevance">Popularity</option>
+            <option value="newest">Newest First</option>
             <option value="lowToHigh">Price: Low to High</option>
             <option value="highToLow">Price: High to Low</option>
           </select>
         </div>
 
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
           {currentItems.map((item) => (
-            <div key={item.id} className="group bg-white rounded-[30px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-transparent hover:border-blue-100 flex flex-col h-full relative">
+            <div key={item._id || item.id} className="group bg-white rounded-[30px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-transparent hover:border-blue-100 flex flex-col h-full relative">
               <div className="h-64 bg-[#f8f9fb] p-6 relative flex items-center justify-center overflow-hidden">
                 <Link 
-                  to={`/product/${item.id}`} 
+                  to={`/product/${item._id || item.id}`} 
                   onClick={() => handleProductView(item)}
                   className="w-full h-full flex items-center justify-center">
-                  <img src={item.image} className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" alt={item.name}/>
+                  <img 
+                    src={item.thumbnail || item.image || PLACEHOLDER_IMAGE} 
+                    onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
+                    className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
+                    alt={item.name}
+                  />
                 </Link>
                 
                 <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20">
-                  {wishlist.some(w => w.id === item.id) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}
+                  {wishlist.some(w => String(w.id) === String(item._id || item.id)) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}
                 </button>
 
                 <div className="absolute bottom-[-60px] group-hover:bottom-4 left-0 right-0 flex justify-center gap-2 transition-all duration-500">
@@ -104,9 +300,15 @@ const ProductListing = () => {
               </div>
 
               <div className="p-6 flex flex-col flex-grow">
-                <p className="text-[9px] text-blue-900 font-black uppercase tracking-[2px] mb-2">Aaramdehi Luxe</p>
+                <p className="text-[9px] text-blue-900 font-black uppercase tracking-[2px] mb-2">
+                  {/* Display populated category name or string fallback */}
+                  {typeof item.category === 'object' 
+                    ? item.category?.name 
+                    : (item.category || "Aaramdehi Luxe")
+                  }
+                </p>
                 <Link 
-                  to={`/product/${item.id}`}
+                  to={`/product/${item._id || item.id}`}
                   onClick={() => handleProductView(item)}>
                   <h3 className="text-sm font-bold text-gray-800 line-clamp-2 h-10 group-hover:text-blue-900 transition-colors leading-tight">
                     {item.name}
@@ -115,8 +317,10 @@ const ProductListing = () => {
                 
                 <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
                   <div className="flex flex-col">
-                    <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{item.price.toLocaleString()}</span>
-                    <span className="text-[11px] text-gray-400 line-through font-bold">₹{item.oldPrice.toLocaleString()}</span>
+                    <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{(item.sellingPrice || item.price || item.newPrice || 0).toLocaleString()}</span>
+                    <span className="text-[11px] text-gray-400 line-through font-bold">₹{(item.mrp || item.oldPrice || 0).toLocaleString()}</span>
+                    {/* ✅ Bank Offer Text */}
+                    <span className="text-[9px] font-bold text-emerald-600 mt-1 uppercase">Extra ₹50 Off on UPI</span>
                   </div>
                   <div className="bg-blue-50 text-blue-900 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all transform group-hover:rotate-12">
                     <BsLightningCharge size={20} />
@@ -126,10 +330,12 @@ const ProductListing = () => {
             </div>
           ))}
         </div>
+        )}
 
         <div className="flex justify-center py-10 border-b border-gray-100">
+          {/* ✅ Dynamic Pagination: Filtered data ki length use karein */}
           <Pagination 
-            count={Math.ceil(ALL_PRODUCTS_DATA.length / 8)} 
+            count={Math.ceil(filteredData.length / 8)} 
             page={page}
             onChange={(e, value) => setPage(value)}
             color="primary"

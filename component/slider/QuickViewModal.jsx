@@ -13,8 +13,8 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
     const syncWishlistState = useCallback(() => {
         if (!product) return;
         const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-        // String comparison is safer (prevents ID type mismatch)
-        const isPresent = wishlist.some(item => String(item.id) === String(product.id));
+        const productId = product._id || product.id; // Prioritize _id from Firebase, fallback to id
+        const isPresent = wishlist.some(item => String(item.id) === String(productId)); // Compare with item.id in wishlist
         setIsInWishlist(isPresent);
     }, [product]);
 
@@ -23,7 +23,8 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
     const syncCompareState = useCallback(() => {
         if (!product) return;
         const compare = JSON.parse(localStorage.getItem("compare")) || [];
-        const isPresent = compare.some(item => String(item.id) === String(product.id));
+        const productId = product._id || product.id; // Prioritize _id from Firebase, fallback to id
+        const isPresent = compare.some(item => String(item.id) === String(productId)); // Compare with item.id in compare
         setIsInCompare(isPresent);
     }, [product]);
 
@@ -53,25 +54,29 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
         try {
             let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-            const isPresent = wishlist.some(item => String(item.id) === String(product.id));
+            const productId = product._id || product.id; // Prioritize _id from Firebase, fallback to id
+            const isPresent = wishlist.some(item => String(item.id) === String(productId)); // Compare with item.id in wishlist
             
             if (isPresent) {
                 // Remove from wishlist
-                wishlist = wishlist.filter(item => String(item.id) !== String(product.id));
+                wishlist = wishlist.filter(item => String(item.id) !== String(productId));
                 console.log("❌ Removed:", product.name);
             } else {
-                // Add to wishlist - pure product object ke saath
+                // Add to wishlist - pure product object ke saath (consistent with ProductListing)
                 const productToSave = {
-                    id: product.id,
+                    id: productId,
                     name: product.name || "Unknown Product",
                     brand: product.brand || "Aaramdehi",
-                    price: product.price || product.newPrice || 0,
+                    price: product.sellingPrice || product.price || product.newPrice || 0,
                     oldPrice: product.oldPrice || 0,
                     rating: product.rating || 5,
-                    image: product.image || "",
+                    image: product.thumbnail || (product.images && product.images[0]?.url) || product.image || "", // Use thumbnail or images array
                     category: product.category || "Uncategorized"
                 };
                 wishlist.push(productToSave);
+                if (wishlist[wishlist.length - 1].price === 0) {
+                    console.warn("Product added to wishlist with 0 price from QuickViewModal:", product.name, "Original product:", product);
+                }
                 console.log("❤️ Added:", product.name);
             }
             
@@ -91,14 +96,23 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
     // --- 3. HANDLE ADD TO CART ---
     const handleAddToCart = () => {
         let cart = JSON.parse(localStorage.getItem("cart")) || [];
-        const isExist = cart.find(item => String(item.id) === String(product.id));
+        const productId = product._id || product.id; // Prioritize _id from Firebase, fallback to id
+        const isExist = cart.find(item => String(item.id) === String(productId)); // Compare with item.id in cart
 
         if (isExist) {
             cart = cart.map(item => 
-                String(item.id) === String(product.id) ? { ...item, qty: item.qty + quantity } : item
+                String(item.id) === String(productId) ? { ...item, qty: item.qty + quantity } : item
             );
         } else {
-            cart.push({ ...product, qty: quantity });
+            cart.push({ 
+                ...product, // Pura product object save karein
+                qty: quantity, 
+                id: productId, // Consistent ID: Use id for cart
+                price: product.sellingPrice || product.price || product.newPrice 
+            });
+            if (cart[cart.length - 1].price === 0) {
+                console.warn("Product added to cart with 0 price from QuickViewModal:", product.name, "Original product:", product);
+            }
         }
 
         localStorage.setItem("cart", JSON.stringify(cart));
@@ -118,7 +132,8 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
         try {
             let compare = JSON.parse(localStorage.getItem("compare")) || [];
-            const isPresent = compare.some(item => String(item.id) === String(product.id));
+            const productId = product._id || product.id; // Prioritize _id from Firebase, fallback to id
+            const isPresent = compare.some(item => String(item.id) === String(productId)); // Compare with item.id in compare
 
             // Maximum 3 products constraint
             if (!isPresent && compare.length >= 3) {
@@ -127,22 +142,25 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
             }
 
             if (isPresent) {
-                // Remove from compare
-                compare = compare.filter(item => String(item.id) !== String(product.id));
+                // Remove from compare (consistent with item.id)
+                compare = compare.filter(item => String(item.id) !== String(productId));
                 console.log("⚖️ Removed from Compare:", product.name);
             } else {
                 // Add to compare
-                const productToSave = {
-                    id: product.id,
+                const productToSave = { // Ensure id is present for compare
+                    id: productId,
                     name: product.name || "Unknown Product",
                     brand: product.brand || "Aaramdehi",
-                    price: product.price || product.newPrice || 0,
+                    price: product.sellingPrice || product.price || product.newPrice || 0,
                     oldPrice: product.oldPrice || 0,
                     rating: product.rating || 5,
                     image: product.image || "",
                     category: product.category || "Uncategorized"
                 };
                 compare.push(productToSave);
+                if (compare[compare.length - 1].price === 0) {
+                    console.warn("Product added to compare with 0 price from QuickViewModal:", product.name, "Original product:", product);
+                }
                 console.log("⚖️ Added to Compare:", product.name);
             }
             
@@ -176,7 +194,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                 {/* Left Side: Product Image */}
                 <div className="md:w-1/2 p-8 bg-[#fcfcfc] flex items-center justify-center border-r">
                     <img 
-                        src={product.image} 
+                        src={product.thumbnail || (product.images && product.images[0]?.url) || product.image || "https://placehold.co/400x400?text=Product"}
                         alt={product.name} 
                         className="max-h-[380px] w-full object-contain mix-blend-multiply transition-transform hover:scale-105 duration-500" 
                     />
@@ -212,7 +230,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
                     {/* Price Section */}
                     <div className="flex items-center gap-4 mb-6">
-                        <span className="text-4xl font-black text-red-500">₹{product.price || product.newPrice}</span>
+                        <span className="text-4xl font-black text-red-500">₹{(product.sellingPrice || product.price || product.newPrice || 0).toLocaleString()}</span>
                         {product.oldPrice && (
                             <span className="text-xl text-gray-300 line-through font-bold">₹{product.oldPrice}</span>
                         )}

@@ -1,4 +1,4 @@
-import Settings from "../models/settings.model.js";
+import { findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
 
 // Get all settings
 export const getAllSettings = async (req, res) => {
@@ -7,12 +7,12 @@ export const getAllSettings = async (req, res) => {
     let filter = {};
 
     if (category) {
-      filter.category = category;
+      const allSettings = await findAll('settings');
+      const settings = allSettings.filter(s => s.category === category);
+      return res.json({ success: true, data: settings });
     }
 
-    const settings = await Settings.find(filter)
-      .populate("updatedBy", "name email")
-      .sort({ category: 1, createdAt: -1 });
+    const settings = await findAll('settings');
 
     return res.json({
       success: true,
@@ -31,10 +31,8 @@ export const getAllSettings = async (req, res) => {
 export const getSettingByKey = async (req, res) => {
   try {
     const { key } = req.params;
-    const setting = await Settings.findOne({ key: key.toUpperCase() }).populate(
-      "updatedBy",
-      "name email"
-    );
+    const settingsList = await findAll('settings');
+    const setting = settingsList.find(s => s.key === key.toUpperCase());
 
     if (!setting) {
       return res.status(404).json({
@@ -69,16 +67,16 @@ export const createSetting = async (req, res) => {
       });
     }
 
-    // Check if setting already exists
-    const existingSetting = await Settings.findOne({ key: key.toUpperCase() });
-    if (existingSetting) {
-      return res.status(400).json({
-        success: false,
-        message: "Setting with this key already exists",
-      });
+    // Check if key exists
+    const existing = await findByQuery('settings', 'key', key.toUpperCase());
+    if (existing && existing.length > 0) {
+        return res.status(400).json({
+            success: false,
+            message: "Setting with this key already exists",
+        });
     }
 
-    const setting = new Settings({
+    const settingData = {
       key: key.toUpperCase(),
       value,
       type: type || "string",
@@ -87,15 +85,15 @@ export const createSetting = async (req, res) => {
       category: category || "general",
       isEditable: isEditable !== false,
       defaultValue: value,
-      updatedBy: req.user.id,
-    });
+      updatedBy: req.user?._id || req.user?.id || req.userId,
+    };
 
-    await setting.save();
+    const savedSetting = await create('settings', settingData);
 
     return res.status(201).json({
       success: true,
       message: "Setting created successfully",
-      data: setting,
+      data: savedSetting,
     });
   } catch (error) {
     return res.status(500).json({
@@ -111,7 +109,8 @@ export const updateSetting = async (req, res) => {
     const { key } = req.params;
     const { value, label, description, isEditable, category } = req.body;
 
-    const setting = await Settings.findOne({ key: key.toUpperCase() });
+    const settingsList = await findAll('settings');
+    const setting = settingsList.find(s => s.key === key.toUpperCase());
 
     if (!setting) {
       return res.status(404).json({
@@ -133,8 +132,8 @@ export const updateSetting = async (req, res) => {
     if (isEditable !== undefined) setting.isEditable = isEditable;
     if (category !== undefined) setting.category = category;
 
-    setting.updatedBy = req.user.id;
-    await setting.save();
+    setting.updatedBy = req.userId || req.user?._id || req.user?.id;
+    await updateById('settings', setting._id, setting);
 
     return res.json({
       success: true,
@@ -153,7 +152,8 @@ export const updateSetting = async (req, res) => {
 export const deleteSetting = async (req, res) => {
   try {
     const { key } = req.params;
-    const setting = await Settings.findOneAndDelete({ key: key.toUpperCase() });
+    const settingsList = await findAll('settings');
+    const setting = settingsList.find(s => s.key === key.toUpperCase());
 
     if (!setting) {
       return res.status(404).json({
@@ -161,6 +161,8 @@ export const deleteSetting = async (req, res) => {
         message: "Setting not found",
       });
     }
+
+    await deleteById('settings', setting._id);
 
     return res.json({
       success: true,
@@ -178,23 +180,47 @@ export const deleteSetting = async (req, res) => {
 export const getSettingsByCategory = async (req, res) => {
   try {
     const { category } = req.params;
+    const allSettings = await findAll('settings');
+    const settings = allSettings.filter(s => s.category === category);
 
-    const settings = await Settings.find({ category }).populate(
-      "updatedBy",
-      "name email"
-    );
-
-    if (settings.length === 0) {
+    if (!settings || settings.length === 0) {
       return res.status(404).json({
         success: false,
         message: "No settings found for this category",
       });
     }
 
+    await deleteById('settings', setting._id);
+
     return res.json({
       success: true,
       message: "Settings fetched successfully",
       data: settings,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// Public settings endpoint - returns only settings with isPublic: true
+export const getPublicSettings = async (req, res) => {
+  try {
+    const settingsList = await findAll('settings');
+    const publicSettings = settingsList.filter(s => s.isPublic === true || s.isPublic === "true");
+
+    // Convert array of settings into key -> value object for easier client consumption
+    const data = {};
+    publicSettings.forEach((s) => {
+      if (s.key) data[s.key] = s.value;
+    });
+
+    return res.json({
+      success: true,
+      message: "Public settings fetched successfully",
+      data,
     });
   } catch (error) {
     return res.status(500).json({
@@ -222,14 +248,15 @@ export const bulkUpdateSettings = async (req, res) => {
       const { key, value } = settingData;
 
       if (!key) continue;
-
-      const setting = await Settings.findOne({ key: key.toUpperCase() });
+      
+      const settingsList = await findAll('settings');
+      const setting = settingsList.find(s => s.key === key.toUpperCase());
 
       if (setting && setting.isEditable) {
-        setting.value = value;
-        setting.updatedBy = req.user.id;
-        await setting.save();
-        updatedSettings.push(setting);
+        await updateById('settings', setting._id, {
+          value,
+          updatedBy: req.userId || req.user?._id || req.user?.id
+        });
       }
     }
 
@@ -250,7 +277,8 @@ export const bulkUpdateSettings = async (req, res) => {
 export const resetSetting = async (req, res) => {
   try {
     const { key } = req.params;
-    const setting = await Settings.findOne({ key: key.toUpperCase() });
+    const settingsList = await findAll('settings');
+    const setting = settingsList.find(s => s.key === key.toUpperCase());
 
     if (!setting) {
       return res.status(404).json({
@@ -266,14 +294,15 @@ export const resetSetting = async (req, res) => {
       });
     }
 
-    setting.value = setting.defaultValue;
-    setting.updatedBy = req.user.id;
-    await setting.save();
+    const updated = await updateById('settings', setting._id, {
+      value: setting.defaultValue,
+      updatedBy: req.userId || req.user?._id || req.user?.id
+    });
 
     return res.json({
       success: true,
       message: "Setting reset to default successfully",
-      data: setting,
+      data: updated,
     });
   } catch (error) {
     return res.status(500).json({

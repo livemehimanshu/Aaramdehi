@@ -307,11 +307,11 @@ export async function loginController(request, response) {
             return response.status(500).json({ message: "Profile update failed", error: true });
         }
 
-        // 🛡️ Security: Enforced Secure HTTP-Only Cookies
+        // 🛡️ Security: HTTP-only cookies. Use SameSite Lax for local dev and None in production.
         const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'None',
+            sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         };
 
@@ -389,6 +389,84 @@ export async function uploadAvatarController(request, response) {
             success: true, 
             data: { avatar: updatedUser.avatar } 
         });
+    } catch (error) {
+        return response.status(500).json({ message: error.message, error: true, success: false });
+    }
+}
+
+/**
+ * 7. UPDATE USER PROFILE DETAILS
+ */
+export async function updateUserDetailsController(request, response) {
+    try {
+        const userId = request.userId; // Middleware se aane wali ID
+        const { name, email, mobile } = request.body;
+
+        if (!userId) {
+            return response.status(401).json({ message: "Unauthorized", error: true, success: false });
+        }
+
+        const updateData = {};
+        if (name) updateData.name = sanitizeString(name);
+        if (mobile) updateData.mobile = sanitizeString(mobile);
+        
+        if (email) {
+            const cleanEmail = sanitizeString(email).toLowerCase().trim();
+            // Check if email is already taken by another user
+            const existingUsers = await findByQuery(USERS_COLLECTION, 'email', cleanEmail);
+            if (existingUsers.length > 0 && String(existingUsers[0]._id) !== String(userId)) {
+                return response.status(400).json({ message: "Email already in use by another account", error: true, success: false });
+            }
+            updateData.email = cleanEmail;
+        }
+
+        // Firebase update call
+        const updatedUser = await updateById(USERS_COLLECTION, userId, updateData);
+
+        return response.status(200).json({
+            message: "Profile updated successfully",
+            error: false,
+            success: true,
+            data: updatedUser
+        });
+
+    } catch (error) {
+        return response.status(500).json({ message: error.message, error: true, success: false });
+    }
+}
+
+/**
+ * 8. CHANGE PASSWORD (Logged in users)
+ */
+export async function changePasswordController(request, response) {
+    try {
+        const userId = request.userId;
+        const { oldPassword, newPassword, confirmPassword } = request.body;
+
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            return response.status(400).json({ message: "All fields are required", error: true, success: false });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return response.status(400).json({ message: "Passwords do not match", error: true, success: false });
+        }
+
+        const user = await findById(USERS_COLLECTION, userId);
+        if (!user) {
+            return response.status(404).json({ message: "User not found", error: true, success: false });
+        }
+
+        const isPasswordCorrect = await bcryptjs.compare(oldPassword, user.password);
+        if (!isPasswordCorrect) {
+            return response.status(400).json({ message: "Incorrect old password", error: true, success: false });
+        }
+
+        const salt = await bcryptjs.genSalt(10);
+        const hashedPassword = await bcryptjs.hash(newPassword, salt);
+
+        await updateById(USERS_COLLECTION, userId, { password: hashedPassword });
+
+        return response.status(200).json({ message: "Password updated successfully", success: true, error: false });
     } catch (error) {
         return response.status(500).json({ message: error.message, error: true, success: false });
     }

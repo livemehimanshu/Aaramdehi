@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import { 
     uploadAvatarController, 
+    updateUserDetailsController, // ✅ Import the new controller
+    getUserDetailsController,
+    changePasswordController // ✅ Import change password
 } from '../controllers/user.controller.js'; // loginController is not used here
-import { getUserDetailsController } from '../controllers/user.controller.js'; // नया कंट्रोलर इम्पोर्ट करें
 
 // ✅ Fix: Named import use kiya hai kyunki auth.middleware.js mein 'export const' hai
 import { isAuthenticatedUser } from '../middleware/auth.middleware.js';
@@ -40,6 +42,12 @@ userRouter.put('/upload-avatar', isAuthenticatedUser, upload.single('avatar'), u
 
 // 🛡️ AdminRoute के लिए: यूजर डिटेल्स और रोल वेरीफाई करें
 userRouter.get('/details', isAuthenticatedUser, getUserDetailsController);
+
+// ✅ Update User Profile Details (Name, Email, Mobile)
+userRouter.put('/update-details', isAuthenticatedUser, updateUserDetailsController);
+
+// ✅ Change Password Route
+userRouter.put('/change-password', isAuthenticatedUser, changePasswordController);
 
 // User Logout
 userRouter.get('/logout', isAuthenticatedUser, (req, res) => {

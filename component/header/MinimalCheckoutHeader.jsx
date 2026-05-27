@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { IoSearchOutline, IoPersonOutline, IoEllipsisVerticalOutline, IoCartOutline, IoCheckmarkOutline, IoChevronDown } from "react-icons/io5";
-import { useCart } from '../../src/hooks/useCart';
 import Badge from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
+
+const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
 
 // Badge styling for cart count
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -20,11 +21,12 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 
 const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
   const navigate = useLocation();
-  const { cartCount } = useCart();
+  const [cartCount, setCartCount] = useState(0);
   const [searchValue, setSearchValue] = useState('');
   const [userProfile, setUserProfile] = useState(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [siteLogo, setSiteLogo] = useState(null);
 
   // Load user profile from localStorage
   useEffect(() => {
@@ -34,9 +36,33 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
       name: userName.charAt(0).toUpperCase() + userName.slice(1),
       email: userEmail
     });
+
+    // Fetch logo
+    const fetchLogo = async () => {
+      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      try {
+        const res = await fetch(`${apiBase}/api/settings/public`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          setSiteLogo(data.data.LOGO || data.data.logo || null);
+        }
+      } catch (e) {}
+    };
+    fetchLogo();
   }, []);
 
-  // ✅ Manual updateCartCount removed. cartCount is now live from useCart().
+  // Update cart count
+  useEffect(() => {
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart')) || [];
+      setCartCount(cart.length);
+    };
+
+    updateCartCount();
+    window.addEventListener('cartUpdated', updateCartCount);
+
+    return () => window.removeEventListener('cartUpdated', updateCartCount);
+  }, []);
 
   // Handle search
   const handleSearch = (e) => {
@@ -61,7 +87,15 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
             
             {/* Left: Logo */}
             <Link to="/" className="flex-shrink-0">
-              <h1 className="text-2xl font-black text-red-500 uppercase tracking-tighter">Aaramdehi</h1>
+              {siteLogo ? (
+                <img 
+                  src={siteLogo} 
+                  onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
+                  alt="Logo" 
+                  className="h-8 object-contain" />
+              ) : (
+                <h1 className="text-2xl font-black text-red-500 uppercase tracking-tighter">Aaramdehi</h1>
+              )}
             </Link>
 
             {/* Center: Search Bar (Hidden on small screens) */}

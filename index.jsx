@@ -1,0 +1,397 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from "react-router-dom";
+import { useCart } from './src/hooks/useCart'; // ✅ CartContext Hook import kiya
+import Search from "./component/search";
+import Navigation from './component/header/navigation';
+import Badge from '@mui/material/Badge';
+import { styled } from '@mui/material/styles';
+import IconButton from '@mui/material/IconButton';
+import { IoCartOutline, IoPersonOutline, IoLogOutOutline } from "react-icons/io5";
+import { IoIosGitCompare } from "react-icons/io";
+import { CiHeart } from "react-icons/ci";
+// ✅ Firebase Auth imports add karein
+import { auth } from './src/api/firebase.js';
+import { onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "firebase/auth";
+import Tooltip from '@mui/material/Tooltip';
+import CartDrawer from './component/CartDrawer/CartDrawer';
+import WishlistDrawer from './component/WishlistDrawer/WishlistDrawer'; 
+import { getActiveCategoriesAPI, getSettingsAPI } from './src/api/authAndAdminApi';
+
+// ===== HEADER COMPONENT =====
+// Yeh top header hai jismein logo, search, login, cart, wishlist sab dikhta hai
+// Ismein CartDrawer open/close logic bhi hai
+
+const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
+
+// Badge ka style customize - cart icon pe red circle number show karne ke liye
+const StyledBadge = styled(Badge)(({ theme }) => ({
+  '& .MuiBadge-badge': {
+    right: -3,
+    top: 13,
+    border: `2px solid white`,
+    padding: '0 4px',
+    backgroundColor: '#dc2626', // Red color
+    color: 'white'
+  },
+}));
+
+const Header = ({ hideNav = false }) => {
+  const navigate = useNavigate();
+  // ✅ पुराना तरीका हटाया: window.addEventListener और मैन्युअल localStorage
+  // ✅ नया तरीका जोड़ा: सीधे CartContext से लाइव काउंट्स उठाना
+  const { cartCount, wishlistCount } = useCart();
+
+  // --- STATE MANAGEMENT ---
+  const [loading, setLoading] = useState(true); // ✅ Loading state add kiya
+  const [isCartOpen, setIsCartOpen] = useState(false); // Cart drawer open/close
+  const [isWishlistOpen, setIsWishlistOpen] = useState(false); // Wishlist drawer open/close
+  const [compareCount, setCompareCount] = useState(0); // Compare mein kitne items hain
+  const [user, setUser] = useState(null); // Logged in user data
+  const [navCategories, setNavCategories] = useState([]); // Navigation bar ke liye categories
+  const [showProfileMenu, setShowProfileMenu] = useState(false); // Profile dropdown menu
+  const [siteLogo, setSiteLogo] = useState(null); // Dynamic site logo
+
+  // Function: Cart drawer ko toggle karna (open/close)
+  const toggleCartDrawer = () => {
+    setIsCartOpen(!isCartOpen);
+    setIsWishlistOpen(false); // Wishlist ko close karna agar open tha
+  };
+
+  // Function: Wishlist drawer ko toggle karna (open/close)
+  const toggleWishlistDrawer = () => {
+    setIsWishlistOpen(!isWishlistOpen);
+    setIsCartOpen(false); // Cart ko close karna agar open tha
+  };
+
+  // Function: Compare mein items ki count update karna
+  // Jab product add/remove hote toh compare count change ho
+  const updateCompareCount = () => {
+    const compare = JSON.parse(localStorage.getItem("compare")) || [];
+    setCompareCount(compare.length); // Compare mein total items ka count
+  };
+
+  // Function: Logout
+  const handleLogout = async () => {
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      await signOut(auth); // ✅ Added missing signOut
+      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      
+      // ✅ Backend API call taaki server-side cookies aur tokens clear ho jayein
+      await fetch(`${apiBase}/api/user/logout`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (error) {
+      console.error("Logout API error:", error);
+    }
+
+    // ✅ Client-side state aur storage clear karna
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('userData');
+    setUser(null);
+    setShowProfileMenu(false);
+    navigate('/login');
+  };
+
+  // useEffect: Component load hone par aur jab cart/wishlist/compare update ho
+  useEffect(() => {
+    // Initial counts set karna
+    updateCompareCount();
+
+    // Quick Check
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      const data = localStorage.getItem("userData");
+      if (data) setUser(JSON.parse(data));
+    }
+    
+    setPersistence(auth, browserLocalPersistence)
+      .catch((error) => console.error("Auth persistence error:", error.message));
+
+    // ✅ 2. Auth state change ko listen karna (Official Firebase Listener)
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // Agar Firebase user mil gaya, toh localStorage se detailed data fetch karein
+        const userDataStr = localStorage.getItem("userData");
+        if (userDataStr) {
+          setUser(JSON.parse(userDataStr));
+        } else {
+          // Fallback: Agar localStorage khali hai toh basic Firebase data use karein
+          setUser({
+            name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+            email: firebaseUser.email,
+            avatar: firebaseUser.photoURL
+          });
+        }
+      } else {
+        // ✅ Fix: Don't clear if custom JWT exists
+        const currentAccessToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
+        if (!currentAccessToken) {
+          localStorage.removeItem("userData");
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("token");
+          setUser(null);
+        }
+      }
+      setLoading(false); // ✅ Data fetch hote hi loading band
+    });
+
+    // Fetch categories for navigation
+    const fetchNavCategories = async () => {
+      try {
+        const res = await getActiveCategoriesAPI();
+        if (res && res.success && Array.isArray(res.data)) {
+          setNavCategories(res.data);
+        } else if (Array.isArray(res)) {
+          setNavCategories(res);
+        }
+      } catch (error) {
+        console.error("Error fetching navigation categories:", error);
+      }
+    };
+    fetchNavCategories();
+
+    // Fetch site settings (Logo)
+    const fetchSettings = async () => {
+      try {
+        // ✅ Fix: Use centralized API with automatic token injection
+        const result = await getSettingsAPI().catch(() => null);
+        if (result && result.success && result.data) {
+          // Support both lowercase and uppercase keys
+          setSiteLogo(result.data.logo || result.data.LOGO || null);
+        }
+      } catch (error) {
+        console.error("Error fetching site logo:", error);
+      }
+    };
+    fetchSettings();
+
+    // Jab "compareUpdated" event fire hote hain tab count update karna
+    window.addEventListener("compareUpdated", updateCompareCount);
+
+    // ✅ Listen for profile updates from the Profile Page
+    const syncProfile = () => {
+      const userDataStr = localStorage.getItem("userData");
+      if (userDataStr) setUser(JSON.parse(userDataStr));
+    };
+    window.addEventListener("userDataUpdated", syncProfile);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("compareUpdated", updateCompareCount);
+      window.removeEventListener("userDataUpdated", syncProfile);
+      unsubscribe(); // Listener cleanup
+    };
+  }, []);
+
+  // ✅ 3. Premature redirection ya UI flashes rokne ke liye loading check
+  if (loading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white z-[9999]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-xs font-black uppercase tracking-widest text-gray-400">Restoring Session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <header className='sticky top-0 z-50 bg-white shadow-sm'>
+        {/* --- TOP STRIP --- */}
+        <div className="top-strip py-2 border-b border-gray-200 hidden md:block">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between text-gray-500">
+              <div className="flex items-center gap-6">
+                <p className="text-[12px] font-medium">Get up to 50% off new season items!</p>
+                <Link to="/seller/register" className='text-[12px] font-bold text-blue-600 hover:underline'>Become a Seller</Link>
+              </div>
+              <div className="flex items-center gap-5">
+                <select className="bg-transparent text-[12px] font-bold outline-none cursor-pointer border-none">
+                    <option>English</option>
+                    <option>Hindi</option>
+                </select>
+                <Link to="/help-center" className='text-[12px] hover:text-red-600 transition'>Help center</Link>
+                <Link to="/order-tracking" className='text-[12px] hover:text-red-600 transition'>Order Tracking</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* --- MAIN HEADER --- */}
+        <div className="header py-3 md:py-4 border-b border-gray-100">
+          <div className="container mx-auto px-4 flex items-center justify-between gap-3 md:gap-4">
+            
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <Link to="/" className="flex items-center gap-2 group">
+                {siteLogo ? (
+                  <img 
+                    src={siteLogo} 
+                    onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
+                    alt="Aaramdehi" 
+                    className="h-8 md:h-10 object-contain" />
+                ) : (
+                  <div className="flex flex-col">
+                    <h1 className="text-xl md:text-2xl font-black uppercase tracking-tighter leading-none text-gray-800">Aaramdehi</h1>
+                    <p className="text-[7px] md:text-[8px] font-bold tracking-[2px] md:tracking-[3px] text-gray-400 uppercase">Comfort Redefined</p>
+                  </div>
+                )}
+              </Link>
+            </div>
+
+            {/* Search */}
+            <div className="flex-1 max-w-[600px] hidden sm:block">
+              <Search />
+            </div>
+
+            {/* Icons & Auth */}
+            <div className="flex items-center gap-1 md:gap-4 relative">
+              
+              {/* Desktop - Login/Register or Profile */}
+              {!user ? (
+                <div className='hidden lg:flex items-center gap-3 text-[13px] font-black uppercase tracking-tight'>
+                  <IoPersonOutline size={20} className='text-gray-700' />
+                  <Link to='/login' className='hover:text-red-600 transition'>Login</Link>
+                  <span className='text-gray-300'>/</span>
+                  <Link to='/signup' className='hover:text-red-600 transition'>Signup</Link>
+                </div>
+              ) : (
+                <div className='hidden lg:flex items-center gap-3'>
+                  <button 
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className='flex items-center gap-2 hover:text-red-600 transition'
+                  >
+                    {user.avatar ? (
+                      <img 
+                        src={user.avatar} 
+                        onError={(e) => { e.target.src = "https://placehold.co/32x32?text=👤"; }}
+                        alt="Profile" 
+                        className='w-8 h-8 rounded-full object-cover' />
+                    ) : (
+                      <IoPersonOutline size={24} className='text-gray-700' />
+                    )}
+                    <span className='text-[13px] font-bold hidden md:inline'>{user.name?.split(' ')[0]}</span>
+                  </button>
+                </div>
+              )}
+
+              {/* Profile Dropdown Menu (Universal for Desktop & Mobile) */}
+              {user && showProfileMenu && (
+                <div className='absolute right-0 top-12 bg-white border border-gray-200 rounded-lg shadow-lg z-50 w-48'>
+                  <div className='p-3 border-b border-gray-200'>
+                    <p className='text-sm font-bold'>{user.name}</p>
+                    <p className='text-xs text-gray-500'>{user.email}</p>
+                    {user.role === 'ADMIN' && <p className='text-xs text-red-600 font-bold mt-1'>✓ Admin</p>}
+                  </div>
+                  
+                  {/* Admin Panel Link - Only for Admins */}
+                  {user.role === 'ADMIN' && (
+                    <>
+                      <Link to='/admin' onClick={() => setShowProfileMenu(false)} className='block px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 border-b border-gray-200'>📊 Admin Panel</Link>
+                    </>
+                  )}
+                  
+                  <Link to='/account/profile' onClick={() => setShowProfileMenu(false)} className='block px-4 py-2.5 text-sm hover:bg-gray-50'>My Profile</Link>
+                  <Link to='/orders' onClick={() => setShowProfileMenu(false)} className='block px-4 py-2.5 text-sm hover:bg-gray-50'>My Orders</Link>
+                  <Link to='/wishlist' onClick={() => setShowProfileMenu(false)} className='block px-4 py-2.5 text-sm hover:bg-gray-50'>My Wishlist</Link>
+                  <Link to='/account/profile' onClick={() => setShowProfileMenu(false)} className='block px-4 py-2.5 text-sm hover:bg-gray-50'>Settings</Link>
+                  <button 
+                    onClick={handleLogout}
+                    className='w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 border-t border-gray-200 text-red-600 font-bold flex items-center gap-2'
+                  >
+                    <IoLogOutOutline size={16} />
+                    Logout
+                  </button>
+                </div>
+              )}
+
+              {/* Mobile Person Icon */}
+              <div className="lg:hidden">
+                {user ? (
+                  <button onClick={() => setShowProfileMenu(!showProfileMenu)} className='p-2'>
+                    {user.avatar ? (
+                      <img 
+                        src={user.avatar} 
+                        onError={(e) => { e.target.src = "https://placehold.co/32x32?text=👤"; }}
+                        alt="Profile" 
+                        className='w-6 h-6 rounded-full object-cover' />
+                    ) : (
+                      <IoPersonOutline size={22} className="text-gray-700" />
+                    )}
+                  </button>
+                ) : (
+                  // ✅ Mobile par bhi Sign Up aur Login links dikhayein
+                  <div className='flex items-center gap-3 text-[11px] font-black uppercase tracking-tighter'>
+                    <IoPersonOutline size={20} className='text-gray-700' />
+                    <Link to='/login' className='text-gray-800'>Login</Link>
+                    <span className='text-gray-300'>/</span>
+                    <Link to='/signup' className='text-red-600'>Signup</Link>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-center gap-0 md:gap-1">
+                {/* Compare */}
+                <Tooltip title="Compare">
+                  <Link to="/compare" className='!p-1.5 md:!p-2 hidden md:flex items-center justify-center'>
+                    <StyledBadge badgeContent={compareCount} color="error">
+                      <IoIosGitCompare size={22} className='text-gray-700' />
+                    </StyledBadge>
+                  </Link>
+                </Tooltip>
+
+                {/* Wishlist - Click to open Wishlist Drawer */}
+                <Tooltip title="Wishlist">
+                  <IconButton 
+                    className='!p-1.5 md:!p-2' 
+                    onClick={toggleWishlistDrawer} // Wishlist Drawer Open logic
+                  >
+                    <StyledBadge badgeContent={wishlistCount} color="error">
+                      <CiHeart size={24} />
+                    </StyledBadge>
+                  </IconButton>
+                </Tooltip>
+
+                {/* Cart - Click to open Cart Drawer */}
+                <Tooltip title="Cart">
+                  <IconButton 
+                    className='!p-1.5 md:!p-2'
+                    onClick={toggleCartDrawer} // Drawer Open logic
+                  >
+                    <StyledBadge badgeContent={cartCount} color="error">
+                      <IoCartOutline size={24} />
+                    </StyledBadge>
+                  </IconButton>
+                </Tooltip>
+              </div>
+            </div>
+          </div>
+
+          <div className="px-4 mt-3 sm:hidden">
+            <Search />
+          </div>
+        </div>
+
+        {!hideNav && <Navigation categories={navCategories} />} {/* ✅ Categories pass kiye */}
+      </header>
+
+      {/* --- Cart Drawer Panel --- */}
+      <CartDrawer 
+        isOpen={isCartOpen} 
+        onClose={() => setIsCartOpen(false)} 
+      />
+
+      {/* --- Wishlist Drawer Panel --- */}
+      <WishlistDrawer 
+        isOpen={isWishlistOpen} 
+        onClose={() => setIsWishlistOpen(false)} 
+      />
+    </>
+  )
+}
+
+export default Header;

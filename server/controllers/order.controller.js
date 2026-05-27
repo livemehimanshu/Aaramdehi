@@ -1,6 +1,7 @@
-import { create, findAll, findById, updateById, findByQuery } from '../config/db.js';
+import { create, findAll, findById, updateById, findByQuery, db } from '../config/db.js';
 
 const COLLECTION = 'orders';
+const USERS_COLLECTION = 'users';
 const PRODUCT_COLLECTION = 'products';
 const COUPON_COLLECTION = 'coupons';
 const SHOP_COLLECTION = 'shops';
@@ -21,40 +22,37 @@ export const createOrder = async (req, res) => {
             paymentInfo
         } = req.body;
 
-        // Basic Validation
-        if (!orderItems || orderItems.length === 0) {
-            return res.status(400).json({ success: false, message: "Order items are required" });
+        if (!orderItems?.length || !shippingAddress || !totalAmount) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Missing required order fields: items, address, or total amount." 
+            });
         }
 
-        // Safety: Extract Clean Shop ID if object was passed
-        const cleanShopId = shopId ? String(shopId._id || shopId.id || shopId) : null;
-
         const userId = req.userId || req.user?._id || req.user?.id;
-
-        // Calculate actual total for calculation safety
+        const cleanShopId = shopId ? String(shopId._id || shopId.id || shopId) : null;
         const finalAmount = Number(totalAmount) || Number(req.body.totalPrice) || 0;
+        const orderId = db.ref(COLLECTION).push().key; // Pre-generate ID for atomic update
+        const timestamp = new Date().toISOString();
+        
+        // Atomic Updates Object
+        const updates = {};
 
         // A. Handle Coupon Usage Update in Firebase
         if (couponCode) {
-            const coupons = await findByQuery(COUPON_COLLECTION, 'code', String(couponCode).trim().toUpperCase());
-            const coupon = coupons && coupons.length > 0 ? coupons[0] : null;
+            const coupons = await findByQuery(COUPON_COLLECTION, 'code', String(couponCode).toUpperCase());
+            const coupon = coupons?.[0];
             
             if (coupon) {
-                const newUsedCount = (Number(coupon.usedCount) || 0) + 1;
                 let usedBy = coupon.usedBy || [];
                 if (!Array.isArray(usedBy)) usedBy = Object.values(usedBy);
-
                 const userUsageIndex = usedBy.findIndex(u => String(u.userId) === String(userId));
-                if (userUsageIndex !== -1) {
-                    usedBy[userUsageIndex].usageCount += 1;
-                } else {
-                    usedBy.push({ userId, usageCount: 1 });
-                }
+                
+                if (userUsageIndex !== -1) usedBy[userUsageIndex].usageCount += 1;
+                else usedBy.push({ userId, usageCount: 1 });
 
-                await updateById(COUPON_COLLECTION, coupon._id, {
-                    usedCount: newUsedCount,
-                    usedBy: usedBy
-                });
+                updates[`${COUPON_COLLECTION}/${coupon._id}/usedCount`] = (Number(coupon.usedCount) || 0) + 1;
+                updates[`${COUPON_COLLECTION}/${coupon._id}/usedBy`] = usedBy;
             }
         }
 
@@ -62,10 +60,7 @@ export const createOrder = async (req, res) => {
         if (cleanShopId && (paymentMethod === 'Shop Credit' || paymentMethod === 'Khata')) {
             const shop = await findById(SHOP_COLLECTION, cleanShopId);
             if (shop) {
-                const currentBalance = Number(shop.outstandingBalance || 0);
-                await updateById(SHOP_COLLECTION, cleanShopId, {
-                    outstandingBalance: currentBalance + finalAmount
-                });
+                updates[`${SHOP_COLLECTION}/${cleanShopId}/outstandingBalance`] = (Number(shop.outstandingBalance || 0)) + finalAmount;
             }
         }
 
@@ -74,39 +69,40 @@ export const createOrder = async (req, res) => {
             const productId = item.product || item.productId;
             const product = await findById(PRODUCT_COLLECTION, productId);
             if (product) {
-                const newStock = Number(product.stock || 0) - Number(item.quantity);
-                await updateById(PRODUCT_COLLECTION, product._id, { stock: Math.max(0, newStock) });
+                updates[`${PRODUCT_COLLECTION}/${productId}/stock`] = Math.max(0, (Number(product.stock || 0)) - Number(item.quantity));
             }
         }
 
         // D. Save Order to Firebase
-        const orderData = {
+        updates[`${COLLECTION}/${orderId}`] = {
             orderItems,
             shippingAddress,
             paymentMethod,
-            paymentStatus: paymentMethod === 'COD' || paymentMethod === 'Shop Credit' ? 'Pending' : 'Completed',
+            paymentStatus: (paymentMethod === 'COD' || paymentMethod === 'Shop Credit') ? 'Pending' : 'Completed',
             orderStatus: 'Processing',
             itemsPrice: Number(itemsPrice) || 0,
             shippingPrice: Number(shippingPrice) || 0,
             discountAmount: Number(discountAmount) || 0,
             totalAmount: finalAmount,
-            paymentInfo: paymentInfo || { id: "n/a", status: "processing" },
+            paymentInfo: paymentInfo || { id: "na", status: "created" },
             userId: userId || null,
             shopId: cleanShopId,
-            orderNumber: `ORD-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
-            createdAt: new Date().toISOString()
+            orderNumber: `ORD${Date.now().toString().slice(-6)}${Math.floor(1000 + Math.random() * 9000)}`,
+            createdAt: timestamp,
+            updatedAt: timestamp
         };
 
-        const order = await create(COLLECTION, orderData);
+        // EXECUTE BATCH UPDATE
+        await db.ref().update(updates);
 
         return res.status(201).json({
           success: true,
           message: "Order placed successfully",
-          data: order
+          data: { _id: orderId, ...updates[`${COLLECTION}/${orderId}`] }
         });
 
     } catch (error) {
-        console.error("Create Order Error:", error);
+        console.error("❌ [Order Controller] Create Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -115,14 +111,39 @@ export const createOrder = async (req, res) => {
 export const getMyOrders = async (req, res) => {
     try {
         const userId = req.userId || req.user?._id || req.user?.id;
-        const allOrders = await findAll(COLLECTION);
-        const myOrders = allOrders.filter(o => String(o.userId) === String(userId));
+
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "User not authenticated." });
+        }
+
+        // ✅ Optimization: Fetch ONLY orders belonging to this user
+        const myOrdersData = await findByQuery(COLLECTION, 'userId', userId);
+        const allProducts = await findAll(PRODUCT_COLLECTION);
         
-        myOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        // Create a product lookup map for O(1) access
+        const productMap = allProducts.reduce((acc, p) => {
+            acc[p._id] = p;
+            return acc;
+        }, {});
+
+        const myOrders = myOrdersData
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .map(order => ({
+                ...order,
+                orderItems: order.orderItems.map(item => {
+                    const p = productMap[item.productId || item.product];
+                    return {
+                        ...item,
+                        name: p?.name || item.name,
+                        image: p?.thumbnail || p?.images?.[0]?.url || item.image
+                    };
+                })
+            }));
 
         return res.json({ success: true, data: myOrders });
     } catch (error) {
-        return res.status(500).json({ success: false, message: error.message });
+        console.error("❌ [Order Controller] getMyOrders Error:", error);
+        return res.status(500).json({ success: false, message: error.message || "Failed to fetch user orders." });
     }
 };
 

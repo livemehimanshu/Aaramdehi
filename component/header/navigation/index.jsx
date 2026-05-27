@@ -1,118 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 import Categorypanel from './categorypanel';
-import { HiMiniBars3CenterLeft } from "react-icons/hi2";
-import { IoIosArrowRoundDown, IoIosArrowForward } from "react-icons/io";
+import IconButton from '@mui/material/IconButton'; // Import IconButton
+import { IoIosArrowRoundDown, IoIosArrowForward, IoIosMenu, IoIosClose } from "react-icons/io"; // HiMiniBars3CenterLeft is no longer used
 
-// Central Data
-import { categoriesData } from '../../categorydata/categoryData';
-
-const Navbar = () => {
+const Navbar = ({ categories = [] }) => {
   const [isOpenCatPanel, setIsopencatpanel] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [openMobileSubmenu, setOpenMobileSubmenu] = useState(null);
-
-  const toggleMobileSubmenu = (index) => {
-    setOpenMobileSubmenu((current) => (current === index ? null : index));
-  };
 
   return (
     <>
-      <nav className="bg-white shadow-md p-3 md:p-0 relative">
+      <nav className="bg-white shadow-sm border-b border-gray-100 p-2 md:p-0 relative z-40">
         <div className="container mx-auto flex items-center justify-between">
           
-          {/* Category Button Section */}
-          <div className="w-[250px]">
-            <Button className='!text-black gap-2 !py-4 w-full !justify-start' onClick={() => setIsopencatpanel(!isOpenCatPanel)}>
-              <HiMiniBars3CenterLeft className='text-[18px]' />
-              Shop By Category
+          {/* 1. Standardized Menu Icon (Category Trigger) */}
+          <div className="flex-shrink-0">
+            <Button className='!text-black gap-2 !py-4 !px-4' onClick={() => setIsopencatpanel(true)}>
+              <IoIosMenu className='text-[24px]' />
+              <span className="hidden lg:inline font-black uppercase text-[12px] tracking-widest">Shop By Category</span>
             </Button>
           </div>
 
-          {/* Navigation Section */}
-          <div className="flex-grow relative">
-            <ul className="hidden md:flex items-center gap-1">
+          {/* 2. Navigation Section (Horizontal Categories) */}
+          <div className="flex-grow relative overflow-hidden">
+            <ul className="hidden md:flex items-center gap-1 overflow-x-auto no-scrollbar whitespace-nowrap px-4">
               <li className='list-none'>
-                <Link to='/' className="link"><Button className='!text-black'>Home</Button></Link>
+                <Link to='/' className="link"><Button className='!text-black font-bold uppercase text-[12px]'>Home</Button></Link>
               </li>
 
-              {/* Dynamic Dropdowns */}
-              {categoriesData.map((cat, index) => (
-                <li key={index} className='list-none relative group py-4'>
-                  <Button className='!text-black group-hover:!text-[#ff5252] !capitalize'>
-                    {cat.title} <IoIosArrowRoundDown className='ml-1' />
-                  </Button>
-                  
-                  <ul className="absolute top-full left-0 min-w-[200px] bg-white shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                    {cat.subItems.map((sub, i) => (
-                      <li key={i} className="border-b last:border-0">
-                        <Link to="/" className="block px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-50 hover:text-[#ff5252]">
-                          {sub}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
+              {categories && categories.length > 0 ? (
+                categories.map((cat, index) => {
+                  const catName = typeof cat === 'string' ? cat : cat.name;
+                  if (!catName) return null;
+                  return (
+                    <li key={index} className='list-none py-4'>
+                      <Link to={`/products?category=${catName}`} className="link">
+                        <Button className='!text-black hover:!text-[#ff5252] !capitalize font-bold text-[12px]'>
+                          {catName}
+                        </Button>
+                      </Link>
+                    </li>
+                  );
+                })
+              ) : null}
 
               {/* --- ADDED: BLOG OPTION FOR DESKTOP --- */}
               <li className='list-none'>
                 <Link to='/blog' className="link">
-                  <Button className='!text-black hover:!text-[#ff5252]'>Blog</Button>
+                  <Button className='!text-black hover:!text-[#ff5252] font-bold uppercase text-[12px]'>Blog</Button>
                 </Link>
               </li>
             </ul>
 
-            {/* Mobile Navigation */}
-            {/* Button to toggle Mobile Menu (Agar aapne add kiya ho toh) */}
-            {isMobileMenuOpen && (
-              <div className="md:hidden absolute top-full left-0 w-full bg-white border-t border-gray-200 shadow-lg z-40">
-                <ul className="flex flex-col gap-1 p-4">
-                  <li className='list-none border-b pb-2'>
-                    <Link to='/' className="block text-base font-semibold text-gray-700 hover:text-red-500">
-                      Home
-                    </Link>
-                  </li>
+            {/* Mobile Menu Toggle Button */}
+          </div>
 
-                  {categoriesData.map((cat, index) => (
-                    <li key={index} className='list-none border-b pb-2 text-gray-700'>
-                      <button
-                        type="button"
-                        onClick={() => toggleMobileSubmenu(index)}
-                        className="w-full flex items-center justify-between text-left hover:text-red-500 font-semibold"
-                      >
-                        {cat.title}
-                        <IoIosArrowForward className={`transition-transform ${openMobileSubmenu === index ? 'rotate-90' : ''}`} />
-                      </button>
-                      {openMobileSubmenu === index && (
-                        <ul className="mt-2 pl-4 flex flex-col gap-1">
-                          {cat.subItems.map((sub) => (
-                            <li key={sub}>
-                              <Link to="/" className="block text-sm text-gray-600 hover:text-red-500">
-                                {sub}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  ))}
-
-                  {/* --- ADDED: BLOG OPTION FOR MOBILE --- */}
-                  <li className='list-none border-b pb-2 pt-1'>
-                    <Link to='/blog' className="block text-base font-semibold text-gray-700 hover:text-red-500">
-                      Blog
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            )}
+          {/* Mobile View Toggle */}
+          <div className="md:hidden flex items-center">
+             <IconButton onClick={() => setIsopencatpanel(true)} className="!text-black">
+                <IoIosMenu size={28} />
+             </IconButton>
           </div>
         </div>
       </nav>
 
-      <Categorypanel isOpen={isOpenCatPanel} setIsopencatpanel={setIsopencatpanel} />
+      <Categorypanel isOpen={isOpenCatPanel} setIsopencatpanel={setIsopencatpanel} categories={categories} />
     </>
   );
 };

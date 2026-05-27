@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { getDatabase, ref, onChildAdded, query, limitToLast } from "firebase/database";
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { toast } from "react-hot-toast"; // Ya koi aur notification library
 import { Package } from "lucide-react";
 
@@ -11,7 +11,7 @@ const firebaseConfig = {
     projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
 };
 
-const app = initializeApp(firebaseConfig);
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const db = getDatabase(app);
 
 const OrderNotificationListener = () => {

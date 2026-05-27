@@ -5,9 +5,10 @@ import AccordionDetails from '@mui/material/AccordionDetails';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Slider from '@mui/material/Slider';
-import { FiChevronDown, FiChevronLeft } from 'react-icons/fi';
+import { FiChevronDown, FiChevronLeft, FiStar } from 'react-icons/fi';
 
-const Sidebar = ({ onPriceChange }) => { // onPriceChange प्रॉप जोड़ा गया है
+const Sidebar = ({ categories, selectedCategory, onCategoryChange, onPriceChange, onFilterChange }) => { 
+  // Ab Sidebar saare props receive kar raha hai
   const [priceRange, setPriceRange] = useState([0, 10000]);
 
   const handlePriceChange = (event, newValue) => {
@@ -19,12 +20,9 @@ const Sidebar = ({ onPriceChange }) => { // onPriceChange प्रॉप जो
   };
 
   const filterSections = [
-    { title: "COLOR", options: ["White", "Blue", "Red", "Beige"] },
-    { title: "FILLING MATERIAL", options: ["Fiber", "Cotton", "Memory Foam"] },
-    { title: "PACK OF", options: ["Pack of 1", "Pack of 2", "Pack of 4"] },
-    { title: "EXTERNAL MATERIAL", options: ["Cotton", "Satin", "Velvet"] },
-    { title: "PATTERN", options: ["Solid", "Printed", "Striped"] },
-    { title: "DISCOUNT", options: ["10% or more", "20% or more", "50% or more"] },
+    { id: "brand", title: "BRAND", options: ["Aaramdehi Premium", "Satin Luxe", "Cotton Soft", "Decor Master"] },
+    { id: "material", title: "MATERIAL", options: ["Satin", "Cotton", "Memory Foam", "Velvet"] },
+    { id: "discount", title: "DISCOUNT", options: ["10% or more", "20% or more", "50% or more"] },
   ];
 
   return (
@@ -36,10 +34,30 @@ const Sidebar = ({ onPriceChange }) => { // onPriceChange प्रॉप जो
       <div className="p-4 border-b">
         <h3 className="text-[12px] font-bold text-gray-500 uppercase mb-3">Categories</h3>
         <div className="space-y-2">
-          <div className="flex items-center text-sm text-gray-600 cursor-pointer hover:text-blue-600">
-            <FiChevronLeft className="mr-1" /> Home Furnishings
+          {/* 1. All Products / Root Category Option */}
+          <div 
+            onClick={() => onCategoryChange('All')}
+            className={`flex items-center text-sm cursor-pointer hover:text-blue-600 transition-colors ${selectedCategory === 'All' ? 'text-blue-600 font-bold' : 'text-gray-600'}`}
+          >
+            <FiChevronLeft className="mr-1" /> All Collections
           </div>
-          <div className="text-sm font-bold text-gray-900 ml-8">Pillows</div>
+
+          {/* 2. Dynamic Categories from Database */}
+          <div className="flex flex-col gap-2 mt-2">
+            {categories && categories.length > 0 ? (
+              categories.map((cat) => (
+                <div 
+                  key={cat._id}
+                  onClick={() => onCategoryChange(cat.name)}
+                  className={`text-sm ml-8 cursor-pointer hover:text-blue-600 transition-all ${selectedCategory === cat.name ? 'font-bold text-gray-900' : 'text-gray-500'}`}
+                >
+                  {cat.name}
+                </div>
+              ))
+            ) : (
+              <p className="text-[10px] ml-8 text-gray-400 italic">No categories found</p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -63,8 +81,37 @@ const Sidebar = ({ onPriceChange }) => { // onPriceChange प्रॉप जो
         </div>
       </div>
 
-    
+      {/* Ratings Filter */}
+      <div className="p-4 border-b">
+        <h3 className="text-[12px] font-bold text-gray-500 uppercase mb-3">Customer Ratings</h3>
+        <div className="space-y-2">
+          {[4, 3, 2].map((star) => (
+            <label key={star} className="flex items-center gap-2 cursor-pointer group">
+              <Checkbox 
+                size="small" 
+                onChange={(e) => onFilterChange('rating', star, e.target.checked)}
+                sx={{ p: 0, '&.Mui-checked': { color: '#2874f0' } }} 
+              />
+              <span className="text-sm text-gray-700 flex items-center gap-1">
+                {star} <FiStar className="fill-amber-400 text-amber-400" size={14} /> & Above
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
 
+      {/* Availability Toggle */}
+      <div className="p-4 border-b bg-gray-50/50">
+        <label className="flex items-center justify-between cursor-pointer">
+          <span className="text-[12px] font-bold text-gray-800 uppercase tracking-tighter">Exclude Out of Stock</span>
+          <input 
+            type="checkbox" 
+            className="w-4 h-4 accent-blue-600" 
+            onChange={(e) => onFilterChange('availability', null, e.target.checked)}
+          />
+        </label>
+      </div>
+    
       {filterSections.map((section, index) => (
         <Accordion key={index} disableGutters elevation={0} square className="border-b before:hidden">
           <AccordionSummary expandIcon={<FiChevronDown className="text-gray-400" />}>
@@ -75,7 +122,8 @@ const Sidebar = ({ onPriceChange }) => { // onPriceChange प्रॉप जो
               <FormControlLabel
                 key={i}
                 className="w-full"
-                control={<Checkbox size="small" sx={{ '&.Mui-checked': { color: '#2874f0' } }} />}
+                control={<Checkbox size="small" sx={{ '&.Mui-checked': { color: '#2874f0' } }} 
+                onChange={(e) => onFilterChange(section.id, option, e.target.checked)} />}
                 label={<span className="text-sm text-gray-700">{option}</span>}
               />
             ))}

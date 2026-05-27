@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { IoHeart } from 'react-icons/io5';
 
-const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product+Not+Found";
+const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product";
 
 const ProductCard = ({ product, onOpenModal }) => {
   const [isAdded, setIsAdded] = useState(false);
@@ -13,7 +13,7 @@ const ProductCard = ({ product, onOpenModal }) => {
     if (!product) return;
     const wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
     // String comparison safe rehta hai hamesha
-    const isPresent = wishlist.some(item => String(item.id) === String(product.id));
+    const isPresent = wishlist.some(item => String(item.id) === String(product._id || product.id));
     setIsInWishlist(isPresent);
   }, [product]);
 
@@ -31,20 +31,24 @@ const ProductCard = ({ product, onOpenModal }) => {
 
     try {
       let wishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
-      const isPresent = wishlist.some(item => String(item.id) === String(product.id));
+      const productId = product._id || product.id;
+      const isPresent = wishlist.some(item => String(item.id) === String(productId));
 
       if (isPresent) {
-        wishlist = wishlist.filter(item => String(item.id) !== String(product.id));
+        wishlist = wishlist.filter(item => String(item.id) !== String(productId));
       } else {
         // Wahi keys use karein jo modal mein kar rahe hain
-        wishlist.push({
-          id: product.id,
+        wishlist.push({ // Ensure _id is used for consistency
+          id: productId,
           name: product.name,
           brand: product.brand || "Aaramdehi",
-          price: product.price || product.newPrice || 0,
-          image: product.image,
+          price: product.sellingPrice || product.price || product.newPrice || 0,
+          image: product.thumbnail || (product.images && product.images[0]?.url) || product.image || PLACEHOLDER_IMAGE, // Robust image selection
           rating: product.rating || 5
         });
+        if (wishlist[wishlist.length - 1].price === 0) {
+          console.warn("Product added to wishlist with 0 price:", product.name, "Original product:", product);
+        }
       }
 
       localStorage.setItem("wishlist", JSON.stringify(wishlist));
@@ -61,12 +65,16 @@ const ProductCard = ({ product, onOpenModal }) => {
     e.preventDefault();
     e.stopPropagation();
     let cart = JSON.parse(localStorage.getItem("cart")) || [];
-    const isExist = cart.find(item => String(item.id) === String(product.id));
+    const productId = product._id || product.id;
+    const isExist = cart.find(item => String(item.id) === String(productId));
 
     if (isExist) {
-      cart = cart.map(item => String(item.id) === String(product.id) ? { ...item, qty: (item.qty || 1) + 1 } : item);
+      cart = cart.map(item => String(item.id) === String(productId) ? { ...item, qty: (item.qty || 1) + 1 } : item);
     } else {
-      cart.push({ ...product, qty: 1 });
+      cart.push({ ...product, qty: 1, id: productId, price: product.sellingPrice || product.price || product.newPrice || 0 }); // Consistent ID: Use id for cart, and ensure price is captured
+      if (cart[cart.length - 1].price === 0) {
+        console.warn("Product added to cart with 0 price:", product.name, "Original product:", product);
+      }
     }
 
     localStorage.setItem("cart", JSON.stringify(cart));
@@ -95,11 +103,10 @@ const ProductCard = ({ product, onOpenModal }) => {
 
       <div className="relative aspect-square mb-4 flex items-center justify-center p-2 bg-gray-50/10 rounded">
         <img 
-          src={product.image || PLACEHOLDER_IMAGE} 
-          onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
-          alt={product.name} 
-          className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition-all duration-500" 
-        />
+            src={product.thumbnail || (product.images && product.images[0]?.url) || PLACEHOLDER_IMAGE} 
+            onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
+            alt={product.name} 
+            className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition-all duration-500" />
       </div>
 
       <div className="flex flex-col flex-grow text-left">
@@ -108,7 +115,7 @@ const ProductCard = ({ product, onOpenModal }) => {
           {product.name}
         </h3>
         <div className="mt-auto">
-          <span className="text-[16px] font-black">₹{(product.price || product.newPrice || 0).toLocaleString()}</span>
+          <span className="text-[16px] font-black">₹{(product.sellingPrice || product.price || product.newPrice || 0).toLocaleString()}</span>
         </div>
       </div>
 

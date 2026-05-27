@@ -1,5 +1,20 @@
 {
   "version": 2,
+  "builds": [
+    {
+      "src": "Aaramdehi/package.json",
+      "use": "@vercel/static-build",
+      "config": { "distDir": "dist" }
+    },
+    {
+      "src": "server/index.js",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "my_search_engine/main.py",
+      "use": "@vercel/python"
+    }
+  ],
   "routes": [
     {
       "src": "/api/search/(.*)",

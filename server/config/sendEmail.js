@@ -45,6 +45,7 @@ const sendEmail = async ({ sendTo, subject, html }) => {
     try {
         // Validate inputs
         if (!sendTo || !html) {
+            console.error("❌ Email failed: Recipient or content is missing.");
             throw new Error("Missing recipient email or content");
         }
 

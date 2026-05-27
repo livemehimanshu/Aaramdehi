@@ -1,23 +1,43 @@
 import React from 'react'
-import { Button } from '@mui/material';
-import Hero from '../../slider/hero';
-import PromoSection from '../../banneradds/PromoSection';
-import PopularProducts from '../../slider/PopularProducts';
-import LatestProducts from '../../slider/LatestProducts';
+import Header from '../../header/index.jsx';
+import HomeBanner from '../../banneradds/HomeBanner.jsx';
+import PopularProducts from '../../slider/PopularProducts.jsx';
+import LatestProducts from '../../slider/LatestProducts.jsx';
+import MultiItemCards from '../../Pages/ProductListing/MultiItemCards.jsx';
+import ShopByRoom from '../../Pages/ProductListing/ShopByRoom.jsx';
 
-import RecentlyViewed from '../../banneradds/RecentlyViewed';
+import AaramdehiAdBanner from '../../header/AaramdehiAdBanner.jsx';
+import RecentlyViewed from '../../banneradds/RecentlyViewed.jsx';
 
  const Home = () => {
   return (
    <main className="w-full">
-      {/* 1. Hero Slider Section */}
-      <Hero />
-{/* 2. जहाँ आप इसे दिखाना चाहते हैं वहां इसका टैग लगा दें */}
-      <PromoSection />
-      {/* 2. Popular Products Section */}
+      {/* 1. High-Quality Banner (Visual Appeal) */}
+      <HomeBanner section="hero" />
+
+      {/* Bedroom Dynamic Banner */}
+      <HomeBanner section="bedroom" />
+
+      {/* Dynamic Ad Banner */}
+      <AaramdehiAdBanner />
+
+      {/* 2. Aesthetic Multi-Item Cards */}
+      <MultiItemCards />
+
+      {/* 3. Shop by Room (Horizontal Scroller) */}
+      <ShopByRoom />
+
+      {/* 4. "Best Sellers in Home Decor" Scroller */}
       <PopularProducts />
-      {/* 3. Latest Products Section */}
+
+      {/* 5. Recently Viewed (Personalization) */}
       <RecentlyViewed />
+
+      {/* 6. Seasonal Offers Section */}
+      <HomeBanner section="seasonal" />
+
+      {/* 6. Latest Products Section */}
+      <HomeBanner section="promotional" />
       <LatestProducts />
       
     </main>

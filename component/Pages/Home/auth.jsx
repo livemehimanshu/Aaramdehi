@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { IoEyeOutline, IoEyeOffOutline, IoShieldCheckmarkOutline, IoWarningOutline } from "react-icons/io5";
 // APIs import
-import { loginAPI, signupAPI } from '../../../../src/api/authAndAdminApi.js';
+import { loginAPI, signupAPI } from '../../../src/api/authAndAdminApi.js';
 
 const Auth = () => {
     const location = useLocation();

@@ -327,6 +327,23 @@ const Header = ({ hideNav = false }) => {
                 </div>
               )}
 
+              {/* Mobile login/profile icon (visible on small screens) */}
+              <div className="sm:hidden ml-2">
+                {user ? (
+                  <button onClick={() => setShowProfileMenu(!showProfileMenu)} className='p-1'>
+                    {user.avatar ? (
+                      <img src={user.avatar} onError={(e)=>{e.target.src = "https://placehold.co/32x32?text=👤"}} alt="Profile" className='w-7 h-7 rounded-full object-cover' />
+                    ) : (
+                      <IoPersonOutline size={20} className='text-gray-700' />
+                    )}
+                  </button>
+                ) : (
+                  <Link to="/login" className='p-1 inline-flex items-center'>
+                    <IoPersonOutline size={20} className='text-gray-700' />
+                  </Link>
+                )}
+              </div>
+
 
               <div className="flex items-center gap-0 md:gap-1">
                 {/* Compare */}

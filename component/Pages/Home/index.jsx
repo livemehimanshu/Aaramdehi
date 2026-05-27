@@ -3,8 +3,8 @@ import Header from '../../header/index.jsx';
 import HomeBanner from '../../banneradds/HomeBanner.jsx';
 import PopularProducts from '../../slider/PopularProducts.jsx';
 import LatestProducts from '../../slider/LatestProducts.jsx';
-import MultiItemCards from '../../Pages/ProductListing/MultiItemCards.jsx';
-import ShopByRoom from '../../Pages/ProductListing/ShopByRoom.jsx';
+import MultiItemCards from '../../Pages/productListing/MultiItemCards.jsx';
+import ShopByRoom from '../../Pages/productListing/ShopByRoom.jsx';
 
 import AaramdehiAdBanner from '../../header/AaramdehiAdBanner.jsx';
 import RecentlyViewed from '../../banneradds/RecentlyViewed.jsx';

@@ -10,7 +10,7 @@ const AaramdehiAdBanner = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const apiBase = import.meta.env.VITE_API_URL || "";
         const response = await fetch(`${apiBase}/api/settings/public`, { signal: AbortSignal.timeout(10000) });
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
         const result = await response.json();
@@ -63,7 +63,12 @@ const AaramdehiAdBanner = () => {
         {/* Product Image & Ad Badge */}
         <div className="relative w-40 h-24 sm:w-48 sm:h-28 flex items-center justify-center">
           <span className="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider scale-90">Ad</span>
-          <img src="/images/luxury-pillow.webp" alt="Pillow" className="w-full h-full object-contain transform hover:scale-105 transition-transform duration-300" />
+          <img
+            src="/images/luxury-pillow.webp"
+            alt="Pillow"
+            onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://placehold.co/400x400?text=Pillow'; }}
+            className="w-full h-full object-contain transform hover:scale-105 transition-transform duration-300"
+          />
         </div>
       </div>
     </div>

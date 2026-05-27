@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import Sidebar from '../../Sidebar'; 
+import Sidebar from '../../sidebar/index.jsx'; 
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
 import { AiFillStar, AiOutlineHeart, AiFillHeart, AiOutlineEye, AiOutlineRight } from 'react-icons/ai';

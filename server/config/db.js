@@ -14,7 +14,7 @@ if (process.env.FIREBASE_PROJECT_ID) {
   console.log('✅ Using Firebase credentials from environment variables');
   serviceAccount = {
     project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    private_key: process.env.FIREBASE_PRIVATE_KEY ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/^"|"$/g, '') : undefined, // ✅ Improved parsing
     client_email: process.env.FIREBASE_CLIENT_EMAIL,
   };
 } else {

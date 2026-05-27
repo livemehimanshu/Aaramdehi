@@ -168,7 +168,7 @@ const Header = ({ hideNav = false }) => {
     // Fetch site settings (Logo)
     const fetchSettings = async () => {
       try {
-        const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+        const apiBase = import.meta.env.VITE_API_URL || ""; // Default to relative path if on same domain
         const response = await fetch(`${apiBase}/api/settings/public`, { 
           signal: AbortSignal.timeout(5000) // Reduced to 5s
         });

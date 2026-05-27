@@ -64,15 +64,23 @@ const corsOptions = {
             'http://localhost:5173',
             'http://localhost:5174',
             'https://aaramdehi.co.in',
+            'http://aaramdehi.co.in', // Added non-https just in case
+            'https://aaramdehi-fortend-82zmvg9np-17hshriv-5129s-projects.vercel.app',
+            'https://aaramdehi-fortend-17hshriv-5129-17hshriv-5129s-projects.vercel.app',
+            'https://aaramdehi-fortend-pecubx8al-17hshriv-5129s-projects.vercel.app', // ✅ Naya link add kiya
+            /\.vercel\.app$/, 
             process.env.FRONTEND_URL // Vercel Dashboard mein ise bhi set karein
         ].filter(Boolean);
         
         // ✅ Improved normalization to handle trailing slashes and casing
         const normalize = (url) => url ? url.replace(/\/$/, "").toLowerCase() : null;
         const normalizedOrigin = normalize(origin);
-        const normalizedAllowed = allowedOrigins.map(normalize);
+        const isAllowed = allowedOrigins.some(allowed => {
+            if (allowed instanceof RegExp) return allowed.test(origin);
+            return normalize(allowed) === normalizedOrigin;
+        });
 
-        if (!origin || normalizedAllowed.includes(normalizedOrigin)) {
+        if (!origin || isAllowed) {
             callback(null, true);
         } else {
             callback(new Error('Not allowed by CORS'));

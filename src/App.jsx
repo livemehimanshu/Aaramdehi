@@ -4,13 +4,13 @@ import { HelmetProvider } from 'react-helmet-async'
 
 // Layouts
 import Header from '../component/header/index.jsx'
-import Footer from '../component/footer/Footer.jsx'
+import Footer from '../component/Footer/Footer.jsx'
 import AdminLayout from '../component/Admin/AdminLayout.jsx'
 import Sidebar from '../component/sidebar/Sidebar.jsx'
 
 // Public Pages
 import Home from '../component/Pages/Home/index.jsx'
-import ProductListing from '../component/Pages/ProductListing/index.jsx'
+import ProductListing from '../component/Pages/productListing/index.jsx'
 import ProductDetailsPage from '../component/Pages/productpage/ProductDetailsPage.jsx'
 import ComparePage from '../component/Pages/ComparePage/index.jsx'
 import { BlogList, BlogDetail } from '../component/Pages/blog/blog.jsx'

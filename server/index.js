@@ -64,11 +64,12 @@ const corsOptions = {
             'http://localhost:5173',
             'http://localhost:5174',
             'https://aaramdehi.co.in',
-            'http://aaramdehi.co.in', 
+            'https://www.aaramdehi.co.in', // ✅ Explicitly allow www subdomain
+            'http://aaramdehi.co.in', // Added non-https just in case
             'https://aaramdehi-fortend-82zmvg9np-17hshriv-5129s-projects.vercel.app',
             'https://aaramdehi-fortend-17hshriv-5129-17hshriv-5129s-projects.vercel.app',
-            'https://aaramdehi-fortend-pecubx8al-17hshriv-5129s-projects.vercel.app',
-            /\.vercel\.app$/, // ✅ Sabhi Vercel preview links allow honge
+            'https://aaramdehi-fortend-pecubx8al-17hshriv-5129s-projects.vercel.app', // ✅ Naya link add kiya
+            /\.vercel\.app$/, 
             process.env.FRONTEND_URL // Vercel Dashboard mein ise bhi set karein
         ].filter(Boolean);
         
@@ -106,8 +107,8 @@ app.use(helmet({
             "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             "img-src": ["'self'", "data:", "https://res.cloudinary.com", "https://images.unsplash.com", "https://*.fbcdn.net", "https://images.pexels.com"],
             "font-src": ["'self'", "https://fonts.gstatic.com"],
-            // ✅ Production fix: Don't restrict to localhost
-            "connect-src": ["'self'", "https://aaramdehi.co.in", "https://*.vercel.app", "https://aaramdehi-91f82-default-rtdb.firebaseio.com/"]
+            // ✅ Standardized both non-www and www for production
+            "connect-src": ["'self'", "https://aaramdehi.co.in", "https://www.aaramdehi.co.in", "https://*.vercel.app", "https://aaramdehi-91f82-default-rtdb.firebaseio.com/"]
         }
     }
 }));

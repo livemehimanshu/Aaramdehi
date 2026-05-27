@@ -2,10 +2,10 @@
   "version": 2,
   "functions": {
     "server/index.js": {
-      "runtime": "@vercel/node"
+      "runtime": "@vercel/node@2.0.0"
     },
     "my_search_engine/main.py": {
-      "runtime": "@vercel/python"
+      "runtime": "@vercel/python@1.0.0"
     }
   },
   "rewrites": [

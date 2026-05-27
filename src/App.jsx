@@ -4,9 +4,9 @@ import { HelmetProvider } from 'react-helmet-async'
 
 // Layouts
 import Header from '../component/header/index.jsx'
-import Footer from '../component/Footer/Footer.jsx'
+import Footer from '../component/footer/Footer.jsx'
 import AdminLayout from '../component/Admin/AdminLayout.jsx'
-import Sidebar from '../component/Sidebar/Sidebar.jsx'
+import Sidebar from '../component/sidebar/Sidebar.jsx'
 
 // Public Pages
 import Home from '../component/Pages/Home/index.jsx'
@@ -16,7 +16,7 @@ import ComparePage from '../component/Pages/ComparePage/index.jsx'
 import { BlogList, BlogDetail } from '../component/Pages/blog/blog.jsx'
 
 // Auth & User Pages
-import AuthPage from '../component/auth/AuthPage.jsx'
+import AuthPage from '../component/Pages/Home/auth.jsx'
 import AccountSettings from '../component/auth/AccountSettings.jsx'
 import ManageAddresses from '../component/auth/ManageAddresses.jsx'
 import PanCardInfo from '../component/pancard/PanCardInfo.jsx'

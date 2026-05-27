@@ -205,10 +205,11 @@ const PORT = process.env.PORT || 8000;
 
 /**
  * ✅ Production/Vercel Readiness
- * app.listen should not run on Vercel as it manages the runtime.
- * Startup sync is moved to a manual admin trigger to avoid serverless timeouts.
+ * Vercel uses the exported 'app' as a serverless function handler.
+ * app.listen is only for local development.
  */
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+if (!isVercel) {
     app.listen(PORT, async () => {
         console.log(`🚀 Local Server: http://localhost:${PORT}`);
         try {

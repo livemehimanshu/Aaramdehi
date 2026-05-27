@@ -219,14 +219,14 @@ const Header = ({ hideNav = false }) => {
     <>
       <header className='sticky top-0 z-50 bg-white shadow-sm'>
         {/* --- TOP STRIP --- */}
-        <div className="top-strip py-2 border-b border-gray-200 hidden md:block">
+        <div className="top-strip py-2 border-b border-gray-200 block">
           <div className="container mx-auto px-4">
-            <div className="flex items-center justify-between text-gray-500">
-              <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center justify-between text-gray-500 gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <p className="text-[12px] font-medium">Get up to 50% off new season items!</p>
                 <Link to="/seller/register" className='text-[12px] font-bold text-blue-600 hover:underline'>Become a Seller</Link>
               </div>
-              <div className="flex items-center gap-5">
+              <div className="flex flex-wrap items-center gap-3">
                 <select className="bg-transparent text-[12px] font-bold outline-none cursor-pointer border-none">
                     <option>English</option>
                     <option>Hindi</option>
@@ -261,7 +261,7 @@ const Header = ({ hideNav = false }) => {
             </div>
 
             {/* Search */}
-            <div className="flex-1 max-w-[600px] hidden sm:block">
+            <div className="flex-1 min-w-0 max-w-full">
               <Search />
             </div>
 
@@ -270,14 +270,14 @@ const Header = ({ hideNav = false }) => {
               
               {/* Desktop - Login/Register or Profile */}
               {!user ? (
-                <div className='hidden lg:flex items-center gap-3 text-[13px] font-black uppercase tracking-tight'>
+                <div className='flex items-center gap-3 text-[13px] font-black uppercase tracking-tight'>
                   <IoPersonOutline size={20} className='text-gray-700' />
                   <Link to='/login' className='hover:text-red-600 transition'>Login</Link>
                   <span className='text-gray-300'>/</span>
                   <Link to='/signup' className='hover:text-red-600 transition'>Signup</Link>
                 </div>
               ) : (
-                <div className='hidden lg:flex items-center gap-3'>
+                <div className='flex items-center gap-3'>
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className='flex items-center gap-2 hover:text-red-600 transition'
@@ -291,7 +291,7 @@ const Header = ({ hideNav = false }) => {
                     ) : (
                       <IoPersonOutline size={24} className='text-gray-700' />
                     )}
-                    <span className='text-[13px] font-bold hidden md:inline'>{user.name?.split(' ')[0]}</span>
+                    <span className='text-[13px] font-bold'>{user.name?.split(' ')[0]}</span>
                   </button>
                 </div>
               )}
@@ -326,35 +326,11 @@ const Header = ({ hideNav = false }) => {
                 </div>
               )}
 
-              {/* Mobile Person Icon */}
-              <div className="lg:hidden">
-                {user ? (
-                  <button onClick={() => setShowProfileMenu(!showProfileMenu)} className='p-2'>
-                    {user.avatar ? (
-                      <img 
-                        src={user.avatar} 
-                        onError={(e) => { e.target.src = "https://placehold.co/32x32?text=👤"; }}
-                        alt="Profile" 
-                        className='w-6 h-6 rounded-full object-cover' />
-                    ) : (
-                      <IoPersonOutline size={22} className="text-gray-700" />
-                    )}
-                  </button>
-                ) : (
-                  // ✅ Mobile par bhi Sign Up aur Login links dikhayein
-                  <div className='flex items-center gap-3 text-[11px] font-black uppercase tracking-tighter'>
-                    <IoPersonOutline size={20} className='text-gray-700' />
-                    <Link to='/login' className='text-gray-800'>Login</Link>
-                    <span className='text-gray-300'>/</span>
-                    <Link to='/signup' className='text-red-600'>Signup</Link>
-                  </div>
-                )}
-              </div>
 
               <div className="flex items-center gap-0 md:gap-1">
                 {/* Compare */}
                 <Tooltip title="Compare">
-                  <Link to="/compare" className='!p-1.5 md:!p-2 hidden md:flex items-center justify-center'>
+                  <Link to="/compare" className='!p-1.5 md:!p-2 flex items-center justify-center'>
                     <StyledBadge badgeContent={compareCount} color="error">
                       <IoIosGitCompare size={22} className='text-gray-700' />
                     </StyledBadge>
@@ -388,9 +364,6 @@ const Header = ({ hideNav = false }) => {
             </div>
           </div>
 
-          <div className="px-4 mt-3 sm:hidden">
-            <Search />
-          </div>
         </div>
 
         {!hideNav && <Navigation categories={navCategories} />} {/* ✅ Categories pass kiye */}

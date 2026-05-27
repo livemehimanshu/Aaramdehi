@@ -73,7 +73,8 @@ const Header = ({ hideNav = false }) => {
   // Function: Logout
   const handleLogout = async () => {
     try {
-      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      // ✅ Mobile Fix: Remove localhost fallback for production
+      const apiBase = import.meta.env.VITE_API_URL || ""; 
       // ✅ 1. Sign out from Firebase
       await signOut(auth);
 

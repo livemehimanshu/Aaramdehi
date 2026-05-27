@@ -108,7 +108,7 @@ app.use(helmet({
             "img-src": ["'self'", "data:", "https://res.cloudinary.com", "https://images.unsplash.com", "https://*.fbcdn.net", "https://images.pexels.com"],
             "font-src": ["'self'", "https://fonts.gstatic.com"],
             // ✅ Standardized both non-www and www for production
-            "connect-src": ["'self'", "https://aaramdehi.co.in", "https://www.aaramdehi.co.in", "https://*.vercel.app", "https://aaramdehi-91f82-default-rtdb.firebaseio.com/"]
+            "connect-src": ["'self'", "https://aaramdehi.co.in", "https://www.aaramdehi.co.in", "https://*.vercel.app", "https://aaramdehi-91f82-default-rtdb.firebaseio.com/", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com"]
         }
     }
 }));

@@ -1,21 +1,31 @@
 {
   "version": 2,
-  "functions": {
-    "server/index.js": {
-      "runtime": "@vercel/node@2.0.0"
+  "builds": [
+    {
+      "src": "server/index.js",
+      "use": "@vercel/node"
     },
-    "my_search_engine/main.py": {
-      "runtime": "@vercel/python@1.0.0"
+    {
+      "src": "my_search_engine/main.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build"
     }
-  },
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/server/index.js"
+      "destination": "server/index.js"
     },
     {
       "source": "/search-api/(.*)",
-      "destination": "/my_search_engine/main.py"
+      "destination": "my_search_engine/main.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "cleanUrls": true

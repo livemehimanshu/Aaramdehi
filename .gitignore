@@ -1,14 +1,26 @@
 # Dependency directories
+# Dependencies
 node_modules/
 jspdf/
 dist/
 build/
+.pnp
+.pnp.js
 
 # Environment variables
+# Environment Variables & Keys
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
+serviceAccountKey.json
 
 # Python
+# Build outputs
+dist/
+build/
+.vercel/
 __pycache__/
 *.py[cod]
 venv/
@@ -16,7 +28,6 @@ env/
 
 # Vercel
 .vercel
-*.json
 server/aaramdehi-*.json
 server/config/serviceAccountKey.json
 .env*.local

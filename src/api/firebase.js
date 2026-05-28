@@ -17,6 +17,11 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// ✅ Validation check to prevent 'invalid-api-key' crash
+if (!firebaseConfig.apiKey) {
+  console.error("❌ Firebase API Key is missing! Check your .env.local or Vercel Environment Variables.");
+}
+
 // Initialize Firebase App as singleton (prevents duplicate-app error)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 

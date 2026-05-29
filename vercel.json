@@ -1,37 +1,25 @@
-{
+﻿{
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+  "functions": {
+    "server/index.js": {
+      "runtime": "nodejs20.x"
     },
-    {
-      "src": "server/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "my_search_engine/main.py",
-      "use": "@vercel/python"
+    "my_search_engine/main.py": {
+      "runtime": "python3.12"
     }
-  ],
-  "routes": [
+  },
+  "rewrites": [
     {
-      "handle": "filesystem"
+      "source": "/api/(.*)",
+      "destination": "/server/index.js"
     },
     {
-      "src": "/api/(.*)",
-      "dest": "/server/index.js"
+      "source": "/search-api/(.*)",
+      "destination": "/my_search_engine/main.py"
     },
     {
-      "src": "/search-api/(.*)",
-      "dest": "/my_search_engine/main.py"
-    },
-    {
-      "src": "^/(?!api|search-api)(?!.*\\.).*$",
-      "dest": "/index.html"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

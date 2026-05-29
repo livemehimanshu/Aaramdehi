@@ -59,22 +59,18 @@ def init_firebase():
             "token_uri": "https://oauth2.googleapis.com/token",
         })
     else:
+        # ✅ Security Improvement: Local development ke liye file check, production mein environment strict
+        if os.getenv('VERCEL') == '1':
+             logger.error('CRITICAL: Firebase Private Key missing in Vercel Environment!')
+             return None
+             
         base_dir = os.path.dirname(__file__)
-        candidate_paths = [
-            os.path.join(base_dir, 'serviceAccountKey.json'),
-            os.path.join(base_dir, '..', 'server', 'serviceAccountKey.json'),
-            os.path.join(base_dir, '..', 'server', 'config', 'serviceAccountKey.json'),
-            os.path.join(base_dir, '..', 'server', 'aaramdehi-91f82-firebase-adminsdk-fbsvc-a144c1cbb1.json'),
-        ]
-
-        for cred_path in candidate_paths:
-            if os.path.exists(cred_path):
-                logger.info('Using Firebase credential file at %s', cred_path)
-                cred = credentials.Certificate(cred_path)
-                break
-
-        if not cred:
-            logger.warning('Firebase credentials not found; using fallback catalog.')
+        cred_path = os.path.join(base_dir, 'serviceAccountKey.json')
+        if os.path.exists(cred_path):
+            logger.info('Using local Firebase credential file')
+            cred = credentials.Certificate(cred_path)
+        else:
+            logger.warning('No Firebase credentials found.')
             return None
 
     db_url = os.getenv('FIREBASE_DATABASE_URL', 'https://aaramdehi-91f82-default-rtdb.firebaseio.com/')

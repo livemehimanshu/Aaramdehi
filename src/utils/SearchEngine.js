@@ -1,4 +1,4 @@
-import { api } from './authUtils';
+import api from './authUtils'; // Use default export consistently
 
 export function useProductSearch() {
   return async function(query) {

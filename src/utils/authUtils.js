@@ -7,10 +7,14 @@ import axios from 'axios';
  */
 
 // ✅ Standardized API Base URL logic
-const apiBaseURL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "").replace(/\/api$/, "");
+const apiBaseURL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 export const api = axios.create({
-  baseURL: apiBaseURL ? `${apiBaseURL}/api` : "/api",
+  // Agar apiBaseURL khali hai (local), toh sirf "/api" use karein. 
+  // Agar domain set hai, toh check karein ki kahin usmein pehle se "/api" toh nahi.
+  baseURL: apiBaseURL 
+    ? (apiBaseURL.endsWith('/api') ? apiBaseURL : `${apiBaseURL}/api`) 
+    : "/api",
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true
 });

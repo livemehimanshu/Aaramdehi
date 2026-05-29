@@ -1,10 +1,11 @@
 import axios from 'axios';
 
-const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+// Vercel rewrites aur local proxy ke liye relative path use karein
+const apiBase = import.meta.env.VITE_API_URL || "/api";
 
 // Centralized API instance for Aaramdehi Admin & User modules
 export const api = axios.create({
-  baseURL: `${apiBase}/api`,
+  baseURL: apiBase,
   headers: {
     'Content-Type': 'application/json'
   },

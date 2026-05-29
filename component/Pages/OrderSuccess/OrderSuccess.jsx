@@ -31,10 +31,10 @@ const OrderSuccess = () => {
             // Agar details missing hain toh DB se fetch karein
             if (idToFetch && idToFetch !== 'ORD-XXXXX' && (!orderData.orderItems || orderData.orderItems.length === 0)) {
                 try {
-                    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+                    const apiBase = import.meta.env.VITE_API_URL || "/api";
                     const token = localStorage.getItem('accessToken');
                     
-                    const response = await axios.get(`${apiBase}/api/order/${idToFetch}`, {
+                    const response = await axios.get(`${apiBase}/order/${idToFetch}`, {
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     

@@ -2,7 +2,8 @@
   "version": 2,
   "functions": {
     "server/index.js": {
-      "runtime": "nodejs20.x"
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
     },
     "my_search_engine/main.py": {
       "runtime": "python3.12"

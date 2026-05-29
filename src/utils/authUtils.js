@@ -6,9 +6,11 @@ import axios from 'axios';
  * Prod: VITE_API_URL environment variable se aayega
  */
 
+// ✅ Standardized API Base URL logic
+const apiBaseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+
 export const api = axios.create({
-  // ✅ Fix: Base URL logic ko simplify kiya taaki double declarations na ho
-  baseURL: (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, ""),
+  baseURL: apiBaseURL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true
 });

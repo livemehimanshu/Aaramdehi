@@ -39,7 +39,6 @@ f:\Aramdehi
 │  ├─ .env.example
 │  ├─ .env.local
 │  ├─ .gitignore
-│  ├─ .vercel\
 │  ├─ aaramdehi-91f82-firebase-adminsdk-fbsvc-a144c1cbb1.json
 │  ├─ config\
 │  │  ├─ db.js

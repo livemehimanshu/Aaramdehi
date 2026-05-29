@@ -121,8 +121,9 @@ apiRouter.use("/refunds", adminLimiter, refundRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/team", teamRouter);
 
-// ✅ Robust mounting for Vercel deployment
-app.use("/api", apiRouter);
+// ✅ Standard mounting for Vercel rewrites and local proxy
+app.use("/api", apiRouter); 
+
 // Health Check
 app.get("/", (req, res) => {
     res.json({ message: "Aaramdehi Server is running!", status: "Active" });

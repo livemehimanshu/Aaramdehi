@@ -1,0 +1,233 @@
+Project Tree Report for f:\Aramdehi
+===============================
+
+This report shows the complete folder and file structure of the project workspace.
+
+f:\Aramdehi
+├─ .env.local
+├─ .env.local.example
+├─ .gitignore
+├─ .vercel\
+├─ ADMIN_PAGE_TEMPLATE.jsx
+├─ dist\
+│  ├─ assets\
+│  ├─ index.html
+│  └─ logo.png
+├─ eslint.config.js
+├─ index.html
+├─ index.jsx
+├─ my_search_engine\
+│  ├─ .gitignore
+│  ├─ engine.py
+│  ├─ index.html
+│  ├─ main.py
+│  ├─ README.md
+│  ├─ requirements.txt
+│  ├─ serviceAccountKey.json
+│  └─ __pycache__\
+├─ node_modules\
+├─ package-lock.json
+├─ package.json
+├─ postcss.config.js
+├─ public\
+│  ├─ index.html
+│  └─ logo.png
+├─ README.md
+├─ README_MASTER_INDEX.md
+├─ server\
+│  ├─ .env
+│  ├─ .env.example
+│  ├─ .env.local
+│  ├─ .gitignore
+│  ├─ .vercel\
+│  ├─ aaramdehi-91f82-firebase-adminsdk-fbsvc-a144c1cbb1.json
+│  ├─ config\
+│  │  ├─ db.js
+│  │  ├─ emailService.js
+│  │  ├─ sendEmail.js
+│  │  └─ serviceAccountKey.json
+│  ├─ controllers\
+│  │  ├─ analytics.controller.js
+│  │  ├─ appointment.controller.js
+│  │  ├─ banner.controller.js
+│  │  ├─ category.controller.js
+│  │  ├─ coupon.controller.js
+│  │  ├─ order.controller.js
+│  │  ├─ payment.controller.js
+│  │  ├─ product.controller.js
+│  │  ├─ refund.controller.js
+│  │  ├─ seo.controller.js
+│  │  ├─ settings.controller.js
+│  │  ├─ shops.controller.js
+│  │  ├─ team.controller.js
+│  │  └─ user.controller.js
+│  ├─ index.js
+│  ├─ middleware\
+│  ├─ node_modules\
+│  ├─ package-lock.json
+│  ├─ package.json
+│  ├─ routes\
+│  │  ├─ analytics.route.js
+│  │  ├─ appointment.route.js
+│  │  ├─ auth.route.js
+│  │  ├─ banner.route.js
+│  │  ├─ category.route.js
+│  │  ├─ category.routes.js
+│  │  ├─ coupon.route.js
+│  │  ├─ ImageWithFallback.jsx
+│  │  ├─ JsonLdSchema.jsx
+│  │  ├─ order.route.js
+│  │  ├─ payment.route.js
+│  │  ├─ product.route.js
+│  │  ├─ refund.route.js
+│  │  ├─ robots.txt
+│  │  ├─ SalesOrderForm.jsx
+│  │  ├─ seo.route.js
+│  │  ├─ settings.route.js
+│  │  ├─ shops.route.js
+│  │  ├─ team.route.js
+│  │  └─ user.route.js
+│  ├─ scripts\
+│  ├─ utils\
+│  └─ vercel.json
+├─ src\
+│  ├─ api\
+│  ├─ App.css
+│  ├─ App.jsx
+│  ├─ context\
+│  │  └─ CartContext.jsx
+│  ├─ data\
+│  │  ├─ categories.js
+│  │  ├─ productDetails.js
+│  │  ├─ products.js
+│  │  └─ recentlyViewedUtils.js
+│  ├─ hooks\
+│  │  └─ useCart.js
+│  ├─ index.css
+│  ├─ main.jsx
+│  ├─ schemas\
+│  └─ utils\
+├─ tailwind.config.js
+├─ vercel.json
+└─ vite.config.js
+
+component\
+├─ Admin\
+│  ├─ AdminLayout.jsx
+│  ├─ QuillEditorWrapper.jsx
+│  ├─ TipTapEditor.css
+│  ├─ component\
+│  │  ├─ charts\
+│  │  ├─ common\
+│  │  └─ filemanger\
+│  └─ pages\
+│     ├─ add-product.jsx
+│     ├─ AddBanner.jsx
+│     ├─ AddProduct.jsx
+│     ├─ AllProducts.jsx
+│     ├─ analytics.jsx
+│     ├─ appointment.jsx
+│     ├─ BannerList.jsx
+│     ├─ categories.jsx
+│     ├─ coupons.jsx
+│     ├─ Dashboard.jsx
+│     ├─ EditBanner.jsx
+│     ├─ EditProduct.jsx
+│     ├─ FrequentlyBoughtTogether.jsx
+│     ├─ generateInvoicePDF.js
+│     ├─ generateShopLedgerPDF.js
+│     ├─ inventory.jsx
+│     ├─ newsletter.jsx
+│     ├─ orders.jsx
+│     ├─ payments.jsx
+│     ├─ Products.jsx
+│     ├─ refunds.jsx
+│     ├─ reviews.jsx
+│     ├─ seo-global.jsx
+│     ├─ seo-optimizer.jsx
+│     ├─ settings.jsx
+│     ├─ Shops.jsx
+│     ├─ team.jsx
+│     └─ users.jsx
+├─ auth\
+│  ├─ AccountSettings.jsx
+│  ├─ AdminRoute.jsx
+│  ├─ AuthContainer.jsx
+│  ├─ AuthPage.jsx
+│  ├─ index.jsx
+│  └─ ManageAddresses.jsx
+├─ banneradds\
+│  ├─ HomeBanner.jsx
+│  ├─ PromoSection.jsx
+│  └─ RecentlyViewed.jsx
+├─ CartDrawer\
+│  └─ CartDrawer.jsx
+├─ CategoriesBar\
+│  ├─ CategoriesBar.jsx
+│  └─ index.jsx
+├─ categorydata\
+│  └─ categoryData.jsx
+├─ checkout\
+│  ├─ CheckoutPage.jsx
+│  ├─ index.jsx
+│  └─ PopularProducts.jsx
+├─ CompareDrawer\
+│  └─ CompareDrawer.jsx
+├─ ErrorBoundary\
+│  └─ ErrorBoundary.jsx
+├─ Footer\
+│  └─ Footer.jsx
+├─ giftcard\
+│  ├─ GiftCards.jsx
+│  └─ MyCoupons.jsx
+├─ header\
+│  ├─ AaramdehiAdBanner.jsx
+│  ├─ Header.jsx
+│  ├─ index.jsx
+│  ├─ MinimalCheckoutHeader.jsx
+│  ├─ navigation.jsx
+│  ├─ SEO.jsx
+│  ├─ MinimalCheckoutHeader\
+│  └─ navigation\
+├─ HeroSection\
+│  ├─ HeroSection.jsx
+│  └─ index.jsx
+├─ MainGrid\
+│  ├─ index.jsx
+│  └─ MainGrid.jsx
+├─ order\
+│  ├─ MyOrders.jsx
+│  ├─ Orders.jsx
+│  ├─ OrderTracking.jsx
+│  └─ Pages\
+│     ├─ Orders.jsx
+│     ├─ Profile.jsx
+│     ├─ blog\
+│     ├─ ComparePage\
+│     ├─ Home\
+│     ├─ OrderSuccess\
+│     ├─ productListing\
+│     └─ productpage\
+├─ pancard\
+│  └─ PanCardInfo.jsx
+├─ payment\
+│  ├─ index.jsx
+│  └─ PaymentPage.jsx
+├─ ProductRow\
+│  ├─ index.jsx
+│  └─ ProductRow.jsx
+├─ search\
+│  ├─ index.jsx
+│  └─ style.css
+├─ sidebar\
+│  ├─ index.jsx
+│  └─ Sidebar.jsx
+├─ slider\
+│  ├─ hero.jsx
+│  ├─ LatestProducts.jsx
+│  ├─ PopularProducts.jsx
+│  ├─ ProductCard.jsx
+│  └─ QuickViewModal.jsx
+└─ WishlistDrawer\
+   ├─ Wishlist.jsx
+   └─ WishlistDrawer.jsx

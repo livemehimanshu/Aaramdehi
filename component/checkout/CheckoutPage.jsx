@@ -31,6 +31,7 @@ const CheckoutPage = () => {
     });
 
     const [showAddressModal, setShowAddressModal] = useState(false);
+    const [editingAddress, setEditingAddress] = useState(null);
 
     // ✅ Setup React Hook Form for Address
     const { register, handleSubmit, formState: { errors }, reset } = useForm({

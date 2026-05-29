@@ -44,10 +44,10 @@ userRouter.put('/upload-avatar', isAuthenticatedUser, upload.single('avatar'), u
 userRouter.get('/details', isAuthenticatedUser, getUserDetailsController);
 
 // ✅ Update User Profile Details (Name, Email, Mobile)
-userRouter.put('/update-details', isAuthenticatedUser, updateUserDetailsController);
+userRouter.put('/update-details', authLimiter, isAuthenticatedUser, updateUserDetailsController);
 
 // ✅ Change Password Route
-userRouter.put('/change-password', isAuthenticatedUser, changePasswordController);
+userRouter.put('/change-password', authLimiter, isAuthenticatedUser, changePasswordController);
 
 // User Logout
 userRouter.get('/logout', isAuthenticatedUser, (req, res) => {

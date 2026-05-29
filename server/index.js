@@ -104,6 +104,7 @@ app.use(helmet({
 // --- API Routes ---
 const apiRouter = express.Router();
 
+// ✅ Standard routes within the router (Relative to mount point)
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/user", userRouter);
 apiRouter.use("/products", adminLimiter, productRouter);
@@ -120,7 +121,7 @@ apiRouter.use("/refunds", adminLimiter, refundRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/team", teamRouter);
 
-// ✅ Mounting on both paths to ensure reliability on Vercel
+// ✅ Robust Mounting: Handle cases where Vercel might pass the /api prefix or not
 app.use("/api", apiRouter);
 app.use("/", apiRouter);
 
@@ -204,27 +205,24 @@ app.use((err, req, res, next) => {
         stack: process.env.NODE_ENV === 'development' ? err.stack : null,
     });
 });
-
 const PORT = process.env.PORT || 8000;
 
-/**
- * ✅ Production/Vercel Readiness
- * Vercel uses the exported 'app' as a serverless function handler.
- * app.listen is only for local development.
- */
+// Vercel detect karne ka logic
 const isVercel = process.env.VERCEL === '1' || !!process.env.VERCEL;
+
 if (!isVercel) {
+    // Sirf Local pe chalega
     app.listen(PORT, async () => {
-        console.log(`🚀 Local Server: http://localhost:${PORT}`);
+        console.log(`🚀 Local Server running at: http://localhost:${PORT}`);
+        // Local startup sync (optional)
         try {
-            setTimeout(async () => {
-                const syncedCount = await syncAIProductsToPython();
-                console.log(`✅ Local startup sync: ${syncedCount} products indexed.`);
-            }, 2000);
+            await syncAIProductsToPython();
+            console.log(`✅ Local startup sync successful.`);
         } catch (err) {
             console.warn(`⚠️ Startup sync failed: ${err.message}`);
         }
     });
 }
 
-export default app; // Required for Vercel Node.js runtime
+// Vercel hamesha 'export default' dhundta hai
+export default app;

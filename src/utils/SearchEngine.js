@@ -17,7 +17,8 @@ export function useProductSearch() {
       });
 
       const latency = `${Math.round(performance.now() - start)}ms`;
-      const products = response?.data?.data || [];
+      // API structure ke hisaab se data extract karein
+      const products = response?.data?.data || response?.data || [];
       const results = products.map((item) => ({
         id: item.id || item._id || item?.productId || item?.slug,
         title: item.name || item.title || item.productName || 'Unknown Product',

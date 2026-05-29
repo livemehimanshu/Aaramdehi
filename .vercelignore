@@ -1,2 +1,1 @@
-server/
-my_search_engine/
+# Keep build-specific ignores here. Do NOT ignore server/ or my_search_engine/ anymore

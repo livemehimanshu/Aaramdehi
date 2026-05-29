@@ -1,1 +1,26 @@
-{"version": 2, "rewrites": [{"source": "/api/(.*)", "destination": "/server/index.js"}, {"source": "/(.*)", "destination": "/index.html"}]}
+{
+  "version": 2,
+  "functions": {
+    "server/index.js": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 15
+    },
+    "my_search_engine/main.py": {
+      "runtime": "python3.12"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/server/index.js"
+    },
+    {
+      "source": "/search-api/(.*)",
+      "destination": "/my_search_engine/main.py"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

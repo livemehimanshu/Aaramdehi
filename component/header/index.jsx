@@ -74,14 +74,15 @@ const Header = ({ hideNav = false }) => {
   // Function: Logout
   const handleLogout = async () => {
     try {
-      const apiBase = import.meta.env.VITE_API_URL || "/api"; 
+      const apiBase = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, ""); 
 
       // ✅ 1. Sign out from Firebase
       await signOut(auth);
 
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
       
-      await fetch(`${apiBase.replace(/\/$/, '')}/user/logout`, {
+      // ✅ baseURL handle karega, yahan extra '/api' na lagayein
+      await fetch(`${apiBase}/user/logout`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -169,8 +170,8 @@ const Header = ({ hideNav = false }) => {
     // Fetch site settings (Logo)
     const fetchSettings = async () => {
       try {
-        const apiBase = import.meta.env.VITE_API_URL || "/api";
-        const response = await fetch(`${apiBase.replace(/\/$/, '')}/settings/public`, {
+        const apiBase = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+        const response = await fetch(`${apiBase}/settings/public`, {
           signal: AbortSignal.timeout(5000) // Reduced to 5s
         });
         if (response.ok) {

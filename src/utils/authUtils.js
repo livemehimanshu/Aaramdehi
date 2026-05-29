@@ -6,15 +6,10 @@ import axios from 'axios';
  * Prod: VITE_API_URL environment variable se aayega
  */
 
-/**
- * ✅ Fix: baseURL ko empty rakhein agar aapke code mein calls pehle se '/api/' use kar rahe hain.
- * Isse localhost:5173/api/api/auth/login wala error solve ho jayega.
- */
-const envURL = import.meta.env.VITE_API_URL || "";
-const baseURL = envURL.replace(/\/$/, "");
-
 export const api = axios.create({
-  baseURL: baseURL,
+  // ✅ Fix: Local dev में proxy (/api) का उपयोग करें, 
+  // और प्रोडक्शन में domain का, लेकिन double '/api' से बचें।
+  baseURL: (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, ""),
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true
 });

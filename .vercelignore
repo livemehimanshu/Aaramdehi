@@ -1,1 +1,5 @@
-# Keep build-specific ignores here. Do NOT ignore server/ or my_search_engine/ anymore
+# Ignore local development files
+node_modules
+.env*
+.env.local
+__pycache__

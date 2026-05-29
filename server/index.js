@@ -122,7 +122,7 @@ apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/team", teamRouter);
 
 // ✅ Robust mounting: Handle requests with and without /api prefix
-app.use("/api", apiRouter);
+//app.use("/api", apiRouter);
 app.use("/", apiRouter); 
 
 // Health Check

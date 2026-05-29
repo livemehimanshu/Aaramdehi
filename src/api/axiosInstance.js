@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Vercel production aur local development dono ke liye '/api' base path use karein
+const apiBase = import.meta.env.VITE_API_URL || '/api';
 
 const axiosInstance = axios.create({
   baseURL: apiBase,

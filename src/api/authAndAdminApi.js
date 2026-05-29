@@ -257,9 +257,10 @@ export async function updateProductAPI(id, productData) {
   }
 }
 
-export async function verifyOTPAPI(data) {
+export async function verifyOTPAPI(email, otp) {
   try {
-    const res = await api.post('/auth/verify-otp', data);
+    // Send both email and otp as an object
+    const res = await api.post('/auth/verify-otp', { email, otp });
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };

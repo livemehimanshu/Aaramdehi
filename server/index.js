@@ -99,38 +99,30 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(helmet({
     crossOriginResourcePolicy: false,
-    contentSecurityPolicy: {
-        directives: {
-            "default-src": ["'self'"],
-            "script-src": ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com"],
-            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            "img-src": ["'self'", "data:", "https://res.cloudinary.com", "https://images.unsplash.com", "https://*.fbcdn.net", "https://images.pexels.com"],
-            "font-src": ["'self'", "https://fonts.gstatic.com"],
-            // ✅ Standardized both non-www and www for production
-            "connect-src": ["'self'", "https://aaramdehi.co.in", "https://www.aaramdehi.co.in", "https://*.vercel.app", "https://aaramdehi-91f82-default-rtdb.firebaseio.com/", "https://identitytoolkit.googleapis.com", "https://securetoken.googleapis.com"]
-        }
-    }
-}));
+})); // Helmet CSP ko debug karne ke liye simplify kiya gaya hai
 
 // --- API Routes ---
-app.use("/api/auth", authRouter);
-app.use("/api/user", userRouter);
+const apiRouter = express.Router();
 
-// Apply Admin Limiter to management routes
-app.use("/api/products", adminLimiter, productRouter);
-app.use("/api/seo", seoRouter);
-app.use("/api/order", orderRouter); // Match exactly with frontend calls
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/user", userRouter);
+apiRouter.use("/products", adminLimiter, productRouter);
+apiRouter.use("/seo", seoRouter);
+apiRouter.use("/order", orderRouter);
+apiRouter.use("/banners", adminLimiter, bannerRouter);
+apiRouter.use("/categories", adminLimiter, categoryRouter);
+apiRouter.use("/coupons", adminLimiter, couponRouter);
+apiRouter.use("/shops", shopsRouter);
+apiRouter.use("/appointments", appointmentRouter);
+apiRouter.use("/analytics", analyticsRouter);
+apiRouter.use("/payments", adminLimiter, paymentRouter);
+apiRouter.use("/refunds", adminLimiter, refundRouter);
+apiRouter.use("/settings", settingsRouter);
+apiRouter.use("/team", teamRouter);
 
-app.use("/api/banners", adminLimiter, bannerRouter);
-app.use("/api/categories", adminLimiter, categoryRouter);
-app.use("/api/coupons", adminLimiter, couponRouter);
-app.use("/api/shops", shopsRouter); // Khata Book (Shops)
-app.use("/api/appointments", appointmentRouter);
-app.use("/api/analytics", analyticsRouter);
-app.use("/api/payments", adminLimiter, paymentRouter);
-app.use("/api/refunds", adminLimiter, refundRouter);
-app.use("/api/settings", settingsRouter);
-app.use("/api/team", teamRouter);
+// ✅ Mounting on both paths to ensure reliability on Vercel
+app.use("/api", apiRouter);
+app.use("/", apiRouter);
 
 // Health Check
 app.get("/", (req, res) => {

@@ -18,9 +18,11 @@ const firebaseConfig = {
 };
 
 // ✅ Validation check to prevent 'invalid-api-key' crash
-if (!firebaseConfig.apiKey) {
-  console.error("❌ Firebase API Key is missing! Check your .env.local or Vercel Environment Variables.");
-}
+Object.entries(firebaseConfig).forEach(([key, value]) => {
+  if (!value && key !== 'measurementId') {
+    console.warn(`⚠️ Firebase Config missing: ${key}. Check your .env.local file.`);
+  }
+});
 
 // Initialize Firebase App as singleton (prevents duplicate-app error)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();

@@ -8,12 +8,12 @@ const SalesOrderForm = () => {
     const [products, setProducts] = useState([]);
     const [selectedShop, setSelectedShop] = useState(null);
     const [cart, setCart] = useState([]);
-    const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+    const apiBase = import.meta.env.VITE_API_URL || "/api";
 
     useEffect(() => {
         const fetchData = async () => {
-            const shopRes = await axios.get(`${apiBase}/api/shops`);
-            const prodRes = await axios.get(`${apiBase}/api/products`);
+            const shopRes = await axios.get(`${apiBase}/shops`);
+            const prodRes = await axios.get(`${apiBase}/products`);
             setShops(shopRes.data.data);
             setProducts(prodRes.data.data);
         };
@@ -51,7 +51,7 @@ const SalesOrderForm = () => {
                 paymentMethod: 'credit', // Default for Khata system
             };
             const token = localStorage.getItem('accessToken');
-            await axios.post(`${apiBase}/api/order/create`, payload, {
+            await axios.post(`${apiBase}/order/create`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             toast.success("Order Placed on Credit (Khata)!");

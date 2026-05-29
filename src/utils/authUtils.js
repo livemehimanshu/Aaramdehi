@@ -1,16 +1,15 @@
 import axios from 'axios';
 
-// Vercel rewrites ke liye relative path use karein.
-// Dashboard mein VITE_API_URL ko empty rakhein ya sirf domain name.
-const apiBase = import.meta.env.VITE_API_URL || "";
+/**
+ * Centralized API instance
+ * Local: /api -> vite.config.js proxy handle karega
+ * Prod: VITE_API_URL environment variable se aayega
+ */
+const baseURL = import.meta.env.VITE_API_URL || "/api";
 
-// Centralized API instance for Aaramdehi Admin & User modules
 export const api = axios.create({
-  // Agar VITE_API_URL empty hai, toh base path automatic current domain + '/api' banega
-  baseURL: apiBase ? `${apiBase}/api` : "/api",
-  headers: {
-    'Content-Type': 'application/json'
-  },
+  baseURL: baseURL,
+  headers: { 'Content-Type': 'application/json' },
   withCredentials: true
 });
 

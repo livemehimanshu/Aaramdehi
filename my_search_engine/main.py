@@ -132,6 +132,7 @@ catalog = firestore_catalog or fallback_catalog
 engine = MultiversalEngine(catalog)
 logger.info('Search engine initialized with %d product(s).', len(catalog))
 
+@app.post("/search-api/search")
 @app.post("/search")
 def search_api(request: SearchRequest):
     if not request.query.strip():
@@ -141,12 +142,14 @@ def search_api(request: SearchRequest):
     context_tuple = tuple(sorted(request.user_context.items()))
     return engine.search(request.query, context_tuple)
 
+@app.get("/search-api/search")
 @app.get("/search")
 def search_get(q: str, category: str | None = None):
     cleaned_category = category.strip() if category and category.strip() else None
     context_tuple = tuple(sorted({"category": cleaned_category}.items())) if cleaned_category else tuple()
     return engine.search(q, context_tuple)
 
+@app.post("/search-api/sync-catalog")
 @app.post("/api/sync-catalog")
 @app.post("/sync-catalog")
 def sync_catalog(catalog: list[ProductItem]):

@@ -5,8 +5,13 @@ import axios from 'axios';
  * Local: /api -> vite.config.js proxy handle karega
  * Prod: VITE_API_URL environment variable se aayega
  */
-// ✅ Ensure no trailing slash in environment variable
-const baseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+
+/**
+ * ✅ Fix: baseURL ko empty rakhein agar aapke code mein calls pehle se '/api/' use kar rahe hain.
+ * Isse localhost:5173/api/api/auth/login wala error solve ho jayega.
+ */
+const envURL = import.meta.env.VITE_API_URL || "";
+const baseURL = envURL.replace(/\/$/, "");
 
 export const api = axios.create({
   baseURL: baseURL,

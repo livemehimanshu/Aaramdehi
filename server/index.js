@@ -121,8 +121,8 @@ apiRouter.use("/refunds", adminLimiter, refundRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/team", teamRouter);
 
-// ✅ Robust Mounting: Handle cases where Vercel might pass the /api prefix or not
-app.use("/api", apiRouter);
+// ✅ standard mounting for Vercel rewrites
+app.use("/api", apiRouter); 
 app.use("/", apiRouter);
 
 // Health Check

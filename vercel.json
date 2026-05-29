@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 2,
   "functions": {
     "server/index.js": {
@@ -12,14 +12,14 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "server/index.js"
+      "destination": "/server/index.js"
     },
     {
       "source": "/search-api/(.*)",
-      "destination": "my_search_engine/main.py"
+      "destination": "/my_search_engine/main.py"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api|search-api).*)",
       "destination": "/index.html"
     }
   ]

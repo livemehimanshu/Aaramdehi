@@ -40,7 +40,11 @@ const app = express();
 
 // --- CORS & Options (SAHI TARIKA) ---
 const corsOptions = {
-    origin: '*',
+    origin: [
+        'https://aaramdehi.vercel.app', 
+        'https://www.aaramdehi.co.in', 
+        'http://localhost:5173'
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "accessToken"]
@@ -48,14 +52,14 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// ✅ CRASH NAHI HOGA: Wildcard '*' ka use routing mein nahi, balki middleware mein karein
+// Pre-flight requests handle karne ke liye
 app.use((req, res, next) => {
-    if (req.method === 'OPTIONS') {
-        res.header("Access-Control-Allow-Origin", "*");
-        res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH,OPTIONS");
-        res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, accessToken");
-        return res.sendStatus(200);
+    const origin = req.headers.origin;
+    if (corsOptions.origin.includes(origin)) {
+        res.header("Access-Control-Allow-Origin", origin);
     }
+    res.header("Access-Control-Allow-Credentials", "true");
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
     next();
 });
 
@@ -67,21 +71,26 @@ app.use(morgan('dev'));
 app.use(helmet({ crossOriginResourcePolicy: false }));
 
 // --- Routes ---
-app.use("/auth", authRouter);
-app.use("/user", userRouter);
-app.use("/products", productRouter);
-app.use("/seo", seoRouter);
-app.use("/order", orderRouter);
-app.use("/banners", bannerRouter);
-app.use("/categories", categoryRouter);
-app.use("/coupons", couponRouter);
-app.use("/shops", shopsRouter);
-app.use("/appointments", appointmentRouter);
-app.use("/analytics", analyticsRouter);
-app.use("/payments", paymentRouter);
-app.use("/refunds", refundRouter);
-app.use("/settings", settingsRouter);
-app.use("/team", teamRouter);
+const apiRouter = express.Router();
+
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/user", userRouter);
+apiRouter.use("/products", productRouter);
+apiRouter.use("/seo", seoRouter);
+apiRouter.use("/order", orderRouter);
+apiRouter.use("/banners", bannerRouter);
+apiRouter.use("/categories", categoryRouter);
+apiRouter.use("/coupons", couponRouter);
+apiRouter.use("/shops", shopsRouter);
+apiRouter.use("/appointments", appointmentRouter);
+apiRouter.use("/analytics", analyticsRouter);
+apiRouter.use("/payments", paymentRouter);
+apiRouter.use("/refunds", refundRouter);
+apiRouter.use("/settings", settingsRouter);
+apiRouter.use("/team", teamRouter);
+
+app.use("/api", apiRouter);
+app.use("/", apiRouter);
 
 // Sync route
 app.post("/admin/sync-ai-search", async (req, res) => {

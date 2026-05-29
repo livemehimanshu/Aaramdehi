@@ -3,7 +3,8 @@
   "functions": {
     "server/index.js": {
       "runtime": "nodejs20.x",
-      "maxDuration": 10
+      "memory": 1024,
+      "maxDuration": 15
     },
     "my_search_engine/main.py": {
       "runtime": "python3.9"
@@ -19,7 +20,7 @@
       "destination": "/my_search_engine/main.py"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!api|search-api).*)",
       "destination": "/index.html"
     }
   ]

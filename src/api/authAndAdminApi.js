@@ -279,7 +279,8 @@ export async function loginAPI(emailOrData, password) {
 
 export async function signupAPI(userData) {
   try {
-    const res = await api.post('/auth/signup', userData);
+    // Backend standard convention 'register' use karta hai
+    const res = await api.post('/auth/register', userData);
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };

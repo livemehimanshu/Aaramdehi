@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-// Vercel rewrites aur local proxy ke liye relative path use karein
+// Vercel rewrites ke liye relative path use karein. 
+// Dashboard mein VITE_API_URL ko empty rakhein.
 const apiBase = import.meta.env.VITE_API_URL || "/api";
 
 // Centralized API instance for Aaramdehi Admin & User modules

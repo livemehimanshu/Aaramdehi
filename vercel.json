@@ -1,4 +1,4 @@
-{
+﻿{
   "version": 2,
   "builds": [
     {
@@ -27,7 +27,7 @@
       "dest": "/my_search_engine/main.py"
     },
     {
-      "src": "/(.*)",
+      "src": "^/(?!api|search-api)(?!.*\\.).*$",
       "dest": "/index.html"
     }
   ]

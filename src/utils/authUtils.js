@@ -6,12 +6,8 @@ import axios from 'axios';
  * Prod: VITE_API_URL environment variable se aayega
  */
 
-/**
- * ✅ Fix: baseURL को संतुलित करें। 
- * अगर VITE_API_URL सेट नहीं है, तो "/api" (Vite Proxy) का उपयोग करें।
- * ध्यान दें: API calls (जैसे /auth/login) में दोबारा /api न जोड़ें।
- */
 export const api = axios.create({
+  // ✅ Fix: Base URL logic ko simplify kiya taaki double declarations na ho
   baseURL: (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, ""),
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true

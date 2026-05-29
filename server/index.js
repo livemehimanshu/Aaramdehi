@@ -121,8 +121,10 @@ apiRouter.use("/refunds", adminLimiter, refundRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/team", teamRouter);
 
-// ✅ standard mounting for Vercel rewrites
-app.use("/api", apiRouter); 
+// ✅ Standard mounting: Vercel rewrite aur local proxy dono ko support karta hai
+app.use("/api", apiRouter);
+
+// ✅ Fallback for root calls
 app.use("/", apiRouter);
 
 // Health Check

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IoPersonOutline, IoMailOutline, IoCallOutline, IoShieldCheckmarkOutline, IoSaveOutline, IoCloseOutline, IoLockClosedOutline } from "react-icons/io5";
-import axios from 'axios';
+import { api } from '../../src/utils/authUtils';
 import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 
@@ -33,10 +33,8 @@ const Profile = () => {
 
         try {
             setLoading(true);
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/user/upload-avatar`, formData, {
+            const response = await api.put(`/user/upload-avatar`, formData, {
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
@@ -61,10 +59,7 @@ const Profile = () => {
         
         try {
             setLoading(true);
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/user/change-password`, passData, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await api.put(`/user/change-password`, passData);
 
             if (response.data.success) {
                 toast.success("Password updated successfully!");
@@ -82,10 +77,7 @@ const Profile = () => {
         if (!editData.name) return toast.error("Name cannot be empty");
         try {
             setLoading(true);
-            const token = localStorage.getItem('accessToken');
-            const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/user/update-details`, editData, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await api.put(`/user/update-details`, editData);
 
             if (response.data.success) {
                 const updatedUser = { ...user, ...editData };

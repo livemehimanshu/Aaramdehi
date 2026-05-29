@@ -155,9 +155,7 @@ async function syncAIProductsToPython() {
 
     try {
         // Vercel par relative path ya domain use karein
-        const pythonUrl = process.env.PYTHON_SEARCH_URL 
-            ? `${process.env.PYTHON_SEARCH_URL}/sync-catalog`
-            : 'https://www.aaramdehi.co.in/search-api/sync-catalog';
+        const pythonUrl = process.env.PYTHON_SEARCH_URL || '/search-api/sync-catalog';
             
         const pythonResponse = await fetch(pythonUrl, {
             method: 'POST',

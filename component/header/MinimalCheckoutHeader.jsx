@@ -39,9 +39,9 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
 
     // Fetch logo
     const fetchLogo = async () => {
-      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
+      const apiBase = import.meta.env.VITE_API_URL || "/api";
       try {
-        const res = await fetch(`${apiBase}/api/settings/public`);
+        const res = await fetch(`${apiBase}/settings/public`);
         const data = await res.json();
         if (data.success && data.data) {
           setSiteLogo(data.data.LOGO || data.data.logo || null);

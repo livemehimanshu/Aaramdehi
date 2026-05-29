@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { api } from '../../src/utils/authUtils';
 import { IoBagHandleOutline, IoChevronForward } from "react-icons/io5";
 import { Link } from 'react-router-dom';
 
@@ -10,11 +10,8 @@ const Orders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const token = localStorage.getItem('accessToken');
                 // Note: Is endpoint ko apne backend ke hisab se check karein
-                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/order`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const res = await api.get(`/order`);
                 if (res.data.success) {
                     setOrders(res.data.data);
                 }

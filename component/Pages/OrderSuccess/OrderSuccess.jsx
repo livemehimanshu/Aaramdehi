@@ -3,6 +3,7 @@ import { IoCheckmarkCircleOutline, IoDownloadOutline, IoMailOutline } from "reac
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../../header';
+import api from '../../../src/utils/authUtils'; // Import the configured API instance
 
 // Invoice PDF Generator Fallback
 const generateInvoicePDF = (data) => {
@@ -31,10 +32,9 @@ const OrderSuccess = () => {
             // Agar details missing hain toh DB se fetch karein
             if (idToFetch && idToFetch !== 'ORD-XXXXX' && (!orderData.orderItems || orderData.orderItems.length === 0)) {
                 try {
-                    const apiBase = import.meta.env.VITE_API_URL || "/api";
                     const token = localStorage.getItem('accessToken');
                     
-                    const response = await axios.get(`${apiBase}/order/${idToFetch}`, {
+                    const response = await api.get(`/order/${idToFetch}`, { // Use the imported 'api' instance
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     

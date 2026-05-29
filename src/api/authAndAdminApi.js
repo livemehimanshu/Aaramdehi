@@ -277,16 +277,6 @@ export async function loginAPI(emailOrData, password) {
   }
 }
 
-export async function verifyOTPAPI(email, otp) {
-  try {
-    // Send both email and otp as an object
-    const res = await api.post('/auth/verify-otp', { email, otp });
-    return res.data;
-  } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
-  }
-}
-
 export async function forgotPasswordAPI(data) {
   try {
     const res = await api.post('/auth/forgot-password', data);

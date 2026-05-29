@@ -5,7 +5,8 @@ import axios from 'axios';
  * Local: /api -> vite.config.js proxy handle karega
  * Prod: VITE_API_URL environment variable se aayega
  */
-const baseURL = import.meta.env.VITE_API_URL || "/api";
+// ✅ Ensure no trailing slash in environment variable
+const baseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
 export const api = axios.create({
   baseURL: baseURL,

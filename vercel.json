@@ -2,21 +2,21 @@
   "version": 2,
   "functions": {
     "server/index.js": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 15
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
     },
     "my_search_engine/main.py": {
-      "runtime": "python3.9"
+      "runtime": "python3.10"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "server/index.js"
+      "destination": "/server/index.js"
     },
     {
       "source": "/search-api/(.*)",
-      "destination": "my_search_engine/main.py"
+      "destination": "/my_search_engine/main.py"
     },
     {
       "source": "/(.*)",

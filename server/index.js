@@ -121,11 +121,8 @@ apiRouter.use("/refunds", adminLimiter, refundRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/team", teamRouter);
 
-// ✅ Vercel rewrite handles /api/ prefix; mounting at "/" avoids path duplication
-
-// ✅ Fallback for root calls
-app.use("/", apiRouter);
-
+// ✅ Robust mounting for Vercel deployment
+app.use("/api", apiRouter);
 // Health Check
 app.get("/", (req, res) => {
     res.json({ message: "Aaramdehi Server is running!", status: "Active" });

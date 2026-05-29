@@ -1,12 +1,12 @@
-{
+﻿{
   "version": 2,
   "functions": {
     "server/index.js": {
-      "runtime": "nodejs20.x",
+      "runtime": "nodejs18.x",
       "maxDuration": 15
     },
     "my_search_engine/main.py": {
-      "runtime": "python3.12"
+      "runtime": "python3.9"
     }
   },
   "rewrites": [

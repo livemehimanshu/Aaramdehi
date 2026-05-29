@@ -31,6 +31,16 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 export const db = getDatabase(app);
 export const storage = getStorage(app);
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+
+// ✅ Graceful Analytics Initialization: Prevent 'config-fetch-failed' from blocking UI
+let firebaseAnalytics = null;
+if (typeof window !== 'undefined') {
+  try {
+    firebaseAnalytics = getAnalytics(app);
+  } catch (err) {
+    console.warn("Firebase Analytics failed to initialize. Likely blocked by browser.");
+  }
+}
+export const analytics = firebaseAnalytics;
 
 export default app;

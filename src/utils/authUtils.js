@@ -7,10 +7,10 @@ import axios from 'axios';
  */
 
 // ✅ Standardized API Base URL logic
-const apiBaseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "").replace(/\/api$/, "");
+const apiBaseURL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "").replace(/\/api$/, "");
 
 export const api = axios.create({
-  baseURL: apiBaseURL + "/api",
+  baseURL: apiBaseURL ? `${apiBaseURL}/api` : "/api",
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true
 });

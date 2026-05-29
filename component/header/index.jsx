@@ -278,7 +278,7 @@ const Header = ({ hideNav = false }) => {
                   <Link to='/signup' className='hover:text-red-600 transition'>Signup</Link>
                 </div>
               ) : (
-                <div className='flex items-center gap-3'>
+                <div className='hidden md:flex items-center gap-3'>
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className='flex items-center gap-2 hover:text-red-600 transition'
@@ -328,7 +328,7 @@ const Header = ({ hideNav = false }) => {
               )}
 
               {/* Mobile login/profile icon (visible on small screens) */}
-              <div className="sm:hidden ml-2">
+              <div className="md:hidden ml-2">
                 {user ? (
                   <button onClick={() => setShowProfileMenu(!showProfileMenu)} className='p-1'>
                     {user.avatar ? (

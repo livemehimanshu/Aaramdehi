@@ -26,7 +26,7 @@ const Navigation = ({ categories = [] }) => {
              🎁
            </div>
            <span className="mt-2 text-xs font-black text-gray-700 group-hover:text-blue-600 uppercase tracking-tighter">Offers</span>
-adn        </Link>
+        </Link>
 
         {/* Dynamic DB Categories */}
         {categories.map((cat) => (

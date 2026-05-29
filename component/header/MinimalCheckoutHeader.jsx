@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { IoSearchOutline, IoPersonOutline, IoEllipsisVerticalOutline, IoCartOutline, IoCheckmarkOutline, IoChevronDown } from "react-icons/io5";
 import Badge from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
@@ -20,7 +20,7 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
 }));
 
 const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
-  const navigate = useLocation();
+  const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
   const [searchValue, setSearchValue] = useState('');
   const [userProfile, setUserProfile] = useState(null);
@@ -117,7 +117,7 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
             <div className="flex items-center gap-1 md:gap-3">
               
               {/* User Profile Dropdown */}
-              <div className="hidden md:block relative">
+              <div className="hidden sm:block relative">
                 <button
                   onClick={() => {
                     setShowProfileMenu(!showProfileMenu);
@@ -153,9 +153,45 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
               </div>
 
               {/* Mobile User Icon */}
-              <button className="md:hidden p-2 hover:bg-gray-50 rounded">
-                <IoPersonOutline size={20} className="text-gray-700" />
-              </button>
+              <div className="sm:hidden">
+                <button 
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="p-2 hover:bg-gray-50 rounded"
+                >
+                  {userProfile?.email && userProfile.email !== 'Guest User' ? (
+                    <div className="w-7 h-7 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
+                      {userProfile.name?.charAt(0)}
+                    </div>
+                  ) : (
+                    <IoPersonOutline size={20} className="text-gray-700" />
+                  )}
+                </button>
+
+                {/* Mobile Profile Dropdown */}
+                {showProfileMenu && (
+                  <div className="absolute right-4 top-16 bg-white border border-gray-200 rounded shadow-lg z-50 w-48">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <p className="text-sm font-bold text-gray-900">{userProfile?.name}</p>
+                      <p className="text-xs text-gray-600">{userProfile?.email}</p>
+                    </div>
+                    <Link to="/account/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                      My Account
+                    </Link>
+                    <Link to="/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                      My Orders
+                    </Link>
+                    <button 
+                      onClick={() => {
+                        localStorage.removeItem('userEmail');
+                        window.location.reload();
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 font-bold hover:bg-gray-50 border-t border-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
 
               {/* More Menu */}
               <div className="relative">

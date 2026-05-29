@@ -5,7 +5,7 @@
       "runtime": "nodejs20.x"
     },
     "my_search_engine/main.py": {
-      "runtime": "python3.12"
+      "runtime": "python3.9"
     }
   },
   "rewrites": [

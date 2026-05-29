@@ -10,11 +10,9 @@ import axios from 'axios';
 const apiBaseURL = (import.meta.env.VITE_API_URL || "").replace(/\/$/, "");
 
 export const api = axios.create({
-  // Agar apiBaseURL khali hai (local), toh sirf "/api" use karein. 
-  // Agar domain set hai, toh check karein ki kahin usmein pehle se "/api" toh nahi.
-  baseURL: apiBaseURL 
-    ? (apiBaseURL.endsWith('/api') ? apiBaseURL : `${apiBaseURL}/api`) 
-    : "/api",
+  // If base URL is provided (e.g. from Vercel env), ensure it ends with /api
+  // In local development, simply use "/api" which hits Vite proxy
+  baseURL: apiBaseURL ? (apiBaseURL.endsWith('/api') ? apiBaseURL : `${apiBaseURL}/api`) : "/api",
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true
 });

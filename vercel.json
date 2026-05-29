@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 2,
   "builds": [
     {
@@ -18,6 +18,9 @@
     }
   ],
   "routes": [
+    {
+      "handle": "filesystem"
+    },
     {
       "src": "/api/(.*)",
       "dest": "/server/index.js"

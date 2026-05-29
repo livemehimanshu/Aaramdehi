@@ -27,8 +27,8 @@ const Header = () => {
 
   const fetchSettings = async () => {
     try {
-      const apiBase = import.meta.env.VITE_API_URL || "http://localhost:8000";
-      const response = await fetch(`${apiBase}/api/settings/public`);
+      const apiBase = import.meta.env.VITE_API_URL || "/api";
+      const response = await fetch(`${apiBase}/settings/public`);
       const result = await response.json();
       if (result.success && result.data) setSiteLogo(result.data.LOGO || result.data.logo || null);
     } catch (e) { console.error(e); }

@@ -10,8 +10,8 @@ const AaramdehiAdBanner = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const apiBase = import.meta.env.VITE_API_URL || "";
-        const response = await fetch(`${apiBase}/api/settings/public`, { signal: AbortSignal.timeout(10000) });
+        const apiBase = import.meta.env.VITE_API_URL || "/api";
+        const response = await fetch(`${apiBase}/settings/public`, { signal: AbortSignal.timeout(10000) });
         if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
         const result = await response.json();
         // result.data is a key->value object from the public settings endpoint

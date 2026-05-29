@@ -171,7 +171,7 @@ const Header = ({ hideNav = false }) => {
     const fetchSettings = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || "/api"; // Standardized proxy path
-        const response = await fetch(`${apiBase}/api/settings/public`, { 
+        const response = await fetch(`${apiBase}/settings/public`, { 
           signal: AbortSignal.timeout(5000) // Reduced to 5s
         });
         if (response.ok) {

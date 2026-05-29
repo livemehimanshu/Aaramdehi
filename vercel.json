@@ -1,20 +1,4 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "server/index.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "my_search_engine/main.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -28,6 +12,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "cleanUrls": true
+  ]
 }

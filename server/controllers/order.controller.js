@@ -203,19 +203,20 @@ export const getOrdersByShopId = async (req, res) => {
 export const getFrequentlyBoughtTogether = async (req, res) => {
     try {
         const { productId } = req.params;
-        // सभी ऑर्डर्स फेच करें
+        if (!productId) return res.status(400).json({ success: false, message: "Product ID required" });
+
         const allOrders = await findAll(COLLECTION);
+        if (!allOrders || allOrders.length === 0) return res.json({ success: true, data: [] });
         
         const frequencyMap = {};
 
         allOrders.forEach(order => {
-            const itemIds = order.orderItems?.map(item => String(item.productId || item.product)) || [];
+            // सुनिश्चित करें कि productId स्ट्रिंग है
+            const itemIds = (order.orderItems || []).map(item => String(item.productId || item.product || item.id));
             
-            // अगर इस ऑर्डर में टारगेट प्रोडक्ट मौजूद है
             if (itemIds.includes(String(productId))) {
                 itemIds.forEach(id => {
-                    // खुद को छोड़कर बाकी प्रोडक्ट्स का काउंट बढ़ाएं
-                    if (id !== String(productId)) {
+                    if (id !== "undefined" && id !== "null" && id !== String(productId)) {
                         frequencyMap[id] = (frequencyMap[id] || 0) + 1;
                     }
                 });
@@ -228,9 +229,7 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
             .slice(0, 3)
             .map(entry => entry[0]);
 
-        if (topProductIds.length === 0) {
-            return res.json({ success: true, data: [] });
-        }
+        if (topProductIds.length === 0) return res.json({ success: true, data: [] });
 
         // इन IDs के लिए प्रोडक्ट डिटेल्स फेच करें
         const allProducts = await findAll(PRODUCT_COLLECTION);

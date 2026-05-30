@@ -16,7 +16,9 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
         const fetchRecs = async () => {
             try {
                 setLoading(true);
-                const res = await api.get(`/order/recommendations/${mainProduct.id || mainProduct._id}`);
+                const pId = mainProduct._id || mainProduct.id;
+                // कंसोल में चेक करें कि ID सही जा रही है या नहीं
+                const res = await api.get(`/order/recommendations/${pId}`);
                 if (res.data.success) {
                     setRecommendations(res.data.data);
                     setSelectedItems(res.data.data.map(item => item._id || item.id));

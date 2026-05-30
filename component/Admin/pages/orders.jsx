@@ -7,7 +7,7 @@ import {
     IoAlertCircleOutline
 } from "react-icons/io5";
 import { generateInvoicePDF } from './generateInvoicePDF';
-import { api } from '../../../src/utils/authUtils'; // ✅ Import authUtils.api
+import { getAllOrdersAdminAPI, api } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -22,12 +22,9 @@ const Orders = () => {
             setLoading(true);
             setError(null);
 
-            const response = await api.get(`/order`, { // ✅ Use authUtils.api
-                // Headers are automatically handled
-            });
-
-            if (response.data.success) {
-                setOrders(response.data.data || []);
+            const response = await getAllOrdersAdminAPI();
+            if (response.success) {
+                setOrders(response.data || []);
             }
         } catch (error) {
             console.error("Error fetching orders:", error);

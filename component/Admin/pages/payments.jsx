@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, ShieldCheck, Clock, CheckCircle, XCircle, Search, Loader2, AlertCircle } from 'lucide-react';
-import { api } from '../../../src/utils/authUtils'; // ✅ Use authUtils.api instance
+import { getAllOrdersAdminAPI } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState([]);
@@ -14,13 +14,10 @@ export default function PaymentsPage() {
       setLoading(true);
       setError(null);
 
-      // ✅ FIX: Using /api/order because it contains all transaction info (Method, Amount, paymentStatus)
-      const response = await api.get(`/order`, { // ✅ Use authUtils.api
-        // Headers are automatically handled by authUtils.api
-      });
+      const response = await getAllOrdersAdminAPI();
 
-      if (response.data.success) {
-        setPayments(response.data.data || []);
+      if (response.success) {
+        setPayments(response.data || []);
       }
     } catch (error) {
       console.error("Error fetching payments:", error);

@@ -176,6 +176,15 @@ export async function getOrderDetailsAPI(orderId) {
   }
 }
 
+export async function getAllOrdersAdminAPI() {
+  try {
+    const res = await api.get('/orders'); // ✅ Standardized to plural
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
 export async function getAllAppointmentsAPI() {
   try {
     const res = await api.get('/appointments');

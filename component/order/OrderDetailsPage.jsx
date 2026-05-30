@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api } from '../../src/utils/authUtils';
+import { getOrderDetailsAPI } from '../../src/api/authAndAdminApi';
 import OrderTracking from './OrderTracking';
 import { Loader2, ArrowLeft, Package, MapPin, CreditCard, ReceiptText } from 'lucide-react';
 import SEO from '../header/SEO';
@@ -15,9 +15,9 @@ const OrderDetailsPage = () => {
         const fetchOrder = async () => {
             try {
                 setLoading(true);
-                const res = await api.get(`/order/details/${id}`);
-                if (res.data.success) {
-                    setOrder(res.data.data);
+                const res = await getOrderDetailsAPI(id);
+                if (res.success) {
+                    setOrder(res.data);
                 }
             } catch (err) {
                 setError(err.response?.data?.message || "Order details load karne mein error.");

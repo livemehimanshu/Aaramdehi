@@ -50,8 +50,13 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
 
     const handleAddBundle = () => {
         try {
-            // 1. Pehle current cart nikalein localStorage se (Single source of truth)
-            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            // 1. Current cart ko safely load karein
+            let cart;
+            try {
+                cart = JSON.parse(localStorage.getItem("cart")) || [];
+            } catch (e) {
+                cart = [];
+            }
             
             // 2. Main Product add karein
             const mainId = mainProduct._id || mainProduct.id;
@@ -83,11 +88,15 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
 
             // 4. Save karein aur events fire karein taaki Sidebar update ho jaye
             localStorage.setItem("cart", JSON.stringify(cart));
+            
+            // Dono events fire karein context sync ke liye
             window.dispatchEvent(new Event("cartUpdated"));
-            window.dispatchEvent(new Event("storage")); // Cross-tab sync ke liye
+            window.dispatchEvent(new Event("storage")); 
             
             // 5. Automatic Sidebar Open
-            if (typeof setIsCartOpen === 'function') setIsCartOpen(true);
+            if (typeof setIsCartOpen === 'function') {
+                setIsCartOpen(true);
+            }
 
             toast.success("Combo bundle added to cart!");
         } catch (error) {

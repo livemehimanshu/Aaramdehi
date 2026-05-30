@@ -53,8 +53,9 @@ const Header = ({ hideNav = false }) => {
 
   // Function: Cart drawer ko toggle karna (open/close)
   const toggleCartDrawer = () => {
-    if (typeof setIsCartOpen === 'function') {
-      setIsCartOpen(prev => !prev);
+    if (setIsCartOpen) {
+      // Use functional update to ensure we have the latest state
+      setIsCartOpen(prev => !prev); 
       setIsWishlistOpen(false);
     }
   };

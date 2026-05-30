@@ -28,7 +28,9 @@ const Orders = () => {
             }
         } catch (error) {
             console.error("Error fetching orders:", error);
-            const msg = error.response?.data?.message || error.message || "Database connection error. Check if backend is running on Port 5000 or 8000.";
+            const msg = error.response?.status === 404 
+                ? "API Endpoint not found (/api/orders). Check backend order.routes.js"
+                : (error.response?.data?.message || error.message);
             setError(msg);
         } finally {
             setLoading(false);

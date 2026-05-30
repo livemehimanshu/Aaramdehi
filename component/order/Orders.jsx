@@ -10,12 +10,12 @@ const Orders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const res = await getUserOrdersAPI();
+                const res = await getUserOrdersAPI(); // ✅ Use centralized helper
                 if (res.success) {
                     setOrders(res.data);
                 }
             } catch (error) {
-                console.error("Error fetching orders:", error);
+                console.error("❌ [User Orders Error]:", error);
             } finally {
                 setLoading(false);
             }

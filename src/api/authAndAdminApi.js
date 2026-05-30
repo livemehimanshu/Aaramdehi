@@ -178,10 +178,11 @@ export async function getOrderDetailsAPI(orderId) {
 
 export async function getAllOrdersAdminAPI() {
   try {
-    const res = await api.get('/orders'); // ✅ Standardized to plural
+    // यदि /orders 404 दे रहा है, तो बैकएंड रूट के अनुसार इसे /order या /order/all करें
+    const res = await api.get('/orders'); 
     return res.data;
   } catch (e) {
-    return { success: false, data: [] };
+    throw e; // Re-throw ताकि component का catch block इसे handle कर सके
   }
 }
 

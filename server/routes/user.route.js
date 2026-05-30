@@ -3,7 +3,12 @@ import {
     uploadAvatarController, 
     updateUserDetailsController, // ✅ Import the new controller
     getUserDetailsController,
-    changePasswordController // ✅ Import change password
+    changePasswordController,
+    updateProfile,
+    getUserAddresses,
+    addUserAddress,
+    getMyCoupons,
+    deleteAccount
 } from '../controllers/user.controller.js'; // loginController is not used here
 
 // ✅ Fix: Named import use kiya hai kyunki auth.middleware.js mein 'export const' hai
@@ -44,7 +49,13 @@ userRouter.put('/upload-avatar', isAuthenticatedUser, upload.single('avatar'), u
 userRouter.get('/details', isAuthenticatedUser, getUserDetailsController);
 
 // ✅ Update User Profile Details (Name, Email, Mobile)
-userRouter.put('/update-details', authLimiter, isAuthenticatedUser, updateUserDetailsController);
+userRouter.put('/update-profile', isAuthenticatedUser, updateProfile);
+
+// ✅ Address & Coupon Routes
+userRouter.get('/addresses', isAuthenticatedUser, getUserAddresses);
+userRouter.post('/address/add', isAuthenticatedUser, addUserAddress);
+userRouter.get('/my-coupons', isAuthenticatedUser, getMyCoupons);
+userRouter.delete('/delete-account', isAuthenticatedUser, deleteAccount);
 
 // ✅ Change Password Route
 userRouter.put('/change-password', authLimiter, isAuthenticatedUser, changePasswordController);

@@ -1,26 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+import { api } from '../../src/utils/authUtils';
+import { Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const AccountSettings = () => {
+    const navigate = useNavigate();
     const [isEdit, setIsEdit] = useState({ personal: false, email: false, mobile: false });
+    const [loading, setLoading] = useState(false);
     const [data, setData] = useState({
-        first: "Himanshu",
-        last: "Srivastava",
-        gender: "Male",
-        email: "17hshri@gmail.com",
-        mobile: "+918979482251"
+        first: "",
+        last: "",
+        gender: "",
+        email: "",
+        mobile: ""
     });
+
+    // Load data from localStorage on mount
+    useEffect(() => {
+        const user = JSON.parse(localStorage.getItem("userData"));
+        if (user) {
+            const names = user.name?.split(' ') || ["", ""];
+            setData({
+                first: names[0] || "",
+                last: names.slice(1).join(' ') || "",
+                gender: user.gender || "Male",
+                email: user.email || "",
+                mobile: user.mobile || ""
+            });
+        }
+    }, []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setData({ ...data, [name]: value });
     };
 
-    const handleToggle = (key) => {
-        if (isEdit[key]) {
-            toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} updated successfully!`);
+    const handleToggle = async (key) => {
+        if (isEdit[key]) { // Clicking 'Save'
+            try {
+                setLoading(true);
+                const payload = {
+                    name: `${data.first} ${data.last}`.trim(),
+                    gender: data.gender,
+                    mobile: data.mobile
+                };
+                const res = await api.put('/user/update-profile', payload);
+                if (res.data.success) {
+                    localStorage.setItem("userData", JSON.stringify(res.data.user));
+                    window.dispatchEvent(new Event('userDataUpdated'));
+                    toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} updated!`);
+                }
+            } catch (err) {
+                toast.error(err.response?.data?.message || "Update failed");
+                return; // Don't close edit mode on error
+            } finally {
+                setLoading(false);
+            }
         }
         setIsEdit({ ...isEdit, [key]: !isEdit[key] });
+    };
+
+    const handleDeleteAccount = async () => {
+        const confirmed = window.confirm("⚠️ WARNING: Are you sure you want to delete your account? This action is permanent and all your data (orders, addresses) will be lost forever.");
+        if (confirmed) {
+            try {
+                setLoading(true);
+                const res = await api.delete('/user/delete-account');
+                if (res.data.success) {
+                    toast.success("Account deleted successfully.");
+                    localStorage.clear();
+                    window.location.href = '/login';
+                }
+            } catch (err) {
+                toast.error(err.response?.data?.message || "Failed to delete account");
+            } finally { setLoading(false); }
+        }
     };
 
     return (
@@ -117,7 +172,7 @@ const AccountSettings = () => {
                 
                 <div className="flex flex-wrap gap-6 pt-4">
                     <button className="text-blue-900 font-black text-[10px] uppercase tracking-[0.2em] hover:text-blue-600 transition-colors">Deactivate Account</button>
-                    <button className="text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] hover:text-rose-400 transition-colors">Delete Account</button>
+                    <button onClick={handleDeleteAccount} className="text-rose-600 font-black text-[10px] uppercase tracking-[0.2em] hover:text-rose-400 transition-colors">Delete Account</button>
                 </div>
             </div>
         </div>

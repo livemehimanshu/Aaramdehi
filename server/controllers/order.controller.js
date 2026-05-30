@@ -99,10 +99,16 @@ export const createOrder = async (req, res) => {
         const orderData = { _id: orderId, ...updates[`${COLLECTION}/${orderId}`] };
 
         // ✅ Background Processing: Send Email without 'await'
-        const user = await findById(USERS_COLLECTION, userId);
-        if (user && user.email) {
-            // Yahan error catch karna zaroori hai taaki background process crash na ho
-            sendOrderEmail(user.email, orderData).catch(err => console.error("❌ [Background Email Error]:", err));
+        const user = userId ? await findById(USERS_COLLECTION, userId) : null;
+        const targetEmail = user?.email || shippingAddress?.email;
+
+        if (targetEmail) {
+            console.log(`📩 Attempting to send order email to: ${targetEmail}`);
+            sendOrderEmail(targetEmail, orderData).catch(err => 
+                console.error("❌ [Background Email Error]:", err.message)
+            );
+        } else {
+            console.warn("⚠️ Email skipped: No email found in User profile or Shipping address.");
         }
 
         return res.status(201).json({

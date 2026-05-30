@@ -210,12 +210,12 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
         const frequencyMap = {};
 
         allOrders.forEach(order => {
-            // सुनिश्चित करें कि productId स्ट्रिंग है
-            const itemIds = (order.orderItems || []).map(item => String(item.productId || item.product || item.id));
+            // ✅ Order Set Logic: Ensure unique product IDs per order to avoid skewed weights
+            const itemIds = [...new Set((order.orderItems || []).map(item => String(item.productId || item.product || item.id)))];
             
             if (itemIds.includes(String(productId))) {
                 itemIds.forEach(id => {
-                    if (id !== "undefined" && id !== "null" && id !== String(productId)) {
+                    if (id && id !== "undefined" && id !== "null" && id !== String(productId)) {
                         frequencyMap[id] = (frequencyMap[id] || 0) + 1;
                     }
                 });
@@ -228,17 +228,29 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
             .slice(0, 3)
             .map(entry => entry[0]);
 
-        let recommendations = [];
+        // ✅ Unique Name Filtering: Skip products with same names as current or already selected ones
+        const seenNames = new Set();
+        if (currentProduct) seenNames.add(currentProduct.name);
 
-        if (topProductIds.length > 0) {
-            recommendations = allProducts.filter(p => topProductIds.includes(String(p._id || p.id)));
-        } 
-        
-        // Fallback: अगर कोई ऑर्डर हिस्ट्री नहीं है, तो Same Category के प्रोडक्ट्स दिखाएं
-        if (recommendations.length === 0 && currentProduct) {
-            recommendations = allProducts
-                .filter(p => String(p._id || p.id) !== String(productId) && p.category === currentProduct.category)
-                .slice(0, 2);
+        let recommendations = allProducts.filter(p => {
+            const pId = String(p._id || p.id);
+            const isRecommended = topProductIds.includes(pId);
+            if (isRecommended && p.name && !seenNames.has(p.name)) {
+                seenNames.add(p.name);
+                return true;
+            }
+            return false;
+        });
+
+        // Fallback: If not enough sales-based recs, add same-category products with unique names
+        if (recommendations.length < 2 && currentProduct) {
+            const moreRecs = allProducts.filter(p => 
+                String(p._id || p.id) !== String(productId) && 
+                String(p.category) === String(currentProduct.category) && 
+                !seenNames.has(p.name)
+            ).slice(0, 2 - recommendations.length);
+            
+            recommendations = [...recommendations, ...moreRecs];
         }
 
         return res.json({ success: true, data: recommendations });

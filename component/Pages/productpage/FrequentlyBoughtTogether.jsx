@@ -22,7 +22,8 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
                 const res = await api.get(`/order/recommendations/${pId}`);
                 if (res.data.success) {
                     setRecommendations(res.data.data);
-                    setSelectedItems(res.data.data.map(item => item._id || item.id));
+                    // Store IDs as Strings
+                    setSelectedItems(res.data.data.map(item => String(item._id || item.id)));
                 }
             } catch (err) {
                 console.error("Recommendations fetch error:", err);
@@ -35,13 +36,15 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
     }, [mainProduct]);
 
     const toggleItem = (id) => {
-        setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+        const strId = String(id);
+        setSelectedItems(prev => prev.includes(strId) ? prev.filter(i => i !== strId) : [...prev, strId]);
     };
 
     const bundleTotal = useMemo(() => {
         let total = Number(mainProductPrice || 0);
         recommendations.forEach(item => {
-            if (selectedItems.includes(item._id || item.id)) {
+            const itemId = String(item._id || item.id);
+            if (selectedItems.includes(itemId)) {
                 total += Number(item.sellingPrice || item.price || 0);
             }
         });
@@ -75,7 +78,8 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
             }
 
             // 3. Recommended Items add karein
-            const selectedRecs = recommendations.filter(item => selectedItems.includes(item._id || item.id));
+            // ✅ Strict ID Comparison: Cast to String before checking inclusion
+            const selectedRecs = recommendations.filter(item => selectedItems.includes(String(item._id || item.id)));
             selectedRecs.forEach(item => {
                 const recId = item._id || item.id;
                 const isRecExist = cart.find(cartItem => String(cartItem.id) === String(recId));

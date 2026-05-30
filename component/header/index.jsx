@@ -39,11 +39,10 @@ const Header = ({ hideNav = false }) => {
   const navigate = useNavigate();
   // ✅ पुराना तरीका हटाया: window.addEventListener और मैन्युअल localStorage
   // ✅ नया तरीका जोड़ा: सीधे CartContext से लाइव काउंट्स उठाना
-  const { cartCount, wishlistCount } = useCart();
+  const { cartCount, wishlistCount, isCartOpen, setIsCartOpen } = useCart();
 
   // --- STATE MANAGEMENT ---
   const [loading, setLoading] = useState(true); // ✅ Loading state add kiya
-  const [isCartOpen, setIsCartOpen] = useState(false); // Cart drawer open/close
   const [isWishlistOpen, setIsWishlistOpen] = useState(false); // Wishlist drawer open/close
   const [compareCount, setCompareCount] = useState(0); // Compare mein kitne items hain
   const [user, setUser] = useState(null); // Logged in user data

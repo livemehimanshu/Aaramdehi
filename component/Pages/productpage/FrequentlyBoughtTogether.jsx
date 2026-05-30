@@ -9,7 +9,7 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
     const [selectedItems, setSelectedItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const { addToCart } = useCart();
+    const { addToCart, setIsCartOpen } = useCart();
 
     const PLACEHOLDER_IMAGE = "https://placehold.co/100x100?text=Product";
 
@@ -49,11 +49,50 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
     }, [mainProductPrice, recommendations, selectedItems]);
 
     const handleAddBundle = () => {
-        addToCart({ ...mainProduct, price: mainProductPrice }, 1);
-        recommendations.filter(item => selectedItems.includes(item._id || item.id)).forEach(item => {
-            addToCart({ ...item, price: item.sellingPrice || item.price }, 1);
-        });
-        toast.success("Combo bundle added to cart!");
+        try {
+            // 1. Pehle current cart nikalein localStorage se (Single source of truth)
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+            
+            // 2. Main Product add karein
+            const mainId = mainProduct._id || mainProduct.id;
+            const isMainExist = cart.find(item => String(item.id) === String(mainId));
+            
+            if (isMainExist) {
+                cart = cart.map(item => String(item.id) === String(mainId) ? { ...item, qty: item.qty + 1 } : item);
+            } else {
+                cart.push({ 
+                    ...mainProduct, 
+                    id: mainId, 
+                    qty: 1, 
+                    price: Number(mainProductPrice),
+                    image: (mainProduct.images?.[0]?.url || mainProduct.images?.[0]) || mainProduct.thumbnail 
+                });
+            }
+
+            // 3. Recommended Items add karein
+            const selectedRecs = recommendations.filter(item => selectedItems.includes(item._id || item.id));
+            selectedRecs.forEach(item => {
+                const recId = item._id || item.id;
+                const isRecExist = cart.find(cartItem => String(cartItem.id) === String(recId));
+                if (isRecExist) {
+                    cart = cart.map(cartItem => String(cartItem.id) === String(recId) ? { ...cartItem, qty: cartItem.qty + 1 } : cartItem);
+                } else {
+                    cart.push({ ...item, id: recId, qty: 1, price: Number(item.sellingPrice || item.price || 0), image: item.thumbnail || (item.images && item.images[0]?.url) });
+                }
+            });
+
+            // 4. Save karein aur events fire karein taaki Sidebar update ho jaye
+            localStorage.setItem("cart", JSON.stringify(cart));
+            window.dispatchEvent(new Event("cartUpdated"));
+            
+            // 5. Automatic Sidebar Open
+            if (setIsCartOpen) setIsCartOpen(true);
+
+            toast.success("Combo bundle added to cart!");
+        } catch (error) {
+            console.error("Bundle Add Error:", error);
+            toast.error("Failed to add bundle to cart");
+        }
     };
 
     if (loading) return (
@@ -73,11 +112,11 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
     return (
         <div className="mt-20">
             <h2 className="text-xl font-black uppercase tracking-tighter mb-6">Frequently Bought Together</h2>
-            <div className="bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center gap-8">
-                <div className="flex items-center gap-4">
+            <div className="bg-white p-6 md:p-8 rounded-[30px] border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center gap-10">
+                <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
                     <img 
                         src={(mainProduct.images?.[0]?.url || mainProduct.images?.[0]) || mainProduct.thumbnail || PLACEHOLDER_IMAGE} 
-                        className="w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl border-2 border-blue-900 p-1" 
+                        className="w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 object-contain bg-gray-50 rounded-xl border-2 border-blue-900 p-1" 
                         alt="main" 
                     />
                     {recommendations.map(item => (
@@ -86,18 +125,18 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
                             <img 
                                 src={item.thumbnail || (item.images && item.images[0]?.url) || PLACEHOLDER_IMAGE} 
                                 onClick={() => toggleItem(item._id || item.id)}
-                                className={`w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl cursor-pointer transition-all ${selectedItems.includes(item._id || item.id) ? 'opacity-100 ring-2 ring-blue-900' : 'opacity-30'}`} 
+                                className={`w-16 h-16 sm:w-20 sm:h-20 md:w-28 md:h-28 object-contain bg-gray-50 rounded-xl cursor-pointer transition-all ${selectedItems.includes(item._id || item.id) ? 'opacity-100 ring-2 ring-blue-900' : 'opacity-30 hover:opacity-50'}`} 
                                 alt="recommended" 
                             />
                         </React.Fragment>
                     ))}
                 </div>
-                <div className="w-full lg:pl-10 lg:border-l flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="w-full lg:pl-10 lg:border-l border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-8">
                     <div className="text-center md:text-left">
-                        <p className="text-[10px] font-black text-gray-400 tracking-widest mb-1 uppercase">Total Bundle</p>
-                        <p className="text-4xl font-black text-blue-900">₹{bundleTotal.toLocaleString()}</p>
+                        <p className="text-[10px] md:text-xs font-black text-gray-400 tracking-widest mb-1 uppercase">Total Bundle Price</p>
+                        <p className="text-3xl md:text-5xl font-black text-blue-900">₹{bundleTotal.toLocaleString()}</p>
                     </div>
-                    <button onClick={handleAddBundle} className="w-full md:w-auto bg-blue-900 text-white px-8 py-4 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-lg active:scale-95">
+                    <button onClick={handleAddBundle} className="w-full sm:w-auto bg-blue-900 text-white px-10 py-5 rounded-2xl font-black text-[10px] md:text-xs tracking-widest uppercase shadow-xl hover:shadow-blue-200 transition-all active:scale-95">
                         Add Bundle to Cart
                     </button>
                 </div>

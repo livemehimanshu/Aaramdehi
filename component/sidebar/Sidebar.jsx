@@ -1,88 +1,138 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
-  IoWalletSharp, IoPersonSharp, IoBagHandleSharp, 
-  IoPower, IoFolderSharp, IoChevronForward 
+  IoCloseOutline, 
+  IoBagHandleOutline, 
+  IoPersonOutline, 
+  IoLocationOutline, 
+  IoCardOutline, 
+  IoWalletOutline, 
+  IoTicketOutline, 
+  IoStarOutline, 
+  IoLogOutOutline,
+  IoChevronForwardOutline
 } from "react-icons/io5";
+import { CiHeart } from "react-icons/ci";
 
-const Sidebar = () => {
-    const activeLink = "bg-blue-50 text-blue-600 font-bold border-r-4 border-blue-600";
-    const normalLink = "text-gray-600 hover:bg-gray-50 hover:text-blue-500 transition-all";
+const Sidebar = ({ isOpen, onClose, user, handleLogout }) => {
+  if (!user) return null;
 
-    return (
-        <div className="w-80 bg-white shadow-sm border border-gray-100 h-fit rounded-sm overflow-hidden">
-            {/* Header Section */}
-            <div className="flex items-center gap-4 p-4 border-b bg-white">
-                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <IoPersonSharp className="text-blue-600 text-xl" />
-                </div>
-                <div>
-                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider leading-none mb-1">Hello,</p>
-                    <h3 className="font-bold text-gray-800">Himanshu Srivastava</h3>
-                </div>
+  return (
+    <>
+      {/* --- Background Overlay (Blur & Dark) --- */}
+      <div 
+        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] transition-opacity duration-300 md:hidden ${
+          isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+        }`}
+        onClick={onClose}
+      ></div>
+
+      {/* --- Sidebar Container (Slide from Left) --- */}
+      <div className={`fixed top-0 left-0 bottom-0 w-[85%] max-w-[320px] bg-white z-[1001] shadow-2xl transition-transform duration-300 ease-in-out md:hidden flex flex-col ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
+        
+        {/* Sidebar Header: User Info & Close */}
+        <div className="p-6 bg-blue-900 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden bg-white/10 flex items-center justify-center">
+              {user.avatar ? (
+                <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <IoPersonOutline size={24} />
+              )}
             </div>
-
-            {/* Navigation Section */}
-            <div className="py-2">
-                <NavLink to="/orders" className={({isActive}) => `flex items-center justify-between p-4 border-b group ${isActive ? activeLink : normalLink}`}>
-                    <div className="flex items-center gap-4">
-                        <IoBagHandleSharp className="text-blue-600" />
-                        <span className="uppercase text-sm font-bold tracking-tight">My Orders</span>
-                    </div>
-                    <IoChevronForward className="text-gray-400 group-hover:text-blue-500 transition-colors" />
-                </NavLink>
-
-                {/* Account Settings */}
-                <div className="border-b">
-                    <div className="flex items-center gap-4 p-4 text-gray-400">
-                        <IoPersonSharp className="text-blue-600" />
-                        <span className="uppercase text-sm font-bold tracking-tight">Account Settings</span>
-                    </div>
-                    <div className="pb-2">
-                        <NavLink to="/account/profile" className={({isActive}) => `block pl-14 py-2 text-sm ${isActive ? "text-blue-600 font-bold bg-blue-50 border-r-4 border-blue-600" : "text-gray-600 hover:bg-gray-50"}`}>
-                            Profile Information
-                        </NavLink>
-                        <NavLink to="/account/addresses" className="block pl-14 py-2 text-sm text-gray-600 hover:bg-gray-50">Manage Addresses</NavLink>
-                        <NavLink to="/account/pan" className="block pl-14 py-2 text-sm text-gray-600 hover:bg-gray-50">PAN Card Information</NavLink>
-                    </div>
-                </div>
-
-                {/* Payments */}
-                <div className="border-b">
-                    <div className="flex items-center gap-4 p-4 text-gray-400">
-                        <IoWalletSharp className="text-blue-600" />
-                        <span className="uppercase text-sm font-bold tracking-tight">Payments</span>
-                    </div>
-                    <div className="pb-2">
-                        <NavLink to="/payments/giftcards" className="flex justify-between items-center pl-14 pr-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                            Gift Cards <span className="text-green-600 font-bold text-xs">₹0</span>
-                        </NavLink>
-                        <NavLink to="/payments/upi" className="block pl-14 py-2 text-sm text-gray-600 hover:bg-gray-50">Saved UPI</NavLink>
-                        <NavLink to="/payments/cards" className="block pl-14 py-2 text-sm text-gray-600 hover:bg-gray-50">Saved Cards</NavLink>
-                    </div>
-                </div>
-
-                {/* My Stuff */}
-                <div className="border-b">
-                    <div className="flex items-center gap-4 p-4 text-gray-400">
-                        <IoFolderSharp className="text-blue-600" />
-                        <span className="uppercase text-sm font-bold tracking-tight">My Stuff</span>
-                    </div>
-                    <div className="pb-2">
-                        <NavLink to="/coupons" className="block pl-14 py-2 text-sm text-gray-600 hover:bg-gray-50">My Coupons</NavLink>
-                        <NavLink to="/reviews" className="block pl-14 py-2 text-sm text-gray-600 hover:bg-gray-50">My Reviews & Ratings</NavLink>
-                        <NavLink to="/wishlist" className="block pl-14 py-2 text-sm text-gray-600 hover:bg-gray-50">My Wishlist</NavLink>
-                    </div>
-                </div>
-
-                {/* Logout */}
-                <button className="w-full flex items-center gap-4 p-4 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-all border-b group">
-                    <IoPower className="text-blue-600 group-hover:text-red-500" />
-                    <span className="uppercase text-sm font-bold tracking-tight text-left">Logout</span>
-                </button>
+            <div className="min-w-0">
+              <p className="text-sm font-black uppercase tracking-tight truncate">{user.name}</p>
+              <p className="text-[10px] opacity-70 truncate lowercase">{user.email}</p>
             </div>
+          </div>
+          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+            <IoCloseOutline size={28} />
+          </button>
         </div>
-    );
+
+        {/* Sidebar Menu: Grouped Content */}
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8">
+          
+          {/* Section: Orders */}
+          <Link to="/orders" onClick={onClose} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl group active:scale-95 transition-all">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-900">
+                <IoBagHandleOutline size={22} />
+              </div>
+              <span className="text-xs font-black uppercase tracking-widest text-gray-800">My Orders</span>
+            </div>
+            <IoChevronForwardOutline className="text-gray-300" />
+          </Link>
+
+          {/* Section Group: Account Settings */}
+          <div>
+            <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Account Settings</p>
+            <div className="space-y-1">
+              {[
+                { label: 'Profile Information', path: '/account/profile', icon: IoPersonOutline },
+                { label: 'Manage Addresses', path: '/account/addresses', icon: IoLocationOutline },
+                { label: 'PAN Card Information', path: '/account/pan', icon: IoCardOutline }
+              ].map((item, idx) => (
+                <Link key={idx} to={item.path} onClick={onClose} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <item.icon size={20} className="text-gray-400" />
+                  <span className="text-[11px] font-bold text-gray-600">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Section Group: Payments */}
+          <div>
+            <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Payments</p>
+            <div className="space-y-1">
+              {[
+                { label: 'Gift Cards', path: '/payments/giftcards', icon: IoWalletOutline, badge: '₹0' },
+                { label: 'Saved UPI', path: '/payments/upi', icon: IoWalletOutline },
+                { label: 'Saved Cards', path: '/payments/cards', icon: IoCardOutline }
+              ].map((item, idx) => (
+                <Link key={idx} to={item.path} onClick={onClose} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <item.icon size={20} className="text-gray-400" />
+                    <span className="text-[11px] font-bold text-gray-600">{item.label}</span>
+                  </div>
+                  {item.badge && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{item.badge}</span>}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Section Group: My Stuff */}
+          <div>
+            <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">My Stuff</p>
+            <div className="space-y-1">
+              {[
+                { label: 'My Coupons', path: '/coupons', icon: IoTicketOutline },
+                { label: 'My Reviews & Ratings', path: '/reviews', icon: IoStarOutline },
+                { label: 'My Wishlist', path: '/wishlist', icon: CiHeart }
+              ].map((item, idx) => (
+                <Link key={idx} to={item.path} onClick={onClose} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
+                  <item.icon size={20} className="text-gray-400" />
+                  <span className="text-[11px] font-bold text-gray-600">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Sidebar Footer: Logout */}
+        <div className="p-4 border-t border-gray-100">
+          <button 
+            onClick={() => { handleLogout(); onClose(); }}
+            className="w-full flex items-center justify-center gap-3 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all active:scale-95"
+          >
+            <IoLogOutOutline size={20} /> Logout
+          </button>
+        </div>
+      </div>
+    </>
+  );
 };
 
 export default Sidebar;

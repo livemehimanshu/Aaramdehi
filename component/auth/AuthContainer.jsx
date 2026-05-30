@@ -200,7 +200,8 @@ const AuthContainer = () => {
                 window.dispatchEvent(new Event('userLoggedIn'));
                 
                 alert("Verification successful!");
-                navigate(response.user.role === 'ADMIN' ? '/admin' : '/');
+
+                navigate('/');
             } else {
                 setErrors({ otp: response.message || 'Invalid OTP. Please check the email and try again.' });
             }

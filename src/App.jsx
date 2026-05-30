@@ -9,6 +9,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import Header from '../component/header/index.jsx'
 import Footer from '../component/Footer/Footer.jsx'
 import AdminLayout from '../component/Admin/AdminLayout.jsx'
+import AdminRoute from '../component/auth/AdminRoute.jsx'
 import Sidebar from '../component/sidebar/Sidebar.jsx'
 
 // Public Pages
@@ -107,7 +108,7 @@ function AppContent() {
           <div className="flex-1 w-full overflow-hidden">
             <Routes>
               {/* ADMIN ROUTES */}
-              <Route path="/admin" element={<AdminLayout />}>
+              <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route index element={<Dashboard />} />
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="analytics" element={<Analytics />} />

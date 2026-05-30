@@ -77,11 +77,7 @@ const AuthPage = () => {
             localStorage.setItem('userData', JSON.stringify(response.user));
             toast.success(`Welcome back, ${response.user.name}!`);
 
-            if (response.user.role.toUpperCase() === 'ADMIN') {
-                navigate('/admin');
-            } else {
-                navigate('/');
-            }
+            navigate('/');
         } catch (error) {
             const errorData = error.response?.data || {};
             const message = typeof errorData.message === 'string' ? errorData.message : "Invalid Email or Password";
@@ -158,11 +154,7 @@ const AuthPage = () => {
                     localStorage.setItem('userData', JSON.stringify(response.user));
                     toast.success("Account verified successfully!");
                     
-                    if (response.user.role === 'ADMIN') {
-                        navigate('/admin');
-                    } else {
-                        navigate('/');
-                    }
+                    navigate('/');
                 } else {
                     toast.success("OTP Verified!");
                 }

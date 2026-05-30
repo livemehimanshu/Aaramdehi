@@ -10,7 +10,8 @@ import {
   IoTicketOutline, 
   IoStarOutline, 
   IoLogOutOutline,
-  IoChevronForwardOutline
+  IoChevronForwardOutline,
+  IoStatsChartOutline
 } from "react-icons/io5";
 import { CiHeart } from "react-icons/ci";
 
@@ -59,6 +60,19 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
         {/* Sidebar Menu: Grouped Content */}
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8">
           
+          {/* Section: Admin Dashboard Link (Only visible if user role is ADMIN) */}
+          {user?.role === 'ADMIN' && (
+            <Link to="/admin" onClick={onClose} className="flex items-center justify-between p-3 bg-rose-50 rounded-2xl group active:scale-95 transition-all border border-rose-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-rose-600">
+                  <IoStatsChartOutline size={22} />
+                </div>
+                <span className="text-xs font-black uppercase tracking-widest text-rose-700">Admin Panel</span>
+              </div>
+              <IoChevronForwardOutline className="text-rose-300" />
+            </Link>
+          )}
+
           {/* Section: Orders */}
           <Link to="/orders" onClick={onClose} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl group active:scale-95 transition-all">
             <div className="flex items-center gap-3">

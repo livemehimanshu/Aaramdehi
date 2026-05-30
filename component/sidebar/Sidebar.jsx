@@ -31,7 +31,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
       )}
 
       {/* --- Sidebar Container (Slide from Left) --- */}
-      <div className={`${isStatic ? 'relative w-full h-full border border-gray-100 rounded-[30px] hidden md:flex' : 'fixed top-0 left-0 bottom-0 w-[85%] max-w-[320px] z-[1001] md:hidden translate-x-0 transition-transform duration-300'} bg-white flex flex-col ${
+      <div className={`${isStatic ? 'relative w-full h-full border border-gray-100 rounded-[30px] hidden md:flex' : 'fixed top-0 left-0 bottom-0 w-[85%] max-w-[320px] z-[1001] md:hidden transition-transform duration-300'} bg-white flex flex-col ${
         !isStatic && !isOpen ? '-translate-x-full' : 'translate-x-0'
       } shadow-2xl overflow-hidden`}>
         

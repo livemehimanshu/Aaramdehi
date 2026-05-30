@@ -16,6 +16,7 @@ import Sidebar from '../component/sidebar/Sidebar.jsx'
 import Home from '../component/Pages/Home/index.jsx'
 import ProductListing from '../component/Pages/productListing/index.jsx'
 import ProductDetailsPage from '../component/Pages/productpage/ProductDetailsPage.jsx'
+import ShopByRoomDetails from '../component/Pages/productListing/ShopByRoomDetails.jsx'
 import ComparePage from '../component/Pages/ComparePage/index.jsx'
 import { BlogList, BlogDetail } from '../component/Pages/blog/blog.jsx'
 
@@ -52,6 +53,10 @@ import Team from '../component/Admin/pages/team.jsx'
 import FileManager from '../component/Admin/component/filemanger/FileManager.jsx'
 import Appointments from '../component/Admin/pages/appointment.jsx'
 import Shops from '../component/Admin/pages/Shops.jsx'
+import Rooms from '../component/Admin/pages/rooms.jsx'
+import BannerList from '../component/Admin/pages/BannerList.jsx'
+import AddBanner from '../component/Admin/pages/AddBanner.jsx'
+import EditBanner from '../component/Admin/pages/EditBanner.jsx'
 // Checkout Pages
 import CheckoutPage from '../component/checkout/CheckoutPage.jsx'
 import PaymentPage from '../component/payment/PaymentPage.jsx'
@@ -131,6 +136,10 @@ function AppContent() {
                 <Route path="files" element={<FileManager />} />
                 <Route path="appointments" element={<Appointments />} />
                 <Route path="shops" element={<Shops />} />
+                <Route path="rooms" element={<Rooms />} />
+                <Route path="banners" element={<BannerList />} />
+                <Route path="add-banner" element={<AddBanner />} />
+                <Route path="edit-banner/:id" element={<EditBanner />} />
               </Route>
 
               {/* PUBLIC ROUTES */}
@@ -138,6 +147,7 @@ function AppContent() {
               <Route path="/product" element={<ProductListing/>}/>
               <Route path="/products" element={<ProductListing/>}/>
               <Route path="/product/:id" element={<ProductDetailsPage />} />
+              <Route path="/shop-by-room/:slug" element={<ShopByRoomDetails />} />
               <Route path="/compare" element={<ComparePage />} />
               <Route path="/login" element={<AuthPage />} />
               <Route path="/signup" element={<AuthPage />} />

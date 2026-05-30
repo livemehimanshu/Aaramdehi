@@ -62,15 +62,28 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
           
           {/* Section: Admin Dashboard Link (Only visible if user role is ADMIN) */}
           {user?.role === 'ADMIN' && (
-            <Link to="/admin" onClick={onClose} className="flex items-center justify-between p-3 bg-rose-50 rounded-2xl group active:scale-95 transition-all border border-rose-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-rose-600">
-                  <IoStatsChartOutline size={22} />
+            <div className="space-y-2">
+              <Link to="/admin" onClick={onClose} className="flex items-center justify-between p-3 bg-rose-50 rounded-2xl group active:scale-95 transition-all border border-rose-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-rose-600">
+                    <IoStatsChartOutline size={22} />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-widest text-rose-700">Admin Panel</span>
                 </div>
-                <span className="text-xs font-black uppercase tracking-widest text-rose-700">Admin Panel</span>
-              </div>
-              <IoChevronForwardOutline className="text-rose-300" />
-            </Link>
+                <IoChevronForwardOutline className="text-rose-300" />
+              </Link>
+              
+              {/* New Shop by Room Management Link */}
+              <Link to="/admin/rooms" onClick={onClose} className="flex items-center justify-between p-3 bg-emerald-50 rounded-2xl group active:scale-95 transition-all border border-emerald-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-emerald-600">
+                    <IoStatsChartOutline size={22} />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Manage Rooms</span>
+                </div>
+                <IoChevronForwardOutline className="text-emerald-300" />
+              </Link>
+            </div>
           )}
 
           {/* Section: Orders */}

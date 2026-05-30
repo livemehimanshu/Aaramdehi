@@ -17,11 +17,11 @@ import { getAllProductsAPI, getActiveCategoriesAPI } from '../../../src/api/auth
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product+Not+Found";
 
-const ProductListing = () => {
+const ProductListing = ({ forcedCategory }) => {
   // --- STATE MANAGEMENT ---
   const [products, setProducts] = useState([]); // Database products
   const [categories, setCategories] = useState([]); // Database categories
-  const [selectedCategory, setSelectedCategory] = useState('All'); // Category filter state
+  const [selectedCategory, setSelectedCategory] = useState(forcedCategory || 'All'); // Category filter state
   const [activeFilters, setActiveFilters] = useState({ brands: [], rating: 0, inStock: false });
   const [loading, setLoading] = useState(true); // Loading state
   const [maxPrice, setMaxPrice] = useState(10000); // Max price filter
@@ -81,6 +81,10 @@ const ProductListing = () => {
     window.addEventListener("wishlistUpdated", handleWishlistUpdate);
     return () => window.removeEventListener("wishlistUpdated", handleWishlistUpdate);
   }, []);
+
+  useEffect(() => {
+    if (forcedCategory) setSelectedCategory(forcedCategory);
+  }, [forcedCategory]);
 
   // Debugging: Log data whenever it changes
   useEffect(() => {

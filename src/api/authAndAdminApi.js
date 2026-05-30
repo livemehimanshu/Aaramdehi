@@ -233,6 +233,7 @@ export async function getAllCouponsAPI() {
 export async function deleteCategoryAPI(id) {
   try {
     const res = await api.delete(`/categories/delete/${id}`);
+    memoryCache.delete('active_categories'); // ✅ कैटेगरी डिलीट होने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -242,6 +243,7 @@ export async function deleteCategoryAPI(id) {
 export async function createCategoryAPI(categoryData) {
   try {
     const res = await api.post('/categories/create', categoryData);
+    memoryCache.delete('active_categories'); // ✅ नई कैटेगरी बनने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -337,6 +339,40 @@ export async function getAdminStatsAPI() {
 export async function createProductAPI(productData) {
   try {
     const res = await api.post('/products/create', productData);
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
+export async function getAllRoomsAPI() {
+  try {
+    if (memoryCache.has('all_rooms')) return memoryCache.get('all_rooms');
+    const res = await api.get('/room');
+    const data = res.data;
+    memoryCache.set('all_rooms', data);
+    return data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
+export async function createRoomAPI(roomData) {
+  try {
+    const res = await api.post('/room/create', roomData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    memoryCache.delete('all_rooms'); // ✅ नया रूम बनाने के बाद कैशे क्लियर करें
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
+export async function deleteRoomAPI(id) {
+  try {
+    const res = await api.delete(`/room/${id}`);
+    memoryCache.delete('all_rooms'); // ✅ रूम डिलीट करने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };

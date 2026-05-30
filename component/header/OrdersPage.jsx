@@ -11,6 +11,14 @@ const OrdersPage = () => {
     const [error, setError] = useState(null);
 
     const fetchOrders = async () => {
+        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+        
+        if (!token) {
+            setError("Please log in to view your orders.");
+            setLoading(false);
+            return;
+        }
+
         try {
             setLoading(true);
             setError(null);
@@ -28,7 +36,11 @@ const OrdersPage = () => {
             }
         } catch (err) {
             console.error("Orders fetch error:", err);
-            setError(err.response?.data?.message || "Orders load karne mein dikkat aa rahi hai. Kripya login check karein.");
+            if (err.response?.status === 401) {
+                setError("Please log in to view your orders.");
+            } else {
+                setError(err.response?.data?.message || "Orders load karne mein dikkat aa rahi hai.");
+            }
         } finally {
             setLoading(false);
         }
@@ -44,14 +56,6 @@ const OrdersPage = () => {
         if (s === 'shipped') return 'bg-blue-50 text-blue-700 border-blue-200';
         if (s === 'cancelled') return 'bg-red-50 text-red-700 border-red-200';
         return 'bg-yellow-50 text-yellow-700 border-yellow-200'; // Processing/Pending
-    };
-
-    const getStatusIcon = (status) => {
-        const s = status?.toLowerCase();
-        if (s === 'delivered') return <IoBagCheckOutline size={14} />;
-        if (s === 'shipped') return <IoRocketOutline size={14} />;
-        if (s === 'cancelled') return <IoCloseCircleOutline size={14} />;
-        return <IoTimeOutline size={14} />;
     };
 
     return (
@@ -84,12 +88,21 @@ const OrdersPage = () => {
                 ) : error ? (
                     <div className="bg-red-50 border border-red-100 p-8 rounded-3xl text-center">
                         <p className="text-red-600 font-bold mb-4">{error}</p>
-                        <button 
-                            onClick={fetchOrders}
-                            className="bg-red-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition"
-                        >
-                            Retry Now
-                        </button>
+                        {error.includes("log in") ? (
+                            <Link 
+                                to="/login"
+                                className="bg-blue-900 text-white px-10 py-3 rounded-full font-black uppercase text-xs tracking-widest hover:bg-black transition-all shadow-lg inline-block"
+                            >
+                                Login Now
+                            </Link>
+                        ) : (
+                            <button 
+                                onClick={fetchOrders}
+                                className="bg-red-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-red-700 transition"
+                            >
+                                Retry Now
+                            </button>
+                        )}
                     </div>
                 ) : orders.length === 0 ? (
                     <div className="bg-white rounded-3xl p-16 text-center border border-gray-100 shadow-sm">
@@ -127,7 +140,7 @@ const OrdersPage = () => {
                                     </div>
                                     
                                     <div className={`px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest flex items-center gap-2 ${getStatusStyles(order.status)}`}>
-                                        {getStatusIcon(order.status)}
+                                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
                                         {order.status || 'Processing'}
                                     </div>
                                 </div>

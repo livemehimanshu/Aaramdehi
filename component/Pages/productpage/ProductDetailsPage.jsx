@@ -13,10 +13,11 @@ import { addToRecentlyViewed } from '@/data/recentlyViewedUtils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { reviewSchema } from '@/schemas/validationSchemas';
-import { productDetailsData, relatedItemsData } from '@/data/productDetails';
+import { productDetailsData } from '@/data/productDetails';
 import { useCart } from '@/hooks/useCart';
 import { sanitizationUtils } from '@/utils/sanitizationUtils';
 import toast from 'react-hot-toast'; // ✅ Import Toast
+import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/600x750?text=No+Image";
 
@@ -45,8 +46,6 @@ const ProductDetailsPage = () => {
   const [appliedDiscount, setAppliedDiscount] = useState(0); 
   const [couponMessage, setCouponMessage] = useState({ type: '', text: '', code: '' });
   const [isValidating, setIsValidating] = useState(false);
-
-  const relatedItems = relatedItemsData;
 
   const parsePrice = (rawPrice) => {
     if (rawPrice == null) return 0;
@@ -120,16 +119,6 @@ const ProductDetailsPage = () => {
       });
     }
   }, [productData, id, selectedSize, selectedImage]);
-
-  const [selectedBundle, setSelectedBundle] = useState([101, 102]); 
-
-  const bundleTotal = useMemo(() => {
-    let total = parsePrice(selectedSize?.price);
-    relatedItems.forEach(item => {
-      if (selectedBundle.includes(item.id)) total += parsePrice(item.price);
-    });
-    return total;
-  }, [selectedBundle, selectedSize, relatedItems]);
 
   // Calculate Final Price after Coupon
   const finalPrice = useMemo(() => {
@@ -240,11 +229,6 @@ const ProductDetailsPage = () => {
     const keywordsArray = [productData.name, productData.brand, productData.category, ...(productData.tags || [])];
     return keywordsArray.filter(Boolean).join(', ');
   }, [productData]);
-
-  const toggleBundleItem = (id) => {
-    if (id === productData.id) return;
-    setSelectedBundle(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
-  };
 
   const onReviewSubmit = (data) => {
     const newEntry = { user: data.userName, comment: data.comment, rating: data.rating, id: Date.now(), date: "Today" };
@@ -410,32 +394,11 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
-        {/* --- COMBO BUNDLE --- */}
-        <div className="mt-20">
-          <h2 className="text-xl font-black uppercase tracking-tighter mb-6">Frequently Bought Together</h2>
-          <div className="bg-white p-6 rounded-[30px] border border-gray-100 shadow-sm flex flex-col lg:flex-row items-center gap-8">
-            <div className="flex items-center gap-4"> 
-               <img src={productData.images[0]?.url || productData.images[0] || PLACEHOLDER_IMAGE} className="w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl border-2 border-blue-900 p-1" alt="primary product" />
-               <FiPlus className="text-gray-300" />
-               {relatedItems.map(item => (
-                 <React.Fragment key={item.id}>
-                    <img src={item.image || PLACEHOLDER_IMAGE} onClick={() => toggleBundleItem(item.id)}
-                      className={`w-16 h-16 md:w-24 md:h-24 object-contain bg-gray-50 rounded-xl cursor-pointer transition-all ${selectedBundle.includes(item.id) ? 'opacity-100 ring-2 ring-blue-900' : 'opacity-30'}`} alt="bundle item" onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }} />
-                    {item.id === 101 && <FiPlus className="text-gray-300" />}
-                 </React.Fragment>
-               ))}
-            </div>
-            <div className="w-full lg:pl-10 lg:border-l flex flex-col md:flex-row items-center justify-between gap-6">
-               <div className="text-center md:text-left">
-                  <p className="text-[10px] font-black text-gray-400 tracking-widest mb-1 uppercase">Total Bundle</p>
-                  <p className="text-4xl font-black text-blue-900">₹{bundleTotal.toLocaleString()}</p>
-               </div>
-               <button className="w-full md:w-auto bg-blue-900 text-white px-8 py-4 rounded-xl font-black text-[10px] tracking-widest uppercase shadow-lg active:scale-95">
-                  Add Bundle to Cart
-               </button>
-            </div>
-          </div>
-        </div>
+        {/* --- DYNAMIC FREQUENTLY BOUGHT TOGETHER --- */}
+        <FrequentlyBoughtTogether 
+            mainProduct={productData} 
+            mainProductPrice={finalPrice} 
+        />
 
         {/* --- REVIEWS SECTION --- */}
         <div className="mt-20 border-t pt-16">

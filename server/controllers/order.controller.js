@@ -198,3 +198,49 @@ export const getOrdersByShopId = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// 6. Get Frequently Bought Together Recommendations
+export const getFrequentlyBoughtTogether = async (req, res) => {
+    try {
+        const { productId } = req.params;
+        // सभी ऑर्डर्स फेच करें
+        const allOrders = await findAll(COLLECTION);
+        
+        const frequencyMap = {};
+
+        allOrders.forEach(order => {
+            const itemIds = order.orderItems?.map(item => String(item.productId || item.product)) || [];
+            
+            // अगर इस ऑर्डर में टारगेट प्रोडक्ट मौजूद है
+            if (itemIds.includes(String(productId))) {
+                itemIds.forEach(id => {
+                    // खुद को छोड़कर बाकी प्रोडक्ट्स का काउंट बढ़ाएं
+                    if (id !== String(productId)) {
+                        frequencyMap[id] = (frequencyMap[id] || 0) + 1;
+                    }
+                });
+            }
+        });
+
+        // फ्रीक्वेंसी के आधार पर सॉर्ट करें और टॉप 3 प्रोडक्ट्स निकालें
+        const topProductIds = Object.entries(frequencyMap)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3)
+            .map(entry => entry[0]);
+
+        if (topProductIds.length === 0) {
+            return res.json({ success: true, data: [] });
+        }
+
+        // इन IDs के लिए प्रोडक्ट डिटेल्स फेच करें
+        const allProducts = await findAll(PRODUCT_COLLECTION);
+        const recommendations = allProducts.filter(p => 
+            topProductIds.includes(String(p._id || p.id))
+        );
+
+        return res.json({ success: true, data: recommendations });
+    } catch (error) {
+        console.error("❌ [Recommendations Error]:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

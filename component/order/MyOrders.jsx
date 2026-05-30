@@ -13,10 +13,24 @@ const MyOrders = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
+        // 1. Pehle LocalStorage se session check karein (Custom Backend Login)
+        const savedUserData = localStorage.getItem("userData");
+        const savedToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+        if (savedUserData && savedToken) {
+            try {
+                setUser(JSON.parse(savedUserData));
+            } catch (e) {
+                console.error("Session restore error:", e);
+            }
+        }
+
+        // 2. Firebase Auth state check karein (Social Login ke liye)
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             if (firebaseUser) {
                 setUser(firebaseUser);
-            } else {
+            } else if (!localStorage.getItem("accessToken") && !localStorage.getItem("token")) {
+                // Agar na Firebase user hai na hi custom token, tabhi error dikhayein
                 setUser(null);
                 setLoading(false);
                 setError("Please log in to view your orders.");
@@ -25,7 +39,6 @@ const MyOrders = () => {
 
         return () => unsubscribe();
     }, []);
-
     useEffect(() => {
         const fetchMyOrders = async () => {
             if (!user) return; // Don't fetch if user is not logged in

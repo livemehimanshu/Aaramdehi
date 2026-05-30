@@ -54,7 +54,13 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
         toast.success("Combo bundle added to cart!");
     };
 
-    if (loading || recommendations.length === 0) return null;
+    if (loading) return (
+        <div className="mt-20 p-10 text-center bg-gray-50 rounded-[30px] border border-dashed border-gray-200 text-gray-400 font-bold animate-pulse uppercase tracking-widest">
+            Finding perfect matches for you...
+        </div>
+    );
+
+    if (recommendations.length === 0) return null;
 
     return (
         <div className="mt-20">

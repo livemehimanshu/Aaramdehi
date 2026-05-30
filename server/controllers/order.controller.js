@@ -203,11 +203,10 @@ export const getOrdersByShopId = async (req, res) => {
 export const getFrequentlyBoughtTogether = async (req, res) => {
     try {
         const { productId } = req.params;
-        if (!productId) return res.status(400).json({ success: false, message: "Product ID required" });
-
-        const allOrders = await findAll(COLLECTION);
-        if (!allOrders || allOrders.length === 0) return res.json({ success: true, data: [] });
+        const allProducts = await findAll(PRODUCT_COLLECTION);
+        const currentProduct = allProducts.find(p => String(p._id || p.id) === String(productId));
         
+        const allOrders = await findAll(COLLECTION) || [];
         const frequencyMap = {};
 
         allOrders.forEach(order => {
@@ -229,13 +228,18 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
             .slice(0, 3)
             .map(entry => entry[0]);
 
-        if (topProductIds.length === 0) return res.json({ success: true, data: [] });
+        let recommendations = [];
 
-        // इन IDs के लिए प्रोडक्ट डिटेल्स फेच करें
-        const allProducts = await findAll(PRODUCT_COLLECTION);
-        const recommendations = allProducts.filter(p => 
-            topProductIds.includes(String(p._id || p.id))
-        );
+        if (topProductIds.length > 0) {
+            recommendations = allProducts.filter(p => topProductIds.includes(String(p._id || p.id)));
+        } 
+        
+        // Fallback: अगर कोई ऑर्डर हिस्ट्री नहीं है, तो Same Category के प्रोडक्ट्स दिखाएं
+        if (recommendations.length === 0 && currentProduct) {
+            recommendations = allProducts
+                .filter(p => String(p._id || p.id) !== String(productId) && p.category === currentProduct.category)
+                .slice(0, 2);
+        }
 
         return res.json({ success: true, data: recommendations });
     } catch (error) {

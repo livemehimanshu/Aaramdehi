@@ -87,9 +87,9 @@ function AppContent() {
   const isAccountPage = accountPaths.some(path => location.pathname.startsWith(path))
 
   const PageWrapper = ({ title }) => (
-    <div className="md:ml-4 p-8 bg-white flex-1 shadow-sm rounded-sm min-h-[500px]">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">{title}</h2>
-      <p className="text-gray-500 italic">Coming Soon: {title} section for Aaramdehi.</p>
+    <div className="p-6 md:p-10 bg-white flex-1 shadow-sm rounded-[30px] min-h-[500px] border border-gray-100 flex flex-col justify-center items-center text-center">
+      <h2 className="text-2xl font-black text-blue-900 mb-4 uppercase tracking-tighter">{title}</h2>
+      <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] max-w-xs leading-loose italic">Coming Soon: Premium {title} section for Aaramdehi comfort seekers.</p>
     </div>
   )
 

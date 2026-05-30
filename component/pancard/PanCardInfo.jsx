@@ -2,26 +2,28 @@ import React from 'react';
 
 const PanCardInfo = () => {
     return (
-        <div className="flex-1 bg-white p-8 ml-4 shadow-sm border border-gray-100 rounded-sm">
-            <h2 className="text-lg font-bold mb-8">PAN Card Information</h2>
-            <div className="max-w-sm space-y-6">
+        <div className="flex-1 bg-white p-6 md:p-10 shadow-sm border border-gray-100 rounded-[30px] min-h-[600px]">
+            <h2 className="text-2xl font-black text-blue-900 uppercase tracking-tight mb-8">PAN Card Information</h2>
+            <div className="max-w-md space-y-8">
                 <div>
-                    <input type="text" placeholder="PAN Card Number" className="w-full border-b p-2 outline-none focus:border-blue-600 transition-colors" />
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Card Number</p>
+                    <input type="text" placeholder="ABCDE1234F" className="w-full border-b-2 border-gray-100 p-3 outline-none focus:border-blue-900 transition-colors font-bold text-gray-800 tracking-[0.2em]" />
                 </div>
                 <div>
-                    <input type="text" placeholder="Full Name" className="w-full border-b p-2 outline-none focus:border-blue-600 transition-colors" />
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Full Name (As on Card)</p>
+                    <input type="text" placeholder="Name on PAN card" className="w-full border-b-2 border-gray-100 p-3 outline-none focus:border-blue-900 transition-colors font-bold text-gray-800 uppercase" />
                 </div>
-                <div className="bg-gray-50 p-4 border border-dashed border-gray-300 rounded-sm">
-                    <p className="text-xs text-gray-500 mb-2 font-medium">Upload PAN Card (Only JPEG file is allowed)</p>
-                    <input type="file" className="text-sm file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                <div className="bg-gray-50 p-6 rounded-2xl border-2 border-dashed border-gray-100 group hover:bg-white hover:border-blue-900/20 transition-all">
+                    <p className="text-[10px] text-gray-400 mb-4 font-black uppercase tracking-widest">Upload PAN Image (JPEG only)</p>
+                    <input type="file" className="text-xs file:mr-6 file:py-3 file:px-6 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-blue-900 file:text-white hover:file:bg-black transition-all cursor-pointer" />
                 </div>
-                <label className="flex items-start gap-2 text-[11px] text-gray-600 cursor-pointer">
+                <label className="flex items-start gap-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest cursor-pointer leading-relaxed">
                     <input type="checkbox" className="mt-0.5" />
                     <span>I do hereby declare that PAN furnished/stated above is correct and belongs to me, registered as an account holder with www.aaramdehi.com.</span>
                 </label>
-                <button className="w-32 bg-blue-600 text-white py-3 font-bold text-sm rounded-sm opacity-50 cursor-not-allowed">UPLOAD</button>
+                <button className="w-full sm:w-40 bg-blue-900 text-white py-4 font-black text-[10px] uppercase tracking-widest rounded-xl opacity-30 cursor-not-allowed shadow-lg">UPLOAD</button>
             </div>
-            <p className="text-blue-600 text-xs font-bold mt-8 cursor-pointer hover:underline uppercase">Read Terms & Conditions of PAN Card Information</p>
+            <p className="text-blue-900 text-[10px] font-black mt-12 cursor-pointer hover:underline uppercase tracking-widest">Read Terms & Conditions of PAN Card Information</p>
         </div>
     );
 };

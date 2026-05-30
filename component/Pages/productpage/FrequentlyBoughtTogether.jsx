@@ -8,6 +8,7 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
     const [recommendations, setRecommendations] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const { addToCart } = useCart();
 
     const PLACEHOLDER_IMAGE = "https://placehold.co/100x100?text=Product";
@@ -16,8 +17,8 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
         const fetchRecs = async () => {
             try {
                 setLoading(true);
+                setError(null);
                 const pId = mainProduct._id || mainProduct.id;
-                // कंसोल में चेक करें कि ID सही जा रही है या नहीं
                 const res = await api.get(`/order/recommendations/${pId}`);
                 if (res.data.success) {
                     setRecommendations(res.data.data);
@@ -25,6 +26,7 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
                 }
             } catch (err) {
                 console.error("Recommendations fetch error:", err);
+                setError("Could not load recommendations at this time.");
             } finally {
                 setLoading(false);
             }
@@ -57,6 +59,12 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
     if (loading) return (
         <div className="mt-20 p-10 text-center bg-gray-50 rounded-[30px] border border-dashed border-gray-200 text-gray-400 font-bold animate-pulse uppercase tracking-widest">
             Finding perfect matches for you...
+        </div>
+    );
+
+    if (error) return (
+        <div className="mt-20 p-6 text-center text-rose-500 bg-rose-50 rounded-xl border border-rose-100 italic text-[10px] uppercase font-bold tracking-widest">
+            {error}
         </div>
     );
 

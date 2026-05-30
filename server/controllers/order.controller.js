@@ -203,7 +203,7 @@ export const getOrdersByShopId = async (req, res) => {
 export const getFrequentlyBoughtTogether = async (req, res) => {
     try {
         const { productId } = req.params;
-        const allProducts = await findAll(PRODUCT_COLLECTION);
+        const allProducts = await findAll(PRODUCT_COLLECTION) || [];
         const currentProduct = allProducts.find(p => String(p._id || p.id) === String(productId));
         
         const allOrders = await findAll(COLLECTION) || [];

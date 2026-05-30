@@ -90,11 +90,11 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
             localStorage.setItem("cart", JSON.stringify(cart));
             
             // Dono events fire karein context sync ke liye
-            window.dispatchEvent(new Event("cartUpdated"));
+            window.dispatchEvent(new Event("cartUpdated")); 
             window.dispatchEvent(new Event("storage")); 
             
             // 5. Automatic Sidebar Open
-            if (typeof setIsCartOpen === 'function') {
+            if (setIsCartOpen) {
                 setIsCartOpen(true);
             }
 

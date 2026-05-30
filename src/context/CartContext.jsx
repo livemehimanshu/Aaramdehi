@@ -16,13 +16,28 @@ export const CartProvider = ({ children }) => {
   const [wishlist, setWishlist] = useState(() => {
     try { return JSON.parse(localStorage.getItem('wishlist')) || [] } catch { return [] }
   })
+  const [isCartOpen, setIsCartOpen] = useState(false); // ✅ Sidebar state add ki
 
   useEffect(() => {
     try { localStorage.setItem('cart', JSON.stringify(cart)) } catch {}
   }, [cart])
+
   useEffect(() => {
     try { localStorage.setItem('wishlist', JSON.stringify(wishlist)) } catch {}
   }, [wishlist])
+
+  // ✅ External storage/events ko listen karne ke liye sync logic
+  useEffect(() => {
+    const syncCart = () => {
+      try { setCart(JSON.parse(localStorage.getItem('cart')) || []) } catch {}
+    };
+    window.addEventListener('cartUpdated', syncCart);
+    window.addEventListener('storage', syncCart);
+    return () => {
+      window.removeEventListener('cartUpdated', syncCart);
+      window.removeEventListener('storage', syncCart);
+    };
+  }, []);
 
   const addToCart = (product) => {
     setCart(prev => {
@@ -50,7 +65,7 @@ export const CartProvider = ({ children }) => {
   const wishlistCount = wishlist.length
 
   return (
-    <CartContext.Provider value={{ cart, wishlist, addToCart, removeFromCart, updateQty, addToWishlist, removeFromWishlist, isInWishlist, cartCount, wishlistCount }}>
+    <CartContext.Provider value={{ cart, wishlist, addToCart, removeFromCart, updateQty, addToWishlist, removeFromWishlist, isInWishlist, cartCount, wishlistCount, isCartOpen, setIsCartOpen }}>
       {children}
     </CartContext.Provider>
   )

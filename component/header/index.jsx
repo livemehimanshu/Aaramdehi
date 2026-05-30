@@ -53,14 +53,16 @@ const Header = ({ hideNav = false }) => {
 
   // Function: Cart drawer ko toggle karna (open/close)
   const toggleCartDrawer = () => {
-    setIsCartOpen(!isCartOpen);
-    setIsWishlistOpen(false); // Wishlist ko close karna agar open tha
+    if (typeof setIsCartOpen === 'function') {
+      setIsCartOpen(prev => !prev);
+      setIsWishlistOpen(false);
+    }
   };
 
   // Function: Wishlist drawer ko toggle karna (open/close)
   const toggleWishlistDrawer = () => {
     setIsWishlistOpen(!isWishlistOpen);
-    setIsCartOpen(false); // Cart ko close karna agar open tha
+    if (typeof setIsCartOpen === 'function') setIsCartOpen(false);
   };
 
   // Function: Compare mein items ki count update karna

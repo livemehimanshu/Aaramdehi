@@ -84,9 +84,10 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
             // 4. Save karein aur events fire karein taaki Sidebar update ho jaye
             localStorage.setItem("cart", JSON.stringify(cart));
             window.dispatchEvent(new Event("cartUpdated"));
+            window.dispatchEvent(new Event("storage")); // Cross-tab sync ke liye
             
             // 5. Automatic Sidebar Open
-            if (setIsCartOpen) setIsCartOpen(true);
+            if (typeof setIsCartOpen === 'function') setIsCartOpen(true);
 
             toast.success("Combo bundle added to cart!");
         } catch (error) {

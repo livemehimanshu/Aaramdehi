@@ -128,11 +128,12 @@ const Header = ({ hideNav = false }) => {
     // ✅ 1. Immediate Session Restore: Check local storage before Firebase async check
     const savedUserData = localStorage.getItem("userData");
     const savedToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (savedUserData && savedToken) {
+    if (savedUserData && savedUserData !== "undefined" && savedToken) {
       try { 
         setUser(JSON.parse(savedUserData)); 
       } catch (e) { 
         console.error("Session restore error:", e); 
+        localStorage.removeItem("userData"); // Kharaab data saaf karein
       }
     }
 

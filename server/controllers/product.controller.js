@@ -161,13 +161,24 @@ export const getProductById = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
+        
+        // ✅ सुरक्षा (Sanitization): '...rest' के बजाय सभी फील्ड्स को स्पष्ट रूप से निकालें
+        // इससे यूजर 'role' या 'createdBy' जैसे संवेदनशील फील्ड्स को अपडेट नहीं कर पाएगा
         const { 
-            name, tags, specifications, seoKeywords, ...rest 
+            name, brand, description, shortDescription, category, subCategory, 
+            tags, mrp, sellingPrice, discountPercent, stock, sku, 
+            specifications, seoTitle, seoDescription, seoKeywords 
         } = req.body;
 
-        const updateData = { 
-            ...rest,
-            name
+        const updateData = {
+            name, brand, description, shortDescription, category, subCategory,
+            mrp: Number(mrp),
+            sellingPrice: Number(sellingPrice),
+            discountPercent: Number(discountPercent) || 0,
+            stock: Number(stock),
+            sku,
+            seoTitle,
+            seoDescription
         };
         
         // Handle parsing of stringified fields from FormData

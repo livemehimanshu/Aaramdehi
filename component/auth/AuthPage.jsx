@@ -79,10 +79,12 @@ const AuthPage = () => {
 
             navigate('/');
         } catch (error) {
-            const errorData = error.response?.data || {};
+            // Check if it's an API error response
+            const errorData = error.response?.data || error; 
             const message = typeof errorData.message === 'string' ? errorData.message : "Invalid Email or Password";
 
-            if (errorData?.needsVerification) {
+            // 403 status and needsVerification flag check
+            if (error.response?.status === 403 && errorData?.needsVerification) {
                 setForgotEmail(data.email.toLowerCase().trim());
                 setOtpFlow('signup');
                 setView('otp');

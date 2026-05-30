@@ -122,7 +122,7 @@ const PopularProducts = () => {
                 to={`/product/${item._id}`}
                 onClick={() => handleProductView(item)}
                 className="w-full h-full flex items-center justify-center">
-                  <img src={item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://via.placeholder.com/150'} className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" alt={item.name}/>
+                  <img src={item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/400x400?text=Aaramdehi'} className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" alt={item.name}/>
               </Link>
               <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20">
                 {wishlist.some(w => String(w.id) === String(item._id || item.id)) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}

@@ -34,11 +34,11 @@ export const storage = getStorage(app);
 
 // ✅ Graceful Analytics Initialization: Prevent 'config-fetch-failed' from blocking UI
 let firebaseAnalytics = null;
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && import.meta.env.PROD) { // Sirf Online/Production mein chalayein
   try {
     firebaseAnalytics = getAnalytics(app);
   } catch (err) {
-    console.warn("Firebase Analytics failed to initialize. Likely blocked by browser.");
+    console.warn("Firebase Analytics disabled or blocked. App will continue to work.");
   }
 }
 export const analytics = firebaseAnalytics;

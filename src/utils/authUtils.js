@@ -8,7 +8,7 @@ import axios from 'axios';
 
 // ✅ Standardized API Base URL logic
 // Render URL ko fallback ke roop mein add kiya
-const apiBaseURL = (import.meta.env.VITE_API_URL || "https://aaramdehi.onrender.com").replace(/\/$/, "");
+const apiBaseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 
 export const api = axios.create({
   // Agar local dev hai toh "/api" use karein (Vite Proxy ke liye)

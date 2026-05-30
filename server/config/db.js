@@ -63,12 +63,14 @@ export const findById = async (collectionName, id) => {
 };
 
 export const findByQuery = async (collectionName, property, value) => {
-  const snapshot = await db.ref(collectionName).once('value');
+  // ✅ Optimization: Use Firebase's native filtering instead of JS memory filter
+  const snapshot = await db.ref(collectionName)
+    .orderByChild(property)
+    .equalTo(value)
+    .once('value');
+  
   const data = snapshot.val();
-  if (!data) return [];
-  return Object.keys(data)
-    .filter(key => data[key][property] === value)
-    .map(key => ({ _id: key, ...data[key] }));
+  return data ? Object.keys(data).map(key => ({ _id: key, ...data[key] })) : [];
 };
 
 export const create = async (collectionName, data) => {

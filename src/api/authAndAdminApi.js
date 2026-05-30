@@ -275,7 +275,8 @@ export async function loginAPI(emailOrData, password) {
     const res = await api.post('/auth/login', payload);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    // Re-throw calculation so caller's catch block can inspect e.response
+    throw e;
   }
 }
 

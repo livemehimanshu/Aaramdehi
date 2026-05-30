@@ -21,7 +21,6 @@ import ComparePage from '../component/Pages/ComparePage/index.jsx'
 import { BlogList, BlogDetail } from '../component/Pages/blog/blog.jsx'
 
 // Auth & User Pages
-import AuthPage from '../component/Pages/Home/auth.jsx'
 import AccountSettings from '../component/auth/AccountSettings.jsx'
 import ManageAddresses from '../component/auth/ManageAddresses.jsx'
 import PanCardInfo from '../component/pancard/PanCardInfo.jsx'
@@ -30,6 +29,7 @@ import MyCoupons from '../component/giftcard/MyCoupons.jsx'
 import Wishlist from '../component/WishlistDrawer/Wishlist.jsx'
 import MyOrders from '../component/order/MyOrders.jsx'
 import OrderDetailsPage from '../component/order/OrderDetailsPage.jsx'
+import AuthPage from '../component/auth/AuthPage.jsx' // ✅ Ismein OTP flow behtar hai
 
 // Admin Pages
 import Dashboard from '../component/Admin/pages/Dashboard.jsx'
@@ -69,7 +69,13 @@ function AppContent() {
   // Session Sync for Sidebar
   useEffect(() => {
     const savedUser = localStorage.getItem("userData");
-    if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedUser && savedUser !== "undefined") {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error("App.jsx: Error parsing userData", e);
+      }
+    }
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser && !localStorage.getItem("accessToken")) {
@@ -149,8 +155,8 @@ function AppContent() {
               <Route path="/product/:id" element={<ProductDetailsPage />} />
               <Route path="/shop-by-room/:slug" element={<ShopByRoomDetails />} />
               <Route path="/compare" element={<ComparePage />} />
-              <Route path="/login" element={<AuthPage />} />
-              <Route path="/signup" element={<AuthPage />} />
+              <Route path="/login" element={<AuthPage />} /> 
+              <Route path="/register" element={<AuthPage />} />
               <Route path="/account/profile" element={<AccountSettings />} />
               <Route path="/account/addresses" element={<ManageAddresses />} />
               <Route path="/account/pan" element={<PanCardInfo />} />

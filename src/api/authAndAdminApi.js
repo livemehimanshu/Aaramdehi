@@ -1,4 +1,4 @@
-import api from '../utils/authUtils';
+import api from '../utils/authUtils'; export { api };
 
 // ✅ Pro Cache: Prevent redundant network waterfalls
 const memoryCache = new Map();

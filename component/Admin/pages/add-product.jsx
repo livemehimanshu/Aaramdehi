@@ -7,7 +7,7 @@ import { Link } from '@tiptap/extension-link';
 import { Upload, Save, Box, DollarSign, ListChecks, Loader2, X, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { useNavigate } from 'react-router-dom';
-import { createProductAPI, getAllCategoriesAPI } from '@/api/authAndAdminApi';
+import { createProductAPI, getAllCategoriesAPI } from '../../../src/api/authAndAdminApi';
 
 // ✅ Expert Indexing: Stop-words for clean keyword generation
 const STOPWORDS = new Set(['for', 'the', 'a', 'in', 'with', 'hai', 'ko', 'ka', 'me', 'and', 'to', 'is', 'of', 'this', 'that', 'on', 'at', 'by', 'an', 'each', 'from', 'are']);

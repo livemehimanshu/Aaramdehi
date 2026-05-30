@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Store, User, Phone, MapPin, Search, Loader2, Plus, AlertCircle, X, RefreshCw, Trash2, Edit, DownloadCloud } from 'lucide-react';
-import api from '@/utils/authUtils'; // ✅ Use the centralized Axios instance
+import { api } from '../../../src/api/authAndAdminApi'; // ✅ Relative path fixes Vercel Build
 import { generateShopLedgerPDF } from './generateShopLedgerPDF'; // ✅ New utility
 
 export default function ShopsPage() {

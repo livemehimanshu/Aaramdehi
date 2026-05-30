@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Package, Truck, CheckCircle, XCircle, Clock, Search, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 import { auth } from '../../src/api/firebase.js';
 import { onAuthStateChanged } from 'firebase/auth'; // Assuming Firebase auth is used for user ID
-import { api } from '../../src/utils/authUtils'; // Centralized Axios instance
+import { api } from '../../src/api/authAndAdminApi'; // ✅ Use the same instance as other components
 
 const MyOrders = () => {
     const [orders, setOrders] = useState([]);

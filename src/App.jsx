@@ -35,7 +35,7 @@ import AuthPage from '../component/auth/AuthPage.jsx' // ✅ Ismein OTP flow beh
 import Dashboard from '../component/Admin/pages/Dashboard.jsx'
 import Analytics from '../component/Admin/pages/analytics.jsx'
 import AllProducts from '../component/Admin/pages/AllProducts.jsx'
-import AddProduct from '../component/Admin/pages/add-product.jsx'
+import AddProduct from '../component/Admin/pages/AddProduct.jsx'
 import EditProduct from '../component/Admin/pages/EditProduct.jsx'
 import Categories from '../component/Admin/pages/categories.jsx'
 import Inventory from '../component/Admin/pages/inventory.jsx'

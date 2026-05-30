@@ -184,7 +184,7 @@ const MyOrders = () => {
                                             </span>
                                         </td>
                                         <td className="py-6 px-4 text-right">
-                                            <Link to={`/order-details/${order._id}`} className="text-[10px] font-black text-blue-900 uppercase tracking-widest border-b-2 border-blue-900/10 hover:border-blue-900 transition-all pb-1">View Details</Link>
+                                            <Link to={`/order-details/${order._id || order.id}`} className="text-[10px] font-black text-blue-900 uppercase tracking-widest border-b-2 border-blue-900/10 hover:border-blue-900 transition-all pb-1">View Details</Link>
                                         </td>
                                     </tr>
                                 ))}
@@ -219,7 +219,7 @@ const MyOrders = () => {
                                     <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Paid Amount</p>
                                     <p className="text-xl font-black text-blue-900 tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
                                 </div>
-                                <Link to={`/order-details/${order._id}`} className="block w-full text-center py-3 bg-gray-50 rounded-xl font-black text-[10px] text-blue-900 uppercase tracking-[0.2em] hover:bg-blue-900 hover:text-white transition-all">View Details</Link>
+                                <Link to={`/order-details/${order._id || order.id}`} className="block w-full text-center py-3 bg-gray-50 rounded-xl font-black text-[10px] text-blue-900 uppercase tracking-[0.2em] hover:bg-blue-900 hover:text-white transition-all">View Details</Link>
                             </div>
                         ))}
                     </div>

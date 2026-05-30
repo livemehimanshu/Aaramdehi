@@ -70,14 +70,15 @@ const ProductDetailsPage = () => {
           setSelectedSize(data.sizes[0]);
           setReviews(data.reviews || []);
         } else {
-          // Performance Fix: Saare products download karne ke bajaye single product fetch karein
-          // Note: Backend mein getProductById endpoint hona chahiye
           const res = await getAllProductsAPI({ limit: 1000 }); 
-          const found = res.data?.find(p => String(p._id || p.id) === String(id));
+          
+          // Robust parsing: handles both {data: [...]} and [...]
+          const productsArray = Array.isArray(res) ? res : (res.data || []);
+          const found = productsArray.find(p => String(p._id || p.id) === String(id));
           
           if (found) {
             const mappedData = {
-              id: found._id,
+              id: found._id || found.id,
               brand: found.brand || "Aaramdehi Luxe",
               name: found.name,
               description: found.description || "Premium quality product.",

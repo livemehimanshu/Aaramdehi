@@ -24,6 +24,7 @@ import GiftCards from '../component/giftcard/GiftCards.jsx'
 import MyCoupons from '../component/giftcard/MyCoupons.jsx'
 import Wishlist from '../component/WishlistDrawer/Wishlist.jsx'
 import MyOrders from '../component/order/MyOrders.jsx'
+import OrderDetailsPage from '../component/order/OrderDetailsPage.jsx'
 
 // Admin Pages
 import Dashboard from '../component/Admin/pages/Dashboard.jsx'
@@ -59,7 +60,7 @@ function AppContent() {
   const hideHeaderRoutes = ['/order-success', '/login', '/signup']
   const shouldHideHeaderFooter = isAdminRoute || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
 
-  const accountPaths = ['/account/profile', '/account/addresses', '/account/pan', '/orders', '/payments/giftcards', '/payments/upi', '/payments/cards', '/coupons', '/reviews', '/wishlist']
+  const accountPaths = ['/account/profile', '/account/addresses', '/account/pan', '/orders', '/order-details', '/payments/giftcards', '/payments/upi', '/payments/cards', '/coupons', '/reviews', '/wishlist']
   const isAccountPage = accountPaths.some(path => location.pathname.startsWith(path))
 
   const PageWrapper = ({ title }) => (
@@ -121,6 +122,7 @@ function AppContent() {
               <Route path="/account/addresses" element={<ManageAddresses />} />
               <Route path="/account/pan" element={<PanCardInfo />} />
               <Route path="/orders" element={<MyOrders />} />
+              <Route path="/order-details/:id" element={<OrderDetailsPage />} />
               <Route path="/payments/giftcards" element={<GiftCards />} />
               <Route path="/payments/upi" element={<PageWrapper title="Saved UPI" />} />
               <Route path="/payments/cards" element={<PageWrapper title="Saved Cards" />} />

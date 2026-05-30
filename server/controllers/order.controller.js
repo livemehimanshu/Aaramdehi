@@ -182,6 +182,48 @@ export const updateOrderStatus = async (req, res) => {
     }
 };
 
+// 5. Get Single Order Details (By ID)
+export const getOrderById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const order = await findById(COLLECTION, id);
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        // Security Check: Ensure user only sees their own orders
+        const userId = req.userId || req.user?._id || req.user?.id;
+        if (String(order.userId) !== String(userId)) {
+            return res.status(403).json({ success: false, message: "You are not authorized to view this order." });
+        }
+
+        // Enforce product details (Names/Images) for the order items
+        const allProducts = await findAll(PRODUCT_COLLECTION);
+        const productMap = allProducts.reduce((acc, p) => {
+            acc[p._id] = p;
+            return acc;
+        }, {});
+
+        const enrichedOrder = {
+            ...order,
+            orderItems: (order.orderItems || []).map(item => {
+                const p = productMap[item.productId || item.product];
+                return {
+                    ...item,
+                    name: p?.name || item.name,
+                    image: p?.thumbnail || p?.images?.[0]?.url || item.image
+                };
+            })
+        };
+
+        return res.json({ success: true, data: enrichedOrder });
+    } catch (error) {
+        console.error("❌ [Order Controller] getOrderById Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 // 5. Get Shop Specific Orders (For Khata Tracking)
 export const getOrdersByShopId = async (req, res) => {
     try {

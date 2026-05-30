@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const ManageAddresses = () => {
 	const [showForm, setShowForm] = useState(false);
@@ -28,7 +29,13 @@ const ManageAddresses = () => {
 					</div>
 					<textarea placeholder="Address (Area and Street)" className="w-full p-3 border outline-none focus:border-blue-500 rounded-sm mb-4 h-24"></textarea>
 					<div className="flex gap-4 mb-6">
-						<button className="bg-blue-600 text-white px-10 py-3 font-bold rounded-sm shadow-md">SAVE</button>
+						<button 
+                            className="bg-blue-600 text-white px-10 py-3 font-bold rounded-sm shadow-md"
+                            onClick={() => {
+                                toast.success("Address saved successfully!");
+                                setShowForm(false);
+                            }}
+                        >SAVE</button>
 						<button onClick={() => setShowForm(false)} className="text-blue-600 font-bold px-6">CANCEL</button>
 					</div>
 				</div>

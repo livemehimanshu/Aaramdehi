@@ -8,6 +8,7 @@ import { FiShoppingCart } from 'react-icons/fi';
 import { BsLightningCharge } from 'react-icons/bs'; 
 import { addToRecentlyViewed } from '../../../src/data/recentlyViewedUtils';
 import AaramdehiAdBanner from '../../header/AaramdehiAdBanner'; // Ad Banner import kiya
+import toast from 'react-hot-toast';
 import HomeBanner from '../../banneradds/HomeBanner'; // Import HomeBanner
 import SEO from '../../header/SEO'; // SEO Component Import Kiya
 import { getAllProductsAPI, getActiveCategoriesAPI } from '../../../src/api/authAndAdminApi';
@@ -110,7 +111,7 @@ const ProductListing = () => {
 
     localStorage.setItem("cart", JSON.stringify(cart));
     window.dispatchEvent(new Event("cartUpdated"));
-    alert(`${product.name} added to Aaramdehi cart!`);
+    toast.success(`${product.name} added to cart!`);
   };
 
   // Function: Wishlist mein item add/remove karna localStorage se
@@ -127,6 +128,7 @@ const ProductListing = () => {
     if (isInWishlist) {
       // Agar already hai toh remove karo
       wishlistData = wishlistData.filter(item => String(item.id) !== String(productId)); // Use item.id for consistency in wishlist array
+      toast.error("Removed from wishlist");
     } else {
       const productToSave = { // Ensure id is present for wishlist
         id: productId,
@@ -139,6 +141,7 @@ const ProductListing = () => {
         category: product.category || "Uncategorized"
       };
       wishlistData.push(productToSave);
+      toast.success("Added to wishlist!");
       if (wishlistData[wishlistData.length - 1].price === 0) {
         console.warn("Product added to wishlist with 0 price from ProductListing:", product.name, "Original product:", product);
       }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { IoClose, IoHeartOutline, IoHeart, IoSyncOutline, IoStar, IoStarOutline } from "react-icons/io5";
+import toast from 'react-hot-toast';
 
 // ===== QUICK VIEW MODAL COMPONENT =====
 const QuickViewModal = ({ product, isOpen, onClose }) => {
@@ -119,7 +120,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
         window.dispatchEvent(new Event("cartUpdated"));
         
         // Success feedback
-        alert(`${product.name} added to cart!`);
+        toast.success(`${product.name} added to cart!`);
         onClose(); 
     };
 
@@ -137,7 +138,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
 
             // Maximum 3 products constraint
             if (!isPresent && compare.length >= 3) {
-                alert("⚠️ Maximum 3 products allowed for comparison!");
+                toast.error("Maximum 3 products allowed for comparison!");
                 return;
             }
 
@@ -145,6 +146,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                 // Remove from compare (consistent with item.id)
                 compare = compare.filter(item => String(item.id) !== String(productId));
                 console.log("⚖️ Removed from Compare:", product.name);
+                toast.error("Removed from comparison");
             } else {
                 // Add to compare
                 const productToSave = { // Ensure id is present for compare
@@ -162,6 +164,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                     console.warn("Product added to compare with 0 price from QuickViewModal:", product.name, "Original product:", product);
                 }
                 console.log("⚖️ Added to Compare:", product.name);
+                toast.success("Added to comparison!");
             }
             
             // Save to localStorage

@@ -163,8 +163,9 @@ const AuthPage = () => {
                     } else {
                         navigate('/');
                     }
+                } else {
+                    toast.success("OTP Verified!");
                 }
-                toast.success("OTP Verified!");
             } else {
                 setView('reset');
                 toast.success("Please set your new password");

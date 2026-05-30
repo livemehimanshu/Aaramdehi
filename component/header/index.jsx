@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from '../../src/hooks/useCart'; // ✅ CartContext Hook import kiya
+import toast from 'react-hot-toast';
 import Search from "../search";
 import Navigation from './navigation';
 import Badge from '@mui/material/Badge';
@@ -113,6 +114,7 @@ const Header = ({ hideNav = false }) => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
+    toast.success("Logged out successfully!");
     setUser(null);
     setShowProfileMenu(false);
     navigate('/login');

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const AccountSettings = () => {
     const [isEdit, setIsEdit] = useState({ personal: false, email: false, mobile: false });
@@ -16,6 +17,9 @@ const AccountSettings = () => {
     };
 
     const handleToggle = (key) => {
+        if (isEdit[key]) {
+            toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} updated successfully!`);
+        }
         setIsEdit({ ...isEdit, [key]: !isEdit[key] });
     };
 

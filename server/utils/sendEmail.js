@@ -6,17 +6,17 @@ import { orderEmailTemplate } from "./orderEmailTemplate.js";
  */
 export const sendOrderEmail = async (userEmail, orderData) => {
     try {
-        // 1. Send to Customer
+        // ✅ 1. Send to Customer (With Order Number in Subject)
         await sendEmail({
             sendTo: userEmail,
             subject: `Order Confirmed: ${orderData.orderNumber} - Aaramdehi`,
             html: orderEmailTemplate(orderData, "CUSTOMER")
         });
 
-        // 2. Send to Admin (Notify store owner)
+        // ✅ 2. Send to Admin (Notify store owner about sale details)
         await sendEmail({
-            sendTo: process.env.EMAIL_USER,
-            subject: `🚨 NEW ORDER: ${orderData.orderNumber}`,
+            sendTo: process.env.EMAIL_USER || "admin@aaramdehi.com",
+            subject: `🚨 NEW SALE: ${orderData.orderNumber} (₹${(orderData.totalAmount || 0).toLocaleString()})`,
             html: orderEmailTemplate(orderData, "ADMIN")
         });
     } catch (error) {

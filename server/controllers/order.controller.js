@@ -1,4 +1,5 @@
 import { create, findAll, findById, updateById, findByQuery, db } from '../config/db.js';
+import { sendOrderEmail } from '../utils/sendEmail.js';
 
 const COLLECTION = 'orders';
 const USERS_COLLECTION = 'users';
@@ -95,10 +96,19 @@ export const createOrder = async (req, res) => {
         // EXECUTE BATCH UPDATE
         await db.ref().update(updates);
 
+        const orderData = { _id: orderId, ...updates[`${COLLECTION}/${orderId}`] };
+
+        // ✅ Background Processing: Send Email without 'await'
+        const user = await findById(USERS_COLLECTION, userId);
+        if (user && user.email) {
+            // Yahan error catch karna zaroori hai taaki background process crash na ho
+            sendOrderEmail(user.email, orderData).catch(err => console.error("❌ [Background Email Error]:", err));
+        }
+
         return res.status(201).json({
           success: true,
           message: "Order placed successfully",
-          data: { _id: orderId, ...updates[`${COLLECTION}/${orderId}`] }
+          data: orderData
         });
 
     } catch (error) {
@@ -175,6 +185,14 @@ export const updateOrderStatus = async (req, res) => {
         }
 
         const updated = await updateById(COLLECTION, id, updateData);
+
+        // ✅ Send Status Update Email
+        const user = await findById(USERS_COLLECTION, order.userId);
+        if (user && user.email && (status === 'Shipped' || status === 'Delivered')) {
+            // Yahan aap status specific template use kar sakte hain
+            console.log(`Sending ${status} email to ${user.email}`);
+            // sendStatusUpdateEmail(user.email, order, status); 
+        }
 
         return res.json({ success: true, message: "Status updated", data: updated });
     } catch (error) {

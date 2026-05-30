@@ -7,7 +7,7 @@ import {
     IoAlertCircleOutline
 } from "react-icons/io5";
 import { generateInvoicePDF } from './generateInvoicePDF';
-import { getAllOrdersAdminAPI, api } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
+import { getAllOrdersAdminAPI, updateOrderStatusAPI } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -42,15 +42,11 @@ const Orders = () => {
     // 2. ऑर्डर का स्टेटस (Processing, Shipped etc.) अपडेट करें
     const handleUpdateStatus = async (orderId, newStatus) => {
         try {
-            const response = await api.put(`/order/update-status/${orderId}`, // ✅ Use authUtils.api
-                { status: newStatus },
-                {} // Headers are automatically handled
-            );
+            const response = await updateOrderStatusAPI(orderId, newStatus);
             
-            if (response.status === 200 || response.data.success) {
+            if (response.success) {
                 // ✅ Local state ko turant update karein taaki database reload ka wait na karna pade
                 setOrders(prev => prev.map(o => o._id === orderId ? { ...o, orderStatus: newStatus, paymentStatus: newStatus === "Delivered" ? "Completed" : o.paymentStatus } : o));
-                console.log(`✅ Order ${orderId} updated to ${newStatus} in Firebase`);
             }
         } catch (error) {
             console.error("Update failed:", error);

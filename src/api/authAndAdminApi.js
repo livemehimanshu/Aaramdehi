@@ -185,6 +185,15 @@ export async function getAllOrdersAdminAPI() {
   }
 }
 
+export async function updateOrderStatusAPI(orderId, status) {
+  try {
+    const res = await api.put(`/order/update-status/${orderId}`, { status });
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
 export async function getAllAppointmentsAPI() {
   try {
     const res = await api.get('/appointments');

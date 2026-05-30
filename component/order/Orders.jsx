@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { api } from '../../src/utils/authUtils';
+import { getUserOrdersAPI } from '../../src/api/authAndAdminApi';
 import { IoBagHandleOutline, IoChevronForward } from "react-icons/io5";
 import { Link } from 'react-router-dom';
 
@@ -10,10 +10,9 @@ const Orders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                // Note: Is endpoint ko apne backend ke hisab se check karein
-                const res = await api.get(`/order`);
-                if (res.data.success) {
-                    setOrders(res.data.data);
+                const res = await getUserOrdersAPI();
+                if (res.success) {
+                    setOrders(res.data);
                 }
             } catch (error) {
                 console.error("Error fetching orders:", error);

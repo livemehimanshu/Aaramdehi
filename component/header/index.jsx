@@ -6,7 +6,21 @@ import Navigation from './navigation';
 import Badge from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
-import { IoCartOutline, IoPersonOutline, IoLogOutOutline, IoSearchOutline } from "react-icons/io5";
+import { 
+  IoCartOutline, 
+  IoPersonOutline, 
+  IoLogOutOutline, 
+  IoSearchOutline,
+  IoBagHandleOutline,
+  IoSettingsOutline,
+  IoLocationOutline,
+  IoCardOutline,
+  IoWalletOutline,
+  IoStarOutline,
+  IoCloseOutline,
+  IoChevronForwardOutline,
+  IoTicketOutline
+} from "react-icons/io5";
 import { IoIosGitCompare } from "react-icons/io";
 import { CiHeart } from "react-icons/ci";
 // ✅ Firebase Auth imports add karein
@@ -44,6 +58,7 @@ const Header = ({ hideNav = false }) => {
   // --- STATE MANAGEMENT ---
   const [loading, setLoading] = useState(true); // ✅ Loading state add kiya
   const [isWishlistOpen, setIsWishlistOpen] = useState(false); // Wishlist drawer open/close
+  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false); // Mobile profile drawer
   const [compareCount, setCompareCount] = useState(0); // Compare mein kitne items hain
   const [user, setUser] = useState(null); // Logged in user data
   const [navCategories, setNavCategories] = useState([]); // Navigation bar ke liye categories
@@ -332,7 +347,7 @@ const Header = ({ hideNav = false }) => {
               {/* Mobile login/profile icon (visible on small screens) */}
               <div className="md:hidden ml-2">
                 {user ? (
-                  <button onClick={() => setShowProfileMenu(!showProfileMenu)} className='p-1'>
+                  <button onClick={() => setIsProfileDrawerOpen(true)} className='p-1'>
                     {user.avatar ? (
                       <img src={user.avatar} onError={(e)=>{e.target.src = "https://placehold.co/32x32?text=👤"}} alt="Profile" className='w-7 h-7 rounded-full object-cover' />
                     ) : (
@@ -416,6 +431,120 @@ const Header = ({ hideNav = false }) => {
         isOpen={isWishlistOpen} 
         onClose={() => setIsWishlistOpen(false)} 
       />
+
+      {/* --- Mobile Profile Drawer --- */}
+      {user && (
+        <div className={`fixed inset-0 z-[100] transition-all duration-300 md:hidden ${isProfileDrawerOpen ? 'visible' : 'invisible'}`}>
+          {/* Overlay */}
+          <div 
+            className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${isProfileDrawerOpen ? 'opacity-100' : 'opacity-0'}`} 
+            onClick={() => setIsProfileDrawerOpen(false)}
+          ></div>
+          
+          {/* Content */}
+          <div className={`absolute right-0 top-0 bottom-0 w-[280px] bg-white transition-transform duration-300 overflow-y-auto ${isProfileDrawerOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
+              <div className="flex items-center gap-3 min-w-0">
+                {user.avatar ? (
+                   <img src={user.avatar} alt="Profile" className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-400">
+                    <IoPersonOutline size={20} />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-tight truncate">{user.name}</p>
+                  <p className="text-[10px] text-gray-400 truncate">{user.email}</p>
+                </div>
+              </div>
+              <button onClick={() => setIsProfileDrawerOpen(false)} className="text-gray-400 hover:text-red-500">
+                <IoCloseOutline size={24} />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-6">
+              {/* My Orders */}
+              <Link to='/orders' onClick={() => setIsProfileDrawerOpen(false)} className="flex items-center justify-between group">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <IoBagHandleOutline size={18} />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-widest text-gray-700 group-hover:text-red-500 transition-colors">My Orders</span>
+                </div>
+                <IoChevronForwardOutline size={14} className="text-gray-300" />
+              </Link>
+
+              {/* Account Settings */}
+              <div>
+                <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-3">Account Settings</p>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Profile Information', path: '/account/profile', icon: IoPersonOutline },
+                    { label: 'Manage Addresses', path: '/account/addresses', icon: IoLocationOutline },
+                    { label: 'PAN Card Information', path: '/account/pan', icon: IoCardOutline }
+                  ].map((item, idx) => (
+                    <Link key={idx} to={item.path} onClick={() => setIsProfileDrawerOpen(false)} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <item.icon size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                        <span className="text-[10px] font-bold text-gray-600 group-hover:text-red-500 transition-colors">{item.label}</span>
+                      </div>
+                      <IoChevronForwardOutline size={12} className="text-gray-300" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Payments */}
+              <div>
+                <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-3">Payments</p>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Gift Cards', path: '/payments/giftcards', icon: IoWalletOutline, sub: '₹0' },
+                    { label: 'Saved UPI', path: '/payments/upi', icon: IoWalletOutline },
+                    { label: 'Saved Cards', path: '/payments/cards', icon: IoCardOutline }
+                  ].map((item, idx) => (
+                    <Link key={idx} to={item.path} onClick={() => setIsProfileDrawerOpen(false)} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <item.icon size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                        <span className="text-[10px] font-bold text-gray-600 group-hover:text-red-500 transition-colors">{item.label}</span>
+                        {item.sub && <span className="text-[10px] font-black text-emerald-600 ml-auto">{item.sub}</span>}
+                      </div>
+                      <IoChevronForwardOutline size={12} className="text-gray-300" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* My Stuff */}
+              <div>
+                <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-3">My Stuff</p>
+                <div className="space-y-3">
+                  {[
+                    { label: 'My Coupons', path: '/coupons', icon: IoTicketOutline },
+                    { label: 'My Reviews & Ratings', path: '/reviews', icon: IoStarOutline },
+                    { label: 'My Wishlist', path: '/wishlist', icon: CiHeart }
+                  ].map((item, idx) => (
+                    <Link key={idx} to={item.path} onClick={() => setIsProfileDrawerOpen(false)} className="flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <item.icon size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
+                        <span className="text-[10px] font-bold text-gray-600 group-hover:text-red-500 transition-colors">{item.label}</span>
+                      </div>
+                      <IoChevronForwardOutline size={12} className="text-gray-300" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              <button 
+                onClick={() => { handleLogout(); setIsProfileDrawerOpen(false); }}
+                className="w-full flex items-center gap-3 p-3 bg-red-50 text-red-600 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-red-600 hover:text-white transition-all"
+              >
+                <IoLogOutOutline size={18} /> Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

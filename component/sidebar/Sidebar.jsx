@@ -14,23 +14,25 @@ import {
 } from "react-icons/io5";
 import { CiHeart } from "react-icons/ci";
 
-const Sidebar = ({ isOpen, onClose, user, handleLogout }) => {
+const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
   if (!user) return null;
 
   return (
     <>
       {/* --- Background Overlay (Blur & Dark) --- */}
-      <div 
-        className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] transition-opacity duration-300 md:hidden ${
+      {!isStatic && (
+        <div 
+          className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-[1000] transition-opacity duration-300 ${
           isOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}
+          } ${isStatic ? 'hidden' : 'md:hidden'}`}
         onClick={onClose}
-      ></div>
+        ></div>
+      )}
 
       {/* --- Sidebar Container (Slide from Left) --- */}
-      <div className={`fixed top-0 left-0 bottom-0 w-[85%] max-w-[320px] bg-white z-[1001] shadow-2xl transition-transform duration-300 ease-in-out md:hidden flex flex-col ${
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}>
+      <div className={`${isStatic ? 'relative w-full h-full border border-gray-100 rounded-[30px] hidden md:flex' : 'fixed top-0 left-0 bottom-0 w-[85%] max-w-[320px] z-[1001] md:hidden translate-x-0 transition-transform duration-300'} bg-white flex flex-col ${
+        !isStatic && !isOpen ? '-translate-x-full' : 'translate-x-0'
+      } shadow-2xl overflow-hidden`}>
         
         {/* Sidebar Header: User Info & Close */}
         <div className="p-6 bg-blue-900 text-white flex items-center justify-between">
@@ -47,9 +49,11 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout }) => {
               <p className="text-[10px] opacity-70 truncate lowercase">{user.email}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
-            <IoCloseOutline size={28} />
-          </button>
+          {!isStatic && (
+            <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors">
+              <IoCloseOutline size={28} />
+            </button>
+          )}
         </div>
 
         {/* Sidebar Menu: Grouped Content */}

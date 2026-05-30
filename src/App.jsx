@@ -1,6 +1,9 @@
 import './App.css'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
+import { useState, useEffect } from 'react'
+import { auth } from '../src/api/firebase.js'
+import { onAuthStateChanged } from 'firebase/auth'
 
 // Layouts
 import Header from '../component/header/index.jsx'
@@ -55,6 +58,25 @@ import OrderSuccess from '../component/Pages/OrderSuccess/OrderSuccess.jsx'
 
 function AppContent() {
   const location = useLocation()
+  const [user, setUser] = useState(null)
+
+  // Session Sync for Sidebar
+  useEffect(() => {
+    const savedUser = localStorage.getItem("userData");
+    if (savedUser) setUser(JSON.parse(savedUser));
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser && !localStorage.getItem("accessToken")) {
+        setUser(null);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
 
   const isAdminRoute = location.pathname.startsWith('/admin')
   const hideHeaderRoutes = ['/order-success', '/login', '/signup']
@@ -78,7 +100,7 @@ function AppContent() {
         <div className={isAccountPage ? "max-w-[1248px] mx-auto flex flex-col md:flex-row py-4 md:py-8 px-2 md:px-4 gap-0 md:gap-4" : ""}>
           {isAccountPage && (
             <div className="w-full md:w-80 flex-shrink-0 mb-4 md:mb-0">
-              <Sidebar />
+              <Sidebar user={user} handleLogout={handleLogout} isOpen={true} isStatic={true} />
             </div>
           )}
 

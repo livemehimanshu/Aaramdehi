@@ -1,3 +1,20 @@
 /* Minimal styles placeholder for App */
 :root { --bg: #fff }
 body { background: var(--bg) }
+
+/* --- ReactQuill Dark Theme Overrides --- */
+.ql-toolbar.ql-snow {
+  background-color: #030712 !important; /* Matches Gray-950 */
+  border-color: #1f2937 !important; /* Matches border-gray-800 */
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+.ql-container.ql-snow {
+  border-color: #1f2937 !important;
+  border-bottom-left-radius: 1rem;
+  border-bottom-right-radius: 1rem;
+}
+.ql-editor {
+  color: #e5e7eb !important; /* Matches text-gray-200 */
+  font-family: inherit;
+}

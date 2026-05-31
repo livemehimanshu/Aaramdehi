@@ -7,7 +7,7 @@ import {
     IoAlertCircleOutline
 } from "react-icons/io5";
 import { generateInvoicePDF } from './generateInvoicePDF';
-import { getAllOrdersAdminAPI, updateOrderStatusAPI } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
+import { getAllOrdersAdminAPI, api } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);
@@ -28,9 +28,7 @@ const Orders = () => {
             }
         } catch (error) {
             console.error("Error fetching orders:", error);
-            const msg = error.response?.status === 404 
-                ? "API Endpoint not found (/api/orders). Check backend order.routes.js"
-                : (error.response?.data?.message || error.message);
+            const msg = error.response?.data?.message || error.message || "Database connection error. Check if backend is running on Port 5000 or 8000.";
             setError(msg);
         } finally {
             setLoading(false);
@@ -49,6 +47,7 @@ const Orders = () => {
             if (response.success) {
                 // ✅ Local state ko turant update karein taaki database reload ka wait na karna pade
                 setOrders(prev => prev.map(o => o._id === orderId ? { ...o, orderStatus: newStatus, paymentStatus: newStatus === "Delivered" ? "Completed" : o.paymentStatus } : o));
+                console.log(`✅ Order ${orderId} updated to ${newStatus} in Firebase`);
             }
         } catch (error) {
             console.error("Update failed:", error);

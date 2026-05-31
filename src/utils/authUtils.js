@@ -14,7 +14,7 @@ export const api = axios.create({
   // Agar local dev hai toh "/api" use karein (Vite Proxy ke liye)
   // Agar production domain hai, toh "/api" prefix ensure karein
   baseURL: apiBaseURL ? (apiBaseURL.endsWith('/api') ? apiBaseURL : `${apiBaseURL}/api`) : "/api",
-  headers: { 'Content-Type': 'application/json' },
+  headers: { }, // Remove fixed Content-Type to allow browser to set it for FormData
   withCredentials: true
 });
 

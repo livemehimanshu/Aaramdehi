@@ -78,7 +78,7 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/user", userRouter);
 apiRouter.use("/products", productRouter);
 apiRouter.use("/seo", seoRouter);
-apiRouter.use("/order", orderRouter);
+apiRouter.use("/orders", orderRouter);
 apiRouter.use("/banners", bannerRouter);
 apiRouter.use("/categories", categoryRouter);
 apiRouter.use("/coupons", couponRouter);

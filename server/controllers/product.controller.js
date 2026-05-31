@@ -1,5 +1,5 @@
 import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
-import { findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
+import { findAll, findById, create, updateById, deleteById, findByQuery, db } from "../config/db.js";
 
 const COLLECTION = 'products';
 
@@ -40,18 +40,41 @@ export const createProduct = async (req, res) => {
         // Generate URL-friendly Slug
         const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-        // Handle image upload (Using Buffer for Streams)
         let images = [];
-        if (req.files && req.files.length > 0) {
-            for (const file of req.files) {
+        // Robust handling for req.files (array or object) and req.file
+        console.log("📂 Incoming files check:", { hasFiles: !!req.files, hasFile: !!req.file });
+        
+        const filesToUpload = req.files 
+            ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat()) 
+            : (req.file ? [req.file] : []);
+
+        if (filesToUpload.length > 0) {
+            console.log(`Processing ${filesToUpload.length} files...`);
+            for (const file of filesToUpload) {
+                // Check if buffer exists (memoryStorage) or path exists (diskStorage)
+                const fileContent = file.buffer || file.path;
+                if (!fileContent) {
+                    console.error("❌ File content is missing for file:", file.originalname);
+                    continue;
+                }
+
                 // ✅ Corrected: Added 'products' folder name to utility call
-                const uploadResult = await uploadImageCloudinary(file.buffer, "products");
-                if (uploadResult.success) {
+                const uploadResult = await uploadImageCloudinary(fileContent, "products");
+                
+                if (uploadResult && uploadResult.success) {
                     images.push({
                         url: uploadResult.url,
+                        public_id: uploadResult.public_id,
                         alt: name
                     });
+                } else {
+                    console.error(`❌ Cloudinary Upload Error [${file.originalname}]:`, uploadResult?.message || "Unknown error");
                 }
+            }
+            
+            // Agar files bheji gayi thi par ek bhi upload nahi hui toh error return karein
+            if (filesToUpload.length > 0 && images.length === 0) {
+                return res.status(500).json({ success: false, message: "Could not upload images to Cloudinary. Check server logs." });
             }
         }
 
@@ -79,6 +102,18 @@ export const createProduct = async (req, res) => {
         };
 
         const savedProduct = await create(COLLECTION, productData);
+        // Server-side: write a lightweight search index entry using Admin SDK (bypasses RTDB security rules)
+        try {
+            const indexEntry = {
+                name: productData.name,
+                productId: savedProduct._id,
+                searchKeywords: productData.seoKeywords.length > 0 ? productData.seoKeywords : [productData.brand, productData.category],
+                indexedAt: new Date().toISOString()
+            };
+            await db.ref('product_indexes').push(indexEntry);
+        } catch (indexErr) {
+            console.warn('⚠️ Failed to write product index (server):', indexErr.message);
+        }
         return res.status(201).json({ success: true, message: "Product created successfully", data: savedProduct });
 
     } catch (error) {
@@ -170,7 +205,7 @@ export const updateProduct = async (req, res) => {
             specifications, seoTitle, seoDescription, seoKeywords 
         } = req.body;
 
-        const updateData = {
+        let updateData = {
             name, brand, description, shortDescription, category, subCategory,
             mrp: Number(mrp),
             sellingPrice: Number(sellingPrice),
@@ -181,6 +216,9 @@ export const updateProduct = async (req, res) => {
             seoDescription
         };
         
+        // ✅ Fix: Remove undefined fields to prevent Firebase update crash
+        updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined));
+
         // Handle parsing of stringified fields from FormData
         if (tags) {
             updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
@@ -192,13 +230,32 @@ export const updateProduct = async (req, res) => {
             updateData.specifications = JSON.parse(specifications);
         }
 
-        if (req.files && req.files.length > 0) {
+        // Robust handling for updates as well
+        console.log("📂 Update incoming files:", { hasFiles: !!req.files, hasFile: !!req.file });
+        
+        const filesToUpload = req.files 
+            ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat()) 
+            : (req.file ? [req.file] : []);
+
+        if (filesToUpload.length > 0) {
             const newImages = [];
-            for (const file of req.files) {
+            for (const file of filesToUpload) {
+                const fileContent = file.buffer || file.path;
+                if (!fileContent) {
+                    console.error("❌ Update: File content is missing for file:", file.originalname);
+                    continue;
+                }
+
                 // ✅ Fix: Standardized to 'products' folder
-                const uploadResult = await uploadImageCloudinary(file.buffer, "products");
-                if (uploadResult.success) {
-                    newImages.push({ url: uploadResult.url, alt: name || "product image" });
+                const uploadResult = await uploadImageCloudinary(fileContent, "products");
+                if (uploadResult && uploadResult.success) {
+                    newImages.push({ 
+                        url: uploadResult.url, 
+                        public_id: uploadResult.public_id,
+                        alt: name || "product image" 
+                    });
+                } else {
+                    console.error(`❌ Update: Cloudinary Error [${file.originalname}]:`, uploadResult?.message);
                 }
             }
             

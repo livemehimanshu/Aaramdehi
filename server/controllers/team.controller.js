@@ -113,7 +113,7 @@ export const createTeamMember = async (req, res) => {
     let profileImagePublicId = "";
 
     if (req.file) {
-      const fileToUpload = req.file.buffer;
+      const fileToUpload = req.file.buffer || req.file.path;
       if (!fileToUpload) {
         return res.status(400).json({ success: false, message: "Profile image file content is missing. Ensure Multer uses memoryStorage." });
       }
@@ -122,9 +122,13 @@ export const createTeamMember = async (req, res) => {
         fileToUpload,
         "team_profiles"
       );
-      // ✅ FIX: secure_url ki jagah url property use karein
-      profileImageUrl = uploadResult.url;
-      profileImagePublicId = uploadResult.public_id;
+      
+      if (uploadResult && uploadResult.success) {
+          profileImageUrl = uploadResult.url;
+          profileImagePublicId = uploadResult.public_id;
+      } else {
+          console.error("❌ Team Profile Upload Failed:", uploadResult?.message);
+      }
     }
 
     const member = await create('team', {
@@ -217,7 +221,7 @@ export const updateTeamMember = async (req, res) => {
     if (emergencyContact !== undefined) updatePayload.emergencyContact = emergencyContact;
 
     if (req.file) {
-      const fileToUpload = req.file.buffer;
+      const fileToUpload = req.file.buffer || req.file.path;
       if (!fileToUpload) {
         return res.status(400).json({ success: false, message: "Profile image file content is missing for update. Ensure Multer uses memoryStorage." });
       }
@@ -226,8 +230,13 @@ export const updateTeamMember = async (req, res) => {
         fileToUpload,
         "team_profiles"
       );
-      updatePayload.profileImage = uploadResult.url;
-      updatePayload.profileImagePublicId = uploadResult.public_id;
+      
+      if (uploadResult && uploadResult.success) {
+          updatePayload.profileImage = uploadResult.url;
+          updatePayload.profileImagePublicId = uploadResult.public_id;
+      } else {
+          console.error("❌ Team Profile Update Failed:", uploadResult?.message);
+      }
     }
 
     const updatedMember = await updateById('team', id, updatePayload);

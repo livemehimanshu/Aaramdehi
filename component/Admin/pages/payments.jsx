@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { CreditCard, ShieldCheck, Clock, CheckCircle, XCircle, Search, Loader2, AlertCircle } from 'lucide-react';
 import { getAllOrdersAdminAPI } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
 
-export default function PaymentsPage() {
+export default function Payments() { // Match with PascalCase naming convention
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);

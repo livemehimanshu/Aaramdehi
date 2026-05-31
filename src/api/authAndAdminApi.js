@@ -12,6 +12,15 @@ export async function getAllProductsAPI(params = {}) {
   }
 }
 
+export async function createProductAPI(productData) {
+  try {
+    const res = await api.post('/products/create', productData);
+    return res.data;
+  } catch (e) {
+    throw e; // Standard practice: Re-throw to allow component-level error handling
+  }
+}
+
 export async function getProductByIdAPI(id) {
   try {
     const res = await api.get(`/products/${id}`);
@@ -151,7 +160,7 @@ export async function createCouponAPI(couponData) {
 
 export async function placeOrderAPI(orderData) {
   try {
-    const res = await api.post('/order/create', orderData);
+    const res = await api.post('/orders', orderData); // Standardized REST POST
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -160,7 +169,7 @@ export async function placeOrderAPI(orderData) {
 
 export async function getUserOrdersAPI() {
   try {
-    const res = await api.get('/order/my-orders');
+    const res = await api.get('/orders/me'); // Standardized REST GET
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -169,7 +178,7 @@ export async function getUserOrdersAPI() {
 
 export async function getOrderDetailsAPI(orderId) {
   try {
-    const res = await api.get(`/order/${orderId}`);
+    const res = await api.get(`/orders/${orderId}`);
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -178,7 +187,6 @@ export async function getOrderDetailsAPI(orderId) {
 
 export async function getAllOrdersAdminAPI() {
   try {
-    // यदि /orders 404 दे रहा है, तो बैकएंड रूट के अनुसार इसे /order या /order/all करें
     const res = await api.get('/orders'); 
     return res.data;
   } catch (e) {
@@ -186,9 +194,36 @@ export async function getAllOrdersAdminAPI() {
   }
 }
 
+export async function getShopOrdersAPI(shopId) {
+  try {
+    const res = await api.get(`/orders/shop/${shopId}`);
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
 export async function updateOrderStatusAPI(orderId, status) {
   try {
-    const res = await api.put(`/order/update-status/${orderId}`, { status });
+    const res = await api.patch(`/orders/${orderId}/status`, { status }); // Standardized PATCH for partial updates
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
+export async function getAllRefundsAPI() {
+  try {
+    const res = await api.get('/refunds');
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
+export async function updateRefundStatusAPI(id, status) {
+  try {
+    const res = await api.patch(`/refunds/${id}`, { status });
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -269,15 +304,6 @@ export async function createCategoryAPI(categoryData) {
   }
 }
 
-export async function updateProductAPI(id, productData) {
-  try {
-    const res = await api.put(`/products/update/${id}`, productData);
-    return res.data;
-  } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
-  }
-}
-
 export async function verifyOTPAPI(email, otp) {
   try {
     // Send both email and otp as an object
@@ -329,7 +355,18 @@ export async function resetPasswordAPI(data) {
 
 export async function deleteProductAPI(id) {
   try {
-    const res = await api.delete(`/products/delete/${id}`);
+    // ✅ Standardized REST path: /api/products/:id
+    const res = await api.delete(`/products/${id}`);
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
+export async function updateProductAPI(id, formData) {
+  try {
+    // ✅ Standardized REST path: /api/products/:id
+    const res = await api.put(`/products/${id}`, formData);
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -350,15 +387,6 @@ export async function getAdminStatsAPI() {
   try {
     // ✅ Match analytics.route.js (Dashboard usually needs the summary)
     const res = await api.get('/analytics/summary'); 
-    return res.data;
-  } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
-  }
-}
-
-export async function createProductAPI(productData) {
-  try {
-    const res = await api.post('/products/create', productData);
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };

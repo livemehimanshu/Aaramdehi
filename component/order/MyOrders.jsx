@@ -46,13 +46,13 @@ const MyOrders = () => {
             try {
                 setLoading(true);
                 setError(null);
-                // Assuming a new endpoint /api/order/my-orders that filters by authenticated user
-                const response = await api.get(`/order/my-orders`);
                 
-                if (response.data.success) {
-                    setOrders(response.data.data || []);
+                const response = await getUserOrdersAPI();
+                
+                if (response.success) {
+                    setOrders(response.data || []);
                 } else {
-                    setError(response.data.message || "Failed to fetch orders.");
+                    setError(response.message || "Failed to fetch orders.");
                 }
             } catch (err) {
                 console.error("Error fetching user orders:", err);

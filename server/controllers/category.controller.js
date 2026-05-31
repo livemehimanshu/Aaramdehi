@@ -8,7 +8,8 @@ const COLLECTION = 'categories';
 export const getAllCategories = async (req, res) => {
   try {
     const categories = await findAll(COLLECTION);
-    categories.sort((a, b) => a.name.localeCompare(b.name));
+    // ✅ Fix: Safe sorting to prevent crash if name is missing
+    categories.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
     return res.json({
       success: true,
@@ -88,9 +89,10 @@ export const createCategory = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Category with this name already exists' });
     }
 
-    // 🖼️ अगर इमेज फाइल अपलोड हुई है
-    if (req.file) {
-        const uploadResult = await uploadImageCloudinary(req.file.buffer);
+    // 🖼️ Robust image upload check
+    const fileToUpload = req.file?.buffer || req.file?.path;
+    if (fileToUpload) {
+        const uploadResult = await uploadImageCloudinary(fileToUpload, "categories");
         if (uploadResult.success) {
             finalIcon = uploadResult.url;
         } else {
@@ -118,7 +120,7 @@ export const createCategory = async (req, res) => {
 export const updateCategoryController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, isActive } = req.body;
+    const { name, description, isActive, icon } = req.body;
 
     const category = await findById(COLLECTION, id);
     if (!category) {
@@ -126,6 +128,18 @@ export const updateCategoryController = async (req, res) => {
     }
 
     const updateData = {};
+
+    // 🖼️ इमेज अपडेट लॉजिक (जो पहले मिसिंग था)
+    const fileToUpload = req.file?.buffer || req.file?.path;
+    if (fileToUpload) {
+        const uploadResult = await uploadImageCloudinary(fileToUpload, "categories");
+        if (uploadResult.success) {
+            updateData.icon = uploadResult.url;
+        }
+    } else if (icon) {
+        updateData.icon = icon;
+    }
+
     if (name) {
       updateData.name = name;
       updateData.slug = slugify(name, { lower: true, strict: true });

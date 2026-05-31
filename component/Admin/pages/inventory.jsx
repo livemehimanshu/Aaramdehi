@@ -3,7 +3,7 @@ import { Package, AlertCircle, Plus, Trash2, Edit, Loader2 } from 'lucide-react'
 import { getAllProductsAPI } from '../../../src/api/authAndAdminApi';
 import { useNavigate } from 'react-router-dom';
 
-export default function InventoryPage() {
+export default function Inventory() { // Match with PascalCase naming convention
   const navigate = useNavigate();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);

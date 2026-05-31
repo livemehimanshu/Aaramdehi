@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Store, User, Phone, MapPin, Search, Loader2, Plus, AlertCircle, X, RefreshCw, Trash2, Edit, DownloadCloud } from 'lucide-react';
-import { api } from '../../../src/api/authAndAdminApi'; // ✅ Relative path fixes Vercel Build
+import { api, placeOrderAPI, getShopOrdersAPI } from '../../../src/api/authAndAdminApi'; // ✅ Use helpers
 import { generateShopLedgerPDF } from './generateShopLedgerPDF'; // ✅ New utility
 
 export default function ShopsPage() {
@@ -130,11 +130,9 @@ export default function ShopsPage() {
     const fetchShopOrders = async (shopId) => {
         try {
             setLoadingOrders(true);
-            const response = await api.get(`/order/shop/${shopId}`, { // ✅ Use authUtils.api
-                // Headers are automatically handled
-            });
-            if (response.data.success) {
-                setShopOrders(response.data.data || []);
+            const response = await getShopOrdersAPI(shopId);
+            if (response.success) {
+                setShopOrders(response.data || []);
             }
         } catch (error) {
             console.error("Failed to load shop orders:", error);
@@ -295,7 +293,7 @@ export default function ShopsPage() {
 
             setSubmitting(true);
             
-            const response = await api.post(`/order/create`, { // ✅ Use authUtils.api
+            const response = await placeOrderAPI({
                 orderItems: selectedProducts.map(p => ({
                     productId: p.productId,
                     name: p.name,
@@ -314,9 +312,9 @@ export default function ShopsPage() {
                 paymentMethod: 'Shop Credit',
                 totalAmount: subtotal,
                 shopId: selectedShop._id,
-            }, {}); // ✅ Headers automatically handled
+            });
 
-            if (response.data.success) {
+            if (response.success) {
                 setSelectedProducts([]);
                 setShowOrderModal(false);
                 const orderNum = response.data.data.orderNumber || 'New Order';

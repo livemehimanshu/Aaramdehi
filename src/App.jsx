@@ -35,13 +35,13 @@ import AuthPage from '../component/auth/AuthPage.jsx' // ✅ Ismein OTP flow beh
 import Dashboard from '../component/Admin/pages/Dashboard.jsx'
 import Analytics from '../component/Admin/pages/analytics.jsx'
 import AllProducts from '../component/Admin/pages/AllProducts.jsx'
-import AddProduct from '../component/Admin/pages/AddProduct.jsx'
+import AddProduct from '../component/Admin/pages/AddProduct.jsx' // ✅ Standardized naming
 import EditProduct from '../component/Admin/pages/EditProduct.jsx'
-import Categories from '../component/Admin/pages/categories.jsx'
-import Inventory from '../component/Admin/pages/inventory.jsx'
-import Orders from '../component/Admin/pages/orders.jsx'
-import Payments from '../component/Admin/pages/payments.jsx'
-import Refunds from '../component/Admin/pages/refunds.jsx'
+import Categories from '../component/Admin/pages/Categories.jsx' // ✅ Standardized naming
+import Inventory from '../component/Admin/pages/Inventory.jsx' // ✅ Standardized naming
+import Orders from '../component/Admin/pages/Orders.jsx'
+import Payments from '../component/Admin/pages/Payments.jsx'
+import Refunds from '../component/Admin/pages/Refunds.jsx' // ✅ Standardized naming
 import SeoOptimizer from '../component/Admin/pages/seo-optimizer.jsx'
 import Coupons from '../component/Admin/pages/coupons.jsx'
 import Newsletter from '../component/Admin/pages/newsletter.jsx'

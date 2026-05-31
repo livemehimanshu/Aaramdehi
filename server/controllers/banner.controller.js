@@ -86,6 +86,16 @@ export const createBanner = async (req, res) => {
       });
     }
 
+    // Debug: Check if user context is available from middleware
+    const creatorId = req.user?._id || req.user?.id || req.userId;
+    if (!creatorId) {
+        console.error("❌ Banner Creation: No user ID found in request. Auth middleware might be failing.");
+        return res.status(403).json({
+            success: false,
+            message: "Unauthorized: Admin privileges required."
+        });
+    }
+
     let imageUrl = "";
     let imagePublicId = "";
 

@@ -21,5 +21,6 @@ router.get("/:id", isAuthenticatedUser, isAdmin, getBannerById);
 router.post("/create", isAuthenticatedUser, isAdmin, upload.single("image"), createBanner);
 router.put("/:id", isAuthenticatedUser, isAdmin, upload.single("image"), updateBanner);
 router.delete("/:id", isAuthenticatedUser, isAdmin, deleteBanner);
+router.delete("/delete/:id", isAuthenticatedUser, isAdmin, deleteBanner); // ✅ Fix: Added alias to match frontend request
 
 export default router;

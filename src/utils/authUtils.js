@@ -12,7 +12,13 @@ const envApiUrl = import.meta.env.VITE_API_URL;
 const isProd = import.meta.env.PROD;
 
 // Production mein agar VITE_API_URL nahi hai, toh absolute path zaroori hai
-const apiBaseURL = isProd ? (envApiUrl ? envApiUrl.replace(/\/$/, "") : null) : "/api";
+// Ensure /api is included if not present in the URL
+let apiBaseURL = isProd ? (envApiUrl ? envApiUrl.replace(/\/$/, "") : null) : "/api";
+
+if (isProd && apiBaseURL && !apiBaseURL.includes('/api')) {
+    // Agar URL mein /api nahi hai toh manually add karein taaki requests /api/order... par jayein
+    apiBaseURL = `${apiBaseURL}/api`;
+}
 
 if (isProd && !apiBaseURL) {
   console.error("❌ CRITICAL: VITE_API_URL is missing in Vercel Environment Variables. API calls will fail.");

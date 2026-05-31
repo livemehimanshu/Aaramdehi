@@ -78,7 +78,8 @@ apiRouter.use("/auth", authRouter);
 apiRouter.use("/user", userRouter);
 apiRouter.use("/products", productRouter);
 apiRouter.use("/seo", seoRouter);
-apiRouter.use("/orders", orderRouter);
+apiRouter.use("/orders", orderRouter); // Plural support
+apiRouter.use("/order", orderRouter);  // ✅ Added Singular support to fix 404
 apiRouter.use("/banners", bannerRouter);
 apiRouter.use("/categories", categoryRouter);
 apiRouter.use("/coupons", couponRouter);

@@ -13,7 +13,8 @@ const apiBaseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
 export const api = axios.create({
   // Agar local dev hai toh "/api" use karein (Vite Proxy ke liye)
   // Agar production domain hai, toh "/api" prefix ensure karein
-  baseURL: apiBaseURL ? (apiBaseURL.endsWith('/api') ? apiBaseURL : `${apiBaseURL}/api`) : "/api",
+  // Added logic to handle environment correctly
+  baseURL: import.meta.env.PROD ? apiBaseURL : "/api",
   headers: { }, // Remove fixed Content-Type to allow browser to set it for FormData
   withCredentials: true
 });

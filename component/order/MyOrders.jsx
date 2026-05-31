@@ -47,7 +47,9 @@ const MyOrders = () => {
                 setLoading(true);
                 setError(null);
                 
-                const response = await getUserOrdersAPI();
+                // Direct API call to the correct endpoint
+                const res = await api.get('/orders/mine');
+                const response = res.data;
                 
                 if (response.success) {
                     setOrders(response.data || []);

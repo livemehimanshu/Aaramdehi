@@ -11,7 +11,7 @@ orderRouter.get('/details/:id', isAuthenticatedUser, getOrderById); // ✅ New D
 // Other routes
 orderRouter.post('/', isAuthenticatedUser, createOrder);
 orderRouter.get('/', isAuthenticatedUser, getAllOrders);
-orderRouter.get('/my-orders', isAuthenticatedUser, getMyOrders);
+orderRouter.get('/mine', isAuthenticatedUser, getMyOrders);
 orderRouter.get('/shop/:shopId', getOrdersByShopId);
 orderRouter.get('/:id', isAuthenticatedUser, getOrderById);
 orderRouter.patch('/:id/status', isAuthenticatedUser, updateOrderStatus);

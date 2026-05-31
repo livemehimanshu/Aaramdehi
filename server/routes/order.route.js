@@ -12,6 +12,7 @@ orderRouter.get('/details/:id', isAuthenticatedUser, getOrderById); // ✅ New D
 orderRouter.post('/', isAuthenticatedUser, createOrder);
 orderRouter.get('/', isAuthenticatedUser, getAllOrders);
 orderRouter.get('/mine', isAuthenticatedUser, getMyOrders);
+orderRouter.get('/my-orders', isAuthenticatedUser, getMyOrders); // ✅ Alias for frontend compatibility
 orderRouter.get('/shop/:shopId', getOrdersByShopId);
 orderRouter.get('/:id', isAuthenticatedUser, getOrderById);
 orderRouter.patch('/:id/status', isAuthenticatedUser, updateOrderStatus);

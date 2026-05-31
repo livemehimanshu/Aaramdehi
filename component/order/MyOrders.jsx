@@ -48,7 +48,7 @@ const MyOrders = () => {
                 setError(null);
                 
                 // Direct API call to the correct endpoint
-                const res = await api.get('/orders/mine');
+                const res = await api.get('/orders/my-orders'); // Matches the alias added above
                 const response = res.data;
                 
                 if (response.success) {

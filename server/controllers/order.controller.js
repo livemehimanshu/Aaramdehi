@@ -133,8 +133,8 @@ export const getMyOrders = async (req, res) => {
         }
 
         // ✅ Optimization: Fetch ONLY orders belonging to this user
-        const myOrdersData = await findByQuery(COLLECTION, 'userId', userId);
-        const allProducts = await findAll(PRODUCT_COLLECTION);
+        const myOrdersData = (await findByQuery(COLLECTION, 'userId', userId)) || [];
+        const allProducts = (await findAll(PRODUCT_COLLECTION)) || [];
         
         // Create a product lookup map for O(1) access
         const productMap = allProducts.reduce((acc, p) => {

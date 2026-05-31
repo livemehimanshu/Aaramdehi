@@ -30,7 +30,8 @@ export const getAllCategories = async (req, res) => {
 export const getActiveCategories = async (req, res) => {
   try {
     const categories = await findByQuery(COLLECTION, 'isActive', true);
-    categories.sort((a, b) => a.name.localeCompare(b.name));
+    // ✅ Fix: Safe sorting to prevent crash if name is missing
+    categories.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
     return res.json({
       success: true,
       message: 'Active categories fetched successfully',

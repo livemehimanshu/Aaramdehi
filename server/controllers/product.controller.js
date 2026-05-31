@@ -59,7 +59,7 @@ export const createProduct = async (req, res) => {
                 }
 
                 // ✅ Corrected: Added 'products' folder name to utility call
-                const uploadResult = await uploadImageCloudinary(fileContent, "products");
+                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads");
                 
                 if (uploadResult && uploadResult.success) {
                     images.push({
@@ -134,7 +134,7 @@ export const getAllProducts = async (req, res) => {
         const skip = (p - 1) * l;
 
         // ✅ FIREBASE: Get all products
-        let products = await findAll(COLLECTION);
+        let products = (await findAll(COLLECTION)) || [];
 
         // ✅ Filter by category (client-side filtering)
         if (category && category !== "" && category !== "undefined") {
@@ -246,8 +246,8 @@ export const updateProduct = async (req, res) => {
                     continue;
                 }
 
-                // ✅ Fix: Standardized to 'products' folder
-                const uploadResult = await uploadImageCloudinary(fileContent, "products");
+            // ✅ Fix: Standardized to 'Aaramdehi_Uploads' folder
+            const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads");
                 if (uploadResult && uploadResult.success) {
                     newImages.push({ 
                         url: uploadResult.url, 
@@ -287,7 +287,7 @@ export const deleteProduct = async (req, res) => {
 export const getDashboardStats = async (req, res) => {
     try {
         // ✅ FIREBASE: Get all products
-        const allProducts = await findAll(COLLECTION);
+        const allProducts = (await findAll(COLLECTION)) || [];
 
         const totalProducts = allProducts.length;
 

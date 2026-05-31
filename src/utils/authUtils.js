@@ -8,13 +8,18 @@ import axios from 'axios';
 
 // ✅ Standardized API Base URL logic
 // Render URL ko fallback ke roop mein add kiya
-const apiBaseURL = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+const envApiUrl = import.meta.env.VITE_API_URL;
+const isProd = import.meta.env.PROD;
+
+// Production mein agar VITE_API_URL nahi hai, toh absolute path zaroori hai
+const apiBaseURL = isProd ? (envApiUrl ? envApiUrl.replace(/\/$/, "") : null) : "/api";
+
+if (isProd && !apiBaseURL) {
+  console.error("❌ CRITICAL: VITE_API_URL is missing in Vercel Environment Variables. API calls will fail.");
+}
 
 export const api = axios.create({
-  // Agar local dev hai toh "/api" use karein (Vite Proxy ke liye)
-  // Agar production domain hai, toh "/api" prefix ensure karein
-  // Added logic to handle environment correctly
-  baseURL: import.meta.env.PROD ? apiBaseURL : "/api",
+  baseURL: apiBaseURL || "/api",
   headers: { }, // Remove fixed Content-Type to allow browser to set it for FormData
   withCredentials: true
 });

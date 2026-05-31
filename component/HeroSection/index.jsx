@@ -1,1 +1,1 @@
-export { default } from '../banneradds/HomeBanner';
+export { default } from './HeroSection';

@@ -35,13 +35,13 @@ import AuthPage from '../component/auth/AuthPage.jsx' // ✅ Ismein OTP flow beh
 import Dashboard from '../component/Admin/pages/Dashboard.jsx'
 import Analytics from '../component/Admin/pages/analytics.jsx'
 import AllProducts from '../component/Admin/pages/AllProducts.jsx'
-import AddProduct from '../component/Admin/pages/AddProduct.jsx' // ✅ Standardized naming
-import EditProduct from '../component/Admin/pages/EditProduct.jsx'
-import Categories from '../component/Admin/pages/Categories.jsx' // ✅ Standardized naming
-import Inventory from '../component/Admin/pages/Inventory.jsx' // ✅ Standardized naming
+import AddProduct from '../component/Admin/pages/addProduct.jsx' 
+import EditProduct from '../component/Admin/pages/editProduct.jsx'
+import Categories from '../component/Admin/pages/categories.jsx' 
+import Inventory from '../component/Admin/pages/inventory.jsx' 
 import Orders from '../component/Admin/pages/Orders.jsx'
 import Payments from '../component/Admin/pages/Payments.jsx'
-import Refunds from '../component/Admin/pages/Refunds.jsx' // ✅ Standardized naming
+import Refunds from '../component/Admin/pages/refunds.jsx' 
 import SeoOptimizer from '../component/Admin/pages/seo-optimizer.jsx'
 import Coupons from '../component/Admin/pages/coupons.jsx'
 import Newsletter from '../component/Admin/pages/newsletter.jsx'
@@ -52,9 +52,9 @@ import SeoGlobal from '../component/Admin/pages/seo-global.jsx'
 import Team from '../component/Admin/pages/team.jsx'
 import FileManager from '../component/Admin/component/filemanger/FileManager.jsx'
 import Appointments from '../component/Admin/pages/appointment.jsx'
-import Shops from '../component/Admin/pages/Shops.jsx'
+import Shops from '../component/Admin/pages/shops.jsx'
 import Rooms from '../component/Admin/pages/rooms.jsx'
-import BannerList from '../component/Admin/pages/BannerList.jsx'
+import BannerList from '../component/Admin/pages/bannerList.jsx'
 import AddBanner from '../component/Admin/pages/AddBanner.jsx'
 import EditBanner from '../component/Admin/pages/EditBanner.jsx'
 // Checkout Pages

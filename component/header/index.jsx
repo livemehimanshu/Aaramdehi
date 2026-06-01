@@ -99,8 +99,16 @@ const Header = ({ hideNav = false }) => {
   // Function: Compare mein items ki count update karna
   // Jab product add/remove hote toh compare count change ho
   const updateCompareCount = () => {
-    const compare = JSON.parse(localStorage.getItem("compare")) || [];
-    setCompareCount(compare.length); // Compare mein total items ka count
+    let compare = [];
+    try {
+      const rawCompare = localStorage.getItem("compare");
+      compare = rawCompare ? JSON.parse(rawCompare) : [];
+    } catch (err) {
+      console.warn('Invalid JSON stored in localStorage for compare:', err, localStorage.getItem("compare"));
+      compare = [];
+      localStorage.removeItem("compare");
+    }
+    setCompareCount(Array.isArray(compare) ? compare.length : 0); // Compare mein total items ka count
   };
 
   // Function: Logout

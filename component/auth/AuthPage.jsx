@@ -229,6 +229,7 @@ const AuthPage = () => {
                         <div className="text-center mb-8">
                             <h1 className="text-4xl font-black text-red-500">Aaramdehi</h1>
                             <p className="text-gray-500 mt-2 font-medium">Welcome back, login to continue</p>
+                            <p className="text-gray-400 text-sm mt-1">AES-256 Encryption Active</p>
                         </div>
                         <form onSubmit={handleLoginSubmit(onLogin)} className="space-y-4">
                             <div className="relative">

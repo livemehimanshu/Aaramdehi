@@ -220,37 +220,37 @@ const AuthPage = () => {
     };
 
     return (
-        <section className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+        <section className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4 py-10">
+            <div className="w-full max-w-md bg-slate-900 rounded-2xl shadow-2xl shadow-black/50 p-8 border border-slate-800">
                 
                 {/* LOGIN VIEW */}
                 {view === 'login' && (
                     <div className="animate-in fade-in duration-500">
                         <div className="text-center mb-8">
                             <h1 className="text-4xl font-black text-red-500">Aaramdehi</h1>
-                            <p className="text-gray-500 mt-2 font-medium">Welcome back, login to continue</p>
-                            <p className="text-gray-400 text-sm mt-1">AES-256 Encryption Active</p>
+                            <p className="text-slate-400 mt-2 font-medium">Welcome back, login to continue</p>
+                            <p className="text-slate-500 text-sm mt-1">AES-256 Encryption Active</p>
                         </div>
                         <form onSubmit={handleLoginSubmit(onLogin)} className="space-y-4">
                             <div className="relative">
-                                <IoMailOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <IoMailOutline className="absolute left-4 top-4 text-slate-400" size={20} />
                                 <input
                                     type="email"
                                     placeholder="Email Address"
                                     {...loginRegister('email')}
-                                    className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all ${loginErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                                    className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all ${loginErrors.email ? 'border-red-500 bg-red-950 text-white' : 'border-slate-700 bg-slate-800 text-white'}`}
                                 />
                                 {loginErrors.email && <p className="text-red-500 text-[10px] mt-1 font-bold">{loginErrors.email.message}</p>}
                             </div>
                             <div className="relative">
-                                <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
+                                <IoLockClosedOutline className="absolute left-4 top-4 text-slate-400" size={20} />
                                 <input
                                     type={showPassword ? 'text' : 'password'}
                                     placeholder="Password"
                                     {...loginRegister('password')}
-                                    className={`w-full pl-12 pr-12 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all ${loginErrors.password ? 'border-red-500 bg-red-50' : 'border-gray-200'}`}
+                                    className={`w-full pl-12 pr-12 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none transition-all ${loginErrors.password ? 'border-red-500 bg-red-50 text-white' : 'border-slate-700 bg-slate-800 text-white'}`}
                                 />
-                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-gray-400">
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-4 text-slate-400">
                                     {showPassword ? <IoEyeOffOutline size={20} /> : <IoEyeOutline size={20} />}
                                 </button>
                             </div>
@@ -259,7 +259,7 @@ const AuthPage = () => {
                             <button type="submit" disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-600 active:scale-95 transition-all disabled:opacity-50">
                                 {loading ? 'Checking...' : 'Sign In'}
                             </button>
-                            <p className="text-center text-sm text-gray-600 mt-6">
+                            <p className="text-center text-sm text-slate-300 mt-6">
                                 Don't have an account? <button onClick={() => setView('signup')} className="text-red-500 font-bold hover:underline">Create Account</button>
                             </p>
                         </form>
@@ -269,38 +269,38 @@ const AuthPage = () => {
                 {/* SIGNUP VIEW */}
                 {view === 'signup' && (
                     <div className="animate-in slide-in-from-right duration-500">
-                        <button onClick={() => setView('login')} className="flex items-center gap-2 text-gray-500 text-sm font-bold mb-6 hover:text-red-500 transition-colors">
+                        <button onClick={() => setView('login')} className="flex items-center gap-2 text-slate-400 text-sm font-bold mb-6 hover:text-red-500 transition-colors">
                             <IoArrowBack size={18} /> Back to Login
                         </button>
-                        <h2 className="text-2xl font-black text-gray-800 mb-6">Join Aaramdehi</h2>
+                        <h2 className="text-2xl font-black text-slate-100 mb-6">Join Aaramdehi</h2>
                         <form onSubmit={handleSignupSubmit(onSignup)} className="space-y-4">
                             <div className="relative">
-                                <IoPersonOutline className="absolute left-4 top-4 text-gray-400" size={20} />
-                                <input type="text" placeholder="Full Name" {...signupRegister('fullName')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.fullName ? 'border-red-500' : 'border-gray-200'}`} />
+                                <IoPersonOutline className="absolute left-4 top-4 text-slate-400" size={20} />
+                                <input type="text" placeholder="Full Name" {...signupRegister('fullName')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.fullName ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.fullName && <p className="text-red-500 text-[10px] font-bold">{signupErrors.fullName.message}</p>}
 
                             <div className="relative">
-                                <IoMailOutline className="absolute left-4 top-4 text-gray-400" size={20} />
-                                <input type="email" placeholder="Email Address" {...signupRegister('email')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.email ? 'border-red-500' : 'border-gray-200'}`} />
+                                <IoMailOutline className="absolute left-4 top-4 text-slate-400" size={20} />
+                                <input type="email" placeholder="Email Address" {...signupRegister('email')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.email ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.email && <p className="text-red-500 text-[10px] font-bold">{signupErrors.email.message}</p>}
 
                             <div className="relative">
-                                <IoCallOutline className="absolute left-4 top-4 text-gray-400" size={20} />
-                                <input type="tel" placeholder="Mobile Number" {...signupRegister('phone')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.phone ? 'border-red-500' : 'border-gray-200'}`} />
+                                <IoCallOutline className="absolute left-4 top-4 text-slate-400" size={20} />
+                                <input type="tel" placeholder="Mobile Number" {...signupRegister('phone')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.phone ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.phone && <p className="text-red-500 text-[10px] font-bold">{signupErrors.phone.message}</p>}
 
                             <div className="relative">
-                                <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
-                                <input type="password" placeholder="Create Password" {...signupRegister('password')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.password ? 'border-red-500' : 'border-gray-200'}`} />
+                                <IoLockClosedOutline className="absolute left-4 top-4 text-slate-400" size={20} />
+                                <input type="password" placeholder="Create Password" {...signupRegister('password')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.password ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.password && <p className="text-red-500 text-[10px] font-bold">{signupErrors.password.message}</p>}
 
                             <div className="relative">
-                                <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
-                                <input type="password" placeholder="Confirm Password" {...signupRegister('confirmPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${signupErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'}`} />
+                                <IoLockClosedOutline className="absolute left-4 top-4 text-slate-400" size={20} />
+                                <input type="password" placeholder="Confirm Password" {...signupRegister('confirmPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.confirmPassword ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.confirmPassword && <p className="text-red-500 text-[10px] font-bold">{signupErrors.confirmPassword.message}</p>}
 
@@ -314,12 +314,12 @@ const AuthPage = () => {
                 {/* FORGOT/OTP/RESET VIEWS (Compact) */}
                 {(view === 'forgot' || view === 'otp' || view === 'reset') && (
                     <div className="space-y-6">
-                        <button type="button" onClick={() => setView('login')} className="flex items-center gap-2 text-gray-500 font-bold hover:text-red-500 transition-colors"><IoArrowBack /> Back</button>
+                        <button type="button" onClick={() => setView('login')} className="flex items-center gap-2 text-slate-400 font-bold hover:text-red-500 transition-colors"><IoArrowBack /> Back</button>
                         <h2 className="text-2xl font-bold">{view === 'forgot' ? 'Reset Password' : view === 'otp' ? 'Verify OTP' : 'New Password'}</h2>
                         
                         {view === 'forgot' && (
                             <form onSubmit={handleForgotSubmit(onForgotPassword)} className="space-y-4">
-                                <input type="email" placeholder="Enter Email" {...forgotRegister('email')} className={`w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-red-500 ${forgotErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-200'}`} />
+                                <input type="email" placeholder="Enter Email" {...forgotRegister('email')} className={`w-full p-4 border rounded-xl outline-none focus:ring-2 focus:ring-red-500 text-white bg-slate-800 ${forgotErrors.email ? 'border-red-500 bg-red-950 text-white' : 'border-slate-700'}`} />
                                 {forgotErrors.email && <p className="text-red-500 text-[10px] font-bold">{forgotErrors.email.message}</p>}
                                 <button type="submit" disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-200 transition-all">
                                     {loading ? 'Processing...' : 'Send OTP'}
@@ -329,8 +329,8 @@ const AuthPage = () => {
 
                         {view === 'otp' && (
                             <div className="space-y-4">
-                                <p className="text-sm text-gray-500">OTP sent to: {forgotEmail}</p>
-                                <input type="text" maxLength="6" placeholder="6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full p-4 text-center text-2xl tracking-[1rem] font-bold border rounded-xl outline-none" />
+                                <p className="text-sm text-slate-400">OTP sent to: {forgotEmail}</p>
+                                <input type="text" maxLength="6" placeholder="6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full p-4 text-center text-2xl tracking-[1rem] font-bold border rounded-xl outline-none bg-slate-800 text-white border-slate-700" />
                                 <button onClick={handleVerifyOTP} disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-200 transition-all">
                                     {loading ? 'Verifying...' : 'Verify OTP'}
                                 </button>
@@ -340,14 +340,14 @@ const AuthPage = () => {
                         {view === 'reset' && (
                             <form onSubmit={handleResetSubmit(onResetPassword)} className="space-y-4">
                                 <div className="relative">
-                                    <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
-                                    <input type="password" placeholder="New Password" {...resetRegister('newPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${resetErrors.newPassword ? 'border-red-500 bg-red-50' : 'border-gray-200'}`} />
+                                    <IoLockClosedOutline className="absolute left-4 top-4 text-slate-400" size={20} />
+                                    <input type="password" placeholder="New Password" {...resetRegister('newPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${resetErrors.newPassword ? 'border-red-500 bg-red-950 text-white' : 'border-slate-700'}`} />
                                 </div>
                                 {resetErrors.newPassword && <p className="text-red-500 text-[10px] font-bold">{resetErrors.newPassword.message}</p>}
                                 
                                 <div className="relative">
-                                    <IoLockClosedOutline className="absolute left-4 top-4 text-gray-400" size={20} />
-                                    <input type="password" placeholder="Confirm Password" {...resetRegister('confirmNewPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none ${resetErrors.confirmNewPassword ? 'border-red-500 bg-red-50' : 'border-gray-200'}`} />
+                                    <IoLockClosedOutline className="absolute left-4 top-4 text-slate-400" size={20} />
+                                    <input type="password" placeholder="Confirm Password" {...resetRegister('confirmNewPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${resetErrors.confirmNewPassword ? 'border-red-500 bg-red-950 text-white' : 'border-slate-700'}`} />
                                 </div>
                                 {resetErrors.confirmNewPassword && <p className="text-red-500 text-[10px] font-bold">{resetErrors.confirmNewPassword.message}</p>}
                                 

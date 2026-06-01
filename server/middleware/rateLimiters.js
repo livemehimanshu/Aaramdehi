@@ -98,8 +98,9 @@ export const uploadLimiter = rateLimit({
     error: true
   },
   keyGenerator: (req) => {
-    // Use userId if authenticated, otherwise IP
-    return req.userId || req.ip;
+    // ✅ Return custom key if available.
+    // Returning undefined tells the library to fallback to its internal IP logic safely.
+    return req.userId || undefined;
   }
 });
 
@@ -127,7 +128,8 @@ export const emailLimiter = rateLimit({
     error: true
   },
   keyGenerator: (req) => {
-    return req.body.email || req.ip;
+    // ✅ Use email as key; fallback to library-managed IP if email is missing.
+    return req.body.email || undefined;
   }
 });
 
@@ -142,7 +144,8 @@ export const couponLimiter = rateLimit({
     error: true
   },
   keyGenerator: (req) => {
-    return req.userId || req.ip;
+    // ✅ Use userId as key; fallback to library-managed IP if authenticated user context is missing.
+    return req.userId || undefined;
   }
 });
 
@@ -157,7 +160,8 @@ export const paymentLimiter = rateLimit({
     error: true
   },
   keyGenerator: (req) => {
-    return req.userId || req.ip;
+    // ✅ Use userId as key; fallback to library-managed IP.
+    return req.userId || undefined;
   }
 });
 

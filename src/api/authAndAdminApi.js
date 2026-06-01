@@ -310,7 +310,7 @@ export async function verifyOTPAPI(email, otp) {
     const res = await api.post('/auth/verify-otp', { email, otp });
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 

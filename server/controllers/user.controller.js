@@ -15,10 +15,44 @@ const COLLECTION = 'users';
 export const registerUserController = async (req, res) => {
     try {
         const { name, email, password, mobile } = req.body;
-        if (!name || !email || !password) return res.status(400).json({ success: false, message: "Provide name, email, password" });
 
-        const existingUser = await findByQuery(COLLECTION, 'email', email.toLowerCase());
-        if (existingUser.length > 0) return res.status(400).json({ success: false, message: "Email already registered" });
+        const lowerEmail = email.toLowerCase();
+        const existingUsers = await findByQuery(COLLECTION, 'email', lowerEmail);
+
+        if (existingUsers.length > 0) {
+            const existingUser = existingUsers[0];
+
+            if (existingUser.isVerified) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Email already registered. Please login."
+                });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(password, salt);
+            const otp = generatedOtp();
+
+            await updateById(COLLECTION, existingUser._id, {
+                name,
+                password: hashedPassword,
+                mobile: mobile || existingUser.mobile || "",
+                forgot_password_otp: otp,
+                forgot_password_expiry: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+            });
+
+            await sendEmail({
+                sendTo: lowerEmail,
+                subject: "Verify your email - Aaramdehi",
+                html: verifyEmailTemplate({ name: existingUser.name || name, url: otp })
+            });
+
+            return res.status(403).json({
+                success: false,
+                needsVerification: true,
+                message: "Email already registered but not verified. OTP has been resent."
+            });
+        }
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -27,7 +61,7 @@ export const registerUserController = async (req, res) => {
         
         const userData = {
             name,
-            email: email.toLowerCase(),
+            email: lowerEmail,
             password: hashedPassword,
             mobile: mobile || "",
             role: "USER",
@@ -40,7 +74,7 @@ export const registerUserController = async (req, res) => {
         const userId = await create(COLLECTION, userData);
         
         await sendEmail({
-            sendTo: email,
+            sendTo: lowerEmail,
             subject: "Verify your email - Aaramdehi",
             html: verifyEmailTemplate({ name, url: otp })
         });

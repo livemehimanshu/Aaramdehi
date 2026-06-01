@@ -15,25 +15,9 @@ import {
 import { isAuthenticatedUser } from '../middleware/auth.middleware.js';
 
 import { upload } from "../middleware/multer.js";
-import rateLimit from 'express-rate-limit';
+import { authLimiter } from '../middleware/rateLimiters.js';
 
 const userRouter = Router();
-
-/**
- * 🛡️ Security: Rate Limiter
- * Zyada requests ko block karne ke liye (Brute force protection)
- */
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
-    message: {
-        message: "Too many attempts from this IP, please try again after 15 minutes",
-        error: true,
-        success: false
-    },
-    standardHeaders: true, 
-    legacyHeaders: false,
-});
 
 /**
  * @routes - Aaramdehi User Routes
@@ -61,7 +45,8 @@ userRouter.delete('/delete-account', isAuthenticatedUser, deleteAccount);
 userRouter.put('/change-password', authLimiter, isAuthenticatedUser, changePasswordController);
 
 // User Logout
-userRouter.get('/logout', isAuthenticatedUser, (req, res) => {
+// ✅ Allow logout without strict auth check to clear cookies even if JWT is expired
+userRouter.get('/logout', (req, res) => {
     try {
         // Cookies clear kar rahe hain
         res.clearCookie('accessToken', {

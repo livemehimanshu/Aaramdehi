@@ -8,28 +8,25 @@ import {
     getUserDetailsController
 } from '../controllers/user.controller.js';
 import { isAuthenticatedUser } from '../middleware/auth.middleware.js';
-import rateLimit from 'express-rate-limit';
+import { authLimiter, passwordResetLimiter, otpLimiter } from '../middleware/rateLimiters.js';
+import { validateRequestBody, validateRequest } from '../middleware/requestValidator.js';
 
 const authRouter = Router();
 
-const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: {
-        message: "Too many attempts from this IP, please try again after 15 minutes",
-        error: true,
-        success: false
-    },
-    standardHeaders: true, 
-    legacyHeaders: false,
-});
+authRouter.route('/register')
+    .post(validateRequest, authLimiter, validateRequestBody(['name', 'email', 'password']), registerUserController)
+    .all((req, res) => res.status(405).json({ success: false, message: "Method Not Allowed. Use POST for registration." }));
 
-authRouter.post('/register', authLimiter, registerUserController);
-authRouter.post('/verify-email', verifyEmailController);
-authRouter.post('/verify-otp', verifyEmailController); // Added alias to fix 404
-authRouter.post('/login', authLimiter, loginController);
-authRouter.post('/forgot-password', authLimiter, forgotPasswordController); 
-authRouter.post('/reset-password', authLimiter, resetPasswordController);
+authRouter.route('/login')
+    .post(validateRequest, authLimiter, loginController)
+    .all((req, res) => res.status(405).json({ success: false, message: "Method Not Allowed. Use POST for login." }));
+
+authRouter.post('/verify-email', otpLimiter, verifyEmailController);
+authRouter.post('/verify-otp', otpLimiter, verifyEmailController); 
+
+authRouter.post('/forgot-password', passwordResetLimiter, forgotPasswordController); 
+authRouter.post('/reset-password', passwordResetLimiter, resetPasswordController);
+
 authRouter.get('/me', isAuthenticatedUser, getUserDetailsController); // 🛡️ Admin verification endpoint
 
 export default authRouter;

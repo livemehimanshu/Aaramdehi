@@ -101,15 +101,32 @@ const AuthPage = () => {
     const onSignup = async (data) => {
         try {
             setLoading(true);
-            await signupAPI({
-                name: data.fullName.trim(),
-                email: data.email.toLowerCase().trim(),
-                mobile: data.phone || "0000000000",
+            // Ensure all required backend fields are present and valid
+            const payload = {
+                name: (data.fullName || "").trim(),
+                email: (data.email || "").toLowerCase().trim(),
+                mobile: (data.phone || "0000000000").trim(),
                 password: data.password,
                 confirmPassword: data.confirmPassword
-            });
+            };
+            
+            const response = await signupAPI(payload);
 
-            setForgotEmail(data.email.toLowerCase().trim());
+            if (response.needsVerification) {
+                setForgotEmail(payload.email);
+                setOtpFlow('signup');
+                setOtp('');
+                setView('otp');
+                toast.success(response.message || "Email already registered but not verified. OTP has been resent.");
+                return;
+            }
+
+            if (!response.success) {
+                toast.error(response.message || "Signup failed. Please check your details.");
+                return;
+            }
+
+            setForgotEmail(payload.email);
             setOtpFlow('signup');
             setOtp('');
             setView('otp');

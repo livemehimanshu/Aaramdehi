@@ -23,7 +23,7 @@ export const validateRequest = (req, res, next) => {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
     const contentType = req.headers['content-type'];
     
-    if (!contentType) {
+    if (!contentType && req.method !== 'DELETE') {
       return res.status(400).json({
         success: false,
         message: 'Content-Type header is required',
@@ -31,7 +31,7 @@ export const validateRequest = (req, res, next) => {
       });
     }
 
-    if (!contentType.includes('application/json')) {
+    if (contentType && !contentType.includes('application/json') && !contentType.includes('multipart/form-data')) {
       return res.status(415).json({
         success: false,
         message: 'Content-Type must be application/json',
@@ -50,42 +50,6 @@ export const validateRequest = (req, res, next) => {
       message: `Request payload too large. Maximum size: ${MAX_SIZE / 1024 / 1024}MB`,
       error: true
     });
-  }
-
-  // 4. Check for required security headers
-  const userAgent = req.headers['user-agent'];
-  const host = req.headers['host'];
-
-  if (!userAgent) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing User-Agent header',
-      error: true
-    });
-  }
-
-  if (!host) {
-    return res.status(400).json({
-      success: false,
-      message: 'Missing Host header',
-      error: true
-    });
-  }
-
-  // 5. Validate JSON format (if body exists)
-  if (req.body && typeof req.body === 'object') {
-    try {
-      // Body already parsed by express.json()
-      if (Object.keys(req.body).length === 0 && req.method !== 'DELETE') {
-        // Empty body might be okay for some endpoints
-      }
-    } catch (error) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid JSON format in request body',
-        error: true
-      });
-    }
   }
 
   next();
@@ -140,6 +104,15 @@ export const preventDoubleSubmission = (req, res, next) => {
 export const validateRequestBody = (requiredFields = []) => {
   return (req, res, next) => {
     if (['POST', 'PUT', 'PATCH'].includes(req.method)) {
+      if (!req.body || Object.keys(req.body).length === 0) {
+        console.warn(`⚠️ [Validator] Empty body received for ${req.path}`);
+        return res.status(400).json({
+          success: false,
+          message: 'Request body is missing or empty',
+          error: true
+        });
+      }
+
       const missingFields = [];
 
       for (const field of requiredFields) {
@@ -150,6 +123,7 @@ export const validateRequestBody = (requiredFields = []) => {
       }
 
       if (missingFields.length > 0) {
+        console.warn(`⚠️ [Validator] Missing fields for ${req.path}:`, missingFields);
         return res.status(400).json({
           success: false,
           message: `Missing required fields: ${missingFields.join(', ')}`,

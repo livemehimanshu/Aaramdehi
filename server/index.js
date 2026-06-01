@@ -103,6 +103,13 @@ app.post("/admin/sync-ai-search", async (req, res) => {
 app.get("/", (req, res) => res.json({ message: "Active" }));
 
 app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid JSON payload. Please send valid JSON in the request body.',
+        });
+    }
+
     res.status(err.statusCode || 500).json({ success: false, message: err.message });
 });
 const PORT = process.env.PORT || 8000;

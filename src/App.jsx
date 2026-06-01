@@ -157,6 +157,7 @@ function AppContent() {
               <Route path="/compare" element={<ComparePage />} />
               <Route path="/login" element={<AuthPage />} /> 
               <Route path="/register" element={<AuthPage />} />
+              <Route path="/signup" element={<AuthPage />} />
               <Route path="/account/profile" element={<AccountSettings />} />
               <Route path="/account/addresses" element={<ManageAddresses />} />
               <Route path="/account/pan" element={<PanCardInfo />} />

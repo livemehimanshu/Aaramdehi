@@ -74,8 +74,12 @@ const AuthPage = () => {
             
             // Backend se milne wale tokens aur user details save karein
             localStorage.setItem('accessToken', response.accessToken);
-            localStorage.setItem('userData', JSON.stringify(response.user));
-            toast.success(`Welcome back, ${response.user.name}!`);
+            if (response.user && typeof response.user === 'object') {
+                localStorage.setItem('userData', JSON.stringify(response.user));
+            } else {
+                localStorage.removeItem('userData');
+            }
+            toast.success(`Welcome back, ${response.user?.name || 'User'}!`);
 
             navigate('/');
         } catch (error) {
@@ -175,6 +179,7 @@ const AuthPage = () => {
                     
                     navigate('/');
                 } else {
+                    localStorage.removeItem('userData');
                     toast.success("OTP Verified!");
                 }
             } else {

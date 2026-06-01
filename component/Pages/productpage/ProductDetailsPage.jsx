@@ -149,7 +149,13 @@ const ProductDetailsPage = () => {
       // Get userId from localStorage to pass it to validation
       // JSON parsing safe banayein agar data na ho
       const rawUserData = localStorage.getItem('userData');
-      const userData = rawUserData ? JSON.parse(rawUserData) : null;
+      let userData = null;
+      try {
+        userData = rawUserData ? JSON.parse(rawUserData) : null;
+      } catch (err) {
+        console.warn('Invalid userData in localStorage:', err);
+        userData = null;
+      }
       
       const userId = userData?._id || userData?.id;
 

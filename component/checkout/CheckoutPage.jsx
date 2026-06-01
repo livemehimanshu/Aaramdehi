@@ -57,7 +57,8 @@ const CheckoutPage = () => {
         // लोकल स्टोरेज से यूजर के लॉयल्टी पॉइंट्स लोड करें
         let userData = {};
         try {
-          userData = JSON.parse(localStorage.getItem('userData')) || {};
+          const rawUserData = localStorage.getItem('userData');
+          userData = rawUserData ? JSON.parse(rawUserData) : {};
         } catch (err) {
           console.warn('Invalid userData in localStorage:', err);
           userData = {};

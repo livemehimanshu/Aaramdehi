@@ -15,12 +15,16 @@ const Profile = () => {
     useEffect(() => {
         const userData = localStorage.getItem('userData');
         if (userData) {
-            const parsed = JSON.parse(userData);
-            setUser(parsed);
-            setEditData({ 
-                name: parsed.name || '', 
-                mobile: parsed.mobile || '' 
-            });
+            try {
+                const parsed = JSON.parse(userData);
+                setUser(parsed);
+                setEditData({ 
+                    name: parsed.name || '', 
+                    mobile: parsed.mobile || '' 
+                });
+            } catch (err) {
+                console.warn('Invalid userData in localStorage:', err);
+            }
         }
     }, []);
 

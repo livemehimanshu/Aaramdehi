@@ -15,7 +15,6 @@ const COLLECTION = 'users';
 export const registerUserController = async (req, res) => {
     try {
         const { name, email, password, mobile } = req.body;
-
         const lowerEmail = email.toLowerCase();
         const existingUsers = await findByQuery(COLLECTION, 'email', lowerEmail);
 
@@ -25,7 +24,7 @@ export const registerUserController = async (req, res) => {
             if (existingUser.isVerified) {
                 return res.status(400).json({
                     success: false,
-                    message: "Email already registered. Please login."
+                    message: "This email is already registered and verified. Please sign in instead."
                 });
             }
 

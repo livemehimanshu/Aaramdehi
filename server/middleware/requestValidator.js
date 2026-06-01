@@ -31,7 +31,11 @@ export const validateRequest = (req, res, next) => {
       });
     }
 
-    if (contentType && !contentType.includes('application/json') && !contentType.includes('multipart/form-data')) {
+    // Normalize content type check for production proxies
+    const isJson = contentType.toLowerCase().includes('application/json');
+    const isMultipart = contentType.toLowerCase().includes('multipart/form-data');
+
+    if (contentType && !isJson && !isMultipart) {
       return res.status(415).json({
         success: false,
         message: 'Content-Type must be application/json',

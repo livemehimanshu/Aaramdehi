@@ -26,7 +26,7 @@ export async function getProductByIdAPI(id) {
     const res = await api.get(`/products/${id}`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -76,7 +76,7 @@ export async function getBannerByIdAPI(id) {
     const res = await api.get(`/banners/${id}`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -85,7 +85,7 @@ export async function createBannerAPI(bannerData) {
     const res = await api.post('/banners/create', bannerData);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -94,7 +94,7 @@ export async function updateBannerAPI(id, bannerData) {
     const res = await api.put(`/banners/update/${id}`, bannerData);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -103,7 +103,7 @@ export async function deleteBannerAPI(id) {
     const res = await api.delete(`/banners/delete/${id}`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -145,7 +145,7 @@ export async function deleteCouponAPI(id) {
     const res = await api.delete(`/coupons/delete/${id}`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -154,7 +154,7 @@ export async function createCouponAPI(couponData) {
     const res = await api.post('/coupons/create', couponData);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -163,7 +163,7 @@ export async function placeOrderAPI(orderData) {
     const res = await api.post('/orders', orderData); // Standardized REST POST
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -172,7 +172,7 @@ export async function getUserOrdersAPI() {
     const res = await api.get('/orders/me'); // Standardized REST GET
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -181,7 +181,8 @@ export async function getOrderDetailsAPI(orderId) {
     const res = await api.get(`/orders/${orderId}`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    // If API returns 404, we want to know why
+    throw e;
   }
 }
 
@@ -208,7 +209,7 @@ export async function updateOrderStatusAPI(orderId, status) {
     const res = await api.patch(`/orders/${orderId}/status`, { status }); // Standardized PATCH for partial updates
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -226,7 +227,7 @@ export async function updateRefundStatusAPI(id, status) {
     const res = await api.patch(`/refunds/${id}`, { status });
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -244,7 +245,7 @@ export async function deleteAppointmentAPI(id) {
     const res = await api.delete(`/appointments/${id}`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -253,7 +254,7 @@ export async function confirmAppointmentAPI(id) {
     const res = await api.put(`/appointments/${id}/confirm`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -262,7 +263,7 @@ export async function getGlobalSeoAPI() {
     const res = await api.get('/seo/global');
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -271,7 +272,7 @@ export async function updateGlobalSeoAPI(payload) {
     const res = await api.put('/seo/global', payload);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -290,7 +291,7 @@ export async function deleteCategoryAPI(id) {
     memoryCache.delete('active_categories'); // ✅ कैटेगरी डिलीट होने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -300,7 +301,7 @@ export async function createCategoryAPI(categoryData) {
     memoryCache.delete('active_categories'); // ✅ नई कैटेगरी बनने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -310,7 +311,7 @@ export async function verifyOTPAPI(email, otp) {
     const res = await api.post('/auth/verify-otp', { email, otp });
     return res.data;
   } catch (e) {
-    throw e;
+    throw e; // ✅ Error ko throw karein
   }
 }
 
@@ -320,7 +321,7 @@ export async function loginAPI(emailOrData, password) {
     const res = await api.post('/auth/login', payload);
     return res.data;
   } catch (e) {
-    // Re-throw calculation so caller's catch block can inspect e.response
+    // ✅ Re-throw error so caller's catch block can inspect e.response
     throw e;
   }
 }
@@ -331,7 +332,7 @@ export async function signupAPI(userData) {
     const res = await api.post('/auth/register', userData);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e; // ✅ Error ko throw karein taaki calling component ka catch block use handle kar sake
   }
 }
 
@@ -340,7 +341,7 @@ export async function forgotPasswordAPI(data) {
     const res = await api.post('/auth/forgot-password', data);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e; // ✅ Error ko throw karein
   }
 }
 
@@ -349,7 +350,7 @@ export async function resetPasswordAPI(data) {
     const res = await api.post('/auth/reset-password', data);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e; // ✅ Error ko throw karein
   }
 }
 
@@ -359,7 +360,7 @@ export async function deleteProductAPI(id) {
     const res = await api.delete(`/products/${id}`);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -369,7 +370,7 @@ export async function updateProductAPI(id, formData) {
     const res = await api.put(`/products/${id}`, formData);
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -379,7 +380,7 @@ export async function getAnalyticsSummaryAPI() {
     const res = await api.get('/analytics/summary');
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -389,7 +390,7 @@ export async function getAdminStatsAPI() {
     const res = await api.get('/analytics/summary'); 
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -413,7 +414,7 @@ export async function createRoomAPI(roomData) {
     memoryCache.delete('all_rooms'); // ✅ नया रूम बनाने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }
 
@@ -423,6 +424,6 @@ export async function deleteRoomAPI(id) {
     memoryCache.delete('all_rooms'); // ✅ रूम डिलीट करने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
+    throw e;
   }
 }

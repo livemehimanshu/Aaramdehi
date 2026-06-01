@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Vercel production aur local development dono ke liye '/api' base path use karein
-const apiBase = import.meta.env.VITE_API_URL || 'https://aaramdehi.onrender.com/api';
+// Use a relative /api path in production so Vercel rewrites work reliably.
+// Local development falls back to the local backend when env var is missing.
+const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000/api');
 
 const axiosInstance = axios.create({
   baseURL: apiBase,

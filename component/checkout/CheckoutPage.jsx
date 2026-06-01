@@ -55,7 +55,13 @@ const CheckoutPage = () => {
         setCartItems(savedCart);
 
         // लोकल स्टोरेज से यूजर के लॉयल्टी पॉइंट्स लोड करें
-        const userData = JSON.parse(localStorage.getItem('userData')) || {};
+        let userData = {};
+        try {
+          userData = JSON.parse(localStorage.getItem('userData')) || {};
+        } catch (err) {
+          console.warn('Invalid userData in localStorage:', err);
+          userData = {};
+        }
         setUserPoints(userData.loyaltyPoints || 0);
 
         const initialQuantities = {};

@@ -66,15 +66,23 @@ function AppContent() {
   const location = useLocation()
   const [user, setUser] = useState(null)
 
+  const safeParseJSON = (rawValue) => {
+    if (typeof rawValue !== 'string' || !rawValue.trim() || rawValue === 'undefined' || rawValue === 'null') {
+      return null;
+    }
+    try {
+      return JSON.parse(rawValue);
+    } catch (err) {
+      console.warn('App.jsx: invalid JSON in localStorage userData', err, rawValue);
+      return null;
+    }
+  };
+
   // Session Sync for Sidebar
   useEffect(() => {
-    const savedUser = localStorage.getItem("userData");
-    if (savedUser && savedUser !== "undefined") {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (e) {
-        console.error("App.jsx: Error parsing userData", e);
-      }
+    const savedUser = safeParseJSON(localStorage.getItem("userData"));
+    if (savedUser) {
+      setUser(savedUser);
     }
 
     const unsubscribe = auth ? onAuthStateChanged(auth, (firebaseUser) => {

@@ -161,9 +161,9 @@ const Header = ({ hideNav = false }) => {
       // ✅ 2. Auth state change ko listen karna (Official Firebase Listener)
       const firebaseUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
         if (firebaseUser) {
-          const userDataStr = localStorage.getItem("userData");
-          if (userDataStr) {
-            setUser(JSON.parse(userDataStr));
+          const savedUserData = safeParseJSON(localStorage.getItem("userData"));
+          if (savedUserData) {
+            setUser(savedUserData);
           } else {
             setUser({
               name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
@@ -229,8 +229,8 @@ const Header = ({ hideNav = false }) => {
 
     // ✅ Listen for profile updates from the Profile Page
     const syncProfile = () => {
-      const userDataStr = localStorage.getItem("userData");
-      if (userDataStr) setUser(JSON.parse(userDataStr));
+      const savedUserData = safeParseJSON(localStorage.getItem("userData"));
+      if (savedUserData) setUser(savedUserData);
     };
     window.addEventListener("userDataUpdated", syncProfile);
 

@@ -69,6 +69,18 @@ const Header = ({ hideNav = false }) => {
   const [siteLogo, setSiteLogo] = useState(null); // Dynamic site logo
   const [showMobileSearch, setShowMobileSearch] = useState(false); // Mobile search toggle
 
+  const safeParseJSON = (rawValue) => {
+    if (typeof rawValue !== 'string' || !rawValue.trim() || rawValue === 'undefined' || rawValue === 'null') {
+      return null;
+    }
+    try {
+      return JSON.parse(rawValue);
+    } catch (err) {
+      console.warn('Invalid JSON stored in localStorage for userData:', err, rawValue);
+      return null;
+    }
+  };
+
   // Function: Cart drawer ko toggle karna (open/close)
   const toggleCartDrawer = () => {
     if (setIsCartOpen) {
@@ -126,15 +138,12 @@ const Header = ({ hideNav = false }) => {
     updateCompareCount();
     
     // ✅ 1. Immediate Session Restore: Check local storage before Firebase async check
-    const savedUserData = localStorage.getItem("userData");
+    const savedUserData = safeParseJSON(localStorage.getItem("userData"));
     const savedToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (savedUserData && savedUserData !== "undefined" && savedToken) {
-      try { 
-        setUser(JSON.parse(savedUserData)); 
-      } catch (e) { 
-        console.error("Session restore error:", e); 
-        localStorage.removeItem("userData"); // Kharaab data saaf karein
-      }
+    if (savedUserData && savedToken) {
+      setUser(savedUserData);
+    } else if (!savedToken) {
+      localStorage.removeItem("userData");
     }
 
     // ✅ 2. Safety Timeout: Reduced to 5 seconds for better UX

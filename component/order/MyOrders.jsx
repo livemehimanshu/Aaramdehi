@@ -12,17 +12,25 @@ const MyOrders = () => {
     const [user, setUser] = useState(null); // Firebase user object
     const [searchTerm, setSearchTerm] = useState('');
 
+    const safeParseJSON = (rawValue) => {
+        if (typeof rawValue !== 'string' || !rawValue.trim() || rawValue === 'undefined' || rawValue === 'null') {
+            return null;
+        }
+        try {
+            return JSON.parse(rawValue);
+        } catch (err) {
+            console.warn('Invalid JSON stored in localStorage for userData:', err, rawValue);
+            return null;
+        }
+    };
+
     useEffect(() => {
         // 1. Pehle LocalStorage se session check karein (Custom Backend Login)
-        const savedUserData = localStorage.getItem("userData");
+        const savedUserData = safeParseJSON(localStorage.getItem("userData"));
         const savedToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
 
         if (savedUserData && savedToken) {
-            try {
-                setUser(JSON.parse(savedUserData));
-            } catch (e) {
-                console.error("Session restore error:", e);
-            }
+            setUser(savedUserData);
         }
 
         // 2. Firebase Auth state check karein (Social Login ke liye)

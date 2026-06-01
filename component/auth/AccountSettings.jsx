@@ -16,9 +16,21 @@ const AccountSettings = () => {
         mobile: ""
     });
 
+    const safeParseJSON = (rawValue) => {
+        if (typeof rawValue !== 'string' || !rawValue.trim() || rawValue === 'undefined' || rawValue === 'null') {
+            return null;
+        }
+        try {
+            return JSON.parse(rawValue);
+        } catch (err) {
+            console.warn('Invalid JSON stored in localStorage for userData:', err, rawValue);
+            return null;
+        }
+    };
+
     // Load data from localStorage on mount
     useEffect(() => {
-        const user = JSON.parse(localStorage.getItem("userData"));
+        const user = safeParseJSON(localStorage.getItem("userData"));
         if (user) {
             const names = user.name?.split(' ') || ["", ""];
             setData({

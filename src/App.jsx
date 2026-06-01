@@ -77,12 +77,12 @@ function AppContent() {
       }
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = auth ? onAuthStateChanged(auth, (firebaseUser) => {
       if (!firebaseUser && !localStorage.getItem("accessToken")) {
         setUser(null);
       }
-    });
-    return () => unsubscribe();
+    }) : null;
+    return () => { if (unsubscribe) unsubscribe(); };
   }, []);
 
   const handleLogout = () => {

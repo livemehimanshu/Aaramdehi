@@ -141,38 +141,45 @@ const Header = ({ hideNav = false }) => {
     const safetyTimer = setTimeout(() => {
       setLoading(false);
     }, 5000);
-    
-    // ✅ 1. Firebase Auth Persistence setup ('local' ensures session stays after refresh)
-    setPersistence(auth, browserLocalPersistence)
-      .catch((error) => console.error("Auth persistence error:", error.message));
 
-    // ✅ 2. Auth state change ko listen karna (Official Firebase Listener)
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        // Agar Firebase user mil gaya, toh localStorage se detailed data fetch karein
-        const userDataStr = localStorage.getItem("userData");
-        if (userDataStr) {
-          setUser(JSON.parse(userDataStr));
+    let unsubscribe = () => {};
+    
+    if (auth) {
+      // ✅ 1. Firebase Auth Persistence setup ('local' ensures session stays after refresh)
+      setPersistence(auth, browserLocalPersistence)
+        .catch((error) => console.error("Auth persistence error:", error.message));
+
+      // ✅ 2. Auth state change ko listen karna (Official Firebase Listener)
+      const firebaseUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        if (firebaseUser) {
+          const userDataStr = localStorage.getItem("userData");
+          if (userDataStr) {
+            setUser(JSON.parse(userDataStr));
+          } else {
+            setUser({
+              name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+              email: firebaseUser.email,
+              avatar: firebaseUser.photoURL
+            });
+          }
         } else {
-          // Fallback: Agar localStorage khali hai toh basic Firebase data use karein
-          setUser({
-            name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-            email: firebaseUser.email,
-            avatar: firebaseUser.photoURL
-          });
+          const currentToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
+          if (!currentToken) {
+            localStorage.removeItem("userData");
+            setUser(null);
+            setShowProfileMenu(false);
+          }
         }
-      } else {
-        // ✅ Fix: Don't clear if custom Node.js JWT exists
-        const currentToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
-        if (!currentToken) {
-          localStorage.removeItem("userData");
-          setUser(null);
-          setShowProfileMenu(false);
-        }
-      }
-      setLoading(false); 
+        setLoading(false);
+        clearTimeout(safetyTimer);
+      });
+
+      // Cleanup function assignment for later
+      unsubscribe = firebaseUnsubscribe;
+    } else {
+      setLoading(false);
       clearTimeout(safetyTimer);
-    });
+    }
 
     // Fetch categories for navigation
     const fetchNavCategories = async () => {
@@ -222,7 +229,7 @@ const Header = ({ hideNav = false }) => {
     return () => {
       window.removeEventListener("compareUpdated", updateCompareCount);
       window.removeEventListener("userDataUpdated", syncProfile);
-      unsubscribe(); // Listener cleanup
+      if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, []);
 

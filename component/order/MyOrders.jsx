@@ -26,18 +26,17 @@ const MyOrders = () => {
         }
 
         // 2. Firebase Auth state check karein (Social Login ke liye)
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+        const unsubscribe = auth ? onAuthStateChanged(auth, (firebaseUser) => {
             if (firebaseUser) {
                 setUser(firebaseUser);
             } else if (!localStorage.getItem("accessToken") && !localStorage.getItem("token")) {
-                // Agar na Firebase user hai na hi custom token, tabhi error dikhayein
                 setUser(null);
                 setLoading(false);
                 setError("Please log in to view your orders.");
             }
-        });
+        }) : () => {};
 
-        return () => unsubscribe();
+        return () => { if (typeof unsubscribe === 'function') unsubscribe(); };
     }, []);
     useEffect(() => {
         const fetchMyOrders = async () => {

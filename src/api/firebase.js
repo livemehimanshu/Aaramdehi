@@ -17,24 +17,38 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// ✅ Validation check to prevent 'invalid-api-key' crash
+const requiredFirebaseKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
+const isFirebaseConfigured = requiredFirebaseKeys.every(key => Boolean(firebaseConfig[key]));
+
 Object.entries(firebaseConfig).forEach(([key, value]) => {
   if (!value && key !== 'measurementId') {
-    console.warn(`⚠️ Firebase Config missing: ${key}. Check your .env.local file.`);
+    console.warn(`⚠️ Firebase Config missing: ${key}. Check your .env.local file or production env vars.`);
   }
 });
 
 // Initialize Firebase App as singleton (prevents duplicate-app error)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDb = null;
+let firebaseStorage = null;
+
+if (isFirebaseConfigured) {
+  firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  firebaseAuth = getAuth(firebaseApp);
+  firebaseDb = getDatabase(firebaseApp);
+  firebaseStorage = getStorage(firebaseApp);
+} else {
+  console.warn('⚠️ Firebase initialization skipped because required config is missing.');
+}
 
 // Initialize and Export Firebase Services for use in your components
-export const auth = getAuth(app);
-export const db = getDatabase(app);
-export const storage = getStorage(app);
+export const auth = firebaseAuth;
+export const db = firebaseDb;
+export const storage = firebaseStorage;
 
 // ✅ Graceful Analytics Initialization: Prevent 'config-fetch-failed' from blocking UI
 let firebaseAnalytics = null;
-if (typeof window !== 'undefined' && import.meta.env.PROD) { // Sirf Online/Production mein chalayein
+if (typeof window !== 'undefined' && import.meta.env.PROD && app) {
   try {
     firebaseAnalytics = getAnalytics(app);
   } catch (err) {
@@ -43,4 +57,4 @@ if (typeof window !== 'undefined' && import.meta.env.PROD) { // Sirf Online/Prod
 }
 export const analytics = firebaseAnalytics;
 
-export default app;
+export default firebaseApp;

@@ -7,25 +7,15 @@ import axios from 'axios';
  */
 
 // ✅ Standardized API Base URL logic
-// Render URL ko fallback ke roop mein add kiya
+// Local development uses VITE_API_URL or /api proxy.
+// Production always uses /api so Vercel rewrites forward to the backend reliably.
 const envApiUrl = import.meta.env.VITE_API_URL;
 const isProd = import.meta.env.PROD;
 
-// Production mein agar VITE_API_URL nahi hai, toh absolute path zaroori hai
-// Ensure /api is included if not present in the URL
-let apiBaseURL = isProd ? (envApiUrl ? envApiUrl.replace(/\/$/, "") : null) : "/api";
-
-if (isProd && apiBaseURL && !apiBaseURL.includes('/api')) {
-    // Agar URL mein /api nahi hai toh manually add karein taaki requests /api/order... par jayein
-    apiBaseURL = `${apiBaseURL}/api`;
-}
-
-if (isProd && !apiBaseURL) {
-  console.error("❌ CRITICAL: VITE_API_URL is missing in Vercel Environment Variables. API calls will fail.");
-}
+const apiBaseURL = isProd ? "/api" : (envApiUrl || "/api");
 
 export const api = axios.create({
-  baseURL: apiBaseURL || "/api",
+  baseURL: apiBaseURL,
   headers: { }, // Remove fixed Content-Type to allow browser to set it for FormData
   withCredentials: true
 });

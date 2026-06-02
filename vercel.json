@@ -1,9 +1,9 @@
-{
+﻿{
   "version": 2,
   "name": "aaramdehi",
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path*",
       "headers": [
         {
           "key": "Content-Type",
@@ -14,11 +14,11 @@
   ],
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://aaramdehi.onrender.com/api/"
+      "source": "/api/:path*",
+      "destination": "https://aaramdehi.onrender.com/api/:path*"
     },
     {
-      "source": "/(.*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]

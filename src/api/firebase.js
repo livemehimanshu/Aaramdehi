@@ -48,9 +48,9 @@ export const storage = firebaseStorage;
 
 // ✅ Graceful Analytics Initialization: Prevent 'config-fetch-failed' from blocking UI
 let firebaseAnalytics = null;
-if (typeof window !== 'undefined' && import.meta.env.PROD && app) {
+if (typeof window !== 'undefined' && import.meta.env.PROD && firebaseApp) {
   try {
-    firebaseAnalytics = getAnalytics(app);
+    firebaseAnalytics = getAnalytics(firebaseApp);
   } catch (err) {
     console.warn("Firebase Analytics disabled or blocked. App will continue to work.");
   }

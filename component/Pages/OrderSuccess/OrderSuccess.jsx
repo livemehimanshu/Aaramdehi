@@ -34,7 +34,8 @@ const OrderSuccess = () => {
                 try {
                     const token = localStorage.getItem('accessToken');
                     
-                    const response = await api.get(`/order/${idToFetch}`, { // Use the imported 'api' instance
+                    // ✅ Added /api prefix to ensure Vercel proxies the request to Render
+                    const response = await api.get(`/api/orders/${idToFetch}`, { 
                         headers: { Authorization: `Bearer ${token}` }
                     });
                     

@@ -175,7 +175,7 @@ export async function getUserOrdersAPI() {
     const res = await api.get('/api/orders/me'); // Standardized REST GET
     return res.data;
   } catch (e) {
-    throw e;
+    return { success: false, data: [], message: e.message };
   }
 }
 

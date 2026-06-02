@@ -340,7 +340,8 @@ export async function signupAPI(userData) {
 
 export async function forgotPasswordAPI(data) {
   try {
-    const res = await api.post('/api/auth/forgot-password', data);
+    const payload = typeof data === 'string' ? { email: data } : data;
+    const res = await api.post('/api/auth/forgot-password', payload);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein
@@ -349,7 +350,8 @@ export async function forgotPasswordAPI(data) {
 
 export async function resetPasswordAPI(data) {
   try {
-    const res = await api.post('/api/auth/reset-password', data);
+    const payload = typeof data === 'object' && data !== null ? data : {};
+    const res = await api.post('/api/auth/reset-password', payload);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein

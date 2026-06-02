@@ -146,8 +146,9 @@ const AuthPage = () => {
     const onForgotPassword = async (data) => {
         try {
             setLoading(true);
-            const response = await forgotPasswordAPI(data.email.toLowerCase().trim());
-            setForgotEmail(data.email.toLowerCase().trim());
+            const email = data.email.toLowerCase().trim();
+            const response = await forgotPasswordAPI({ email });
+            setForgotEmail(email);
             setOtpFlow('forgot-password');
             setView('otp');
             toast.success("Reset OTP sent to your email!");
@@ -203,12 +204,14 @@ const AuthPage = () => {
                 return;
             }
 
-            const response = await resetPasswordAPI(
-                forgotEmail.toLowerCase().trim(), 
-                otp.trim(), 
-                data.newPassword, 
-                data.confirmNewPassword
-            );
+            const payload = {
+                email: forgotEmail.toLowerCase().trim(),
+                otp: otp.trim(),
+                newPassword: data.newPassword,
+                confirmNewPassword: data.confirmNewPassword
+            };
+
+            const response = await resetPasswordAPI(payload);
             
             if (response.success) {
                 toast.success('Password updated! Please login.');

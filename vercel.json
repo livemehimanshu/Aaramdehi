@@ -1,10 +1,14 @@
-{
+﻿{
   "version": 2,
   "name": "aaramdehi",
   "rewrites": [
     {
       "source": "/api/:path*",
       "destination": "https://aaramdehi-backend.onrender.com/api/:path*"
+    },
+    {
+      "source": "/settings/:path*",
+      "destination": "https://aaramdehi-backend.onrender.com/settings/:path*"
     },
     {
       "source": "/:path*",

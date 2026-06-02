@@ -3,7 +3,7 @@
   "name": "aaramdehi",
   "headers": [
     {
-      "source": "/api/:path*",
+      "source": "/api/(.*)",
       "headers": [
         {
           "key": "Content-Type",
@@ -13,13 +13,7 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://aaramdehi.onrender.com/api/:path*"
-    },
-    {
-      "source": "/:path*",
-      "destination": "/index.html"
-    }
+    { "source": "/api/(.*)", "destination": "https://aaramdehi-backend.onrender.com/api/$1" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }

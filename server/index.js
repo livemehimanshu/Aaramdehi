@@ -58,12 +58,26 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+
 // --- Middlewares ---
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(helmet({ crossOriginResourcePolicy: false }));
+
+// ✅ Handle preflight OPTIONS requests for all routes
+app.use((req, res, next) => {
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Origin', corsOptions.origin.includes(req.headers.origin) ? req.headers.origin : corsOptions.origin[0]);
+    res.header('Access-Control-Allow-Methods', corsOptions.methods.join(', '));
+    res.header('Access-Control-Allow-Headers', corsOptions.allowedHeaders.join(', '));
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 // --- Routes ---
 const apiRouter = express.Router();

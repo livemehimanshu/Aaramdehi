@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../../src/utils/authUtils';
+import { api } from '../../../src/api/authAndAdminApi';
 import SEO from '../../header/SEO';
 import { IoChevronForwardOutline, IoBagCheckOutline, IoTimeOutline, IoCloseCircleOutline, IoRocketOutline } from "react-icons/io5";
 import { Loader2, Package } from 'lucide-react';
@@ -23,8 +23,8 @@ const OrdersPage = () => {
             setLoading(true);
             setError(null);
             
-            // api instance automatically Bearer token attach karega (authUtils interceptor)
-            const response = await api.get('/order/my-orders');
+            // ✅ Standardized path with /api prefix
+            const response = await api.get('/api/order/my-orders');
             
             // Backend response structures: .data (standard) or .orders (common custom)
             if (response.data && response.data.success) {

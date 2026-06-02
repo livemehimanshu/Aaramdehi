@@ -8,8 +8,9 @@ dns.setDefaultResultOrder('ipv4first');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config(); 
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+// ✅ Robust Env Loading: Pehle server folder dekho, fir root folder
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 import express from 'express';
 import cors from 'cors';
@@ -38,11 +39,16 @@ import shopsRouter from './routes/shops.route.js';
 
 const app = express();
 
+// ✅ Trust Proxy: Vite/Vercel proxy ke peeche rate-limiting sahi chalne ke liye
+app.set('trust proxy', 1);
+
 // --- CORS & Options (SAHI TARIKA) ---
 const corsOptions = {
     origin: [
         process.env.FRONTEND_URL,
         'https://aaramdehi.vercel.app',
+        'https://aaramdehi.co.in',
+        'https://www.aaramdehi.co.in',
         'http://localhost:5173',
         'http://127.0.0.1:5173'
     ].filter(Boolean),
@@ -52,18 +58,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-// Pre-flight requests handle karne ke liye
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
-    if (corsOptions.origin.includes(origin)) {
-        res.header("Access-Control-Allow-Origin", origin);
-    }
-    res.header("Access-Control-Allow-Credentials", "true");
-    if (req.method === 'OPTIONS') return res.sendStatus(200);
-    next();
-});
-
 // --- Middlewares ---
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -74,14 +68,17 @@ app.use(helmet({ crossOriginResourcePolicy: false }));
 // --- Routes ---
 const apiRouter = express.Router();
 
+// ✅ Public Routes (Pehle rakhein taaki auth middleware inhe block na kare)
 apiRouter.use("/auth", authRouter);
-apiRouter.use("/user", userRouter);
 apiRouter.use("/products", productRouter);
-apiRouter.use("/seo", seoRouter);
-apiRouter.use("/orders", orderRouter); // Plural support
-apiRouter.use("/order", orderRouter);  // ✅ Added Singular support to fix 404
 apiRouter.use("/banners", bannerRouter);
 apiRouter.use("/categories", categoryRouter);
+
+// ✅ Protected/User Routes
+apiRouter.use("/user", userRouter);
+apiRouter.use("/seo", seoRouter);
+apiRouter.use("/orders", orderRouter);
+apiRouter.use("/order", orderRouter); 
 apiRouter.use("/coupons", couponRouter);
 apiRouter.use("/shops", shopsRouter);
 apiRouter.use("/appointments", appointmentRouter);
@@ -103,14 +100,25 @@ app.post("/admin/sync-ai-search", async (req, res) => {
 app.get("/", (req, res) => res.json({ message: "Active" }));
 
 app.use((err, req, res, next) => {
+    // ✅ Full error logging taaki 500 error ka exact line pata chale
+    console.error("❌ [Backend Error]:", {
+        message: err.message,
+        stack: err.stack,
+        path: req.path
+    });
+
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         return res.status(400).json({
             success: false,
             message: 'Invalid JSON payload. Please send valid JSON in the request body.',
         });
     }
-
-    res.status(err.statusCode || 500).json({ success: false, message: err.message });
+    res.status(err.statusCode || 500).json({ 
+        success: false, 
+        message: err.message || "Internal Server Error",
+        // Development mein error detail dikhane ke liye (Optional)
+        error: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+    });
 });
 const PORT = process.env.PORT || 8000;
 

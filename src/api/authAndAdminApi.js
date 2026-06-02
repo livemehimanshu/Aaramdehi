@@ -1,10 +1,4 @@
-import axios from 'axios';
-
-// ✅ Universal Instance: Local par Vite proxy use karega, Production par Vercel rewrites
-const api = axios.create({
-  baseURL: '', 
-  withCredentials: true
-});
+import api from './axiosInstance';
 
 export { api };
 
@@ -316,7 +310,7 @@ export async function createCategoryAPI(categoryData) {
 export async function verifyOTPAPI(email, otp) {
   try {
     // Send both email and otp as an object
-    const res = await api.post('/auth/verify-otp', { email, otp });
+    const res = await api.post('/api/auth/verify-otp', { email, otp });
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein
@@ -326,7 +320,7 @@ export async function verifyOTPAPI(email, otp) {
 export async function loginAPI(emailOrData, password) {
   const payload = typeof emailOrData === 'string' ? { email: emailOrData, password } : emailOrData;
   try {
-    const res = await api.post('/auth/login', payload);
+    const res = await api.post('/api/auth/login', payload);
     return res.data;
   } catch (e) {
     // ✅ Re-throw error so caller's catch block can inspect e.response
@@ -337,7 +331,7 @@ export async function loginAPI(emailOrData, password) {
 export async function signupAPI(userData) {
   try {
     // Backend standard convention 'register' use karta hai
-    const res = await api.post('/auth/register', userData);
+    const res = await api.post('/api/auth/register', userData);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein taaki calling component ka catch block use handle kar sake
@@ -346,7 +340,7 @@ export async function signupAPI(userData) {
 
 export async function forgotPasswordAPI(data) {
   try {
-    const res = await api.post('/auth/forgot-password', data);
+    const res = await api.post('/api/auth/forgot-password', data);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein
@@ -355,7 +349,7 @@ export async function forgotPasswordAPI(data) {
 
 export async function resetPasswordAPI(data) {
   try {
-    const res = await api.post('/auth/reset-password', data);
+    const res = await api.post('/api/auth/reset-password', data);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein

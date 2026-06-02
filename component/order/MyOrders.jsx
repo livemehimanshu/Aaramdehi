@@ -54,8 +54,8 @@ const MyOrders = () => {
                 setLoading(true);
                 setError(null);
                 
-                // Direct API call to the correct endpoint
-                const res = await api.get('/orders/my-orders'); // Matches the alias added above
+                // Use the API proxy path so Vercel rewrites it to the backend
+                const res = await api.get('/api/orders/my-orders');
                 const response = res.data;
                 
                 if (response.success) {

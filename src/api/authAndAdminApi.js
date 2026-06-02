@@ -16,7 +16,8 @@ export async function getAllProductsAPI(params = {}) {
 
 export async function createProductAPI(productData) {
   try {
-    const res = await api.post('/api/products/create', productData);
+    // Let Axios handle the headers for FormData automatically
+    const res = await api.post('/api/products/create', productData); 
     return res.data;
   } catch (e) {
     throw e; // Standard practice: Re-throw to allow component-level error handling
@@ -412,9 +413,7 @@ export async function getAllRoomsAPI() {
 
 export async function createRoomAPI(roomData) {
   try {
-    const res = await api.post('/api/room/create', roomData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const res = await api.post('/api/room/create', roomData);
     memoryCache.delete('all_rooms'); // ✅ नया रूम बनाने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {

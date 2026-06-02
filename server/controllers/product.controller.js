@@ -31,14 +31,15 @@ export const createProduct = async (req, res) => {
             });
         }
 
-        // Duplicate Check (Manual check for Firebase)
-        const existingProducts = await findByQuery(COLLECTION, 'name', name);
-        if (existingProducts.length > 0) {
-            return res.status(409).json({ success: false, message: "Product with this name already exists" });
-        }
-
         // Generate URL-friendly Slug
-        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const rawSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        let slug = rawSlug;
+
+        // Ensure unique slug when product names repeat
+        const existingSlugs = await findByQuery(COLLECTION, 'slug', slug);
+        if (existingSlugs.length > 0) {
+            slug = `${rawSlug}-${Date.now()}`;
+        }
 
         let images = [];
         // Robust handling for req.files (array or object) and req.file

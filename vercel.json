@@ -1,21 +1,10 @@
 {
   "version": 2,
   "name": "aaramdehi",
-  "headers": [
-    {
-      "source": "/api/:path*",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/json; charset=utf-8"
-        }
-      ]
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://aaramdehi.onrender.com/api/:path*"
+      "destination": "https://aaramdehi-backend.onrender.com/api/:path*"
     },
     {
       "source": "/:path*",

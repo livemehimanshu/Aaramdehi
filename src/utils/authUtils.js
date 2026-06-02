@@ -12,7 +12,7 @@ import axios from 'axios';
 const envApiUrl = import.meta.env.VITE_API_URL;
 const isProd = import.meta.env.PROD;
 
-const apiBaseURL = isProd ? "/api" : (envApiUrl || "/api");
+const apiBaseURL = envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
 
 export const api = axios.create({
   baseURL: apiBaseURL,

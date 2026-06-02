@@ -1,8 +1,11 @@
 import axios from 'axios';
 
-// Use a relative /api path in production so Vercel rewrites work reliably.
-// Local development falls back to the local backend when env var is missing.
-const apiBase = '';
+const envApiUrl = import.meta.env.VITE_API_URL;
+const isProd = import.meta.env.PROD;
+
+// In production, use the actual Render backend if no env var is provided.
+// In development, use the local proxy or explicit env var.
+const apiBase = envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
 
 const axiosInstance = axios.create({
   baseURL: apiBase,

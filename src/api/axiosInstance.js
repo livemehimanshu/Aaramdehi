@@ -2,10 +2,11 @@ import axios from 'axios';
 
 const envApiUrl = import.meta.env.VITE_API_URL;
 const isProd = import.meta.env.PROD;
+const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
 
 // In production, use the actual Render backend if no env var is provided.
-// In development, use the local proxy or explicit env var.
-const apiBase = envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
+// In development, use the local Vite proxy via absolute /api paths.
+const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '');
 
 const axiosInstance = axios.create({
   baseURL: apiBase,

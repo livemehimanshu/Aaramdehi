@@ -10,7 +10,10 @@ const AaramdehiAdBanner = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const apiBase = import.meta.env.VITE_API_URL || "/api";
+        const envApiUrl = import.meta.env.VITE_API_URL;
+        const isProd = import.meta.env.PROD;
+        const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
+        const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
         const response = await fetch(`${apiBase}/settings/public`, { signal: AbortSignal.timeout(10000) });
         const contentType = response.headers.get("content-type");
         if (response.ok && contentType && contentType.includes("application/json")) {

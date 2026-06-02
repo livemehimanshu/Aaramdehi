@@ -76,6 +76,7 @@ const AuthPage = () => {
             localStorage.setItem('accessToken', response.accessToken);
             if (response.user && typeof response.user === 'object') {
                 localStorage.setItem('userData', JSON.stringify(response.user));
+                window.dispatchEvent(new Event('userDataUpdated'));
             } else {
                 localStorage.removeItem('userData');
             }
@@ -176,6 +177,7 @@ const AuthPage = () => {
                 if (response.user) {
                     localStorage.setItem('accessToken', response.accessToken);
                     localStorage.setItem('userData', JSON.stringify(response.user));
+                    window.dispatchEvent(new Event('userDataUpdated'));
                     toast.success("Account verified successfully!");
                     
                     navigate('/');

@@ -11,8 +11,9 @@ import axios from 'axios';
 // Production always uses /api so Vercel rewrites forward to the backend reliably.
 const envApiUrl = import.meta.env.VITE_API_URL;
 const isProd = import.meta.env.PROD;
+const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
 
-const apiBaseURL = envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
+const apiBaseURL = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '');
 
 export const api = axios.create({
   baseURL: apiBaseURL,

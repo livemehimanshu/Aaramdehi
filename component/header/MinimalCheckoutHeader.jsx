@@ -39,7 +39,10 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
 
     // Fetch logo
     const fetchLogo = async () => {
-      const apiBase = import.meta.env.VITE_API_URL || "/api";
+      const envApiUrl = import.meta.env.VITE_API_URL;
+      const isProd = import.meta.env.PROD;
+      const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
+      const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
       try {
         const res = await fetch(`${apiBase}/settings/public`);
         const data = await res.json();

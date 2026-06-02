@@ -114,7 +114,9 @@ const Header = ({ hideNav = false }) => {
   // Function: Logout
   const handleLogout = async () => {
     try {
-      const apiBase = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, ""); 
+      const envApiUrl = import.meta.env.VITE_API_URL;
+      const isProd = import.meta.env.PROD;
+      const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api')).replace(/\/$/, "");
 
       // ✅ 1. Sign out from Firebase
       await signOut(auth);
@@ -216,7 +218,9 @@ const Header = ({ hideNav = false }) => {
     // Fetch site settings (Logo)
     const fetchSettings = async () => {
       try {
-        const apiBase = (import.meta.env.VITE_API_URL || "/api").replace(/\/$/, "");
+        const envApiUrl = import.meta.env.VITE_API_URL;
+        const isProd = import.meta.env.PROD;
+        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api')).replace(/\/$/, "");
         const response = await fetch(`${apiBase}/settings/public`, {
           signal: AbortSignal.timeout(5000) // Reduced to 5s
         });

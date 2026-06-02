@@ -2,6 +2,12 @@ import admin from 'firebase-admin';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import path from 'path';
+import dotenv from 'dotenv';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Load environment variables before initializing Firebase
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 let serviceAccount;
 
@@ -20,7 +26,6 @@ if (process.env.FIREBASE_CONFIG_JSON) {
     client_email: process.env.FIREBASE_CLIENT_EMAIL,
   };
 } else {
-  const __dirname = path.dirname(fileURLToPath(import.meta.url));
   const keyPath = path.join(__dirname, 'serviceAccountKey.json');
   if (fs.existsSync(keyPath)) {
     serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));

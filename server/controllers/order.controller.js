@@ -134,11 +134,17 @@ export const getMyOrders = async (req, res) => {
 
         // ✅ Optimization: Fetch ONLY orders belonging to this user
         const myOrdersData = (await findByQuery(COLLECTION, 'userId', userId)) || [];
-        const allProducts = (await findAll(PRODUCT_COLLECTION)) || [];
         
-        // Create a product lookup map for O(1) access
-        const productMap = allProducts.reduce((acc, p) => {
-            acc[p._id] = p;
+        // Extract unique product IDs from orders to avoid fetching the whole catalog
+        const productIds = [...new Set(myOrdersData.flatMap(order => 
+            (order.orderItems || []).map(item => item.productId || item.product)
+        ))].filter(Boolean);
+
+        // Fetch only required products
+        const products = await Promise.all(productIds.map(id => findById(PRODUCT_COLLECTION, id)));
+        
+        const productMap = products.filter(Boolean).reduce((acc, p) => {
+            acc[p._id || p.id] = p;
             return acc;
         }, {});
 
@@ -222,10 +228,12 @@ export const getOrderById = async (req, res) => {
             return res.status(403).json({ success: false, message: "You are not authorized to view this order." });
         }
 
-        // Enforce product details (Names/Images) for the order items
-        const allProducts = await findAll(PRODUCT_COLLECTION);
-        const productMap = allProducts.reduce((acc, p) => {
-            acc[p._id] = p;
+        // ✅ Optimization: Fetch only products related to this specific order
+        const productIds = (order.orderItems || []).map(item => item.productId || item.product).filter(Boolean);
+        const products = await Promise.all(productIds.map(id => findById(PRODUCT_COLLECTION, id)));
+        
+        const productMap = products.filter(Boolean).reduce((acc, p) => {
+            acc[p._id || p.id] = p;
             return acc;
         }, {});
 

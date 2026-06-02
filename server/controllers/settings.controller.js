@@ -190,8 +190,6 @@ export const getSettingsByCategory = async (req, res) => {
       });
     }
 
-    await deleteById('settings', setting._id);
-
     return res.json({
       success: true,
       message: "Settings fetched successfully",

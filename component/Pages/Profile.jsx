@@ -12,19 +12,25 @@ const Profile = () => {
     const [editData, setEditData] = useState({ name: '', mobile: '' });
     const [passData, setPassData] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
 
+    const safeParseJSON = (rawValue) => {
+        if (typeof rawValue !== 'string' || !rawValue.trim() || rawValue === 'undefined' || rawValue === 'null') {
+            return null;
+        }
+        try {
+            return JSON.parse(rawValue);
+        } catch (err) {
+            return null;
+        }
+    };
+
     useEffect(() => {
-        const userData = localStorage.getItem('userData');
-        if (userData) {
-            try {
-                const parsed = JSON.parse(userData);
-                setUser(parsed);
-                setEditData({ 
-                    name: parsed.name || '', 
-                    mobile: parsed.mobile || '' 
-                });
-            } catch (err) {
-                console.warn('Invalid userData in localStorage:', err);
-            }
+        const parsed = safeParseJSON(localStorage.getItem('userData'));
+        if (parsed) {
+            setUser(parsed);
+            setEditData({ 
+                name: parsed.name || '', 
+                mobile: parsed.mobile || '' 
+            });
         }
     }, []);
 

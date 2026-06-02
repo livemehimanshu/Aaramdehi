@@ -220,7 +220,8 @@ const Header = ({ hideNav = false }) => {
         const response = await fetch(`${apiBase}/settings/public`, {
           signal: AbortSignal.timeout(5000) // Reduced to 5s
         });
-        if (response.ok) {
+        const contentType = response.headers.get("content-type");
+        if (response.ok && contentType && contentType.includes("application/json")) {
           const result = await response.json();
           if (result && result.success && result.data) {
             setSiteLogo(result.data.logo || result.data.LOGO || null);

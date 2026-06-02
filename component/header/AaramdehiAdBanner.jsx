@@ -12,13 +12,15 @@ const AaramdehiAdBanner = () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || "/api";
         const response = await fetch(`${apiBase}/settings/public`, { signal: AbortSignal.timeout(10000) });
-        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        const result = await response.json();
-        // result.data is a key->value object from the public settings endpoint
-        if (result.success && result.data && result.data.LOGO) {
-          setSiteLogo(result.data.LOGO);
-        } else if (result.success && result.data && result.data.logo) {
-          setSiteLogo(result.data.logo);
+        const contentType = response.headers.get("content-type");
+        if (response.ok && contentType && contentType.includes("application/json")) {
+            const result = await response.json();
+            // result.data is a key->value object from the public settings endpoint
+            if (result.success && result.data && result.data.LOGO) {
+              setSiteLogo(result.data.LOGO);
+            } else if (result.success && result.data && result.data.logo) {
+              setSiteLogo(result.data.logo);
+            }
         }
       } catch (error) {
         console.error("Error fetching logo for banner:", error);

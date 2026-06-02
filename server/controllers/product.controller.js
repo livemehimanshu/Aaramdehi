@@ -134,12 +134,12 @@ export const getAllProducts = async (req, res) => {
         const l = Number(limit) || 10;
         const skip = (p - 1) * l;
 
-        // ✅ FIREBASE: Get all products
-        let products = (await findAll(COLLECTION)) || [];
-
-        // ✅ Filter by category (client-side filtering)
+        let products;
+        // ✅ Optimization: Use native Firebase query for category
         if (category && category !== "" && category !== "undefined") {
-            products = products.filter(prod => prod.category === category);
+            products = await findByQuery(COLLECTION, 'category', category);
+        } else {
+            products = (await findAll(COLLECTION)) || [];
         }
 
         // ✅ Search by name or brand (client-side search)

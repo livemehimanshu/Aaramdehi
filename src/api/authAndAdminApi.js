@@ -7,7 +7,7 @@ const memoryCache = new Map();
 
 export async function getAllProductsAPI(params = {}) {
   try {
-    const res = await api.get('/api/products', { params });
+    const res = await api.get('/products', { params });
     return res.data;
   } catch (e) {
     return { success: false, data: [] }
@@ -17,7 +17,7 @@ export async function getAllProductsAPI(params = {}) {
 export async function createProductAPI(productData) {
   try {
     // Let Axios handle the headers for FormData automatically
-    const res = await api.post('/api/products/create', productData); 
+    const res = await api.post('/products/create', productData); 
     return res.data;
   } catch (e) {
     throw e; // Standard practice: Re-throw to allow component-level error handling
@@ -26,7 +26,7 @@ export async function createProductAPI(productData) {
 
 export async function getProductByIdAPI(id) {
   try {
-    const res = await api.get(`/api/products/${id}`);
+    const res = await api.get(`/products/${id}`);
     return res.data;
   } catch (e) {
     throw e;
@@ -37,7 +37,7 @@ export async function getActiveCategoriesAPI() {
   try {
     if (memoryCache.has('active_categories')) return memoryCache.get('active_categories');
     
-    const res = await api.get('/api/categories/active');
+    const res = await api.get('/categories/active');
     const data = res.data;
     memoryCache.set('active_categories', data);
     return data;
@@ -49,7 +49,7 @@ export async function getActiveCategoriesAPI() {
 export async function getAllCategoriesAPI() {
   try {
     // ✅ Corrected to match category.routes.js root handler
-    const res = await api.get('/api/categories'); 
+    const res = await api.get('/categories'); 
     return res.data;
   } catch (e) {
     return { success: false, data: [] }
@@ -58,7 +58,7 @@ export async function getAllCategoriesAPI() {
 
 export async function getAllBannersAPI() {
   try {
-    const res = await api.get('/api/banners');
+    const res = await api.get('/banners');
     return res.data;
   } catch (e) {
     return { success: false, data: [] };
@@ -67,7 +67,7 @@ export async function getAllBannersAPI() {
 
 export async function getActiveBannersAPI() {
   try {
-    const res = await api.get('/api/banners/active');
+    const res = await api.get('/banners/active');
     return res.data;
   } catch (e) {
     return { success: false, data: [] };
@@ -76,7 +76,7 @@ export async function getActiveBannersAPI() {
 
 export async function getBannerByIdAPI(id) {
   try {
-    const res = await api.get(`/api/banners/${id}`);
+    const res = await api.get(`/banners/${id}`);
     return res.data;
   } catch (e) {
     throw e;
@@ -85,7 +85,7 @@ export async function getBannerByIdAPI(id) {
 
 export async function createBannerAPI(bannerData) {
   try {
-    const res = await api.post('/api/banners/create', bannerData);
+    const res = await api.post('/banners/create', bannerData);
     return res.data;
   } catch (e) {
     throw e;
@@ -94,7 +94,7 @@ export async function createBannerAPI(bannerData) {
 
 export async function updateBannerAPI(id, bannerData) {
   try {
-    const res = await api.put(`/api/banners/update/${id}`, bannerData);
+    const res = await api.put(`/banners/update/${id}`, bannerData);
     return res.data;
   } catch (e) {
     throw e;
@@ -103,7 +103,7 @@ export async function updateBannerAPI(id, bannerData) {
 
 export async function deleteBannerAPI(id) {
   try {
-    const res = await api.delete(`/api/banners/delete/${id}`);
+    const res = await api.delete(`/banners/delete/${id}`);
     return res.data;
   } catch (e) {
     throw e;
@@ -115,7 +115,7 @@ export async function getSettingsAPI() {
     if (memoryCache.has('site_settings')) return memoryCache.get('site_settings');
 
     // Use the public settings endpoint so frontend doesn't require admin auth
-    const res = await api.get('/api/settings/public');
+    const res = await api.get('/settings/public');
     const data = res.data;
     memoryCache.set('site_settings', data);
     return data;
@@ -127,7 +127,7 @@ export async function getSettingsAPI() {
 export async function validateCouponAPI(params) {
   try {
     // ✅ Changed to POST because backend coupon.controller.js expects data in req.body
-    const res = await api.post('/api/coupons/validate', params);
+    const res = await api.post('/coupons/validate', params);
     return res.data;
   } catch (e) {
     return { success: false }
@@ -136,7 +136,7 @@ export async function validateCouponAPI(params) {
 
 export async function getAdminDetailsAPI() {
   try {
-    const res = await api.get('/api/user/details');
+    const res = await api.get('/user/details');
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -145,7 +145,7 @@ export async function getAdminDetailsAPI() {
 
 export async function deleteCouponAPI(id) {
   try {
-    const res = await api.delete(`/api/coupons/delete/${id}`);
+    const res = await api.delete(`/coupons/delete/${id}`);
     return res.data;
   } catch (e) {
     throw e;
@@ -154,7 +154,7 @@ export async function deleteCouponAPI(id) {
 
 export async function createCouponAPI(couponData) {
   try {
-    const res = await api.post('/api/coupons/create', couponData);
+    const res = await api.post('/coupons/create', couponData);
     return res.data;
   } catch (e) {
     throw e;
@@ -163,7 +163,7 @@ export async function createCouponAPI(couponData) {
 
 export async function placeOrderAPI(orderData) {
   try {
-    const res = await api.post('/api/orders', orderData); // Standardized REST POST
+    const res = await api.post('/orders', orderData); // Standardized REST POST
     return res.data;
   } catch (e) {
     throw e;
@@ -172,7 +172,7 @@ export async function placeOrderAPI(orderData) {
 
 export async function getUserOrdersAPI() {
   try {
-    const res = await api.get('/api/orders/me'); // Standardized REST GET
+    const res = await api.get('/orders/me'); // Standardized REST GET
     return res.data;
   } catch (e) {
     return { success: false, data: [], message: e.message };
@@ -181,7 +181,7 @@ export async function getUserOrdersAPI() {
 
 export async function getOrderDetailsAPI(orderId) {
   try {
-    const res = await api.get(`/api/orders/${orderId}`);
+    const res = await api.get(`/orders/${orderId}`);
     return res.data;
   } catch (e) {
     // If API returns 404, we want to know why
@@ -191,7 +191,7 @@ export async function getOrderDetailsAPI(orderId) {
 
 export async function getAllOrdersAdminAPI() {
   try {
-    const res = await api.get('/api/orders'); 
+    const res = await api.get('/orders'); 
     return res.data;
   } catch (e) {
     throw e; // Re-throw ताकि component का catch block इसे handle कर सके
@@ -200,7 +200,7 @@ export async function getAllOrdersAdminAPI() {
 
 export async function getShopOrdersAPI(shopId) {
   try {
-    const res = await api.get(`/api/orders/shop/${shopId}`);
+    const res = await api.get(`/orders/shop/${shopId}`);
     return res.data;
   } catch (e) {
     return { success: false, data: [] };
@@ -209,7 +209,7 @@ export async function getShopOrdersAPI(shopId) {
 
 export async function updateOrderStatusAPI(orderId, status) {
   try {
-    const res = await api.patch(`/api/orders/${orderId}/status`, { status }); // Standardized PATCH for partial updates
+    const res = await api.patch(`/orders/${orderId}/status`, { status }); // Standardized PATCH for partial updates
     return res.data;
   } catch (e) {
     throw e;
@@ -218,7 +218,7 @@ export async function updateOrderStatusAPI(orderId, status) {
 
 export async function getAllRefundsAPI() {
   try {
-    const res = await api.get('/api/refunds');
+    const res = await api.get('/refunds');
     return res.data;
   } catch (e) {
     return { success: false, data: [] };
@@ -227,7 +227,7 @@ export async function getAllRefundsAPI() {
 
 export async function updateRefundStatusAPI(id, status) {
   try {
-    const res = await api.patch(`/api/refunds/${id}`, { status });
+    const res = await api.patch(`/refunds/${id}`, { status });
     return res.data;
   } catch (e) {
     throw e;
@@ -236,7 +236,7 @@ export async function updateRefundStatusAPI(id, status) {
 
 export async function getAllAppointmentsAPI() {
   try {
-    const res = await api.get('/api/appointments');
+    const res = await api.get('/appointments');
     return res.data;
   } catch (e) {
     return { success: false, data: [] }
@@ -245,7 +245,7 @@ export async function getAllAppointmentsAPI() {
 
 export async function deleteAppointmentAPI(id) {
   try {
-    const res = await api.delete(`/api/appointments/${id}`);
+    const res = await api.delete(`/appointments/${id}`);
     return res.data;
   } catch (e) {
     throw e;
@@ -254,7 +254,7 @@ export async function deleteAppointmentAPI(id) {
 
 export async function confirmAppointmentAPI(id) {
   try {
-    const res = await api.put(`/api/appointments/${id}/confirm`);
+    const res = await api.put(`/appointments/${id}/confirm`);
     return res.data;
   } catch (e) {
     throw e;
@@ -263,7 +263,7 @@ export async function confirmAppointmentAPI(id) {
 
 export async function getGlobalSeoAPI() {
   try {
-    const res = await api.get('/api/seo/global');
+    const res = await api.get('/seo/global');
     return res.data;
   } catch (e) {
     throw e;
@@ -272,7 +272,7 @@ export async function getGlobalSeoAPI() {
 
 export async function updateGlobalSeoAPI(payload) {
   try {
-    const res = await api.put('/api/seo/global', payload);
+    const res = await api.put('/seo/global', payload);
     return res.data;
   } catch (e) {
     throw e;
@@ -281,7 +281,7 @@ export async function updateGlobalSeoAPI(payload) {
 
 export async function getAllCouponsAPI() {
   try {
-    const res = await api.get('/api/coupons');
+    const res = await api.get('/coupons');
     return res.data;
   } catch (e) {
     return { success: false, data: [] }
@@ -290,7 +290,7 @@ export async function getAllCouponsAPI() {
 
 export async function deleteCategoryAPI(id) {
   try {
-    const res = await api.delete(`/api/categories/delete/${id}`);
+    const res = await api.delete(`/categories/delete/${id}`);
     memoryCache.delete('active_categories'); // ✅ कैटेगरी डिलीट होने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {
@@ -300,7 +300,7 @@ export async function deleteCategoryAPI(id) {
 
 export async function createCategoryAPI(categoryData) {
   try {
-    const res = await api.post('/api/categories/create', categoryData);
+    const res = await api.post('/categories/create', categoryData);
     memoryCache.delete('active_categories'); // ✅ नई कैटेगरी बनने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {
@@ -311,7 +311,7 @@ export async function createCategoryAPI(categoryData) {
 export async function verifyOTPAPI(email, otp) {
   try {
     // Send both email and otp as an object
-    const res = await api.post('/api/auth/verify-otp', { email, otp });
+    const res = await api.post('/auth/verify-otp', { email, otp });
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein
@@ -321,7 +321,7 @@ export async function verifyOTPAPI(email, otp) {
 export async function loginAPI(emailOrData, password) {
   const payload = typeof emailOrData === 'string' ? { email: emailOrData, password } : emailOrData;
   try {
-    const res = await api.post('/api/auth/login', payload);
+    const res = await api.post('/auth/login', payload);
     return res.data;
   } catch (e) {
     // ✅ Re-throw error so caller's catch block can inspect e.response
@@ -332,7 +332,7 @@ export async function loginAPI(emailOrData, password) {
 export async function signupAPI(userData) {
   try {
     // Backend standard convention 'register' use karta hai
-    const res = await api.post('/api/auth/register', userData);
+    const res = await api.post('/auth/register', userData);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein taaki calling component ka catch block use handle kar sake
@@ -342,7 +342,7 @@ export async function signupAPI(userData) {
 export async function forgotPasswordAPI(data) {
   try {
     const payload = typeof data === 'string' ? { email: data } : data;
-    const res = await api.post('/api/auth/forgot-password', payload);
+    const res = await api.post('/auth/forgot-password', payload);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein
@@ -352,7 +352,7 @@ export async function forgotPasswordAPI(data) {
 export async function resetPasswordAPI(data) {
   try {
     const payload = typeof data === 'object' && data !== null ? data : {};
-    const res = await api.post('/api/auth/reset-password', payload);
+    const res = await api.post('/auth/reset-password', payload);
     return res.data;
   } catch (e) {
     throw e; // ✅ Error ko throw karein
@@ -362,7 +362,7 @@ export async function resetPasswordAPI(data) {
 export async function deleteProductAPI(id) {
   try {
     // ✅ Standardized REST path: /api/products/:id
-    const res = await api.delete(`/api/products/${id}`);
+    const res = await api.delete(`/products/${id}`);
     return res.data;
   } catch (e) {
     throw e;
@@ -372,7 +372,7 @@ export async function deleteProductAPI(id) {
 export async function updateProductAPI(id, formData) {
   try {
     // ✅ Standardized REST path: /api/products/:id
-    const res = await api.put(`/api/products/${id}`, formData);
+    const res = await api.put(`/products/${id}`, formData);
     return res.data;
   } catch (e) {
     throw e;
@@ -382,7 +382,7 @@ export async function updateProductAPI(id, formData) {
 export async function getAnalyticsSummaryAPI() {
   try {
     // ✅ Match analytics.route.js
-    const res = await api.get('/api/analytics/summary');
+    const res = await api.get('/analytics/summary');
     return res.data;
   } catch (e) {
     throw e;
@@ -392,7 +392,7 @@ export async function getAnalyticsSummaryAPI() {
 export async function getAdminStatsAPI() {
   try {
     // ✅ Match analytics.route.js (Dashboard usually needs the summary)
-    const res = await api.get('/api/analytics/summary'); 
+    const res = await api.get('/analytics/summary'); 
     return res.data;
   } catch (e) {
     throw e;
@@ -402,7 +402,7 @@ export async function getAdminStatsAPI() {
 export async function getAllRoomsAPI() {
   try {
     if (memoryCache.has('all_rooms')) return memoryCache.get('all_rooms');
-    const res = await api.get('/api/room');
+    const res = await api.get('/room');
     const data = res.data;
     memoryCache.set('all_rooms', data);
     return data;
@@ -413,7 +413,7 @@ export async function getAllRoomsAPI() {
 
 export async function createRoomAPI(roomData) {
   try {
-    const res = await api.post('/api/room/create', roomData);
+    const res = await api.post('/room/create', roomData);
     memoryCache.delete('all_rooms'); // ✅ नया रूम बनाने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {
@@ -423,7 +423,7 @@ export async function createRoomAPI(roomData) {
 
 export async function deleteRoomAPI(id) {
   try {
-    const res = await api.delete(`/api/room/${id}`);
+    const res = await api.delete(`/room/${id}`);
     memoryCache.delete('all_rooms'); // ✅ रूम डिलीट करने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {

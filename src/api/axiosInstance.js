@@ -6,7 +6,7 @@ const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
 
 // In production, use the actual Render backend if no env var is provided.
 // In development, use the local Vite proxy via absolute /api paths.
-const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi.onrender.com' : '');
+const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api');
 
 const axiosInstance = axios.create({
   baseURL: apiBase,

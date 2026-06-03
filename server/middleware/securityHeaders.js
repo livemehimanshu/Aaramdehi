@@ -40,7 +40,7 @@ export const securityHeaders = (req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "img-src * data: https:; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
-    "connect-src 'self' https://aaramdehi-backend.onrender.com https://*.firebaseio.com https://www.gstatic.com; " +
+    "connect-src 'self' https://aaramdehi.onrender.com https://*.firebaseio.com https://www.gstatic.com; " +
     "frame-ancestors 'none'; " +
     "base-uri 'self'; " +
     "form-action 'self'"

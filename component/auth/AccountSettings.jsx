@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { api } from '../../src/utils/authUtils';
+import api from '../../src/api/axiosInstance';
 import { Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

@@ -5,15 +5,25 @@
 
 export const securityHeaders = (req, res, next) => {
   // 0. CORS Headers - Allow your production domain
-  const allowedOrigins = ['https://www.aaramdehi.co.in', 'https://aaramdehi.vercel.app', 'http://localhost:5173'];
+  const allowedOrigins = [
+    'https://www.aaramdehi.co.in', 
+    'https://aaramdehi.co.in', // Naked domain also added
+    'https://aaramdehi.vercel.app', 
+    'http://localhost:5173'
+  ];
   const origin = req.headers.origin;
 
-  if (allowedOrigins.includes(origin)) {
+  // Standardize origin check to ignore trailing slashes and handle cases correctly
+  const normalizedOrigin = origin ? origin.replace(/\/$/, "") : null;
+
+  if (normalizedOrigin && allowedOrigins.includes(normalizedOrigin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin'); // Important for proxies like Cloudflare/Render
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-API-Version');
+  // Added 'accesstoken' to headers as your backend logic often looks for it specifically
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, accesstoken, X-Requested-With, X-API-Version');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   // Handle Preflight (OPTIONS) requests immediately

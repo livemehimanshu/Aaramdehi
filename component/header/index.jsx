@@ -116,7 +116,7 @@ const Header = ({ hideNav = false }) => {
     try {
       const envApiUrl = import.meta.env.VITE_API_URL;
       const isProd = import.meta.env.PROD;
-      const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api')).replace(/\/$/, "");
+      const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com' : '/api')).replace(/\/$/, "");
 
       // ✅ 1. Sign out from Firebase
       await signOut(auth);
@@ -220,7 +220,7 @@ const Header = ({ hideNav = false }) => {
       try {
         const envApiUrl = import.meta.env.VITE_API_URL;
         const isProd = import.meta.env.PROD;
-        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api')).replace(/\/$/, "");
+        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com' : '/api')).replace(/\/$/, "");
         const response = await fetch(`${apiBase}/settings/public`, {
           signal: AbortSignal.timeout(5000) // Reduced to 5s
         });

@@ -55,7 +55,7 @@ const MyOrders = () => {
                 setError(null);
                 
                 // Use the API proxy path so Vercel rewrites it to the backend
-                const res = await api.get('/api/orders/my-orders');
+                const res = await api.get('/api/order/my-orders');
                 const response = res.data;
                 
                 if (response.success) {

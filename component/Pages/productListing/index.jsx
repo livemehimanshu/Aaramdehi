@@ -24,7 +24,7 @@ const ProductListing = ({ forcedCategory }) => {
   const [selectedCategory, setSelectedCategory] = useState(forcedCategory || 'All'); // Category filter state
   const [activeFilters, setActiveFilters] = useState({ brands: [], rating: 0, inStock: false });
   const [loading, setLoading] = useState(true); // Loading state
-  const [maxPrice, setMaxPrice] = useState(10000); // Max price filter
+  const [maxPrice, setMaxPrice] = useState(1000000); // Max price filter (Increased to 10 Lakhs)
   const [sortBy, setSortBy] = useState('relevance'); // Sorting option
   const [page, setPage] = useState(1); // Current page number
   const [wishlist, setWishlist] = useState([]); // Wishlist mein jo items hain localStorage se load honge

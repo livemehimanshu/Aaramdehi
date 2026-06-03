@@ -208,17 +208,17 @@ export const updateProduct = async (req, res) => {
 
         let updateData = {
             name, brand, description, shortDescription, category, subCategory,
-            mrp: Number(mrp),
-            sellingPrice: Number(sellingPrice),
-            discountPercent: Number(discountPercent) || 0,
-            stock: Number(stock),
+            mrp: mrp !== undefined ? Number(mrp) : undefined,
+            sellingPrice: sellingPrice !== undefined ? Number(sellingPrice) : undefined,
+            discountPercent: discountPercent !== undefined ? Number(discountPercent) : undefined,
+            stock: stock !== undefined ? Number(stock) : undefined,
             sku,
             seoTitle,
             seoDescription
         };
         
         // ✅ Fix: Remove undefined fields to prevent Firebase update crash
-        updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined));
+        updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && !Number.isNaN(v)));
 
         // Handle parsing of stringified fields from FormData
         if (tags) {

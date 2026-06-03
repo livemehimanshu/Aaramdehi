@@ -4,6 +4,23 @@
  */
 
 export const securityHeaders = (req, res, next) => {
+  // 0. CORS Headers - Allow your production domain
+  const allowedOrigins = ['https://www.aaramdehi.co.in', 'https://aaramdehi.vercel.app', 'http://localhost:5173'];
+  const origin = req.headers.origin;
+
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-API-Version');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // Handle Preflight (OPTIONS) requests immediately
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // 1. Content Security Policy (CSP)
   // Prevents XSS attacks by controlling which resources can be loaded
   res.setHeader(
@@ -13,7 +30,7 @@ export const securityHeaders = (req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
     "img-src * data: https:; " +
     "font-src 'self' data: https://fonts.gstatic.com; " +
-    "connect-src 'self' https://*.firebaseio.com https://www.gstatic.com; " +
+    "connect-src 'self' https://aaramdehi-backend.onrender.com https://*.firebaseio.com https://www.gstatic.com; " +
     "frame-ancestors 'none'; " +
     "base-uri 'self'; " +
     "form-action 'self'"

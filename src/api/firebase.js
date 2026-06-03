@@ -21,8 +21,11 @@ const requiredFirebaseKeys = ['apiKey', 'authDomain', 'projectId', 'appId'];
 const isFirebaseConfigured = requiredFirebaseKeys.every(key => Boolean(firebaseConfig[key]));
 
 Object.entries(firebaseConfig).forEach(([key, value]) => {
-  if (!value && key !== 'measurementId') {
-    console.warn(`⚠️ Firebase Config missing: ${key}. Check your .env.local file or production env vars.`);
+  if (!value && key !== 'measurementId' && key !== 'databaseURL') {
+    // Production mein alert dene ke liye
+    if (import.meta.env.PROD) {
+      console.error(`❌ CRITICAL: Firebase Config missing [${key}]. Ensure this is set in your hosting provider's env variables.`);
+    }
   }
 });
 

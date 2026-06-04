@@ -13,16 +13,34 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Attach saved accessToken to every request automatically.
+// ✅ Attach saved accessToken or adminToken to every request automatically.
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken') || 
+                  localStorage.getItem('token') || 
+                  localStorage.getItem('adminToken');
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// ✅ Handle unauthorized responses globally
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      console.warn("Unauthorized (401): Session expired or invalid token.");
+      // Optional: Clear tokens and redirect if needed
+      // localStorage.removeItem('accessToken');
+      // localStorage.removeItem('adminToken');
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default axiosInstance;

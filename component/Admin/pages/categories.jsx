@@ -88,15 +88,13 @@ const Categories = () => {
             data.append('description', newCategory.description);
             data.append('isActive', newCategory.isActive);
             
-            // ✅ सब-कैटेगरीज को स्ट्रिंग के रूप में भेजें (कोमा से अलग)
-            if (newCategory.subCategories) {
-                data.append('subCategories', newCategory.subCategories);
-            }
+            // ✅ Always send subCategories (even if empty) to prevent backend .split() crashes
+            data.append('subCategories', newCategory.subCategories || "");
 
-            // ✅ Unify the field name to 'icon'. Multer expects a single consistent key.
-            const iconData = imageFile || newCategory.icon;
-            if (iconData) {
-                data.append('icon', iconData);
+            if (imageFile) {
+                data.append('icon', imageFile); // 🔄 Switched to 'icon' as categories often use this field name
+            } else if (newCategory.icon) {
+                data.append('icon', newCategory.icon);
             }
 
             const res = await createCategoryAPI(data);

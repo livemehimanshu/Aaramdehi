@@ -27,7 +27,7 @@ import userRouter from './routes/user.route.js';
 import productRouter from './routes/product.route.js';
 import seoRouter from './routes/seo.route.js';
 import bannerRouter from './routes/banner.route.js';
-import categoryRouter from './routes/category.routes.js';
+import categoryRouter from './routes/category.route.js';
 import couponRouter from './routes/coupon.route.js';
 import appointmentRouter from './routes/appointment.route.js';
 import analyticsRouter from './routes/analytics.route.js';

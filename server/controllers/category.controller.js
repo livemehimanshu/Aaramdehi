@@ -93,9 +93,12 @@ export const getCategoryById = async (req, res) => {
 // Create a new category
 export const createCategory = async (req, res) => {
   try {
-    // ✅ Fix: Handle cases where req.body might be undefined due to Multer parsing issues
-    if (!req.body) {
-        return res.status(400).json({ success: false, message: "Request body is missing. Ensure you are sending FormData and Multer is correctly configured." });
+    // ✅ Robust check: If Multer isn't applied or fails, req.body will be empty/undefined
+    if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "Request body is empty. Ensure you are sending FormData and the 'upload' middleware is applied to this route." 
+        });
     }
 
     const { name, description, isActive, icon, subCategories } = req.body;
@@ -110,8 +113,10 @@ export const createCategory = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Category with this name already exists' });
     }
 
-    // 🖼️ Robust image upload check
-    const fileToUpload = req.file?.buffer || req.file?.path;
+    // 🖼️ Robust file check: Handle single or multiple file uploads
+    const fileToUpload = req.file?.buffer || req.file?.path || 
+                         (req.files && (Array.isArray(req.files) ? req.files[0]?.buffer : Object.values(req.files)[0]?.[0]?.buffer));
+
     if (fileToUpload) {
         const uploadResult = await uploadImageCloudinary(fileToUpload, "categories");
         if (uploadResult.success) {
@@ -126,9 +131,12 @@ export const createCategory = async (req, res) => {
       slug: slugify(name, { lower: true, strict: true }),
       description,
       icon: finalIcon,
-      // ✅ Convert comma-separated string from frontend into a clean Array
-      subCategories: typeof subCategories === 'string' ? subCategories.split(',').map(s => s.trim()).filter(Boolean) : [],
+      // ✅ Robust parsing logic (same as update logic)
+      subCategories: typeof subCategories === 'string' 
+          ? subCategories.split(',').map(s => s.trim()).filter(Boolean) 
+          : (Array.isArray(subCategories) ? subCategories.filter(Boolean) : []),
       isActive: isActive === 'true' || isActive === true,
+      createdAt: new Date().toISOString()
     };
 
     const newCategory = await create(COLLECTION, categoryData);
@@ -143,11 +151,6 @@ export const createCategory = async (req, res) => {
 export const updateCategoryController = async (req, res) => {
   try {
     const { id } = req.params;
-    // ✅ Fix: Defensive check for req.body in update controller as well
-    if (!req.body) {
-        return res.status(400).json({ success: false, message: "Update payload missing. Ensure multi-part parsing is active." });
-    }
-
     const { name, description, isActive, icon, subCategories } = req.body;
 
     const category = await findById(COLLECTION, id);
@@ -157,8 +160,10 @@ export const updateCategoryController = async (req, res) => {
 
     const updateData = {};
 
-    // 🖼️ इमेज अपडेट लॉजिक (जो पहले मिसिंग था)
-    const fileToUpload = req.file?.buffer || req.file?.path;
+    // Robust file check for updates
+    const fileToUpload = req.file?.buffer || req.file?.path || 
+                         (req.files && (Array.isArray(req.files) ? req.files[0]?.buffer : Object.values(req.files)[0]?.[0]?.buffer));
+
     if (fileToUpload) {
         const uploadResult = await uploadImageCloudinary(fileToUpload, "categories");
         if (uploadResult.success) {

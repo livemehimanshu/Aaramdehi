@@ -254,17 +254,31 @@ export const updateProduct = async (req, res) => {
         updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && !Number.isNaN(v)));
 
         // Handle parsing of stringified fields from FormData
+        console.log("📦 updateProduct payload:", {
+            id,
+            bodyKeys: Object.keys(req.body),
+            hasExistingImages: req.body.existingImages !== undefined,
+            fileCount: req.files ? (Array.isArray(req.files) ? req.files.length : Object.values(req.files).flat().length) : 0
+        });
+
         if (tags) {
             updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
         }
+
         const searchKeywordsRaw = req.body.seoKeywords || req.body.searchKeywords;
         if (searchKeywordsRaw) {
             updateData.seoKeywords = (typeof searchKeywordsRaw === 'string' && searchKeywordsRaw.trim()) 
                 ? searchKeywordsRaw.replace(/\[|\]|"/g, '').split(',').map(k => k.trim()).filter(Boolean)
                 : searchKeywordsRaw;
         }
-        if (specifications && typeof specifications === 'string' && specifications.startsWith('{')) {
-            updateData.specifications = JSON.parse(specifications);
+
+        if (specifications && typeof specifications === 'string') {
+            try {
+                updateData.specifications = specifications.trim().startsWith('{') ? JSON.parse(specifications) : specifications;
+            } catch (parseError) {
+                console.error("❌ Invalid specifications JSON:", parseError, specifications);
+                updateData.specifications = specifications;
+            }
         }
 
         // ✅ Image Merging Logic: Handle images the user wants to keep.

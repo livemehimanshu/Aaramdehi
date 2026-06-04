@@ -7,7 +7,7 @@ import {
     IoAlertCircleOutline
 } from "react-icons/io5";
 import { generateInvoicePDF } from './generateInvoicePDF';
-import { getAllOrdersAdminAPI, api } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
+import { getAllOrdersAdminAPI, updateOrderStatusAPI, api } from '../../../src/api/authAndAdminApi'; // ✅ Use Centralized API
 
 const Orders = () => {
     const [orders, setOrders] = useState([]);

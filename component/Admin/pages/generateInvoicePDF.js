@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 /**
  * Generates a professional PDF invoice for Aaramdehi
@@ -7,6 +7,9 @@ import "jspdf-autotable";
  */
 export const generateInvoicePDF = (order) => {
   const doc = new jsPDF();
+  // ✅ Ensure autoTable is attached to this doc instance
+  autoTable(doc);
+
   const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
 
   // --- Header & Branding ---

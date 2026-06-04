@@ -311,7 +311,7 @@ export async function updateCategoryAPI(id, categoryData) {
 
 export async function createCategoryAPI(categoryData) {
   try {
-    // 🔙 Reverting to /create because the backend router is specifically listening there
+    // Ensure we use the exact route defined in category.routes.js
     const res = await api.post('/categories/create', categoryData);
     memoryCache.delete('active_categories'); // ✅ नई कैटेगरी बनने पर कैशे साफ़ करें
     return res.data;

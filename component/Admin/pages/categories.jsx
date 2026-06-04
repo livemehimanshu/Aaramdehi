@@ -92,7 +92,7 @@ const Categories = () => {
             data.append('subCategories', newCategory.subCategories || "");
 
             if (imageFile) {
-                data.append('icon', imageFile); // 🔄 Switched to 'icon' as categories often use this field name
+                data.append('image', imageFile); // ✅ Standardized to 'image' to match backend Multer config
             } else if (newCategory.icon) {
                 data.append('icon', newCategory.icon);
             }

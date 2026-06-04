@@ -269,7 +269,7 @@ const Header = ({ hideNav = false }) => {
 
   return (
     <>
-      <header className='sticky top-0 z-50 bg-white shadow-sm'>
+      <header className='sticky top-0 z-[1000] bg-white shadow-sm'>
         {/* --- TOP STRIP --- */}
         <div className="top-strip py-2 border-b border-gray-200 hidden md:block">
           <div className="container mx-auto px-4">

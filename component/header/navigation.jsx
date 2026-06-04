@@ -46,7 +46,7 @@ const Navigation = ({ categories = [] }) => {
                   <ul className="space-y-1 relative">
                     {cat.subCategories.map((sub, idx) => (
                       <li key={idx}>
-                        <Link to={`/products?category=${sub}`} className="text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg block transition-all">
+                        <Link to={`/products?subCategory=${sub}`} className="text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg block transition-all">
                           {sub}
                         </Link>
                       </li>

@@ -138,15 +138,17 @@ export const createProduct = async (req, res) => {
 // ✅ GET ALL PRODUCTS (Updated logic to show all data to Admin)
 export const getAllProducts = async (req, res) => {
     try {
-        const { category, page, limit, search, sort = "-createdAt" } = req.query;
+        const { category, subCategory, page, limit, search, sort = "-createdAt" } = req.query;
         
         const p = Number(page) || 1;
         const l = Number(limit) || 10;
         const skip = (p - 1) * l;
 
         let products;
-        // ✅ Optimization: Use native Firebase query for category
-        if (category && category !== "" && category !== "undefined") {
+        // ✅ Optimization: Use native Firebase query for category or subCategory
+        if (subCategory && subCategory !== "" && subCategory !== "undefined") {
+            products = await findByQuery(COLLECTION, 'subCategory', subCategory);
+        } else if (category && category !== "" && category !== "undefined") {
             products = await findByQuery(COLLECTION, 'category', category);
         } else {
             products = (await findAll(COLLECTION)) || [];

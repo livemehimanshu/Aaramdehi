@@ -6,7 +6,13 @@ import "jspdf-autotable";
  * @param {Object} order - The order data object
  */
 export const generateInvoicePDF = (order) => {
-  const doc = new jsPDF();
+  try {
+    if (!order) {
+      throw new Error("Order data is missing or null");
+    }
+
+    const doc = new jsPDF();
+    console.log("✅ jsPDF instance created successfully");
 
   const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
 
@@ -92,8 +98,12 @@ export const generateInvoicePDF = (order) => {
   });
 
   // --- Summary Section ---
-  const finalY = doc.lastAutoTable.finalY + 10;
-  let currentY = finalY;
+  let currentY = 85;
+  
+  // ✅ Safe check for autoTable results
+  if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
+    currentY = doc.lastAutoTable.finalY + 10;
+  }
 
   // Show Discount row ONLY if a coupon was used
   if (order.couponCode || (order.discountAmount && order.discountAmount > 0)) {
@@ -118,6 +128,12 @@ export const generateInvoicePDF = (order) => {
   doc.text("Thank you for choosing Aaramdehi for your home comfort needs.", 105, footerY + 5, { align: "center" });
 
   // --- Save File ---
-const finalId = order.orderNumber || order.orderId || order._id || order.id || 'XXXXX';
-doc.save(`Invoice_${finalId}.pdf`);
+  const finalId = order.orderNumber || order.orderId || order._id || order.id || 'XXXXX';
+  doc.save(`Invoice_${finalId}.pdf`);
+  console.log(`✅ Invoice PDF downloaded: Invoice_${finalId}.pdf`);
+  } catch (error) {
+    console.error("❌ Error generating invoice:", error);
+    alert(`Invoice generation failed: ${error.message}`);
+    throw error;
+  }
 };

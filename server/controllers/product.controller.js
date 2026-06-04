@@ -207,15 +207,14 @@ export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // ✅ Defensive check for updates
         if (!req.body) {
             return res.status(400).json({ success: false, message: "No data provided for update." });
         }
         
-        // ✅ सुरक्षा (Sanitization): '...rest' के बजाय सभी फील्ड्स को स्पष्ट रूप से निकालें
-        // इससे यूजर 'role' या 'createdBy' जैसे संवेदनशील फील्ड्स को अपडेट नहीं कर पाएगा
+        // ✅ Security Sanitization: Explicitly extract allowed fields.
+        // This prevents users from manipulating internal fields like 'createdBy' or 'userId'.
         const { 
-            name, brand, description, shortDescription, category, subCategory, 
+            name, brand, description, shortDescription, category, subCategory, isActive,
             tags, mrp, sellingPrice, discountPercent, stock, sku, 
             specifications, seoTitle, seoDescription, seoKeywords 
         } = req.body;
@@ -227,11 +226,12 @@ export const updateProduct = async (req, res) => {
             discountPercent: discountPercent !== undefined ? Number(discountPercent) : undefined,
             stock: stock !== undefined ? Number(stock) : undefined,
             sku,
-            seoTitle,
+            isActive: isActive !== undefined ? (isActive === 'true' || isActive === true) : undefined,
+            seoTitle: seoTitle || name,
             seoDescription
         };
         
-        // ✅ Fix: Remove undefined fields to prevent Firebase update crash
+        // ✅ Cleanup: Remove undefined/NaN fields to prevent database corruption.
         updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && !Number.isNaN(v)));
 
         // Handle parsing of stringified fields from FormData
@@ -245,7 +245,17 @@ export const updateProduct = async (req, res) => {
             updateData.specifications = JSON.parse(specifications);
         }
 
-        // Robust handling for updates as well
+        // ✅ Image Merging Logic: Handle images the user wants to keep.
+        let finalImages = [];
+        const hasExistingImagesField = req.body.existingImages !== undefined;
+        
+        if (hasExistingImagesField) {
+            try {
+                finalImages = typeof req.body.existingImages === 'string' ? JSON.parse(req.body.existingImages) : req.body.existingImages;
+                if (!Array.isArray(finalImages)) finalImages = [];
+            } catch (e) { console.error("❌ Error parsing existingImages:", e); }
+        }
+
         console.log("📂 Update incoming files:", { hasFiles: !!req.files, hasFile: !!req.file });
         
         const filesToUpload = req.files 
@@ -253,7 +263,6 @@ export const updateProduct = async (req, res) => {
             : (req.file ? [req.file] : []);
 
         if (filesToUpload.length > 0) {
-            const newImages = [];
             for (const file of filesToUpload) {
                 const fileContent = file.buffer || file.path;
                 if (!fileContent) {
@@ -264,7 +273,7 @@ export const updateProduct = async (req, res) => {
             // ✅ Standardized folder path
             const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
                 if (uploadResult && uploadResult.success) {
-                    newImages.push({ 
+                    finalImages.push({ 
                         url: uploadResult.url, 
                         public_id: uploadResult.public_id,
                         alt: name || "product image" 
@@ -273,18 +282,100 @@ export const updateProduct = async (req, res) => {
                     console.error(`❌ Update: Cloudinary Error [${file.originalname}]:`, uploadResult?.message);
                 }
             }
-            
-            if (newImages.length > 0) {
-                // Purani images ke sath naye images ko combine karne ke liye logic (optional)
-                updateData.images = newImages; 
-                updateData.thumbnail = newImages[0].url;
-            }
+        }
+
+        // ✅ Update image array only if images were modified or new ones added
+        if (hasExistingImagesField || filesToUpload.length > 0) {
+            updateData.images = finalImages;
+            updateData.thumbnail = finalImages.length > 0 ? finalImages[0].url : "";
         }
 
         const updatedProduct = await updateById(COLLECTION, id, updateData);
         return res.json({ success: true, message: "Updated successfully", data: updatedProduct });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+// ✅ 4.5 ADD PRODUCT REVIEW
+export const addProductReview = async (req, res) => {
+    // This system calculates average ratings and enforces a one-review-per-user policy.
+    try {
+        const { id } = req.params;
+        const { rating, comment } = req.body;
+        const userId = req.userId || req.user?._id;
+        const userName = req.user?.name || "Customer";
+
+        if (!rating || !comment) {
+            return res.status(400).json({ success: false, message: "Rating and comment are required" });
+        }
+
+        const product = await findById(COLLECTION, id);
+        if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+
+        const reviews = Array.isArray(product.reviews) ? product.reviews : [];
+        
+        // ✅ Duplicate Check: Prevent multiple reviews from the same user ID.
+        const alreadyReviewed = reviews.find(r => String(r.userId) === String(userId));
+        if (alreadyReviewed) {
+            return res.status(400).json({ success: false, message: "Product already reviewed by you" });
+        }
+
+        const review = {
+            userId,
+            name: userName,
+            rating: Number(rating),
+            comment,
+            createdAt: new Date().toISOString()
+        };
+
+        reviews.push(review);
+
+        // ✅ Rating Logic: Recalculate average whenever a new review is added.
+        const ratingsCount = reviews.length;
+        const avgRating = reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount;
+
+        const updateData = {
+            reviews,
+            ratings: {
+                average: parseFloat(avgRating.toFixed(1)),
+                count: ratingsCount
+            }
+        };
+
+        await updateById(COLLECTION, id, updateData);
+
+        return res.status(201).json({ success: true, message: "Review added successfully", data: review });
+    } catch (error) {
+        console.error("❌ Review Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ✅ 4.6 TOGGLE PRODUCT STATUS
+export const toggleProductStatus = async (req, res) => {
+    // Allows admins to hide products from the frontend without permanent deletion.
+    try {
+        const { id } = req.params;
+        const product = await findById(COLLECTION, id);
+        
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        // If field is missing, default to false then toggle
+        const currentStatus = product.isActive === undefined ? true : product.isActive;
+        const newStatus = !currentStatus;
+
+        await updateById(COLLECTION, id, { isActive: newStatus });
+
+        return res.json({ 
+            success: true, 
+            message: `Product is now ${newStatus ? 'Active' : 'Inactive'}`,
+            isActive: newStatus 
+        });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
     }
 };
 

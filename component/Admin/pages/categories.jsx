@@ -93,11 +93,10 @@ const Categories = () => {
                 data.append('subCategories', newCategory.subCategories);
             }
 
-            if (imageFile) {
-                // ✅ 500 एरर को ठीक करने के लिए 'icon' की जगह 'image' की (Key) का उपयोग करें
-                data.append('image', imageFile); 
-            } else {
-                data.append('icon', newCategory.icon); // Emoji support fallback
+            // ✅ Unify the field name to 'icon'. Multer expects a single consistent key.
+            const iconData = imageFile || newCategory.icon;
+            if (iconData) {
+                data.append('icon', iconData);
             }
 
             const res = await createCategoryAPI(data);
@@ -263,7 +262,7 @@ const Categories = () => {
                                     <td className="p-5 text-slate-500 text-xs font-mono">{cat.slug || '/'+cat.name.toLowerCase()}</td>
                                     <td className="p-5">
                                         <div className="flex flex-wrap gap-1">
-                                            {cat.subCategories?.map((sub, i) => (
+                                            {Array.isArray(cat.subCategories) && cat.subCategories.map((sub, i) => (
                                                 <span key={i} className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter">{sub}</span>
                                             ))}
                                         </div>

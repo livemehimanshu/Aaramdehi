@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IoCloudUploadOutline, IoArrowBackOutline, IoSaveOutline } from 'react-icons/io5';
 import { Loader2 } from 'lucide-react';
-import { getProductByIdAPI, updateProductAPI } from '../../../src/api/authAndAdminApi';
+import { getProductByIdAPI, updateProductAPI, getAllCategoriesAPI } from '../../../src/api/authAndAdminApi';
 import imageCompression from 'browser-image-compression'; // ✅ Import imageCompression
 
 const EditProduct = () => {
@@ -17,6 +17,7 @@ const EditProduct = () => {
         name: '',
         brand: '',
         category: '',
+        subCategory: '',
         mrp: '',
         sellingPrice: '',
         stock: '',
@@ -25,6 +26,8 @@ const EditProduct = () => {
         specifications: '{}'
     });
     
+    const [categoriesList, setCategoriesList] = useState([]);
+    const [subCategoriesList, setSubCategoriesList] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]); // ✅ Store actual File objects
     const [previews, setPreviews] = useState([]); // Images preview ke liye
 
@@ -44,6 +47,14 @@ const EditProduct = () => {
 
     // 1. Load Existing Product Data
     useEffect(() => {
+        const fetchCats = async () => {
+            const res = await getAllCategoriesAPI();
+            if (res.success) setCategoriesList(res.data);
+        };
+        fetchCats();
+    }, []);
+
+    useEffect(() => {
         const fetchProduct = async () => {
             try {
                 setLoading(true);
@@ -54,6 +65,7 @@ const EditProduct = () => {
                         name: p.name || '',
                         brand: p.brand || '',
                         category: p.category || '',
+                        subCategory: p.subCategory || '',
                         mrp: p.mrp || '',
                         sellingPrice: p.sellingPrice || '',
                         stock: p.stock || '',
@@ -74,8 +86,30 @@ const EditProduct = () => {
         fetchProduct();
     }, [id]);
 
+    // ✅ Sync subcategories when categories and product data are both available
+    useEffect(() => {
+        if (categoriesList.length > 0 && productData.category) {
+            const selectedCat = categoriesList.find(cat => cat.name === productData.category);
+            if (selectedCat && Array.isArray(selectedCat.subCategories)) {
+                setSubCategoriesList(selectedCat.subCategories);
+            }
+        }
+    }, [categoriesList, productData.category]);
+
     const handleChange = (e) => {
         setProductData({ ...productData, [e.target.name]: e.target.value });
+    };
+
+    const handleCategoryChange = (e) => {
+        const categoryName = e.target.value;
+        setProductData(prev => ({ ...prev, category: categoryName, subCategory: '' }));
+
+        const selectedCat = categoriesList.find(cat => cat.name === categoryName);
+        if (selectedCat && Array.isArray(selectedCat.subCategories)) {
+            setSubCategoriesList(selectedCat.subCategories);
+        } else {
+            setSubCategoriesList([]);
+        }
     };
 
     // 2. Multiple File Selection Logic
@@ -193,7 +227,17 @@ const EditProduct = () => {
                         </div>
                         <div className="space-y-1">
                             <label className="text-[10px] font-black uppercase text-slate-500">Category</label>
-                            <input name="category" value={productData.category} onChange={handleChange} className="w-full bg-gray-950 border border-gray-800 p-3 rounded-lg focus:border-blue-600 outline-none font-bold text-white" />
+                            <select name="category" value={productData.category} onChange={handleCategoryChange} className="w-full bg-gray-950 border border-gray-800 p-3 rounded-lg focus:border-blue-600 outline-none font-bold text-white appearance-none">
+                                <option value="">Select Category</option>
+                                {categoriesList.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase text-slate-500">Sub Category</label>
+                            <select name="subCategory" value={productData.subCategory} onChange={handleChange} disabled={subCategoriesList.length === 0} className="w-full bg-gray-950 border border-gray-800 p-3 rounded-lg focus:border-blue-600 outline-none font-bold text-white appearance-none disabled:opacity-50 disabled:cursor-not-allowed">
+                                <option value="">{subCategoriesList.length === 0 ? "No Sub-categories Available" : "Choose Sub Category"}</option>
+                                {subCategoriesList.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
+                            </select>
                         </div>
                     </div>
 

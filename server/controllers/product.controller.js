@@ -1,4 +1,5 @@
 import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
+// Assume a utility exists or add one for Cloudinary deletion
 import { findAll, findById, create, updateById, deleteById, findByQuery, db } from "../config/db.js";
 
 const COLLECTION = 'products';
@@ -207,12 +208,12 @@ export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
-        if (!req.body) {
-            return res.status(400).json({ success: false, message: "No data provided for update." });
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res.status(400).json({ success: false, message: "Update payload missing. Ensure you are sending FormData." });
         }
         
-        // ✅ Security Sanitization: Explicitly extract allowed fields.
-        // This prevents users from manipulating internal fields like 'createdBy' or 'userId'.
+        // ✅ Security Sanitization: Explicitly map allowed fields.
+        // Prevents manipulation of sensitive fields like 'createdBy', 'userId', or '_id'.
         const { 
             name, brand, description, shortDescription, category, subCategory, isActive,
             tags, mrp, sellingPrice, discountPercent, stock, sku, 
@@ -284,13 +285,27 @@ export const updateProduct = async (req, res) => {
             }
         }
 
-        // ✅ Update image array only if images were modified or new ones added
-        if (hasExistingImagesField || filesToUpload.length > 0) {
+        // Only update image array if user sent existing set or uploaded new files
+        if (hasExistingImages || filesToUpload.length > 0) {
             updateData.images = finalImages;
-            updateData.thumbnail = finalImages.length > 0 ? finalImages[0].url : "";
+            updateData.thumbnail = finalImages.length > 0 ? finalImages[0].url : updateData.thumbnail;
         }
 
         const updatedProduct = await updateById(COLLECTION, id, updateData);
+
+        // ✅ Update Search Index
+        try {
+            const indexResults = await findByQuery('product_indexes', 'productId', id);
+            if (indexResults.length > 0) {
+                const indexId = indexResults[0]._id;
+                await updateById('product_indexes', indexId, {
+                    name: updateData.name || updatedProduct.name,
+                    searchKeywords: updateData.seoKeywords || updatedProduct.seoKeywords || [updatedProduct.brand, updatedProduct.category],
+                    indexedAt: new Date().toISOString()
+                });
+            }
+        } catch (indexErr) { console.warn('⚠️ Search index update failed:', indexErr.message); }
+
         return res.json({ success: true, message: "Updated successfully", data: updatedProduct });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
@@ -352,9 +367,99 @@ export const addProductReview = async (req, res) => {
     }
 };
 
-// ✅ 4.6 TOGGLE PRODUCT STATUS
+// ✅ 4.7 DELETE PRODUCT REVIEW (Admin/User)
+export const deleteProductReview = async (req, res) => {
+    try {
+        const { id, reviewId } = req.params; // reviewId would be the timestamp or userId
+        const product = await findById(COLLECTION, id);
+        if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+
+        let reviews = Array.isArray(product.reviews) ? product.reviews : [];
+        
+        // Filter out the review (assuming we identify by userId)
+        const initialCount = reviews.length;
+        reviews = reviews.filter(r => String(r.userId) !== String(reviewId));
+
+        if (reviews.length === initialCount) {
+            return res.status(404).json({ success: false, message: "Review not found" });
+        }
+
+        // Recalculate average
+        const ratingsCount = reviews.length;
+        const avgRating = ratingsCount > 0 
+            ? reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount 
+            : 5; // Default back to 5 if no reviews left
+
+        await updateById(COLLECTION, id, {
+            reviews,
+            ratings: {
+                average: parseFloat(avgRating.toFixed(1)),
+                count: ratingsCount
+            }
+        });
+
+        return res.json({ success: true, message: "Review deleted successfully" });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ✅ 4.5 ADD PRODUCT REVIEW
+export const addProductReview = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rating, comment } = req.body;
+        const userId = req.userId || req.user?._id;
+        const userName = req.user?.name || "Customer";
+
+        if (!rating || !comment) {
+            return res.status(400).json({ success: false, message: "Rating and comment are required" });
+        }
+
+        const product = await findById(COLLECTION, id);
+        if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+
+        const reviews = Array.isArray(product.reviews) ? product.reviews : [];
+        
+        // ✅ Prevent multiple reviews from same user
+        const alreadyReviewed = reviews.find(r => String(r.userId) === String(userId));
+        if (alreadyReviewed) {
+            return res.status(400).json({ success: false, message: "You have already reviewed this product." });
+        }
+
+        const review = {
+            userId,
+            name: userName,
+            rating: Number(rating),
+            comment,
+            createdAt: new Date().toISOString()
+        };
+
+        reviews.push(review);
+
+        // ✅ Recalculate average rating
+        const ratingsCount = reviews.length;
+        const avgRating = reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount;
+
+        const updateData = {
+            reviews,
+            ratings: {
+                average: parseFloat(avgRating.toFixed(1)),
+                count: ratingsCount
+            }
+        };
+
+        await updateById(COLLECTION, id, updateData);
+
+        return res.status(201).json({ success: true, message: "Review added successfully", data: review });
+    } catch (error) {
+        console.error("❌ Review Error:", error);
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// ✅ 4.6 TOGGLE PRODUCT STATUS (Visibility)
 export const toggleProductStatus = async (req, res) => {
-    // Allows admins to hide products from the frontend without permanent deletion.
     try {
         const { id } = req.params;
         const product = await findById(COLLECTION, id);
@@ -363,7 +468,6 @@ export const toggleProductStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        // If field is missing, default to false then toggle
         const currentStatus = product.isActive === undefined ? true : product.isActive;
         const newStatus = !currentStatus;
 

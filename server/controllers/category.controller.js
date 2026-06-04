@@ -113,9 +113,11 @@ export const createCategory = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Category with this name already exists' });
     }
 
-    // 🖼️ Robust file check: Handle single or multiple file uploads
-    const fileToUpload = req.file?.buffer || req.file?.path || 
-                         (req.files && (Array.isArray(req.files) ? req.files[0]?.buffer : Object.values(req.files)[0]?.[0]?.buffer));
+    // 🖼️ Flexible file check: Handles upload.single OR upload.fields
+    const fileToUpload = req.file?.buffer || 
+                         (req.files?.icon?.[0]?.buffer) || 
+                         (req.files?.image?.[0]?.buffer) ||
+                         (Array.isArray(req.files) ? req.files[0]?.buffer : null);
 
     if (fileToUpload) {
         const uploadResult = await uploadImageCloudinary(fileToUpload, "categories");
@@ -151,6 +153,11 @@ export const createCategory = async (req, res) => {
 export const updateCategoryController = async (req, res) => {
   try {
     const { id } = req.params;
+    
+    if (!req.body || Object.keys(req.body).length === 0) {
+        return res.status(400).json({ success: false, message: "No data provided for update." });
+    }
+
     const { name, description, isActive, icon, subCategories } = req.body;
 
     const category = await findById(COLLECTION, id);
@@ -160,9 +167,10 @@ export const updateCategoryController = async (req, res) => {
 
     const updateData = {};
 
-    // Robust file check for updates
-    const fileToUpload = req.file?.buffer || req.file?.path || 
-                         (req.files && (Array.isArray(req.files) ? req.files[0]?.buffer : Object.values(req.files)[0]?.[0]?.buffer));
+    const fileToUpload = req.file?.buffer || 
+                         (req.files?.icon?.[0]?.buffer) || 
+                         (req.files?.image?.[0]?.buffer) ||
+                         (Array.isArray(req.files) ? req.files[0]?.buffer : null);
 
     if (fileToUpload) {
         const uploadResult = await uploadImageCloudinary(fileToUpload, "categories");
@@ -210,8 +218,19 @@ export const updateCategoryController = async (req, res) => {
 export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await deleteById(COLLECTION, id);
+    const category = await findById(COLLECTION, id);
+    
+    if (!category) {
+      return res.status(404).json({ success: false, message: 'Category not found' });
+    }
 
+    // ✅ Handle Orphaned Products: Update products using this category
+    const affectedProducts = await findByQuery('products', 'category', category.name);
+    for (const prod of affectedProducts) {
+        await updateById('products', prod._id, { category: "Uncategorized" });
+    }
+
+    const result = await deleteById(COLLECTION, id);
     if (!result.success) {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }

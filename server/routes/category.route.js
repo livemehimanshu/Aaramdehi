@@ -19,8 +19,9 @@ router.get("/active", getActiveCategories); // ✅ Added alias for consistency
 router.get("/get/:id", getCategoryById);
 
 // Admin Only Routes (With Image Upload)
-router.post("/create", isAuthenticatedUser, isAdmin, upload.single("icon"), createCategory);
-router.put("/update/:id", isAuthenticatedUser, isAdmin, upload.single("icon"), updateCategoryController);
+// ✅ Fixed: Accepting either 'icon' or 'image' field to avoid Multer parsing failures
+router.post("/create", isAuthenticatedUser, isAdmin, upload.fields([{ name: 'icon', maxCount: 1 }, { name: 'image', maxCount: 1 }]), createCategory);
+router.put("/update/:id", isAuthenticatedUser, isAdmin, upload.fields([{ name: 'icon', maxCount: 1 }, { name: 'image', maxCount: 1 }]), updateCategoryController);
 router.delete("/delete/:id", isAuthenticatedUser, isAdmin, deleteCategory);
 
 export default router;

@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 /**
  * Generates a professional PDF invoice for Aaramdehi
@@ -78,7 +78,7 @@ export const generateInvoicePDF = (order) => {
     tableRows.push(rowData);
   });
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 80,
     head: [tableColumn],
     body: tableRows,

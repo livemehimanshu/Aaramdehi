@@ -37,6 +37,7 @@ import settingsRouter from './routes/settings.route.js';
 import teamRouter from './routes/team.route.js';
 import orderRouter from './routes/order.route.js';
 import shopsRouter from './routes/shops.route.js';
+import roomRouter from './routes/room.route.js';
 
 const app = express();
 

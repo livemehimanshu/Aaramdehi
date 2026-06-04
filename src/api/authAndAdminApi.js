@@ -445,3 +445,13 @@ export async function deleteRoomAPI(id) {
     throw e;
   }
 }
+
+export async function updateRoomAPI(id, roomData) {
+  try {
+    const res = await api.put(`/rooms/${id}`, roomData);
+    memoryCache.delete('all_rooms');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}

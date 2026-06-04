@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import "jspdf-autotable";
 
 /**
  * Generates a professional PDF invoice for Aaramdehi
@@ -13,6 +13,14 @@ export const generateInvoicePDF = (order) => {
 
     const doc = new jsPDF();
     console.log("✅ jsPDF instance created successfully");
+    
+    // ✅ Check if autoTable is available
+    if (!doc.autoTable) {
+      console.warn("⚠️ autoTable not available, using fallback simple table");
+      generateSimpleInvoice(order, doc);
+      return;
+    }
+    console.log("✅ autoTable is available - proceeding with full invoice");
 
   const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
 
@@ -82,7 +90,7 @@ export const generateInvoicePDF = (order) => {
     tableRows.push(rowData);
   });
 
-  autoTable(doc, {
+  doc.autoTable({
     startY: 80,
     head: [tableColumn],
     body: tableRows,
@@ -136,4 +144,79 @@ export const generateInvoicePDF = (order) => {
     alert(`Invoice generation failed: ${error.message}`);
     throw error;
   }
+};
+
+// ✅ Fallback function if autoTable is not available
+const generateSimpleInvoice = (order, doc) => {
+  const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+
+  // --- Header ---
+  doc.setFontSize(22);
+  doc.setTextColor(239, 68, 68);
+  doc.setFont("helvetica", "bold");
+  doc.text("AARAMDEHI", 14, 20);
+
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.setFont("helvetica", "normal");
+  doc.text("Premium Home Decor & Furniture", 14, 26);
+
+  // --- Invoice Title ---
+  doc.setFontSize(18);
+  doc.setTextColor(59, 130, 246);
+  doc.text("INVOICE", 150, 20);
+  
+  doc.setFontSize(10);
+  doc.setTextColor(0);
+  doc.text(`Invoice #: ${order.orderNumber || order.orderId || 'N/A'}`, 150, 28);
+  doc.text(`Date: ${date}`, 150, 35);
+
+  // --- Bill To ---
+  doc.setFont("helvetica", "bold");
+  doc.text("Bill To:", 14, 50);
+  doc.setFont("helvetica", "normal");
+  doc.text(order.shippingAddress?.fullName || order.address?.name || "Customer", 14, 56);
+  doc.text(order.shippingAddress?.city || order.address?.city || '', 14, 62);
+
+  // --- Items (Simple Table) ---
+  let yPos = 75;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("Item", 14, yPos);
+  doc.text("Qty", 80, yPos);
+  doc.text("Price", 110, yPos);
+  doc.text("Subtotal", 150, yPos);
+
+  // --- Draw line ---
+  doc.setDrawColor(150);
+  doc.line(14, yPos + 2, 200, yPos + 2);
+
+  // --- Items rows ---
+  yPos += 8;
+  doc.setFont("helvetica", "normal");
+  const items = order.orderItems?.length > 0 ? order.orderItems : 
+                order.items?.length > 0 ? order.items : 
+                [{ name: "Product", quantity: 1, price: order.totalAmount || 0 }];
+
+  items.forEach((item) => {
+    const itemName = (item.name || item.productName || "Product").substring(0, 40);
+    doc.text(itemName, 14, yPos);
+    doc.text(String(item.quantity || 1), 80, yPos);
+    doc.text(`₹${(item.price || 0).toLocaleString()}`, 110, yPos);
+    doc.text(`₹${((item.price || 0) * (item.quantity || 1)).toLocaleString()}`, 150, yPos);
+    yPos += 7;
+  });
+
+  // --- Total ---
+  doc.setDrawColor(150);
+  doc.line(14, yPos, 200, yPos);
+  yPos += 8;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(`Total: ₹${(order.totalAmount || 0).toLocaleString()}`, 150, yPos);
+
+  // --- Save ---
+  const finalId = order.orderNumber || order.orderId || 'XXXXX';
+  doc.save(`Invoice_${finalId}.pdf`);
+  console.log(`✅ Simple invoice PDF downloaded: Invoice_${finalId}.pdf`);
 };

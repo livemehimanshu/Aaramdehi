@@ -23,6 +23,7 @@ const AddProduct = () => {
     name: '',
     brand: '',
     category: '',
+    subCategory: '',
     sellingPrice: '',
     mrp: '',
     stock: '',
@@ -33,6 +34,7 @@ const AddProduct = () => {
   const [imageFiles, setImageFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
+  const [subCategoriesList, setSubCategoriesList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -44,6 +46,23 @@ const AddProduct = () => {
     };
     fetchCats();
   }, []);
+
+  // Handle category change and update subcategories dynamically
+  const handleCategoryChange = (e) => {
+    const categoryName = e.target.value;
+    
+    // Update category and reset subcategory
+    setFormData(prev => ({ ...prev, category: categoryName, subCategory: '' }));
+
+    // Find the selected category and extract its subcategories
+    const selectedCat = categoriesList.find(cat => cat.name === categoryName);
+
+    if (selectedCat && Array.isArray(selectedCat.subCategories)) {
+      setSubCategoriesList(selectedCat.subCategories);
+    } else {
+      setSubCategoriesList([]);
+    }
+  };
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
@@ -161,9 +180,16 @@ const AddProduct = () => {
             </div>
             <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-gray-500 ml-1">Category *</label>
-                <select value={formData.category} onChange={(e) => setFormData({...formData, category: e.target.value})} className="w-full p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-gray-300 font-bold transition-all appearance-none">
+                <select value={formData.category} onChange={handleCategoryChange} className="w-full p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-gray-300 font-bold transition-all appearance-none">
                     <option value="">Choose Category</option>
                     {categoriesList.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                </select>
+            </div>
+            <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase text-gray-500 ml-1">Sub Category</label>
+                <select value={formData.subCategory} onChange={(e) => setFormData({...formData, subCategory: e.target.value})} disabled={subCategoriesList.length === 0} className="w-full p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-gray-300 font-bold transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed">
+                    <option value="">{subCategoriesList.length === 0 ? "No Sub-categories Available" : "Choose Sub Category"}</option>
+                    {subCategoriesList.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
                 </select>
             </div>
             <input type="number" placeholder="Selling Price (₹) *" value={formData.sellingPrice} onChange={(e) => setFormData({...formData, sellingPrice: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-emerald-400 font-black" />

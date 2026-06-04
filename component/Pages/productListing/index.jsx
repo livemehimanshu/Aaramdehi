@@ -21,7 +21,7 @@ const ProductListing = ({ forcedCategory }) => {
   // --- STATE MANAGEMENT ---
   const [products, setProducts] = useState([]); // Database products
   const [categories, setCategories] = useState([]); // Database categories
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const categoryParam = searchParams.get('category');
   const subCategoryParam = searchParams.get('subCategory');
 
@@ -35,28 +35,7 @@ const ProductListing = ({ forcedCategory }) => {
   const [wishlist, setWishlist] = useState([]); // Wishlist mein jo items hain localStorage se load honge
 
   useEffect(() => {
-    // --- FETCH PRODUCTS FROM DATABASE ---
-    const loadProducts = async () => {
-      try {
-        setLoading(true);
-        const res = await getAllProductsAPI({ limit: 100 }); // Saare products mangwayein
-        
-        // Handle both object with data property and direct array
-        if (res && res.success && Array.isArray(res.data)) {
-          setProducts(res.data);
-          console.log("📦 Products loaded:", res.data);
-        } else if (Array.isArray(res)) {
-          setProducts(res);
-        }
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadProducts();
-
+    // --- FETCH DATA ON MOUNT ---
     // --- FETCH CATEGORIES FROM DATABASE ---
     const loadCategories = async () => {
       try {
@@ -88,13 +67,39 @@ const ProductListing = ({ forcedCategory }) => {
   }, []);
 
   useEffect(() => {
-    if (forcedCategory) setSelectedCategory(forcedCategory);
-    if (categoryParam) setSelectedCategory(categoryParam);
-    if (subCategoryParam) {
-        setSelectedSubCategory(subCategoryParam);
-    } else {
-        setSelectedSubCategory(null);
-    }
+    // --- FETCH PRODUCTS WHEN PARAMS CHANGE ---
+    const loadProducts = async () => {
+      try {
+        setLoading(true);
+        // API को कैटेगरी और सब-कैटेगरी भेजें ताकि सर्वर से ही फिल्टर डेटा आए
+        const res = await getAllProductsAPI({ 
+          category: categoryParam !== 'All' ? categoryParam : undefined,
+          subCategory: subCategoryParam || undefined,
+          limit: 100 
+        });
+        
+        if (res && res.success && Array.isArray(res.data)) {
+          setProducts(res.data);
+        } else if (Array.isArray(res)) {
+          setProducts(res);
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Priority: forcedCategory > categoryParam > 'All'
+    const currentCat = forcedCategory || categoryParam || 'All';
+    const currentSubCat = subCategoryParam || null;
+
+    setSelectedCategory(currentCat);
+    setSelectedSubCategory(currentSubCat);
+    
+    // URL या फिल्टर बदलने पर हमेशा पहले पेज से शुरू करें
+    setPage(1);
+    loadProducts();
   }, [forcedCategory, categoryParam, subCategoryParam]);
 
   // Debugging: Log data whenever it changes
@@ -228,7 +233,7 @@ const ProductListing = ({ forcedCategory }) => {
     if (sortBy === 'newest') data = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
     return data;
-  }, [products, selectedCategory, maxPrice, sortBy, activeFilters]);
+  }, [products, selectedCategory, selectedSubCategory, maxPrice, sortBy, activeFilters]);
 
   // 2. Ab current page ke items nikalo
   const currentItems = useMemo(() => {
@@ -249,7 +254,17 @@ const ProductListing = ({ forcedCategory }) => {
          <Sidebar 
             categories={categories} 
             selectedCategory={selectedCategory}
-            onCategoryChange={(cat) => {setSelectedCategory(cat); setPage(1);}} 
+            onCategoryChange={(cat) => {
+              // साइडबार से कैटेगरी बदलने पर URL अपडेट करें
+              const newParams = new URLSearchParams(searchParams);
+              if (cat === 'All') {
+                newParams.delete('category');
+              } else {
+                newParams.set('category', cat);
+              }
+              newParams.delete('subCategory'); // कैटेगरी बदलते ही सब-कैटेगरी क्लियर करें
+              setSearchParams(newParams);
+            }} 
             onPriceChange={(val) => setMaxPrice(val)} 
             onFilterChange={handleFilterChange}
          />

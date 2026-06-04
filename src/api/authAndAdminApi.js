@@ -299,6 +299,16 @@ export async function deleteCategoryAPI(id) {
   }
 }
 
+export async function updateCategoryAPI(id, categoryData) {
+  try {
+    const res = await api.put(`/categories/${id}`, categoryData);
+    memoryCache.delete('active_categories'); // कैशे साफ़ करें ताकि फ्रंटएंड पर नया डेटा दिखे
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
 export async function createCategoryAPI(categoryData) {
   try {
     const res = await api.post('/categories/create', categoryData);

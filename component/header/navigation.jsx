@@ -12,21 +12,18 @@ const Navigation = ({ categories = [] }) => {
         src={cat.icon} 
         onError={(e) => { e.target.src = "https://placehold.co/40x40?text=📦"; }}
         alt={cat.name} 
-        className="w-full h-full object-cover rounded-xl" />;
+        className="w-full h-full object-cover rounded-xl group-hover:scale-110 transition-transform duration-300" />;
     }
-    return cat.icon || '🎁';
+    return (
+      <span className="group-hover:scale-110 transition-transform duration-300">
+        {cat.icon || '🎁'}
+      </span>
+    );
   };
 
   return (
     <nav className="bg-white border-b shadow-sm hidden lg:block py-2.5 relative">
       <div className="container mx-auto px-10 flex justify-center items-center gap-5 min-w-[900px]">
-        {/* Homepage Special Category */}
-        <Link to="/products" className="flex flex-col items-center group cursor-pointer transition-transform hover:-translate-y-1">
-           <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-100 transition-colors">
-             🎁
-           </div>
-           <span className="mt-2 text-xs font-black text-gray-700 group-hover:text-blue-600 uppercase tracking-tighter">Offers</span>
-        </Link>
 
         {/* Dynamic DB Categories */}
         {categories.map((cat) => (

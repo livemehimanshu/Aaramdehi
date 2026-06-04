@@ -139,9 +139,11 @@ const Header = () => {
             >
               <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100 overflow-hidden">
                 {item.icon?.startsWith('http') ? (
-                  <img src={item.icon} alt={item.name} className="w-full h-full object-cover rounded-xl" />
+                  <img src={item.icon} alt={item.name} className="w-full h-full object-cover rounded-xl group-hover:scale-110 transition-transform duration-300" />
                 ) : (
-                  item.icon || '🎁'
+                  <span className="group-hover:scale-110 transition-transform duration-300">
+                    {item.icon || '🎁'}
+                  </span>
                 )}
               </div>
               <span className="text-[11px] font-black text-gray-600 group-hover:text-blue-600 uppercase tracking-tighter">{item.name}</span>

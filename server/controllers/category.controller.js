@@ -8,13 +8,21 @@ const COLLECTION = 'categories';
 export const getAllCategories = async (req, res) => {
   try {
     const categories = await findAll(COLLECTION);
-    // ✅ Fix: Safe sorting to prevent crash if name is missing
-    categories.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const products = await findAll('products'); // ✅ Fetch products to calculate item counts
+
+    // Map through categories to attach the real-time product count
+    const categoriesWithCount = categories.map(cat => ({
+      ...cat,
+      productCount: products.filter(p => p.category === cat.name).length
+    }));
+
+    // Safe sorting
+    categoriesWithCount.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
     return res.json({
       success: true,
       message: 'Categories fetched successfully',
-      data: categories,
+      data: categoriesWithCount,
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
@@ -30,12 +38,19 @@ export const getAllCategories = async (req, res) => {
 export const getActiveCategories = async (req, res) => {
   try {
     const categories = await findByQuery(COLLECTION, 'isActive', true);
-    // ✅ Fix: Safe sorting to prevent crash if name is missing
-    categories.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+    const products = await findAll('products');
+
+    const activeWithCount = categories.map(cat => ({
+      ...cat,
+      productCount: products.filter(p => p.category === cat.name).length
+    }));
+
+    activeWithCount.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
     return res.json({
       success: true,
       message: 'Active categories fetched successfully',
-      data: categories,
+      data: activeWithCount,
     });
   } catch (error) {
     console.error('Error fetching active categories:', error);
@@ -78,6 +93,11 @@ export const getCategoryById = async (req, res) => {
 // Create a new category
 export const createCategory = async (req, res) => {
   try {
+    // ✅ Fix: Handle cases where req.body might be undefined due to Multer parsing issues
+    if (!req.body) {
+        return res.status(400).json({ success: false, message: "Request body is missing. Ensure you are sending FormData and Multer is correctly configured." });
+    }
+
     const { name, description, isActive, icon, subCategories } = req.body;
     let finalIcon = icon; // डिफ़ॉल्ट रूप से इमोजी
 
@@ -123,6 +143,11 @@ export const createCategory = async (req, res) => {
 export const updateCategoryController = async (req, res) => {
   try {
     const { id } = req.params;
+    // ✅ Fix: Defensive check for req.body in update controller as well
+    if (!req.body) {
+        return res.status(400).json({ success: false, message: "Update payload missing. Ensure multi-part parsing is active." });
+    }
+
     const { name, description, isActive, icon, subCategories } = req.body;
 
     const category = await findById(COLLECTION, id);
@@ -144,6 +169,13 @@ export const updateCategoryController = async (req, res) => {
     }
 
     if (name) {
+      // ✅ Ensure the updated name is unique (excluding current category)
+      if (name.toLowerCase() !== category.name.toLowerCase()) {
+        const existing = await findByQuery(COLLECTION, 'name', name);
+        if (existing.length > 0) {
+          return res.status(409).json({ success: false, message: 'Category name already exists' });
+        }
+      }
       updateData.name = name;
       updateData.slug = slugify(name, { lower: true, strict: true });
     }
@@ -151,7 +183,14 @@ export const updateCategoryController = async (req, res) => {
     if (isActive !== undefined) updateData.isActive = isActive === 'true' || isActive === true;
     
     if (subCategories !== undefined) {
-      updateData.subCategories = typeof subCategories === 'string' ? subCategories.split(',').map(s => s.trim()).filter(Boolean) : [];
+      // ✅ Robust parsing: handle both comma-separated string and direct array
+      if (typeof subCategories === 'string') {
+        updateData.subCategories = subCategories.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (Array.isArray(subCategories)) {
+        updateData.subCategories = subCategories.filter(Boolean);
+      } else {
+        updateData.subCategories = [];
+      }
     }
 
     const updatedCategory = await updateById(COLLECTION, id, updateData);

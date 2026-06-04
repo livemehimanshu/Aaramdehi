@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Tags, Plus, Search, Trash2, Edit2, Loader2, AlertCircle, CheckCircle, Layers, Upload, X } from 'lucide-react';
-import { getAllCategoriesAPI, createCategoryAPI, deleteCategoryAPI } from '../../../src/api/authAndAdminApi';
+import { getAllCategoriesAPI, createCategoryAPI, deleteCategoryAPI, updateCategoryAPI } from '../../../src/api/authAndAdminApi';
 import imageCompression from 'browser-image-compression';
 
 const Categories = () => {
@@ -13,6 +13,7 @@ const Categories = () => {
     const [showAddForm, setShowAddForm] = useState(false);
     const [preview, setPreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
+    const [editingId, setEditingId] = useState(null);
     
     const [newCategory, setNewCategory] = useState({
         name: '',
@@ -100,13 +101,17 @@ const Categories = () => {
                 data.append('image', imageFile);
             }
 
-            const res = await createCategoryAPI(data);
+            const res = editingId 
+                ? await updateCategoryAPI(editingId, data)
+                : await createCategoryAPI(data);
+
             if (res.success) {
-                setMessage({ type: 'success', text: 'Category added successfully!' });
+                setMessage({ type: 'success', text: editingId ? 'Category updated successfully!' : 'Category added successfully!' });
                 setNewCategory({ name: '', icon: '', description: '', subCategories: '', isActive: true });
                 setPreview(null);
                 setImageFile(null);
                 setShowAddForm(false);
+                setEditingId(null);
                 fetchCategories();
             }
         } catch (error) {
@@ -129,6 +134,20 @@ const Categories = () => {
         }
     };
 
+    const handleEdit = (cat) => {
+        setNewCategory({
+            name: cat.name,
+            description: cat.description || '',
+            subCategories: Array.isArray(cat.subCategories) ? cat.subCategories.join(', ') : '',
+            isActive: cat.isActive,
+            icon: cat.icon || ''
+        });
+        setPreview(cat.icon && cat.icon.startsWith('http') ? cat.icon : null);
+        setEditingId(cat._id);
+        setShowAddForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const filteredCategories = categories.filter(cat => 
         cat.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -142,11 +161,14 @@ const Categories = () => {
                     </h1>
                     <p className="text-slate-400 text-xs mt-1">Organize your products into collections</p>
                 </div>
-                <button 
-                    onClick={() => setShowAddForm(!showAddForm)}
+                <button
+                    onClick={() => {
+                        setShowAddForm(!showAddForm);
+                        if (showAddForm) setEditingId(null);
+                    }}
                     className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20"
                 >
-                    {showAddForm ? <Trash2 size={18} /> : <Plus size={18} />}
+                    {showAddForm ? <X size={18} /> : <Plus size={18} />}
                     {showAddForm ? 'Cancel' : 'New Category'}
                 </button>
             </div>
@@ -161,7 +183,14 @@ const Categories = () => {
             )}
 
             {showAddForm && (
-                <form onSubmit={handleAddCategory} className="mb-8 bg-gray-900 border border-gray-800 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <form onSubmit={handleAddCategory} className="mb-8 bg-gray-900 border border-gray-800 p-6 rounded-2xl">
+                    <div className="mb-4 flex items-center gap-2 border-b border-gray-800 pb-2">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <h2 className="text-sm font-bold text-white uppercase tracking-wider">
+                            {editingId ? 'Edit Category' : 'Create New Category'}
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div className="space-y-2">
                         <label className="text-[10px] font-black uppercase text-slate-500">Category Name</label>
                         <input 
@@ -217,8 +246,9 @@ const Categories = () => {
                         type="submit" disabled={submitting}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-sm disabled:bg-gray-800"
                     >
-                        {submitting ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Create Category'}
+                        {submitting ? <Loader2 className="animate-spin mx-auto" size={20} /> : (editingId ? 'Update Category' : 'Create Category')}
                     </button>
+                    </div>
                 </form>
             )}
 
@@ -277,6 +307,9 @@ const Categories = () => {
                                     </td>
                                     <td className="p-5 text-right">
                                         <div className="flex justify-end gap-2">
+                                            <button onClick={() => handleEdit(cat)} className="p-2 bg-gray-800 rounded-lg text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all">
+                                                <Edit2 size={16} />
+                                            </button>
                                             <button onClick={() => handleDelete(cat._id)} className="p-2 bg-gray-800 rounded-lg text-rose-400 hover:bg-rose-500 hover:text-white transition-all">
                                                 <Trash2 size={16} />
                                             </button>

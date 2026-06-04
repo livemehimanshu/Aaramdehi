@@ -6,6 +6,11 @@ const COLLECTION = 'products';
 // ✅ 1. CREATE NEW PRODUCT
 export const createProduct = async (req, res) => {
     try {
+        // ✅ Defensive check: Ensure req.body exists after Multer parsing
+        if (!req.body || Object.keys(req.body).length === 0) {
+            return res.status(400).json({ success: false, message: "Request body is empty. Check your FormData and Multer configuration." });
+        }
+
         const { 
             name, brand, description, shortDescription, category, subCategory, 
             tags, mrp, sellingPrice, discountPercent, stock, sku, 
@@ -197,6 +202,11 @@ export const getProductById = async (req, res) => {
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // ✅ Defensive check for updates
+        if (!req.body) {
+            return res.status(400).json({ success: false, message: "No data provided for update." });
+        }
         
         // ✅ सुरक्षा (Sanitization): '...rest' के बजाय सभी फील्ड्स को स्पष्ट रूप से निकालें
         // इससे यूजर 'role' या 'createdBy' जैसे संवेदनशील फील्ड्स को अपडेट नहीं कर पाएगा

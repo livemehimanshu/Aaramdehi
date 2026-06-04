@@ -134,8 +134,6 @@ export const createProduct = async (req, res) => {
 };
 
 // ✅ 2. GET ALL PRODUCTS (Search & Filter)
-// ✅ 2. GET ALL PRODUCTS (Search & Filter)
-// ✅ GET ALL PRODUCTS (Updated logic to show all data to Admin)
 export const getAllProducts = async (req, res) => {
     try {
         const { category, subCategory, page, limit, search, sort = "-createdAt" } = req.query;
@@ -158,8 +156,8 @@ export const getAllProducts = async (req, res) => {
         if (search && search !== "" && search !== "undefined") {
             const searchLower = search.toLowerCase();
             products = products.filter(prod => 
-                prod.name.toLowerCase().includes(searchLower) || 
-                prod.brand.toLowerCase().includes(searchLower)
+                (prod.name || "").toLowerCase().includes(searchLower) || 
+                (prod.brand || "").toLowerCase().includes(searchLower)
             );
         }
 
@@ -196,11 +194,15 @@ export const getAllProducts = async (req, res) => {
 // ✅ 3. GET SINGLE PRODUCT
 export const getProductById = async (req, res) => {
     try {
-        const product = await findById(COLLECTION, req.params.id);
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ success: false, message: "ID is required" });
+
+        const product = await findById(COLLECTION, id);
         if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
         return res.json({ success: true, data: product });
     } catch (error) {
+        console.error(`❌ Error fetching product [${req.params.id}]:`, error);
         return res.status(500).json({ success: false, error: error.message });
     }
 };

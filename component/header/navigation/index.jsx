@@ -44,27 +44,24 @@ const Navbar = ({ categories = [] }) => {
                 categories.map((cat, index) => {
                   if (!cat.name) return null;
                   return (
-                    <li key={index} className='list-none py-4 group relative'>
+                    <li key={index} className='list-none py-2 group relative'>
                       <div className="flex flex-col items-center cursor-pointer">
                         <Link to={`/products?category=${cat.name}`} className="flex flex-col items-center">
-                          <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center group-hover:bg-blue-50 transition-all border border-transparent group-hover:border-blue-100 mb-1">
+                          <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 transition-all border border-transparent group-hover:border-blue-100 group-hover:shadow-sm">
                             {getIcon(cat)}
                           </div>
-                          <Button className='!text-black group-hover:!text-blue-600 !capitalize font-bold text-[11px] !min-w-0 !p-0 flex items-center gap-1'>
-                            {cat.name}
-                            {cat.subCategories?.length > 0 && <IoIosArrowDown size={10} className="group-hover:rotate-180 transition-transform" />}
-                          </Button>
                         </Link>
                       </div>
 
                       {/* ✅ Sub-Category Dropdown on Hover */}
                       {cat.subCategories?.length > 0 && (
-                        <div className="absolute top-[80%] left-0 pt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                          <div className="bg-white shadow-xl border border-gray-100 rounded-lg p-3 min-w-[200px]">
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                          <div className="bg-white shadow-2xl border border-gray-100 rounded-xl p-4 min-w-[180px]">
+                            <div className="text-[10px] font-black uppercase text-gray-400 mb-2 border-b pb-1">{cat.name}</div>
                             <ul className="flex flex-col gap-1">
                               {cat.subCategories.map((sub, sIdx) => (
                                 <li key={sIdx}>
-                                  <Link to={`/products?category=${sub}`} className="text-[13px] text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md block transition-all font-medium">
+                                  <Link to={`/products?category=${sub}`} className="text-[12px] text-gray-600 hover:text-blue-600 hover:bg-blue-50 px-2 py-1.5 rounded-md block transition-all font-bold uppercase">
                                     {sub}
                                   </Link>
                                 </li>

@@ -36,10 +36,6 @@ const Navigation = ({ categories = [] }) => {
               <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100">
                 {getIcon(cat)}
               </div>
-              <span className="mt-2 text-xs font-black text-gray-700 flex items-center gap-1 group-hover:text-blue-600 uppercase tracking-tighter">
-                {cat.name} 
-                {cat.subCategories?.length > 0 && <ChevronDown size={12} className="group-hover:rotate-180 transition-transform" />}
-              </span>
             </Link>
             
             {/* Dropdown for Subcategories (Flipkart Style) */}

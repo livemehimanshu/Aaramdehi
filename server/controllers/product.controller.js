@@ -221,6 +221,11 @@ export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
 
+        if (!id) {
+            console.error("❌ updateProduct called without id", req.params);
+            return res.status(400).json({ success: false, message: "Product ID is required" });
+        }
+
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({ success: false, message: "Update payload missing. Ensure you are sending FormData." });
         }
@@ -252,8 +257,11 @@ export const updateProduct = async (req, res) => {
         if (tags) {
             updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
         }
-        if (seoKeywords) {
-            updateData.seoKeywords = (typeof seoKeywords === 'string' && seoKeywords.trim()) ? seoKeywords.split(',').map(k => k.trim()) : seoKeywords;
+        const searchKeywordsRaw = req.body.seoKeywords || req.body.searchKeywords;
+        if (searchKeywordsRaw) {
+            updateData.seoKeywords = (typeof searchKeywordsRaw === 'string' && searchKeywordsRaw.trim()) 
+                ? searchKeywordsRaw.replace(/\[|\]|"/g, '').split(',').map(k => k.trim()).filter(Boolean)
+                : searchKeywordsRaw;
         }
         if (specifications && typeof specifications === 'string' && specifications.startsWith('{')) {
             updateData.specifications = JSON.parse(specifications);
@@ -261,16 +269,20 @@ export const updateProduct = async (req, res) => {
 
         // ✅ Image Merging Logic: Handle images the user wants to keep.
         let finalImages = [];
-        const hasExistingImagesField = req.body.existingImages !== undefined;
+        const hasExistingImages = req.body.existingImages !== undefined;
+        const hasExistingImagesField = hasExistingImages;
         
         if (hasExistingImagesField) {
             try {
                 finalImages = typeof req.body.existingImages === 'string' ? JSON.parse(req.body.existingImages) : req.body.existingImages;
                 if (!Array.isArray(finalImages)) finalImages = [];
-            } catch (e) { console.error("❌ Error parsing existingImages:", e); }
+            } catch (e) {
+                console.error("❌ Error parsing existingImages:", e);
+                finalImages = [];
+            }
         }
 
-        console.log("📂 Update incoming files:", { hasFiles: !!req.files, hasFile: !!req.file });
+        console.log("📂 Update incoming files:", { hasFiles: !!req.files, hasFile: !!req.file, hasExistingImages: hasExistingImagesField });
         
         const filesToUpload = req.files 
             ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat()) 
@@ -284,8 +296,8 @@ export const updateProduct = async (req, res) => {
                     continue;
                 }
 
-            // ✅ Standardized folder path
-            const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
+                // ✅ Standardized folder path
+                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
                 if (uploadResult && uploadResult.success) {
                     finalImages.push({ 
                         url: uploadResult.url, 
@@ -299,9 +311,11 @@ export const updateProduct = async (req, res) => {
         }
 
         // Only update image array if user sent existing set or uploaded new files
-        if (hasExistingImages || filesToUpload.length > 0) {
+        if (hasExistingImagesField || filesToUpload.length > 0) {
             updateData.images = finalImages;
-            updateData.thumbnail = finalImages.length > 0 ? finalImages[0].url : updateData.thumbnail;
+            if (finalImages.length > 0) {
+                updateData.thumbnail = finalImages[0].url;
+            }
         }
 
         const updatedProduct = await updateById(COLLECTION, id, updateData);
@@ -321,7 +335,8 @@ export const updateProduct = async (req, res) => {
 
         return res.json({ success: true, message: "Updated successfully", data: updatedProduct });
     } catch (error) {
-        return res.status(500).json({ success: false, error: error.message });
+        console.error(`❌ Error updating product [${req.params.id}]:`, error);
+        return res.status(500).json({ success: false, message: "Internal server error while updating product", error: error.message });
     }
 };
 

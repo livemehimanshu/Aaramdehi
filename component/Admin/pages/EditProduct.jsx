@@ -28,6 +28,7 @@ const EditProduct = () => {
     
     const [categoriesList, setCategoriesList] = useState([]);
     const [subCategoriesList, setSubCategoriesList] = useState([]);
+    const [existingImages, setExistingImages] = useState([]); // Preserve old images
     const [selectedFiles, setSelectedFiles] = useState([]); // ✅ Store actual File objects
     const [previews, setPreviews] = useState([]); // Images preview ke liye
 
@@ -74,7 +75,9 @@ const EditProduct = () => {
                         specifications: JSON.stringify(p.specifications || {}, null, 2)
                     });
                     if (p.images) {
-                        setPreviews(p.images.map(img => img.url || img));
+                        const previewUrls = p.images.map(img => img.url || img);
+                        setPreviews(previewUrls);
+                        setExistingImages(Array.isArray(p.images) ? p.images : []);
                     }
                 }
             } catch (error) {
@@ -170,7 +173,10 @@ const EditProduct = () => {
             formData.append(key, productData[key]);
         });
 
-        formData.append('searchKeywords', JSON.stringify(updatedKeywords)); // 🔥 Array as string for FormData
+        formData.append('seoKeywords', JSON.stringify(updatedKeywords)); // backend expects seoKeywords
+        if (existingImages.length > 0) {
+            formData.append('existingImages', JSON.stringify(existingImages));
+        }
 
         // Backend 'images' (plural) expect karta hai
         selectedFiles.forEach(file => {

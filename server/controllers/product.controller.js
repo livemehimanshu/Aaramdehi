@@ -137,27 +137,30 @@ export const createProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
     try {
         const { category, subCategory, page, limit, search, sort = "-createdAt" } = req.query;
+        console.log("🔎 getAllProducts params:", { category, subCategory, page, limit, search, sort });
         
         const p = Number(page) || 1;
         const l = Number(limit) || 10;
         const skip = (p - 1) * l;
 
-        let products;
+        let products = [];
         // ✅ Optimization: Use native Firebase query for category or subCategory
         if (subCategory && subCategory !== "" && subCategory !== "undefined") {
             products = await findByQuery(COLLECTION, 'subCategory', subCategory);
         } else if (category && category !== "" && category !== "undefined") {
             products = await findByQuery(COLLECTION, 'category', category);
         } else {
-            products = (await findAll(COLLECTION)) || [];
+            products = await findAll(COLLECTION) || [];
         }
+
+        products = Array.isArray(products) ? products : [];
 
         // ✅ Search by name or brand (client-side search)
         if (search && search !== "" && search !== "undefined") {
-            const searchLower = search.toLowerCase();
+            const searchLower = String(search).toLowerCase();
             products = products.filter(prod => 
-                (prod.name || "").toLowerCase().includes(searchLower) || 
-                (prod.brand || "").toLowerCase().includes(searchLower)
+                String(prod.name || "").toLowerCase().includes(searchLower) || 
+                String(prod.brand || "").toLowerCase().includes(searchLower)
             );
         }
 
@@ -195,15 +198,21 @@ export const getAllProducts = async (req, res) => {
 export const getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!id) return res.status(400).json({ success: false, message: "ID is required" });
+        if (!id) {
+            console.error("❌ getProductById called without id", req.params);
+            return res.status(400).json({ success: false, message: "ID is required" });
+        }
 
         const product = await findById(COLLECTION, id);
-        if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+        if (!product) {
+            console.warn(`⚠️ Product not found for ID [${id}]`);
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
 
         return res.json({ success: true, data: product });
     } catch (error) {
         console.error(`❌ Error fetching product [${req.params.id}]:`, error);
-        return res.status(500).json({ success: false, error: error.message });
+        return res.status(500).json({ success: false, message: "Internal server error while fetching product", error: error.message });
     }
 };
 

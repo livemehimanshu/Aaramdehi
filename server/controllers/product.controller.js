@@ -404,60 +404,6 @@ export const deleteProductReview = async (req, res) => {
     }
 };
 
-// ✅ 4.5 ADD PRODUCT REVIEW
-export const addProductReview = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { rating, comment } = req.body;
-        const userId = req.userId || req.user?._id;
-        const userName = req.user?.name || "Customer";
-
-        if (!rating || !comment) {
-            return res.status(400).json({ success: false, message: "Rating and comment are required" });
-        }
-
-        const product = await findById(COLLECTION, id);
-        if (!product) return res.status(404).json({ success: false, message: "Product not found" });
-
-        const reviews = Array.isArray(product.reviews) ? product.reviews : [];
-        
-        // ✅ Prevent multiple reviews from same user
-        const alreadyReviewed = reviews.find(r => String(r.userId) === String(userId));
-        if (alreadyReviewed) {
-            return res.status(400).json({ success: false, message: "You have already reviewed this product." });
-        }
-
-        const review = {
-            userId,
-            name: userName,
-            rating: Number(rating),
-            comment,
-            createdAt: new Date().toISOString()
-        };
-
-        reviews.push(review);
-
-        // ✅ Recalculate average rating
-        const ratingsCount = reviews.length;
-        const avgRating = reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount;
-
-        const updateData = {
-            reviews,
-            ratings: {
-                average: parseFloat(avgRating.toFixed(1)),
-                count: ratingsCount
-            }
-        };
-
-        await updateById(COLLECTION, id, updateData);
-
-        return res.status(201).json({ success: true, message: "Review added successfully", data: review });
-    } catch (error) {
-        console.error("❌ Review Error:", error);
-        return res.status(500).json({ success: false, message: error.message });
-    }
-};
-
 // ✅ 4.6 TOGGLE PRODUCT STATUS (Visibility)
 export const toggleProductStatus = async (req, res) => {
     try {

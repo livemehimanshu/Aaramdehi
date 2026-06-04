@@ -32,12 +32,50 @@ export const createOrder = async (req, res) => {
 
         const userId = req.userId || req.user?._id || req.user?.id;
         const cleanShopId = shopId ? String(shopId._id || shopId.id || shopId) : null;
-        const finalAmount = Number(totalAmount) || Number(req.body.totalPrice) || 0;
-        const orderId = db.ref(COLLECTION).push().key; // Pre-generate ID for atomic update
         const timestamp = new Date().toISOString();
         
         // Atomic Updates Object
         const updates = {};
+
+        // ✅ SECURITY FIX: Calculate backend-side prices (prevents IDOR/Parameter Tampering)
+        let calculatedItemsPrice = 0;
+        const validatedOrderItems = [];
+
+        // Fetch and validate products with actual prices from database
+        for (const item of orderItems) {
+            const productId = item.product || item.productId;
+            const product = await findById(PRODUCT_COLLECTION, productId);
+            
+            if (!product) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: `Product with ID ${productId} not found.` 
+                });
+            }
+
+            // ✅ Use actual product price from database (prevents price manipulation)
+            const actualPrice = Number(product.sellingPrice || product.price || 0);
+            const quantity = Number(item.quantity) || 1;
+            const itemTotal = actualPrice * quantity;
+            
+            calculatedItemsPrice += itemTotal;
+
+            validatedOrderItems.push({
+                ...item,
+                price: actualPrice,  // Store verified backend price
+                quantity: quantity
+            });
+
+            // C. Reduce Inventory Stock in Firebase (from original logic)
+            updates[`${PRODUCT_COLLECTION}/${productId}/stock`] = Math.max(0, (Number(product.stock || 0)) - quantity);
+        }
+
+        // ✅ Calculate final amount with backend-validated prices
+        const backendShippingPrice = Number(shippingPrice) || 0;
+        const backendDiscountAmount = Number(discountAmount) || 0;
+        const finalAmount = Math.max(0, calculatedItemsPrice + backendShippingPrice - backendDiscountAmount);
+
+        const orderId = db.ref(COLLECTION).push().key;
 
         // A. Handle Coupon Usage Update in Firebase
         if (couponCode) {
@@ -65,26 +103,17 @@ export const createOrder = async (req, res) => {
             }
         }
 
-        // C. Reduce Inventory Stock in Firebase
-        for (const item of orderItems) {
-            const productId = item.product || item.productId;
-            const product = await findById(PRODUCT_COLLECTION, productId);
-            if (product) {
-                updates[`${PRODUCT_COLLECTION}/${productId}/stock`] = Math.max(0, (Number(product.stock || 0)) - Number(item.quantity));
-            }
-        }
-
-        // D. Save Order to Firebase
+        // D. Save Order to Firebase (using validated backend-calculated amounts)
         updates[`${COLLECTION}/${orderId}`] = {
-            orderItems,
+            orderItems: validatedOrderItems,  // Use validated items with backend prices
             shippingAddress,
             paymentMethod,
             paymentStatus: (paymentMethod === 'COD' || paymentMethod === 'Shop Credit') ? 'Pending' : 'Completed',
             orderStatus: 'Processing',
-            itemsPrice: Number(itemsPrice) || 0,
-            shippingPrice: Number(shippingPrice) || 0,
-            discountAmount: Number(discountAmount) || 0,
-            totalAmount: finalAmount,
+            itemsPrice: calculatedItemsPrice,  // Backend-calculated
+            shippingPrice: backendShippingPrice,
+            discountAmount: backendDiscountAmount,
+            totalAmount: finalAmount,  // Backend-calculated
             paymentInfo: paymentInfo || { id: "na", status: "created" },
             userId: userId || null,
             shopId: cleanShopId,
@@ -122,7 +151,6 @@ export const createOrder = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
-
 // 2. Get Logged-In User Orders
 export const getMyOrders = async (req, res) => {
     try {

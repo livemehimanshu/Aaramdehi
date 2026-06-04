@@ -311,7 +311,8 @@ export async function updateCategoryAPI(id, categoryData) {
 
 export async function createCategoryAPI(categoryData) {
   try {
-    const res = await api.post('/categories/create', categoryData);
+    // ✅ Standardized REST path to match backend router and fix 500/404 errors
+    const res = await api.post('/categories', categoryData);
     memoryCache.delete('active_categories'); // ✅ नई कैटेगरी बनने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {

@@ -18,6 +18,7 @@ const Categories = () => {
         name: '',
         icon: '',
         description: '',
+        subCategories: '', // ✅ सब-कैटेगरी के लिए नई स्टेट
         isActive: true
     });
 
@@ -87,8 +88,14 @@ const Categories = () => {
             data.append('description', newCategory.description);
             data.append('isActive', newCategory.isActive);
             
+            // ✅ सब-कैटेगरीज को स्ट्रिंग के रूप में भेजें (कोमा से अलग)
+            if (newCategory.subCategories) {
+                data.append('subCategories', newCategory.subCategories);
+            }
+
             if (imageFile) {
-                data.append('icon', imageFile); // Image file send karein
+                // ✅ 500 एरर को ठीक करने के लिए 'icon' की जगह 'image' की (Key) का उपयोग करें
+                data.append('image', imageFile); 
             } else {
                 data.append('icon', newCategory.icon); // Emoji support fallback
             }
@@ -96,7 +103,7 @@ const Categories = () => {
             const res = await createCategoryAPI(data);
             if (res.success) {
                 setMessage({ type: 'success', text: 'Category added successfully!' });
-                setNewCategory({ name: '', icon: '', description: '', isActive: true });
+                setNewCategory({ name: '', icon: '', description: '', subCategories: '', isActive: true });
                 setPreview(null);
                 setImageFile(null);
                 setShowAddForm(false);
@@ -197,6 +204,15 @@ const Categories = () => {
                             placeholder="Brief details..."
                         />
                     </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-slate-500">Sub Categories (Comma Separated)</label>
+                        <input 
+                            type="text" value={newCategory.subCategories}
+                            onChange={(e) => setNewCategory({...newCategory, subCategories: e.target.value})}
+                            className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 outline-none transition-all"
+                            placeholder="e.g. Pillows, Cushions, Covers"
+                        />
+                    </div>
                     <button 
                         type="submit" disabled={submitting}
                         className="bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-sm disabled:bg-gray-800"
@@ -225,6 +241,7 @@ const Categories = () => {
                                 <th className="p-5 w-20">Icon</th>
                                 <th className="p-5">Name</th>
                                 <th className="p-5">Slug</th>
+                                <th className="p-5">Sub Categories</th>
                                 <th className="p-5">Products</th>
                                 <th className="p-5">Status</th>
                                 <th className="p-5 text-right">Actions</th>
@@ -244,6 +261,13 @@ const Categories = () => {
                                     </td>
                                     <td className="p-5 font-bold text-white text-sm">{cat.name}</td>
                                     <td className="p-5 text-slate-500 text-xs font-mono">{cat.slug || '/'+cat.name.toLowerCase()}</td>
+                                    <td className="p-5">
+                                        <div className="flex flex-wrap gap-1">
+                                            {cat.subCategories?.map((sub, i) => (
+                                                <span key={i} className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter">{sub}</span>
+                                            ))}
+                                        </div>
+                                    </td>
                                     <td className="p-5 text-emerald-400 font-bold text-sm">{cat.productCount || 0} Items</td>
                                     <td className="p-5">
                                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${cat.isActive ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-500'}`}>

@@ -84,17 +84,20 @@ const Categories = () => {
         setSubmitting(true);
         try {
             const data = new FormData();
-            data.append('name', newCategory.name);
-            data.append('description', newCategory.description);
+            data.append('name', newCategory.name || "");
+            data.append('description', newCategory.description || "");
             data.append('isActive', newCategory.isActive);
             
             // ✅ Always send subCategories (even if empty) to prevent backend .split() crashes
             data.append('subCategories', newCategory.subCategories || "");
 
+            // ✅ Separation of concerns: 'icon' field for the emoji string, 'image' field for the file.
+            // Multer expects a file stream in the 'image' field. Sending a string there 
+            // can cause the body parser to fail entirely, leading to the 500 error.
+            data.append('icon', newCategory.icon || "");
+            
             if (imageFile) {
-                data.append('image', imageFile); // ✅ Standardized to 'image' to match backend Multer config
-            } else if (newCategory.icon) {
-                data.append('icon', newCategory.icon);
+                data.append('image', imageFile);
             }
 
             const res = await createCategoryAPI(data);
@@ -250,10 +253,11 @@ const Categories = () => {
                             ) : filteredCategories.map((cat) => (
                                 <tr key={cat._id} className="hover:bg-gray-800/20 transition-colors group">
                                     <td className="p-5 text-2xl">
-                                        {cat.icon?.startsWith('http') ? (
-                                            <img src={cat.icon} alt={cat.name} className="w-10 h-10 object-contain rounded-lg" />
+                                        {/* ✅ Support both 'image' and 'icon' fields for visual consistency */}
+                                        {(cat.image || cat.icon)?.startsWith('http') ? (
+                                            <img src={cat.image || cat.icon} alt={cat.name} className="w-10 h-10 object-contain rounded-lg" />
                                         ) : (
-                                            cat.icon || '🎁'
+                                            cat.icon || cat.image || '🎁'
                                         )}
                                     </td>
                                     <td className="p-5 font-bold text-white text-sm">{cat.name}</td>

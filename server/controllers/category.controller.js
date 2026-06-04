@@ -78,7 +78,7 @@ export const getCategoryById = async (req, res) => {
 // Create a new category
 export const createCategory = async (req, res) => {
   try {
-    const { name, description, isActive, icon } = req.body;
+    const { name, description, isActive, icon, subCategories } = req.body;
     let finalIcon = icon; // डिफ़ॉल्ट रूप से इमोजी
 
     if (!name) {
@@ -106,6 +106,8 @@ export const createCategory = async (req, res) => {
       slug: slugify(name, { lower: true, strict: true }),
       description,
       icon: finalIcon,
+      // ✅ Convert comma-separated string from frontend into a clean Array
+      subCategories: typeof subCategories === 'string' ? subCategories.split(',').map(s => s.trim()).filter(Boolean) : [],
       isActive: isActive === 'true' || isActive === true,
     };
 
@@ -121,7 +123,7 @@ export const createCategory = async (req, res) => {
 export const updateCategoryController = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description, isActive, icon } = req.body;
+    const { name, description, isActive, icon, subCategories } = req.body;
 
     const category = await findById(COLLECTION, id);
     if (!category) {
@@ -147,6 +149,10 @@ export const updateCategoryController = async (req, res) => {
     }
     if (description !== undefined) updateData.description = description;
     if (isActive !== undefined) updateData.isActive = isActive === 'true' || isActive === true;
+    
+    if (subCategories !== undefined) {
+      updateData.subCategories = typeof subCategories === 'string' ? subCategories.split(',').map(s => s.trim()).filter(Boolean) : [];
+    }
 
     const updatedCategory = await updateById(COLLECTION, id, updateData);
     return res.json({ success: true, message: 'Category updated successfully', data: updatedCategory });

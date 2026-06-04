@@ -22,17 +22,19 @@ const ProductListing = ({ forcedCategory }) => {
   const [products, setProducts] = useState([]); // Database products
   const [categories, setCategories] = useState([]); // Database categories
   const [searchParams, setSearchParams] = useSearchParams();
+  
+  // ✅ READ PARAMS FROM URL DYNAMICALLY
   const categoryParam = searchParams.get('category');
   const subCategoryParam = searchParams.get('subCategory');
 
-  const [selectedCategory, setSelectedCategory] = useState(forcedCategory || categoryParam || 'All'); // Category filter state
+  const [selectedCategory, setSelectedCategory] = useState(forcedCategory || categoryParam || 'All');
   const [selectedSubCategory, setSelectedSubCategory] = useState(subCategoryParam || null);
   const [activeFilters, setActiveFilters] = useState({ brands: [], rating: 0, inStock: false });
-  const [loading, setLoading] = useState(true); // Loading state
-  const [maxPrice, setMaxPrice] = useState(1000000); // Max price filter (Increased to 10 Lakhs)
-  const [sortBy, setSortBy] = useState('relevance'); // Sorting option
-  const [page, setPage] = useState(1); // Current page number
-  const [wishlist, setWishlist] = useState([]); // Wishlist mein jo items hain localStorage se load honge
+  const [loading, setLoading] = useState(true);
+  const [maxPrice, setMaxPrice] = useState(1000000);
+  const [sortBy, setSortBy] = useState('relevance');
+  const [page, setPage] = useState(1);
+  const [wishlist, setWishlist] = useState([]);
 
   useEffect(() => {
     // --- FETCH DATA ON MOUNT ---
@@ -67,40 +69,45 @@ const ProductListing = ({ forcedCategory }) => {
   }, []);
 
   useEffect(() => {
-    // --- FETCH PRODUCTS WHEN PARAMS CHANGE ---
+    // --- FETCH PRODUCTS WHEN URL PARAMS CHANGE ---
     const loadProducts = async () => {
       try {
         setLoading(true);
-        // API को कैटेगरी और सब-कैटेगरी भेजें ताकि सर्वर से ही फिल्टर डेटा आए
+        const currentCategory = forcedCategory || categoryParam || 'All';
+        const currentSubCategory = subCategoryParam || undefined;
+
+        // Update UI states based on current params
+        setSelectedCategory(currentCategory);
+        setSelectedSubCategory(currentSubCategory);
+        setPage(1); // Reset to first page
+
+        // ✅ IMPROVED API CALL: Only send params if they're not 'All'
         const res = await getAllProductsAPI({ 
-          category: categoryParam !== 'All' ? categoryParam : undefined,
-          subCategory: subCategoryParam || undefined,
+          category: currentCategory !== 'All' ? currentCategory : undefined,
+          subCategory: currentSubCategory,
           limit: 100 
         });
+
+        console.log(`✅ Products fetched for Category: ${currentCategory}, SubCategory: ${currentSubCategory}`, res);
         
         if (res && res.success && Array.isArray(res.data)) {
           setProducts(res.data);
         } else if (Array.isArray(res)) {
           setProducts(res);
+        } else {
+          console.warn("Unexpected API response structure:", res);
+          setProducts([]);
         }
       } catch (error) {
         console.error("Failed to fetch products:", error);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
-    // Priority: forcedCategory > categoryParam > 'All'
-    const currentCat = forcedCategory || categoryParam || 'All';
-    const currentSubCat = subCategoryParam || null;
-
-    setSelectedCategory(currentCat);
-    setSelectedSubCategory(currentSubCat);
-    
-    // URL या फिल्टर बदलने पर हमेशा पहले पेज से शुरू करें
-    setPage(1);
     loadProducts();
-  }, [forcedCategory, categoryParam, subCategoryParam]);
+  }, [forcedCategory, categoryParam, subCategoryParam, searchParams]);
 
   // Debugging: Log data whenever it changes
   useEffect(() => {

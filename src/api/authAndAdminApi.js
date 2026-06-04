@@ -7,9 +7,12 @@ const memoryCache = new Map();
 
 export async function getAllProductsAPI(params = {}) {
   try {
+    console.log('🔍 Fetching products with params:', params); // ✅ DEBUG LOG
     const res = await api.get('/products', { params });
+    console.log('✅ Products API Response:', res.data); // ✅ DEBUG LOG
     return res.data;
   } catch (e) {
+    console.error('❌ Products API Error:', e);
     return { success: false, data: [] }
   }
 }

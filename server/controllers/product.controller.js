@@ -64,8 +64,8 @@ export const createProduct = async (req, res) => {
                     continue;
                 }
 
-                // ✅ Corrected: Added 'products' folder name to utility call
-                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads");
+                // ✅ Suggestion: Use a specific subfolder for products
+                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
                 
                 if (uploadResult && uploadResult.success) {
                     images.push({
@@ -84,6 +84,9 @@ export const createProduct = async (req, res) => {
             }
         }
 
+        const mrpNum = Number(mrp);
+        const sellingPriceNum = Number(sellingPrice);
+
         const productData = {
             name,
             brand,
@@ -92,9 +95,10 @@ export const createProduct = async (req, res) => {
             category,
             subCategory: subCategory || "",
             tags: (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : [],
-            mrp: Number(mrp),
-            sellingPrice: Number(sellingPrice),
-            discountPercent: Number(discountPercent) || 0,
+            mrp: mrpNum,
+            sellingPrice: sellingPriceNum,
+            // Auto-calculate discount if percent isn't explicitly sent
+            discountPercent: Number(discountPercent) || Math.round(((mrpNum - sellingPriceNum) / mrpNum) * 100),
             stock: Number(stock),
                 sku: sku || `SKU-${Date.now()}-${slug.slice(0,5)}`,
             images,
@@ -257,8 +261,8 @@ export const updateProduct = async (req, res) => {
                     continue;
                 }
 
-            // ✅ Fix: Standardized to 'Aaramdehi_Uploads' folder
-            const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads");
+            // ✅ Standardized folder path
+            const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
                 if (uploadResult && uploadResult.success) {
                     newImages.push({ 
                         url: uploadResult.url, 

@@ -12,7 +12,7 @@ const Navigation = ({ categories = [] }) => {
         src={cat.icon} 
         onError={(e) => { e.target.src = "https://placehold.co/40x40?text=📦"; }}
         alt={cat.name} 
-        className="w-8 h-8 object-contain" />;
+        className="w-10 h-10 object-contain" />;
     }
     return cat.icon || '🎁';
   };
@@ -22,7 +22,7 @@ const Navigation = ({ categories = [] }) => {
       <div className="container mx-auto px-10 flex justify-center items-center gap-5 min-w-[900px]">
         {/* Homepage Special Category */}
         <Link to="/products" className="flex flex-col items-center group cursor-pointer transition-transform hover:-translate-y-1">
-           <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-100 transition-colors">
+           <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-100 transition-colors">
              🎁
            </div>
            <span className="mt-2 text-xs font-black text-gray-700 group-hover:text-blue-600 uppercase tracking-tighter">Offers</span>
@@ -33,7 +33,7 @@ const Navigation = ({ categories = [] }) => {
           /* Safe key handling agar _id missing ho */
           <div key={cat._id || cat.id || cat.name} className="group relative flex flex-col items-center cursor-pointer">
             <Link to={`/products?category=${cat.name}`} className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100">
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100">
                 {getIcon(cat)}
               </div>
             </Link>

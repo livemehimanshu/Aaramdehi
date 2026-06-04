@@ -137,9 +137,9 @@ const Header = () => {
                 key={index} 
                 className="flex flex-col items-center group cursor-pointer space-y-2 shrink-0 transition-transform hover:-translate-y-1"
             >
-              <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-lg group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100">
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100">
                 {item.icon?.startsWith('http') ? (
-                  <img src={item.icon} alt={item.name} className="w-7 h-7 object-contain" />
+                  <img src={item.icon} alt={item.name} className="w-9 h-9 object-contain" />
                 ) : (
                   item.icon || '🎁'
                 )}

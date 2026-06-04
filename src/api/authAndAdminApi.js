@@ -311,8 +311,8 @@ export async function updateCategoryAPI(id, categoryData) {
 
 export async function createCategoryAPI(categoryData) {
   try {
-    // ✅ Standardized REST path to match backend router and fix 500/404 errors
-    const res = await api.post('/categories', categoryData);
+    // 🔙 Reverting to /create because the backend router is specifically listening there
+    const res = await api.post('/categories/create', categoryData);
     memoryCache.delete('active_categories'); // ✅ नई कैटेगरी बनने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Sidebar from '../../sidebar/index.jsx'; 
 import Pagination from '@mui/material/Pagination';
 import Stack from '@mui/material/Stack';
@@ -21,7 +21,12 @@ const ProductListing = ({ forcedCategory }) => {
   // --- STATE MANAGEMENT ---
   const [products, setProducts] = useState([]); // Database products
   const [categories, setCategories] = useState([]); // Database categories
-  const [selectedCategory, setSelectedCategory] = useState(forcedCategory || 'All'); // Category filter state
+  const [searchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+  const subCategoryParam = searchParams.get('subCategory');
+
+  const [selectedCategory, setSelectedCategory] = useState(forcedCategory || categoryParam || 'All'); // Category filter state
+  const [selectedSubCategory, setSelectedSubCategory] = useState(subCategoryParam || null);
   const [activeFilters, setActiveFilters] = useState({ brands: [], rating: 0, inStock: false });
   const [loading, setLoading] = useState(true); // Loading state
   const [maxPrice, setMaxPrice] = useState(1000000); // Max price filter (Increased to 10 Lakhs)
@@ -84,7 +89,13 @@ const ProductListing = ({ forcedCategory }) => {
 
   useEffect(() => {
     if (forcedCategory) setSelectedCategory(forcedCategory);
-  }, [forcedCategory]);
+    if (categoryParam) setSelectedCategory(categoryParam);
+    if (subCategoryParam) {
+        setSelectedSubCategory(subCategoryParam);
+    } else {
+        setSelectedSubCategory(null);
+    }
+  }, [forcedCategory, categoryParam, subCategoryParam]);
 
   // Debugging: Log data whenever it changes
   useEffect(() => {
@@ -194,7 +205,15 @@ const ProductListing = ({ forcedCategory }) => {
     }
 
     // ✅ Improved Filtering: 'All' ko skip karein aur strings ko trim/lowercase match karein
-    if (selectedCategory && selectedCategory !== 'All') {
+    // ✅ Sub-Category Filter (High Priority)
+    if (selectedSubCategory) {
+      data = data.filter(product => {
+        const subCatName = String(product.subCategory || "");
+        return subCatName.trim().toLowerCase() === selectedSubCategory.trim().toLowerCase();
+      });
+    } 
+    // ✅ Main Category Filter
+    else if (selectedCategory && selectedCategory !== 'All') {
       data = data.filter(product => {
         const catName = typeof product.category === 'object' ? product.category?.name : String(product.category);
         return catName?.trim().toLowerCase() === selectedCategory.trim().toLowerCase();

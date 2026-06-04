@@ -317,11 +317,11 @@ export default function ShopsPage() {
             if (response.success) {
                 setSelectedProducts([]);
                 setShowOrderModal(false);
-                const orderNum = response.data.data.orderNumber || 'New Order';
+                const orderNum = response.data.orderNumber || 'New Order';
                 alert(`Order created successfully! Order #${orderNum}`);
                 
                 // ✅ Trigger Automatic WhatsApp Notification
-                sendWhatsAppOrderConfirmation(selectedShop, response.data.data, subtotal);
+                sendWhatsAppOrderConfirmation(selectedShop, response.data, subtotal);
 
                 // Refresh shops list
                 fetchShops();

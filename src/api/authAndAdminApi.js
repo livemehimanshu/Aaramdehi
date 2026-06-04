@@ -290,7 +290,8 @@ export async function getAllCouponsAPI() {
 
 export async function deleteCategoryAPI(id) {
   try {
-    const res = await api.delete(`/categories/delete/${id}`);
+    // ✅ Standardized REST path to match backend router and resolve 404 error
+    const res = await api.delete(`/categories/${id}`);
     memoryCache.delete('active_categories'); // ✅ कैटेगरी डिलीट होने पर कैशे साफ़ करें
     return res.data;
   } catch (e) {

@@ -22,10 +22,16 @@ const RoomProductsPage = () => {
                 // Agar room meta mil jaye toh theek, warna hum slug ko hi category maangenge
                 setRoom(foundRoom || { name: slug.replace(/-/g, ' '), categorySlug: slug });
 
-                // 2. Fetch Products for this Category
-                // Room metadata mein 'categorySlug' hota hai jo products filter karne mein kaam aata hai
-                const categoryToFilter = foundRoom ? foundRoom.categorySlug : slug;
-                const productsRes = await getAllProductsAPI({ category: categoryToFilter, limit: 50 });
+                let productsRes;
+                // ✅ New Logic: Check if specific products are curated for this room
+                if (foundRoom && foundRoom.products && foundRoom.products.length > 0) {
+                    // Fetch only those specific products selected in Admin
+                    productsRes = await getAllProductsAPI({ ids: foundRoom.products.join(','), limit: 100 });
+                } else {
+                    // Fallback: Fetch products by category if no specific products are linked
+                    const categoryToFilter = foundRoom ? foundRoom.categorySlug : slug;
+                    productsRes = await getAllProductsAPI({ category: categoryToFilter, limit: 50 });
+                }
                 
                 setProducts(productsRes.data || []);
             } catch (err) {

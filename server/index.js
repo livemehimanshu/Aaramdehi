@@ -88,6 +88,7 @@ apiRouter.use("/analytics", analyticsRouter);
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/refunds", refundRouter);
 apiRouter.use("/settings", settingsRouter);
+apiRouter.use("/rooms", roomRouter);
 apiRouter.use("/team", teamRouter);
 
 app.use("/api", apiRouter);

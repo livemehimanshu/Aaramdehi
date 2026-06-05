@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllRoomsAPI } from '../../../src/api/authAndAdminApi';
+import { FiPlus, FiArrowRight } from 'react-icons/fi';
 
 const RoomSection = () => {
     const [rooms, setRooms] = useState([]);
@@ -18,27 +19,41 @@ const RoomSection = () => {
     if (rooms.length === 0) return null;
 
     return (
-        <section className="container mx-auto px-4 py-16">
-            <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-5xl font-black text-blue-900 uppercase tracking-tighter">Shop by Room</h2>
-                <p className="text-gray-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-2">Find the perfect comfort for every corner</p>
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-20">
+            <div className="text-center mb-16">
+                <span className="text-[10px] uppercase tracking-[0.4em] font-black text-blue-600 block mb-3">Curated Spaces</span>
+                <h2 className="text-3xl md:text-4xl font-serif text-[#1A365D] tracking-tight">Shop by Room</h2>
+                <p className="text-gray-500 text-sm mt-3 font-medium tracking-wide">Discover furniture and decor for every corner of your home</p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                 {rooms.map((room) => (
-                    <Link key={room._id} to={`/shop-by-room/${room.slug}`} className="group relative overflow-hidden rounded-[40px] aspect-[4/5] shadow-xl">
+                    <Link key={room._id} to={`/shop-by-room/${room.slug}`} className="group block text-center">
+                        <div className="relative overflow-hidden rounded-[40px] aspect-square shadow-sm group-hover:shadow-2xl transition-all duration-700 mb-6">
                         <img 
-                            src={room.image || 'https://placehold.co/600x800'} 
-                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                            src={room.image || 'https://placehold.co/600x600'} 
+                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                             alt={room.name} 
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-blue-900/80 via-transparent to-transparent opacity-60 group-hover:opacity-90 transition-opacity" />
-                        <div className="absolute bottom-10 left-10 text-white">
-                            <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">{room.name}</h3>
-                            <span className="inline-block bg-white text-blue-900 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all">
-                                Explore Room
-                            </span>
+                        
+                        {/* Floating Icon Badge */}
+                        <div className="absolute top-6 right-6 w-12 h-12 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg border border-white/50 group-hover:bg-[#1a365d] group-hover:text-white transition-all duration-500 z-10">
+                            <FiPlus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
                         </div>
+
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1a365d]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                        
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-700 translate-y-4 group-hover:translate-y-0">
+                            <div className="bg-white text-[#1a365d] p-4 rounded-full shadow-xl">
+                                <FiArrowRight size={24} />
+                            </div>
+                        </div>
+                        </div>
+                        
+                        <h3 className="text-lg font-serif text-gray-800 group-hover:text-[#1a365d] transition-colors duration-300 tracking-tight">
+                            {room.name}
+                        </h3>
+                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1 group-hover:text-blue-600 transition-colors">Explore Collection</p>
                     </Link>
                 ))}
             </div>

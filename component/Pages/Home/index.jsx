@@ -3,7 +3,6 @@ import Header from '../../header/index.jsx';
 import HomeBanner from '../../banneradds/HomeBanner.jsx';
 import PopularProducts from '../../slider/PopularProducts.jsx';
 import LatestProducts from '../../slider/LatestProducts.jsx';
-import MultiItemCards from '../../Pages/productListing/MultiItemCards.jsx';
 import ShopByRoom from '../../Pages/productListing/ShopByRoom.jsx';
 
 import AaramdehiAdBanner from '../../header/AaramdehiAdBanner.jsx';
@@ -27,14 +26,7 @@ const Home = () => {
         <AaramdehiAdBanner />
       </section>
 
-      {/* 4. Multi-Item Cards with Premium Layout */}
-      <section className="py-12 bg-white border-t-2 border-b-2 border-gray-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <MultiItemCards />
-        </div>
-      </section>
-
-      {/* 5. Shop by Room Premium Section */}
+      {/* 4. Shop by Room Premium Section */}
       <section className="py-16 bg-gradient-to-b from-white to-[#FAF9F6]">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-serif text-center text-[#1A365D] mb-2 tracking-tight">Shop by Room</h2>
@@ -50,11 +42,11 @@ const Home = () => {
             <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 block mb-2">Top Collections</span>
             <h2 className="text-3xl md:text-4xl font-serif text-[#1A365D] tracking-tight">Best Sellers in Home Decor</h2>
           </div>
-          <PopularProducts />
+      {/* 5. Best Sellers Premium Section */}
         </div>
       </section>
 
-      {/* 7. Recently Viewed Premium Section */}
+      {/* 6. Recently Viewed Premium Section */}
       <section className="py-16 bg-gradient-to-b from-[#FAF9F6] to-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl font-serif text-center text-[#1A365D] mb-12 tracking-tight">Your Recent Favorites</h2>
@@ -62,12 +54,12 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 8. Seasonal Offers Banner */}
+      {/* 7. Seasonal Offers Banner */}
       <section className="py-6 bg-[#FAF9F6]">
         <HomeBanner section="seasonal" />
       </section>
 
-      {/* 9. Latest Products Premium Section */}
+      {/* 8. Latest Products Premium Section */}
       <section className="py-16 bg-white border-t-2 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
           <div className="mb-12 text-center">
@@ -78,12 +70,12 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 10. Promotional Banner */}
+      {/* 9. Promotional Banner */}
       <section className="py-6 bg-gradient-to-r from-[#1A365D] to-[#2a4365]">
         <HomeBanner section="promotional" />
       </section>
 
-      {/* 11. Premium CTA Footer Section */}
+      {/* 10. Premium CTA Footer Section */}
       <section className="py-20 bg-white text-center border-t border-gray-100">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-serif text-[#1A365D] mb-4 tracking-tight">Experience Premium Comfort</h2>

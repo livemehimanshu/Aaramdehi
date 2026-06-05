@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../../src/utils/authUtils';
+import { getAllRoomsAPI } from '../../../src/api/authAndAdminApi';
 
 const RoomSection = () => {
     const [rooms, setRooms] = useState([]);
 
     useEffect(() => {
         const fetchRooms = async () => {
-            try {
-                const res = await api.get('/room'); 
-                if (res.data.success) setRooms(res.data.data);
-            } catch (err) { console.error(err); }
+            const res = await getAllRoomsAPI();
+            if (res?.success) {
+                setRooms(res.data);
+            }
         };
         fetchRooms();
     }, []);

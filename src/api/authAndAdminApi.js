@@ -417,7 +417,7 @@ export async function getAdminStatsAPI() {
 export async function getAllRoomsAPI() {
   try {
     if (memoryCache.has('all_rooms')) return memoryCache.get('all_rooms');
-    const res = await api.get('/room');
+    const res = await api.get('/rooms');
     const data = res.data;
     memoryCache.set('all_rooms', data);
     return data;
@@ -428,7 +428,7 @@ export async function getAllRoomsAPI() {
 
 export async function createRoomAPI(roomData) {
   try {
-    const res = await api.post('/room/create', roomData);
+    const res = await api.post('/rooms/create', roomData);
     memoryCache.delete('all_rooms'); // ✅ नया रूम बनाने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {
@@ -438,7 +438,7 @@ export async function createRoomAPI(roomData) {
 
 export async function deleteRoomAPI(id) {
   try {
-    const res = await api.delete(`/room/${id}`);
+    const res = await api.delete(`/rooms/${id}`);
     memoryCache.delete('all_rooms'); // ✅ रूम डिलीट करने के बाद कैशे क्लियर करें
     return res.data;
   } catch (e) {

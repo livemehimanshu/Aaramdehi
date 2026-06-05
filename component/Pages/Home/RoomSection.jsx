@@ -8,7 +8,7 @@ const RoomSection = () => {
     useEffect(() => {
         const fetchRooms = async () => {
             try {
-                const res = await api.get('/room');
+                const res = await api.get('/rooms');
                 if (res.data.success) setRooms(res.data.data);
             } catch (err) { console.error(err); }
         };

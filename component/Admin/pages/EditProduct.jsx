@@ -127,7 +127,7 @@ const EditProduct = () => {
         try {
             for (const file of files) {
                 const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1000 });
-                const webpFile = await convertToWebP(compressedFile); // ✅ Convert to WebP
+                const webpFile = await convertToWebP(compressedFile); 
                 
                 compressedFiles.push(webpFile);
                 previewUrls.push(URL.createObjectURL(webpFile));
@@ -142,19 +142,26 @@ const EditProduct = () => {
         }
     };
 
-    // ✅ WebP conversion utility (copy from AddProduct.jsx)
     const convertToWebP = (file) => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             const img = new Image();
-            img.src = URL.createObjectURL(file);
+            const objectUrl = URL.createObjectURL(file);
+            img.src = objectUrl;
+            
             img.onload = () => {
                 const canvas = document.createElement('canvas');
                 canvas.width = img.width;
                 canvas.height = img.height;
                 canvas.getContext('2d').drawImage(img, 0, 0);
                 canvas.toBlob((blob) => {
+                    URL.revokeObjectURL(objectUrl); // ✅ Memory management
                     resolve(new File([blob], file.name.split('.')[0] + '.webp', { type: 'image/webp' }));
                 }, 'image/webp', 0.8);
+            };
+
+            img.onerror = (err) => {
+                URL.revokeObjectURL(objectUrl);
+                reject(err);
             };
         });
     };

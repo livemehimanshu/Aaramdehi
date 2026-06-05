@@ -9,6 +9,7 @@ import {
   deleteRoomAPI,
   getAllCategoriesAPI 
 } from '../../../src/api/authAndAdminApi';
+import imageCompression from 'browser-image-compression'; // ✅ Image handling ke liye
 import toast from 'react-hot-toast';
 
 const Rooms = () => {
@@ -28,6 +29,21 @@ const Rooms = () => {
   });
   const [imagePreview, setImagePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false); // ✅ Processing state
+
+  // ✅ SEO Keyword Generator (EditProduct ki tarah)
+  const STOPWORDS = ["is", "the", "a", "an", "and", "for", "ke", "liye", "mujhe", "chahiye", "ko", "par", "ek", "hai", "mein", "this", "that", "with"];
+  
+  const createSearchKeywords = (title, description) => {
+    if (!title || !description) return [];
+    // HTML tags remove karein aur lowercase karein
+    const plainText = description.replace(/<[^>]*>/g, ' ');
+    const combinedText = `${title} ${plainText}`.toLowerCase();
+    
+    const cleanWords = combinedText.replace(/[^\w\s]/g, ' ').split(/\s+/);
+    
+    return [...new Set(cleanWords.filter(word => word.length > 2 && !STOPWORDS.includes(word)))];
+  };
 
   useEffect(() => {
     fetchData();
@@ -68,14 +84,58 @@ const Rooms = () => {
     setImagePreview(null);
   };
 
+  // ✅ Robust Image Selection & WebP Conversion
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImageProcessing(true);
+    try {
+      // 1. Compress Image
+      const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200 });
+      // 2. Convert to WebP
+      const webpFile = await convertToWebP(compressedFile);
+      
+      setFormData({ ...formData, image: webpFile });
+      setImagePreview(URL.createObjectURL(webpFile));
+      toast.success("Image processed successfully!");
+    } catch (err) {
+      console.error("Processing error:", err);
+      toast.error("Failed to process image");
+    } finally {
+      setImageProcessing(false);
+    }
+  };
+
+  const convertToWebP = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(new File([blob], file.name.split('.')[0] + '.webp', { type: 'image/webp' }));
+        }, 'image/webp', 0.8);
+      };
+      img.onerror = (err) => { URL.revokeObjectURL(objectUrl); reject(err); };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.categorySlug) return toast.error("Name and Category Link are required");
 
+    const updatedKeywords = createSearchKeywords(formData.name, formData.description);
+
     const data = new FormData();
-    data.append('name', formData.name);
+    data.append('name', formData.name.trim());
     data.append('categorySlug', formData.categorySlug);
     data.append('description', formData.description);
+    data.append('seoKeywords', JSON.stringify(updatedKeywords)); // ✅ Match SEO logic
     if (formData.image) data.append('image', formData.image);
 
     try {
@@ -189,21 +249,20 @@ const Rooms = () => {
                   <label className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.2em] ml-1">Room Image</label>
                   <div className="relative group">
                     <div className={`w-full h-48 rounded-[32px] border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden ${imagePreview ? 'border-solid border-white/10' : 'border-white/5 bg-zinc-900/50 hover:border-white/20'}`}>
-                      {imagePreview ? (
-                        <img src={imagePreview} className="w-full h-full object-cover" alt="preview" />
+                      {imageProcessing ? (
+                        <Loader2 className="animate-spin text-emerald-500" size={32} />
+                      ) : imagePreview ? (
+                        <img src={imagePreview} className="w-full h-full object-cover p-2 rounded-[32px]" alt="preview" />
                       ) : (
                         <><FiImage size={32} className="text-zinc-700 mb-2" /><p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Click to upload</p></>
                       )}
-                      <input type="file" onChange={(e) => {
-                         const file = e.target.files[0];
-                         if (file) { setFormData({...formData, image: file}); setImagePreview(URL.createObjectURL(file)); }
-                      }} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                      <input type="file" disabled={imageProcessing} onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
                     </div>
                   </div>
                 </div>
                 
-                <button type="submit" disabled={isSubmitting} className="w-full bg-emerald-500 text-black py-5 rounded-[24px] font-black uppercase tracking-[0.2em] text-xs hover:bg-emerald-400 active:scale-[0.98] transition-all disabled:bg-zinc-900 disabled:text-zinc-700 shadow-2xl shadow-emerald-500/10">
-                  {isSubmitting ? 'Syncing...' : editingRoom ? 'Update Room' : 'Create Room'}
+                <button type="submit" disabled={isSubmitting || imageProcessing} className="w-full bg-emerald-500 text-black py-5 rounded-[24px] font-black uppercase tracking-[0.2em] text-xs hover:bg-emerald-400 active:scale-[0.98] transition-all disabled:bg-zinc-900 disabled:text-zinc-700 shadow-2xl shadow-emerald-500/10">
+                  {isSubmitting ? 'Syncing...' : imageProcessing ? 'Processing Image...' : editingRoom ? 'Update Room' : 'Create Room'}
                 </button>
              </form>
           </div>

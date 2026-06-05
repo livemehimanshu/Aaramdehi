@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getAllRoomsAPI, getAllProductsAPI } from '../../../src/api/authAndAdminApi';
+import { getAllRoomsAPI, getAllProductsAPI, getAllCategoriesAPI } from '../../../src/api/authAndAdminApi';
 import ProductCard from '../../slider/ProductCard';
 import { FiChevronRight, FiGrid, FiInfo } from 'react-icons/fi';
 import { Loader2 } from 'lucide-react';
@@ -15,21 +15,39 @@ const RoomProductsPage = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // 1. Try to fetch Room Metadata
-                const roomsRes = await getAllRoomsAPI();
+                // 1. Fetch Room Metadata and Categories simultaneously
+                const [roomsRes, catsRes] = await Promise.all([
+                    getAllRoomsAPI(),
+                    getAllCategoriesAPI()
+                ]);
+
                 const foundRoom = roomsRes.data?.find(r => r.slug === slug);
                 
                 // Agar room meta mil jaye toh theek, warna hum slug ko hi category maangenge
                 setRoom(foundRoom || { name: slug.replace(/-/g, ' '), categorySlug: slug });
 
+                // ✅ Parse curated products safely (handles both Array and JSON string from DB)
+                let productIds = foundRoom?.products || [];
+                if (typeof productIds === 'string') {
+                    try { productIds = JSON.parse(productIds); } catch (e) { productIds = []; }
+                }
+
                 let productsRes;
                 // ✅ New Logic: Check if specific products are curated for this room
-                if (foundRoom && foundRoom.products && foundRoom.products.length > 0) {
+                if (productIds.length > 0) {
                     // Fetch only those specific products selected in Admin
-                    productsRes = await getAllProductsAPI({ ids: foundRoom.products.join(','), limit: 100 });
+                    productsRes = await getAllProductsAPI({ ids: productIds.join(','), limit: 100 });
                 } else {
-                    // Fallback: Fetch products by category if no specific products are linked
-                    const categoryToFilter = foundRoom ? foundRoom.categorySlug : slug;
+                    // ✅ SMART FALLBACK: Resolve Slug to actual Category Name
+                    // Kyunki products "Living Room" name se store hote hain, "living-room" slug se nahi.
+                    const targetSlug = foundRoom ? foundRoom.categorySlug : slug;
+                    const categoryObj = catsRes.data?.find(c => c.slug === targetSlug);
+                    
+                    // Agar category name mil jaye toh use karein (Living Room), warna slug (living-room)
+                    const categoryToFilter = categoryObj ? categoryObj.name : targetSlug;
+
+                    console.log(`🔍 Room Fallback Fetch: Mapping slug "${targetSlug}" to name "${categoryToFilter}"`);
+                    
                     productsRes = await getAllProductsAPI({ category: categoryToFilter, limit: 50 });
                 }
                 

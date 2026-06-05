@@ -110,41 +110,41 @@ const Rooms = () => {
   const filteredRooms = rooms.filter(room => room.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div className="p-6 bg-[#0a0a0a] min-h-screen text-zinc-100">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="p-6 bg-black min-h-screen text-white">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
         <div>
-          <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Room Management</h1>
-          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Homepage Content Editor</p>
+          <h1 className="text-3xl font-black text-white uppercase tracking-tighter italic">Room Management</h1>
+          <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] mt-1">Homepage Content Editor</p>
         </div>
-        <button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit">
+        <button onClick={() => handleOpenModal()} className="bg-white text-black hover:bg-zinc-200 px-8 py-4 rounded-2xl font-black flex items-center gap-2 shadow-2xl active:scale-95 transition-all w-fit uppercase text-[11px] tracking-widest">
           <FiPlus size={20} /> Add New Room
         </button>
       </div>
 
-      <div className="bg-[#141414] p-4 rounded-2xl border border-zinc-800 shadow-sm mb-6 flex items-center">
+      <div className="bg-zinc-900/30 p-6 rounded-[32px] border border-white/5 shadow-2xl mb-10 flex items-center backdrop-blur-md">
         <div className="relative flex-1 max-w-md">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-600" />
           <input type="text" placeholder="Search rooms..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-zinc-900 rounded-xl border border-zinc-800 focus:border-blue-500 transition-all text-sm font-medium outline-none text-white" />
+            className="w-full pl-14 pr-6 py-4 bg-black rounded-2xl border border-white/10 focus:border-white/30 transition-all text-sm font-medium outline-none text-white" />
         </div>
       </div>
 
       {loading ? (
-        <div className="bg-[#141414] rounded-3xl h-64 flex items-center justify-center border border-zinc-800 animate-pulse text-zinc-600 font-bold uppercase">Loading Rooms...</div>
+        <div className="bg-zinc-900/20 rounded-[40px] h-64 flex items-center justify-center border border-white/5 animate-pulse text-zinc-700 font-black uppercase tracking-widest text-xs">Syncing Room Data...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRooms.map((room) => (
-            <div key={room._id} className="bg-[#141414] rounded-3xl border border-zinc-800 shadow-sm overflow-hidden group hover:shadow-xl hover:border-zinc-700 transition-all duration-500">
-              <div className="relative aspect-[16/10] overflow-hidden">
-                <img src={room.image || 'https://placehold.co/600x400'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={room.name} />
+            <div key={room._id} className="bg-zinc-900/40 rounded-[40px] border border-white/5 shadow-2xl overflow-hidden group hover:border-white/20 transition-all duration-500 flex flex-col">
+              <div className="relative aspect-[16/10] overflow-hidden bg-zinc-800">
+                <img src={room.image || 'https://placehold.co/600x400?text=No+Image'} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 opacity-80 group-hover:opacity-100" alt={room.name} />
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <button onClick={() => handleOpenModal(room)} className="p-2.5 bg-black/60 backdrop-blur-md rounded-full text-white shadow-sm hover:bg-blue-600 transition-all border border-white/10"><FiEdit2 size={16} /></button>
-                  <button onClick={() => handleDelete(room._id)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-full text-rose-500 shadow-sm hover:bg-rose-500 hover:text-white transition-all"><FiTrash2 size={16} /></button>
+                  <button onClick={() => handleOpenModal(room)} className="p-3 bg-black/40 backdrop-blur-xl rounded-full text-white border border-white/10 hover:bg-white hover:text-black transition-all shadow-xl"><FiEdit2 size={14} /></button>
+                  <button onClick={() => handleDelete(room._id)} className="p-3 bg-black/40 backdrop-blur-xl rounded-full text-rose-500 border border-white/10 hover:bg-rose-500 hover:text-white transition-all shadow-xl"><FiTrash2 size={14} /></button>
                 </div>
               </div>
-              <div className="p-6">
-                <h3 className="text-lg font-black uppercase tracking-tighter text-white mb-1">{room.name}</h3>
-                <div className="flex items-center gap-2 text-[10px] text-blue-400 font-black bg-blue-500/10 w-fit px-3 py-1.5 rounded-full mb-3 uppercase border border-blue-500/20">
+              <div className="p-8 flex-1">
+                <h3 className="text-xl font-black uppercase tracking-tighter text-white mb-1">{room.name}</h3>
+                <div className="flex items-center gap-2 text-[9px] text-emerald-400 font-black bg-emerald-500/5 w-fit px-3 py-1.5 rounded-full mb-4 uppercase border border-emerald-500/10">
                   <FiExternalLink /> {room.categorySlug}
                 </div>
                 <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed">{room.description || "No description."}</p>

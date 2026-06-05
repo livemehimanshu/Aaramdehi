@@ -29,7 +29,7 @@ const RoomSection = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                 {rooms.map((room) => (
                     <Link key={room._id} to={`/shop-by-room/${room.slug}`} className="group block text-center">
-                        <div className="relative overflow-hidden rounded-[40px] aspect-square shadow-sm group-hover:shadow-2xl transition-all duration-700 mb-6">
+                        <div className="relative overflow-hidden rounded-full aspect-square shadow-sm group-hover:shadow-2xl transition-all duration-700 mb-6">
                         <img 
                             src={room.image || 'https://placehold.co/600x600'} 
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
@@ -37,7 +37,7 @@ const RoomSection = () => {
                         />
                         
                         {/* Floating Icon Badge */}
-                        <div className="absolute top-6 right-6 w-12 h-12 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg border border-white/50 group-hover:bg-[#1a365d] group-hover:text-white transition-all duration-500 z-10">
+                        <div className="absolute top-6 right-6 w-12 h-12 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-lg border border-white/50 group-hover:bg-[#1a365d] group-hover:text-white transition-all duration-500 z-10">
                             <FiPlus size={20} className="group-hover:rotate-90 transition-transform duration-500" />
                         </div>
 

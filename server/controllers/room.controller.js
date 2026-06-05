@@ -85,7 +85,7 @@ export const getRoomBySlug = async (req, res) => {
         const rooms = (await findAll(COLLECTION)) || [];
         const room = rooms.find(r => String(r.slug) === String(slug));
         
-        if (!room) return res.status(404).json({ success: false, message: "Room not found" });
+        if (!room) return res.json({ success: false, message: "Room metadata not found, falling back to category listing" });
         return res.json({ success: true, data: room });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });

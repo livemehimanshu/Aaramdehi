@@ -16,7 +16,7 @@ import Sidebar from '../component/sidebar/Sidebar.jsx'
 import Home from '../component/Pages/Home/index.jsx'
 import ProductListing from '../component/Pages/productListing/index.jsx'
 import ProductDetailsPage from '../component/Pages/productpage/ProductDetailsPage.jsx'
-import ShopByRoomDetails from '../component/Pages/productListing/ShopByRoomDetails.jsx'
+import RoomProductsPage from '../component/Pages/productListing/RoomProductsPage.jsx'
 import ComparePage from '../component/Pages/ComparePage/index.jsx'
 import { BlogList, BlogDetail } from '../component/Pages/blog/blog.jsx'
 
@@ -161,7 +161,7 @@ function AppContent() {
               <Route path="/product" element={<ProductListing/>}/>
               <Route path="/products" element={<ProductListing/>}/>
               <Route path="/product/:id" element={<ProductDetailsPage />} />
-              <Route path="/shop-by-room/:slug" element={<ShopByRoomDetails />} />
+              <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
               <Route path="/compare" element={<ComparePage />} />
               <Route path="/login" element={<AuthPage />} /> 
               <Route path="/register" element={<AuthPage />} />

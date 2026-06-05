@@ -291,16 +291,16 @@ const Header = ({ hideNav = false }) => {
         </div>
 
         {/* --- MAIN HEADER --- */}
-        <div className="header py-3 md:py-4 border-b border-gray-100">
-          <div className="container mx-auto px-4 flex items-center justify-between gap-3 md:gap-4">
+        <div className="header py-2 md:py-4 border-b border-gray-100">
+          <div className="container mx-auto px-2 md:px-4 flex items-center justify-between gap-2 md:gap-4">
             
             {/* Mobile Hamburger Menu Icon */}
             <div className="md:hidden flex-shrink-0">
               <button 
                 onClick={() => setIsSidebarOpen(true)} 
-                className="p-1 text-gray-700 hover:text-blue-900 transition-colors"
+                className="p-1.5 text-gray-700 hover:text-blue-900 transition-colors"
               >
-                <IoMenuOutline size={30} />
+                <IoMenuOutline size={26} />
               </button>
             </div>
 
@@ -314,8 +314,8 @@ const Header = ({ hideNav = false }) => {
                     alt="Aaramdehi" 
                     className="h-8 md:h-10 object-contain" />
                 ) : (
-                  <div className="flex flex-col">
-                    <h1 className="text-xl md:text-2xl font-black uppercase tracking-tighter leading-none text-gray-800">Aaramdehi</h1>
+                  <div className="flex flex-col -space-y-0.5">
+                    <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter leading-none text-gray-800">Aaramdehi</h1>
                     <p className="text-[7px] md:text-[8px] font-bold tracking-[2px] md:tracking-[3px] text-gray-400 uppercase">Comfort Redefined</p>
                   </div>
                 )}
@@ -328,7 +328,7 @@ const Header = ({ hideNav = false }) => {
             </div>
 
             {/* Icons & Auth */}
-            <div className="flex items-center gap-1 md:gap-4 relative">
+            <div className="flex items-center gap-0.5 md:gap-4 relative">
               
               {/* Auth - show text on sm+; collapse on mobile */}
               {!user ? (
@@ -389,18 +389,18 @@ const Header = ({ hideNav = false }) => {
               )}
 
               {/* Mobile login/profile icon (visible on small screens) */}
-              <div className="md:hidden ml-2">
+              <div className="md:hidden">
                 {user ? (
                   <button onClick={() => setIsSidebarOpen(true)} className='p-1'>
                     {user.avatar ? (
-                      <img src={user.avatar} onError={(e)=>{e.target.src = "https://placehold.co/32x32?text=👤"}} alt="Profile" className='w-7 h-7 rounded-full object-cover' />
+                      <img src={user.avatar} onError={(e)=>{e.target.src = "https://placehold.co/32x32?text=👤"}} alt="Profile" className='w-6 h-6 rounded-full object-cover' />
                     ) : (
-                      <IoPersonOutline size={20} className='text-gray-700' />
+                      <IoPersonOutline size={22} className='text-gray-700' />
                     )}
                   </button>
                 ) : (
-                  <Link to="/login" className='p-1 inline-flex items-center'>
-                    <IoPersonOutline size={20} className='text-gray-700' />
+                  <Link to="/login" className='p-1.5 inline-flex items-center'>
+                    <IoPersonOutline size={22} className='text-gray-700' />
                   </Link>
                 )}
               </div>
@@ -410,16 +410,16 @@ const Header = ({ hideNav = false }) => {
                 {/* Compare */}
                 <Tooltip title="Compare">
                   <Link to="/compare" className='!p-1.5 md:!p-2 hidden md:flex items-center justify-center'>
-                    <StyledBadge badgeContent={compareCount} color="error">
-                      <IoIosGitCompare size={22} className='text-gray-700' />
+                    <StyledBadge badgeContent={compareCount} color="error" overlap="circular">
+                      <IoIosGitCompare size={20} className='text-gray-700' />
                     </StyledBadge>
                   </Link>
                 </Tooltip>
 
                 {/* Mobile Search Toggle */}
                 <div className="sm:hidden">
-                  <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="p-2">
-                    <IoSearchOutline size={20} className='text-gray-700' />
+                  <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="p-1.5">
+                    <IoSearchOutline size={22} className='text-gray-700' />
                   </button>
                 </div>
 
@@ -429,8 +429,8 @@ const Header = ({ hideNav = false }) => {
                     className='!p-1.5 md:!p-2' 
                     onClick={toggleWishlistDrawer} // Wishlist Drawer Open logic
                   >
-                    <StyledBadge badgeContent={wishlistCount} color="error">
-                      <CiHeart size={24} />
+                    <StyledBadge badgeContent={wishlistCount} color="error" overlap="circular">
+                      <CiHeart size={26} />
                     </StyledBadge>
                   </IconButton>
                 </Tooltip>
@@ -441,8 +441,8 @@ const Header = ({ hideNav = false }) => {
                     className='!p-1.5 md:!p-2'
                     onClick={toggleCartDrawer} // Drawer Open logic
                   >
-                    <StyledBadge badgeContent={cartCount} color="error">
-                      <IoCartOutline size={24} />
+                    <StyledBadge badgeContent={cartCount} color="error" overlap="circular">
+                      <IoCartOutline size={26} />
                     </StyledBadge>
                   </IconButton>
                 </Tooltip>

@@ -63,18 +63,6 @@ const HomeBanner = ({ section = 'hero' }) => {
                                 className="w-full h-[250px] md:h-[450px] object-cover transition-transform duration-700 group-hover:scale-105"
                                 onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }}
                             />
-                            {banner.title && (
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-8 md:p-16">
-                                    <h2 className="text-white text-2xl md:text-5xl font-black uppercase tracking-tighter mb-2 drop-shadow-lg">
-                                        {banner.title}
-                                    </h2>
-                                    {banner.link && (
-                                        <span className="text-white bg-red-600 w-fit px-6 py-2 rounded-full font-bold text-xs uppercase tracking-widest mt-4">
-                                            Shop Now
-                                        </span>
-                                    )}
-                                </div>
-                            )}
                         </Link>
                     </SwiperSlide>
                 ))}

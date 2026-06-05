@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './ProductPage.css';
+import { FiShare2, FiHeart } from 'react-icons/fi';
 
 const ProductPage = ({
   images = [
@@ -28,7 +29,10 @@ const ProductPage = ({
   onActiveImgChange,
   imageAlt,
   onAddToCart,
-  onBuyNow
+  onBuyNow,
+  onShare,
+  onToggleWishlist,
+  isInWishlist = false
 }) => {
   const [internalQuantity, setInternalQuantity] = useState(1);
   const [internalActiveImg, setInternalActiveImg] = useState(images[0] || 'https://placehold.co/600x600?text=Product');
@@ -82,6 +86,14 @@ const ProductPage = ({
         </div>
         <div className="main-image">
           <img src={currentActiveImg} alt={imageAlt || title} />
+          <div className="absolute top-4 right-4 flex flex-col gap-2">
+            <button onClick={onToggleWishlist} className="p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform">
+              <FiHeart className={isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-300'} />
+            </button>
+            <button onClick={onShare} className="p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform text-gray-500">
+              <FiShare2 />
+            </button>
+          </div>
         </div>
       </div>
 

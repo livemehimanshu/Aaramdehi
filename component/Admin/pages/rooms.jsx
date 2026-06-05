@@ -1,165 +1,216 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Plus, Search, Trash2, Loader2, AlertCircle, CheckCircle, Upload, X, Home } from 'lucide-react';
-import { getAllRoomsAPI, createRoomAPI, deleteRoomAPI, getAllCategoriesAPI } from '../../../src/api/authAndAdminApi';
-import imageCompression from 'browser-image-compression';
+import { 
+  FiPlus, FiEdit2, FiTrash2, FiSearch, FiImage, FiX, FiExternalLink 
+} from 'react-icons/fi';
+import { 
+  getAllRoomsAPI, 
+  createRoomAPI, 
+  updateRoomAPI, 
+  deleteRoomAPI,
+  getAllCategoriesAPI 
+} from '../../../src/api/authAndAdminApi';
+import toast from 'react-hot-toast';
 
 const Rooms = () => {
-    const [rooms, setRooms] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [imageProcessing, setImageProcessing] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [message, setMessage] = useState({ type: '', text: '' });
-    const [showAddForm, setShowAddForm] = useState(false);
-    const [preview, setPreview] = useState(null);
-    const [imageFile, setImageFile] = useState(null);
-    
-    const [newRoom, setNewRoom] = useState({
-        name: '',
-        categorySlug: '',
-        description: '',
-        isActive: true
-    });
+  const [rooms, setRooms] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Modal & Form State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    categorySlug: '',
+    description: '',
+    image: null
+  });
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            const [roomsRes, catsRes] = await Promise.all([
-                getAllRoomsAPI(),
-                getAllCategoriesAPI()
-            ]);
-            if (roomsRes.success) setRooms(roomsRes.data);
-            if (catsRes.success) setCategories(catsRes.data);
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to load data' });
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-    useEffect(() => {
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [roomsRes, catsRes] = await Promise.all([
+        getAllRoomsAPI(),
+        getAllCategoriesAPI()
+      ]);
+      if (roomsRes.success) setRooms(roomsRes.data);
+      if (catsRes.success) setCategories(catsRes.data);
+    } catch (error) {
+      toast.error("Failed to fetch dashboard data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenModal = (room = null) => {
+    if (room) {
+      setEditingRoom(room);
+      setFormData({ name: room.name, categorySlug: room.categorySlug, description: room.description || '', image: null });
+      setImagePreview(room.image);
+    } else {
+      setEditingRoom(null);
+      setFormData({ name: '', categorySlug: '', description: '', image: null });
+      setImagePreview(null);
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingRoom(null);
+    setImagePreview(null);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.name || !formData.categorySlug) return toast.error("Name and Category Link are required");
+
+    const data = new FormData();
+    data.append('name', formData.name);
+    data.append('categorySlug', formData.categorySlug);
+    data.append('description', formData.description);
+    if (formData.image) data.append('image', formData.image);
+
+    try {
+      setIsSubmitting(true);
+      const res = editingRoom 
+        ? await updateRoomAPI(editingRoom._id, data)
+        : await createRoomAPI(data);
+
+      if (res.success) {
+        toast.success(res.message || "Room saved successfully");
         fetchData();
-    }, []);
+        handleCloseModal();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Operation failed");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    const handleImageChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setImageProcessing(true);
-        try {
-            const compressedFile = await imageCompression(file, { maxSizeMB: 0.2, maxWidthOrHeight: 800 });
-            setPreview(URL.createObjectURL(compressedFile));
-            setImageFile(compressedFile);
-        } catch (err) {
-            setMessage({ type: 'error', text: 'Image processing failed' });
-        } finally {
-            setImageProcessing(false);
-        }
-    };
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this room? This cannot be undone.")) return;
+    try {
+      const res = await deleteRoomAPI(id);
+      if (res.success) {
+        toast.success("Room deleted");
+        setRooms(prev => prev.filter(r => r._id !== id));
+      }
+    } catch (error) { toast.error("Delete failed"); }
+  };
 
-    const handleAddRoom = async (e) => {
-        e.preventDefault();
-        if (!imageFile) return setMessage({ type: 'error', text: 'Please upload a room image' });
-        if (!newRoom.categorySlug) return setMessage({ type: 'error', text: 'Please link a category' });
-        
-        setSubmitting(true);
-        try {
-            const data = new FormData();
-            data.append('name', newRoom.name);
-            data.append('categorySlug', newRoom.categorySlug);
-            data.append('description', newRoom.description);
-            data.append('isActive', newRoom.isActive);
-            data.append('image', imageFile);
+  const filteredRooms = rooms.filter(room => room.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
-            const res = await createRoomAPI(data);
-            if (res.success) {
-                setMessage({ type: 'success', text: 'Room created successfully!' });
-                setNewRoom({ name: '', categorySlug: '', description: '', isActive: true });
-                setPreview(null); setImageFile(null); setShowAddForm(false);
-                fetchData();
-            }
-        } catch (error) {
-            setMessage({ type: 'error', text: error.response?.data?.message || 'Error adding room' });
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const handleDelete = async (id) => {
-        if (!window.confirm("Delete this room collection?")) return;
-        try {
-            const res = await deleteRoomAPI(id);
-            if (res.success) {
-                setRooms(prev => prev.filter(r => r._id !== id));
-                setMessage({ type: 'success', text: 'Room deleted' });
-            }
-        } catch (error) {
-            setMessage({ type: 'error', text: 'Failed to delete' });
-        }
-    };
-
-    return (
-        <div className="p-4 md:p-8 bg-gray-950 min-h-screen text-gray-200">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2 uppercase tracking-tight">
-                        <Home className="text-emerald-500" /> Room Management
-                    </h1>
-                    <p className="text-slate-400 text-xs mt-1">Manage "Shop by Room" collections</p>
-                </div>
-                <button onClick={() => setShowAddForm(!showAddForm)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-emerald-900/20">
-                    {showAddForm ? <Trash2 size={18} /> : <Plus size={18} />} {showAddForm ? 'Cancel' : 'New Room'}
-                </button>
-            </div>
-
-            {showAddForm && (
-                <form onSubmit={handleAddRoom} className="mb-8 bg-gray-900 border border-gray-800 p-6 rounded-2xl grid grid-cols-1 md:grid-cols-4 gap-4 items-end animate-in fade-in slide-in-from-top-4 duration-300">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-500">Room Name</label>
-                        <input type="text" required value={newRoom.name} onChange={(e) => setNewRoom({...newRoom, name: e.target.value})} className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 outline-none" placeholder="e.g. Living Room" />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-500">Link Category</label>
-                        <select required value={newRoom.categorySlug} onChange={(e) => setNewRoom({...newRoom, categorySlug: e.target.value})} className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-2.5 text-sm focus:border-emerald-500 outline-none text-gray-300">
-                            <option value="">-- Select Category --</option>
-                            {categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
-                        </select>
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black uppercase text-slate-500">Room Image</label>
-                        <div className="relative border-2 border-dashed border-gray-800 rounded-xl p-1 bg-gray-950 h-[42px] flex items-center justify-center overflow-hidden hover:border-emerald-500 transition-colors">
-                            {preview ? <div className="flex items-center justify-between w-full px-3"><img src={preview} alt="Icon" className="w-8 h-8 object-cover rounded" /><button type="button" onClick={() => {setPreview(null); setImageFile(null);}} className="text-rose-500"><X size={14} /></button></div> : <><Upload size={14} className="text-gray-500 mr-2" /><span className="text-[10px] text-gray-500 font-bold uppercase">Upload Room Image</span><input type="file" accept="image/*" onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" /></>}
-                        </div>
-                    </div>
-                    <button type="submit" disabled={submitting} className="bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-sm disabled:bg-gray-800">{submitting ? <Loader2 className="animate-spin mx-auto" size={20} /> : 'Create Room'}</button>
-                </form>
-            )}
-
-            <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-gray-800/30 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-gray-800">
-                                <th className="p-5 w-32">Image</th>
-                                <th className="p-5">Room Name</th>
-                                <th className="p-5">Linked Category</th>
-                                <th className="p-5 text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-800">
-                            {loading ? <tr><td colSpan="4" className="p-20 text-center"><Loader2 className="animate-spin mx-auto text-emerald-500" /></td></tr> : rooms.map((room) => (
-                                <tr key={room._id} className="hover:bg-gray-800/20 transition-colors">
-                                    <td className="p-5"><img src={room.image} alt={room.name} className="w-20 h-12 object-cover rounded-lg" /></td>
-                                    <td className="p-5 font-bold text-white text-sm">{room.name}</td>
-                                    <td className="p-5 text-emerald-400 font-bold text-xs uppercase">{room.categorySlug}</td>
-                                    <td className="p-5 text-right"><button onClick={() => handleDelete(room._id)} className="p-2 bg-gray-800 rounded-lg text-rose-400 hover:bg-rose-500 hover:text-white transition-all"><Trash2 size={16} /></button></td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Room Management</h1>
+          <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Homepage Content Editor</p>
         </div>
-    );
+        <button onClick={() => handleOpenModal()} className="bg-[#1a365d] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit">
+          <FiPlus size={20} /> Add New Room
+        </button>
+      </div>
+
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex items-center">
+        <div className="relative flex-1 max-w-md">
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input type="text" placeholder="Search rooms..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-transparent focus:border-[#1a365d] focus:bg-white transition-all text-sm font-medium outline-none" />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="bg-white rounded-3xl h-64 flex items-center justify-center border border-gray-100 animate-pulse text-gray-400 font-bold uppercase">Loading Rooms...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredRooms.map((room) => (
+            <div key={room._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-500">
+              <div className="relative aspect-[16/10] overflow-hidden">
+                <img src={room.image || 'https://placehold.co/600x400'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={room.name} />
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <button onClick={() => handleOpenModal(room)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-full text-blue-900 shadow-sm hover:bg-[#1a365d] hover:text-white transition-all"><FiEdit2 size={16} /></button>
+                  <button onClick={() => handleDelete(room._id)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-full text-rose-500 shadow-sm hover:bg-rose-500 hover:text-white transition-all"><FiTrash2 size={16} /></button>
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="text-lg font-black uppercase tracking-tighter text-gray-900 mb-1">{room.name}</h3>
+                <div className="flex items-center gap-2 text-[10px] text-[#1a365d] font-black bg-blue-50 w-fit px-3 py-1.5 rounded-full mb-3 uppercase">
+                  <FiExternalLink /> {room.categorySlug}
+                </div>
+                <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed">{room.description || "No description."}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+             <div className="p-8 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{editingRoom ? 'Edit Room' : 'Add New Room'}</h2>
+                <button onClick={handleCloseModal} className="p-3 bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 transition-all"><FiX size={20} /></button>
+             </div>
+
+             <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Name</label>
+                    <input name="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Living Room" 
+                      className="w-full px-5 py-3.5 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-[#1a365d] focus:bg-white outline-none transition-all font-bold" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Target Category</label>
+                    <select name="categorySlug" value={formData.categorySlug} onChange={(e) => setFormData({...formData, categorySlug: e.target.value})}
+                      className="w-full px-5 py-3.5 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-[#1a365d] focus:bg-white outline-none transition-all font-bold appearance-none">
+                      <option value="">Select Category</option>
+                      {categories.map(cat => <option key={cat._id} value={cat.slug}>{cat.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                  <textarea name="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows="3"
+                    placeholder="Short summary..." className="w-full px-5 py-3.5 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-[#1a365d] focus:bg-white outline-none transition-all font-medium" />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Image</label>
+                  <div className="relative group">
+                    <div className={`w-full h-48 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden ${imagePreview ? 'border-solid border-blue-100' : 'border-gray-200 bg-gray-50'}`}>
+                      {imagePreview ? (
+                        <img src={imagePreview} className="w-full h-full object-cover" alt="preview" />
+                      ) : (
+                        <><FiImage size={32} className="text-gray-300 mb-2" /><p className="text-[10px] text-gray-400 font-bold uppercase">Click to upload</p></>
+                      )}
+                      <input type="file" onChange={(e) => {
+                         const file = e.target.files[0];
+                         if (file) { setFormData({...formData, image: file}); setImagePreview(URL.createObjectURL(file)); }
+                      }} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                    </div>
+                  </div>
+                </div>
+                
+                <button type="submit" disabled={isSubmitting} className="w-full bg-[#1a365d] text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-black active:scale-[0.98] transition-all disabled:bg-gray-300 shadow-xl shadow-blue-900/10">
+                  {isSubmitting ? 'Saving...' : editingRoom ? 'Update Room' : 'Create Room'}
+                </button>
+             </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 };
+
 export default Rooms;

@@ -8,8 +8,9 @@ const COLLECTION = 'rooms';
 export const getAllRooms = async (req, res) => {
     try {
         const rooms = await findAll(COLLECTION);
-        return res.json({ success: true, data: rooms });
+        return res.json({ success: true, data: rooms || [] });
     } catch (error) {
+        console.error("❌ getAllRooms Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -17,8 +18,11 @@ export const getAllRooms = async (req, res) => {
 // Create a new room
 export const createRoom = async (req, res) => {
     try {
-        if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).json({ success: false, message: "Request body is empty. Ensure you are sending FormData and Multer is configured." });
+        if (!req.body || (Object.keys(req.body).length === 0 && !req.file)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Request body or image is empty. Ensure you are sending FormData and Multer is configured." 
+            });
         }
 
         const { name, categorySlug, description } = req.body;
@@ -35,13 +39,23 @@ export const createRoom = async (req, res) => {
         }
 
         let imageUrl = "";
-        // Robust file check (buffer for memory storage, path for disk storage)
-        const fileToUpload = req.file?.buffer || req.file?.path;
+        // Robust file check: handles single upload or field uploads
+        const fileToUpload = req.file?.buffer || req.file?.path || 
+                             req.files?.image?.[0]?.buffer || 
+                             req.files?.image?.[0]?.path;
 
         if (fileToUpload) {
             const uploadResult = await uploadImageCloudinary(fileToUpload, "rooms");
-            if (uploadResult && uploadResult.success) {
-                imageUrl = uploadResult.url;
+            if (uploadResult) {
+                if (uploadResult.success) {
+                    imageUrl = uploadResult.url;
+                } else {
+                    console.error("❌ Cloudinary Upload Failed:", uploadResult.message);
+                    return res.status(500).json({ 
+                        success: false, 
+                        message: `Image upload failed: ${uploadResult.message}` 
+                    });
+                }
             }
         }
 
@@ -52,12 +66,14 @@ export const createRoom = async (req, res) => {
             description: description || "",
             image: imageUrl,
             isActive: true,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            createdBy: req.userId || req.user?._id || req.user?.id || null
         };
 
         const newRoom = await create(COLLECTION, roomData);
-        return res.status(201).json({ success: true, data: newRoom });
+        return res.status(201).json({ success: true, message: "Room created successfully", data: newRoom });
     } catch (error) {
+        console.error("❌ createRoom Controller Error:", error);
         return res.status(500).json({ success: false, message: error.message });
     }
 };
@@ -80,7 +96,9 @@ export const getRoomBySlug = async (req, res) => {
 export const updateRoom = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!req.body) return res.status(400).json({ success: false, message: "No update data provided" });
+        if (!req.body || (Object.keys(req.body).length === 0 && !req.file)) {
+            return res.status(400).json({ success: false, message: "No update data provided" });
+        }
 
         const { name, categorySlug, description, isActive } = req.body;
         const updateData = {};
@@ -93,11 +111,17 @@ export const updateRoom = async (req, res) => {
         if (description !== undefined) updateData.description = description;
         if (isActive !== undefined) updateData.isActive = isActive === 'true' || isActive === true;
 
-        const fileToUpload = req.file?.buffer || req.file?.path;
+        const fileToUpload = req.file?.buffer || req.file?.path || 
+                             req.files?.image?.[0]?.buffer || 
+                             req.files?.image?.[0]?.path;
+
         if (fileToUpload) {
             const uploadResult = await uploadImageCloudinary(fileToUpload, "rooms");
-            if (uploadResult?.success) {
+            if (uploadResult && uploadResult.success) {
                 updateData.image = uploadResult.url;
+            } else if (uploadResult) {
+                console.error("❌ Cloudinary Update Error:", uploadResult.message);
+                return res.status(500).json({ success: false, message: "Image update failed" });
             }
         }
 

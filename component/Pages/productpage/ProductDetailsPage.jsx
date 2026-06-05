@@ -208,6 +208,20 @@ const ProductDetailsPage = () => {
     });
   };
 
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: productData.name,
+        text: `Check out ${productData.name} on Aaramdehi!`,
+        url: url,
+      }).catch(err => console.error('Error sharing', err));
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("Link copied to clipboard!");
+    }
+  };
+
   const handleAddToCart = () => {
     const productId = productData.id || id;
 
@@ -311,6 +325,9 @@ const ProductDetailsPage = () => {
           imageAlt={productData.name}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
+          onShare={handleShare}
+          onToggleWishlist={handleToggleWishlist}
+          isInWishlist={isInWishlist(productData?.id || id)}
         />
 
         <div className="pt-6 border-t mt-4">

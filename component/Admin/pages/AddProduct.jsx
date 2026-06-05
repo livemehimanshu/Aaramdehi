@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import { Loader2, AlertCircle, CheckCircle, Upload, X, Box, Save, ArrowLeft } from 'lucide-react';
-import { ref, push, set } from "firebase/database";
-import { db } from '../../../src/api/firebase';
 import { createProductAPI, getAllCategoriesAPI } from '../../../src/api/authAndAdminApi';
+import imageCompression from 'browser-image-compression'; // ✅ Image optimization
 import { generateKeywordsOnTheFly } from '../../../src/utils/searchIndexer';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,7 +20,7 @@ const AddProduct = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    brand: '',
+    brand: 'Aaramdehi', // Defaulting to your brand name
     category: '',
     subCategory: '',
     sellingPrice: '',
@@ -36,6 +35,7 @@ const AddProduct = () => {
   const [categoriesList, setCategoriesList] = useState([]);
   const [subCategoriesList, setSubCategoriesList] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false); // ✅ Processing state for UI feedback
   const [message, setMessage] = useState({ type: '', text: '' });
 
   // Fetch categories for the dropdown
@@ -64,12 +64,55 @@ const AddProduct = () => {
     }
   };
 
-  const handleImageChange = (e) => {
+  // ✅ Optimized Image Selection & WebP Conversion (Frontend Processing)
+  const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
-    const newPreviews = files.map(file => URL.createObjectURL(file));
-    
-    setImageFiles([...imageFiles, ...files].slice(0, 5));
-    setPreviews([...previews, ...newPreviews].slice(0, 5));
+    if (files.length === 0) return;
+
+    setImageProcessing(true);
+    const processedFiles = [];
+    const newPreviews = [];
+
+    try {
+      for (const file of files) {
+        // 1. Compress Image (Max 0.5MB, optimized for high-res screens)
+        const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200 });
+        // 2. Convert to WebP
+        const webpFile = await convertToWebP(compressedFile);
+        
+        processedFiles.push(webpFile);
+        newPreviews.push(URL.createObjectURL(webpFile));
+      }
+      setImageFiles(prev => [...prev, ...processedFiles].slice(0, 5));
+      setPreviews(prev => [...prev, ...newPreviews].slice(0, 5));
+    } catch (err) {
+      console.error("Image processing error:", err);
+      setMessage({ type: 'error', text: 'Failed to process images. Please try again.' });
+    } finally {
+      setImageProcessing(false);
+    }
+  };
+
+  const convertToWebP = (file) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width; 
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(objectUrl);
+          resolve(new File([blob], file.name.split('.')[0] + '.webp', { type: 'image/webp' }));
+        }, 'image/webp', 0.8);
+      };
+      img.onerror = (err) => { 
+        URL.revokeObjectURL(objectUrl); 
+        reject(err); 
+      };
+    });
   };
 
   const removeImage = (index) => {
@@ -80,7 +123,7 @@ const AddProduct = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.brand || !formData.category || !formData.sellingPrice || !formData.mrp || !formData.stock) {
-        return setMessage({ type: 'error', text: "Validation Failed: 'Brand Name' and 'Stock' are mandatory. Please fill all required fields before publishing." });
+        return setMessage({ type: 'error', text: "Validation Failed: Mandatory fields missing. Please fill all required fields before publishing." });
     }
 
     setLoading(true);
@@ -92,20 +135,18 @@ const AddProduct = () => {
 
       // 2. Prepare FormData for Image Upload
       const data = new FormData();
-      // Ensure numeric fields are sent correctly
       Object.keys(formData).forEach(key => {
           const val = (key === 'sellingPrice' || key === 'mrp' || key === 'stock') ? Number(formData[key]) : formData[key];
           data.append(key, val);
       });
       
-      data.append('seoKeywords', keywords.join(', ')); // Sync with backend's expected field
+      data.append('seoKeywords', keywords.join(', ')); 
       imageFiles.forEach(file => data.append('images', file));
 
       // 3. API Call
       const res = await createProductAPI(data);
 
       if (res.success) {
-        // Note: Server-side indexing is handled by the controller using Admin SDK
         setMessage({ type: 'success', text: 'Product published successfully! 🎉' });
         setTimeout(() => navigate('/admin/products'), 2000);
       } else {
@@ -142,12 +183,18 @@ const AddProduct = () => {
           <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
             <h3 className="text-xs font-black uppercase text-gray-500 mb-4 tracking-widest">Product Gallery</h3>
             
-            <label className="group h-48 border-2 border-dashed border-gray-800 bg-gray-950 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500/50 transition-all">
-              <div className="p-4 bg-gray-900 rounded-full text-gray-500 group-hover:text-emerald-500 group-hover:scale-110 transition-all">
-                <Upload size={24} />
-              </div>
-              <span className="text-[10px] font-black text-gray-500 mt-3 uppercase tracking-tighter">Click to upload images</span>
-              <input type="file" multiple className="hidden" onChange={handleImageChange} accept="image/*" />
+            <label className={`group h-48 border-2 border-dashed border-gray-800 bg-gray-950 rounded-2xl flex flex-col items-center justify-center transition-all ${imageProcessing ? 'cursor-wait opacity-50' : 'cursor-pointer hover:border-emerald-500/50'}`}>
+              {imageProcessing ? (
+                <Loader2 className="animate-spin text-emerald-500" size={32} />
+              ) : (
+                <>
+                  <div className="p-4 bg-gray-900 rounded-full text-gray-500 group-hover:text-emerald-500 group-hover:scale-110 transition-all">
+                    <Upload size={24} />
+                  </div>
+                  <span className="text-[10px] font-black text-gray-500 mt-3 uppercase tracking-tighter">Click to upload images</span>
+                </>
+              )}
+              <input type="file" disabled={imageProcessing} multiple className="hidden" onChange={handleImageChange} accept="image/*" />
             </label>
             
             <div className="grid grid-cols-3 gap-3 mt-6">
@@ -194,7 +241,10 @@ const AddProduct = () => {
             </div>
             <input type="number" placeholder="Selling Price (₹) *" value={formData.sellingPrice} onChange={(e) => setFormData({...formData, sellingPrice: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-emerald-400 font-black" />
             <input type="number" placeholder="MRP (₹) *" value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-gray-400 font-bold" />
-            <input type="number" placeholder="Stock Quantity *" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold" />
+            <div className="grid grid-cols-2 gap-3">
+                <input type="number" placeholder="Stock *" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold w-full" />
+                <input type="text" placeholder="SKU Code" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-blue-500 text-blue-400 font-mono text-xs uppercase" />
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -208,9 +258,9 @@ const AddProduct = () => {
             />
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/20 active:scale-95 disabled:opacity-50">
+          <button type="submit" disabled={loading || imageProcessing} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-2xl font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/20 active:scale-95 disabled:opacity-50 text-xs">
             {loading ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-            {loading ? 'Publishing Product...' : 'Publish to Store'}
+            {loading ? 'Publishing Product...' : imageProcessing ? 'Processing Images...' : 'Publish to Store'}
           </button>
         </div>
       </form>

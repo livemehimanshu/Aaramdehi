@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './ProductPage.css';
-import { FiShare2, FiHeart } from 'react-icons/fi';
+import { FiShare2, FiHeart, FiMapPin, FiInfo } from 'react-icons/fi';
 
 const ProductPage = ({
   images = [
@@ -32,7 +32,11 @@ const ProductPage = ({
   onBuyNow,
   onShare,
   onToggleWishlist,
-  isInWishlist = false
+  isInWishlist = false,
+  pincode,
+  onPincodeChange,
+  onCheckDelivery,
+  deliveryStatus
 }) => {
   const [internalQuantity, setInternalQuantity] = useState(1);
   const [internalActiveImg, setInternalActiveImg] = useState(images[0] || 'https://placehold.co/600x600?text=Product');
@@ -120,6 +124,25 @@ const ProductPage = ({
               </li>
             ))}
           </ul>
+        </div>
+
+        {/* Delivery Check Section */}
+        <div className="delivery-check-section py-4 border-y border-gray-50 my-4">
+          <div className="flex items-center gap-2 mb-3">
+            <FiMapPin className="text-blue-900" />
+            <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Check Delivery Availability</span>
+          </div>
+          <div className="flex gap-2">
+            <input 
+              type="text" 
+              placeholder="Enter Pincode" 
+              value={pincode}
+              onChange={(e) => onPincodeChange(e.target.value)}
+              className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-bold outline-none focus:border-blue-900 transition-all" 
+            />
+            <button onClick={onCheckDelivery} className="px-6 py-2.5 bg-[#1a365d] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">Check</button>
+          </div>
+          {deliveryStatus && <p className={`mt-2 text-[10px] font-bold uppercase ${deliveryStatus.includes('Available') ? 'text-emerald-600' : 'text-rose-500'}`}>{deliveryStatus}</p>}
         </div>
 
         <div className="promo-banner">

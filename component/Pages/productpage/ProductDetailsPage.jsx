@@ -47,6 +47,17 @@ const ProductDetailsPage = () => {
   const [appliedDiscount, setAppliedDiscount] = useState(0); 
   const [couponMessage, setCouponMessage] = useState({ type: '', text: '', code: '' });
   const [isValidating, setIsValidating] = useState(false);
+  
+  // Delivery Logic
+  const [pincode, setPincode] = useState("");
+  const [deliveryStatus, setDeliveryStatus] = useState("");
+
+  const handleCheckDelivery = () => {
+    if (pincode.length < 6) return setDeliveryStatus("❌ Invalid Pincode");
+    // Mock delivery logic: usually you'd call an API here
+    const isAvailable = pincode.startsWith('11') || pincode.startsWith('24') || pincode.startsWith('40'); 
+    setDeliveryStatus(isAvailable ? "✅ Standard Delivery Available" : "⏳ Shipping takes 5-7 working days");
+  };
 
   const parsePrice = (rawPrice) => {
     if (rawPrice == null) return 0;

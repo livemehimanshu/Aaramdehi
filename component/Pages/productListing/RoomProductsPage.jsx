@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getAllRoomsAPI, getAllProductsAPI } from '../../../src/api/authAndAdminApi';
 import ProductCard from '../../slider/ProductCard';
 import { FiChevronRight, FiGrid, FiInfo } from 'react-icons/fi';
-import Loader2 from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 const RoomProductsPage = () => {
     const { slug } = useParams();

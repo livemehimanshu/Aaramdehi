@@ -1,0 +1,247 @@
+/* Container Layout */
+.product-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 40px;
+}
+
+/* Image Handling */
+.product-gallery {
+    display: flex;
+    gap: 15px;
+}
+
+.thumbnails {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.thumbnails img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.thumbnails img:hover,
+.thumbnails img.active {
+    border-color: #1a365d;
+}
+
+.main-image {
+    flex: 1;
+}
+
+.main-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+/* Typography & Info */
+.brand-tag {
+    font-size: 12px;
+    font-weight: 700;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.product-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1a365d;
+    margin-top: 5px;
+    line-height: 1.3;
+}
+
+.product-subtitle {
+    font-size: 15px;
+    color: #4a5568;
+    margin-top: 5px;
+}
+
+.rating-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+.price {
+    font-size: 32px;
+    font-weight: 700;
+    color: #1a365d;
+}
+
+.rating-badge {
+    background: #f7fafc;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    color: #d69e2e;
+    border: 1px solid #edf2f7;
+}
+
+.review-count {
+    color: #718096;
+    font-weight: 400;
+    font-size: 13px;
+}
+
+.divider {
+    border: 0;
+    height: 1px;
+    background: #edf2f7;
+    margin: 20px 0;
+}
+
+/* Bullet Points */
+.product-description h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+    color: #2d3748;
+}
+
+.product-description ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.product-description li {
+    font-size: 14px;
+    color: #4a5568;
+    margin-bottom: 12px;
+    line-height: 1.6;
+    position: relative;
+    padding-left: 20px;
+}
+
+.product-description li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #319795;
+    font-weight: bold;
+}
+
+/* Coupon Banner */
+.promo-banner {
+    background-color: #ebf8ff;
+    border: 1px dashed #bee3f8;
+    color: #2b6cb0;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin: 25px 0;
+}
+
+.promo-banner .code {
+    background: #2b6cb0;
+    color: #fff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* Interaction Actions */
+.purchase-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    width: fit-content;
+    background: #fff;
+}
+
+.quantity-selector input {
+    width: 50px;
+    text-align: center;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    outline: none;
+}
+
+.qty-btn {
+    background: none;
+    border: none;
+    padding: 8px 14px;
+    font-size: 18px;
+    cursor: pointer;
+    color: #4a5568;
+}
+
+.qty-btn:hover {
+    background: #edf2f7;
+}
+
+.cta-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    flex: 1;
+    padding: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-secondary {
+    background: #ffffff;
+    color: #1a365d;
+    border: 2px solid #1a365d;
+}
+
+.btn-secondary:hover {
+    background: #f7fafc;
+}
+
+.btn-primary {
+    background: #1a365d;
+    color: #ffffff;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #2a4365;
+}
+
+/* Responsive Mobile Layout */
+@media (max-width: 768px) {
+    .product-container {
+        grid-template-columns: 1fr;
+        padding: 15px;
+    }
+    .product-gallery {
+        flex-direction: column-reverse;
+    }
+    .thumbnails {
+        flex-direction: row;
+        justify-content: center;
+    }
+    .cta-buttons {
+        flex-direction: column;
+    }
+}

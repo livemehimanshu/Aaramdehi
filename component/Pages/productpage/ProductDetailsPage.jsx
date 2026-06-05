@@ -17,6 +17,7 @@ import { productDetailsData } from '@/data/productDetails';
 import { useCart } from '@/hooks/useCart';
 import { sanitizationUtils } from '@/utils/sanitizationUtils';
 import toast from 'react-hot-toast'; // ✅ Import Toast
+import ProductPage from './ProductPage';
 import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/600x750?text=No+Image";
@@ -237,6 +238,30 @@ const ProductDetailsPage = () => {
     return keywordsArray.filter(Boolean).join(', ');
   }, [productData]);
 
+  const highlightItems = useMemo(() => {
+    if (!productData?.description) {
+      return [
+        'Crafted for long-lasting comfort and support.',
+        'Breathable materials keep you cool all night.',
+        'Hypoallergenic design for sensitive skin.',
+        'Lightweight and easy to maintain.'
+      ];
+    }
+
+    const sentences = productData.description
+      .split(/\.\s+/)
+      .filter(Boolean)
+      .slice(0, 4)
+      .map((sentence) => sentence.replace(/\.$/, ''));
+
+    return sentences.length ? sentences : [
+      'Crafted for long-lasting comfort and support.',
+      'Breathable materials keep you cool all night.',
+      'Hypoallergenic design for sensitive skin.',
+      'Lightweight and easy to maintain.'
+    ];
+  }, [productData?.description]);
+
   const onReviewSubmit = (data) => {
     const newEntry = { user: data.userName, comment: data.comment, rating: data.rating, id: Date.now(), date: "Today" };
     setReviews([newEntry, ...reviews]);
@@ -270,133 +295,79 @@ const ProductDetailsPage = () => {
       <div className="container mx-auto px-4 md:px-12 lg:px-24 py-6 md:py-10">
         
         {/* PRODUCT TOP SECTION (Gallery + Info) */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-16">
-          <div className="lg:w-1/2 flex flex-col md:flex-row gap-4">
-            <div className="order-2 md:order-1 flex md:flex-col gap-3 overflow-x-auto pb-2 shrink-0">
-              {productData.images.map((img, i) => (
-                <img 
-                  key={i} 
-                  src={(img?.url || img) || PLACEHOLDER_IMAGE} 
-                  onClick={() => setSelectedImage((img?.url || img) || PLACEHOLDER_IMAGE)}
-                  className={`w-16 h-20 md:w-20 md:h-24 border-2 rounded-xl cursor-pointer object-cover ${selectedImage === (img?.url || img) ? 'border-blue-900 scale-105' : 'border-gray-100'}`} 
-                  alt="thumbnail"
-                  onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }}
-                />
-              ))}
-            </div>
-            <div className="order-1 md:order-2 flex-1 bg-gray-50 rounded-[20px] md:rounded-[30px] h-[350px] md:h-[550px] flex items-center justify-center relative border border-gray-100">
-              <img 
-                src={selectedImage || PLACEHOLDER_IMAGE}
-                loading="lazy"
-                onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMAGE; }}
-                className="max-h-[85%] object-contain mix-blend-multiply" 
-                alt="product" />
-              <button onClick={handleToggleWishlist} className="absolute top-4 right-4 p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform">
-                <FiHeart className={isInWishlist(productData?.id || id) ? 'fill-red-500 text-red-500' : 'text-gray-300'} />
-              </button>
-            </div>
+        <ProductPage
+          images={productData.images.map((img) => (img?.url || img) || PLACEHOLDER_IMAGE)}
+          brand={productData.brand}
+          title={productData.name}
+          subtitle={productData.category || 'Premium Comfort Pillow'}
+          price={Number(finalPrice || 0)}
+          rating={productData.rating || 5}
+          reviewsCount={reviews.length}
+          highlights={highlightItems}
+          quantity={quantity}
+          onQuantityChange={setQuantity}
+          activeImg={selectedImage}
+          onActiveImgChange={setSelectedImage}
+          imageAlt={productData.name}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+        />
+
+        <div className="pt-6 border-t mt-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Offers & Coupons</p>
+            {appliedDiscount > 0 && (
+              <button onClick={handleRemoveCoupon} className="text-[10px] font-black text-rose-500 uppercase border-b-2 border-rose-500 pb-0.5">Remove</button>
+            )}
           </div>
-
-          <div className="lg:w-1/2 space-y-5">
-            <div>
-              <p className="text-blue-900 font-black text-[10px] uppercase tracking-[3px] mb-1">{productData.brand}</p>
-              <h1 className="text-2xl md:text-4xl font-black text-gray-900 leading-tight">{productData.name}</h1>
-            </div>
-            <div className="bg-blue-50/50 p-4 rounded-2xl w-fit flex items-center gap-4">
-              <span className="text-3xl font-black text-blue-900">₹{Number(finalPrice || 0).toLocaleString()}</span>
-              {appliedDiscount > 0 && selectedSize?.price ? (
-                <span className="text-gray-400 line-through text-sm font-bold italic">
-                  ₹{Number(String(selectedSize?.price || 0).replace(/[^0-9.-]+/g, "")).toLocaleString()}
-                </span>
-              ) : (
-                selectedSize?.oldPrice && (
-                  <span className="text-gray-400 line-through text-sm font-bold italic">₹{(selectedSize.oldPrice || 0).toLocaleString()}</span>
-                )
-              )}
-              {appliedDiscount > 0 && <span className="bg-emerald-500 text-white text-[10px] px-2 py-1 rounded-full font-black uppercase tracking-wider animate-pulse">Coupon Applied</span>}
-            </div>
-            <p className="text-gray-500 text-sm leading-relaxed italic border-t pt-4">{productData.description}</p>
-
-            {/* PROFESSIONAL COUPON SECTION */}
-            <div className="pt-6 border-t mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Offers & Coupons</p>
-                {appliedDiscount > 0 && (
-                  <button onClick={handleRemoveCoupon} className="text-[10px] font-black text-rose-500 uppercase border-b-2 border-rose-500 pb-0.5">Remove</button>
-                )}
-              </div>
-              
-              {!appliedDiscount ? (
-                <div 
-                  onClick={() => setIsCouponModalOpen(true)}
-                  className="group flex items-center justify-between p-4 border border-dashed border-red-200 rounded-2xl bg-red-50 cursor-pointer hover:bg-red-100 transition-all"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-red-500">
-                      <BsLightningCharge size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-gray-800 uppercase">Best Offers & Coupons</p>
-                      <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">View available offers for you</p>
-                    </div>
-                  </div>
-                  <FiArrowRight className="text-red-500 group-hover:translate-x-1 transition-transform" />
+          
+          {!appliedDiscount ? (
+            <div 
+              onClick={() => setIsCouponModalOpen(true)}
+              className="group flex items-center justify-between p-4 border border-dashed border-red-200 rounded-2xl bg-red-50 cursor-pointer hover:bg-red-100 transition-all"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-red-500">
+                  <BsLightningCharge size={20} />
                 </div>
-              ) : (
-                <div className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
-                      <FiCheck size={20} />
-                    </div>
-                    <div>
-                      <p className="text-xs font-black text-gray-900 uppercase">'{couponMessage.code}' Applied</p>
-                      <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">{couponMessage.text}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {couponMessage.type === 'error' && (
-                <div className="mt-3 flex items-center gap-2 text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
-                  <span className="text-[10px] font-black uppercase tracking-tighter">{couponMessage.text}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-b pb-6">
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Size</p>
-                <div className="flex gap-2">
-                  {productData.sizes.map((s) => (
-                    <button key={s.label} onClick={() => setSelectedSize(s)} 
-                      className={`flex-1 py-3 rounded-xl text-[11px] font-black border-2 ${selectedSize?.label === s.label ? 'bg-blue-900 text-white border-blue-900 shadow-lg' : 'bg-white text-gray-600 border-gray-100'}`}>
-                      {s.label} <span className="block text-[8px] opacity-60">{s.dimensions}</span>
-                    </button>
-                  ))}
+                <div>
+                  <p className="text-sm font-black text-gray-800 uppercase">Best Offers & Coupons</p>
+                  <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">View available offers for you</p>
                 </div>
               </div>
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Quantity</p>
-                <div className="flex items-center border-2 border-gray-100 rounded-xl h-[52px] bg-white">
-                  <button onClick={() => setQuantity(Math.max(1, quantity-1))} className="flex-1 h-full flex items-center justify-center border-r"><FiMinus/></button>
-                  <span className="flex-1 text-center font-black">{quantity}</span>
-                  <button onClick={() => setQuantity(quantity+1)} className="flex-1 h-full flex items-center justify-center border-l"><FiPlus/></button>
+              <FiArrowRight className="text-red-500 group-hover:translate-x-1 transition-transform" />
+            </div>
+          ) : (
+            <div className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                  <FiCheck size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-gray-900 uppercase">'{couponMessage.code}' Applied</p>
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">{couponMessage.text}</p>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button 
-                onClick={handleAddToCart}
-                className="flex-1 bg-black text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest active:scale-95 transition-all"
-              >
-                 <FiShoppingCart size={18}/> Add to Cart {/* Removed duplicate text */}
-              </button>
-              <button 
-                onClick={handleBuyNow}
-                className="flex-1 bg-blue-900 text-white font-black py-4 rounded-xl flex items-center justify-center gap-3 uppercase text-xs tracking-widest shadow-xl shadow-blue-100 active:scale-95 transition-all"
-              >
-                 <BsLightningCharge size={18}/> Buy Now
-              </button>
+          )}
+
+          {couponMessage.type === 'error' && (
+            <div className="mt-3 flex items-center gap-2 text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
+              <span className="text-[10px] font-black uppercase tracking-tighter">{couponMessage.text}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-b pb-6">
+          <div className="space-y-2">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Size</p>
+            <div className="flex gap-2">
+              {productData.sizes.map((s) => (
+                <button key={s.label} onClick={() => setSelectedSize(s)} 
+                  className={`flex-1 py-2.5 rounded-xl text-[11px] font-black border-2 transition-all ${selectedSize?.label === s.label ? 'bg-[#1a365d] text-white border-[#1a365d] shadow-md' : 'bg-white text-gray-600 border-gray-100 hover:border-gray-300'}`}>
+                  {s.label} <span className="block text-[8px] opacity-60">{s.dimensions}</span>
+                </button>
+              ))}
             </div>
           </div>
         </div>

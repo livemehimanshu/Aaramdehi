@@ -1,6 +1,7 @@
 import { findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
 import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
 import slugify from 'slugify';
+import sharp from 'sharp'; // ✅ WebP conversion ke liye
 
 const COLLECTION = 'rooms';
 
@@ -45,7 +46,13 @@ export const createRoom = async (req, res) => {
                              req.files?.image?.[0]?.path;
 
         if (fileToUpload) {
-            const uploadResult = await uploadImageCloudinary(fileToUpload, "rooms");
+            // ✅ Image ko WebP mein convert karein upload se pehle
+            const webpBuffer = await sharp(fileToUpload)
+                .webp({ quality: 80 })
+                .toBuffer();
+
+            const uploadResult = await uploadImageCloudinary(webpBuffer, "rooms");
+            
             if (uploadResult) {
                 if (uploadResult.success) {
                     imageUrl = uploadResult.url;
@@ -116,7 +123,13 @@ export const updateRoom = async (req, res) => {
                              req.files?.image?.[0]?.path;
 
         if (fileToUpload) {
-            const uploadResult = await uploadImageCloudinary(fileToUpload, "rooms");
+            // ✅ Image ko WebP mein convert karein upload se pehle
+            const webpBuffer = await sharp(fileToUpload)
+                .webp({ quality: 80 })
+                .toBuffer();
+
+            const uploadResult = await uploadImageCloudinary(webpBuffer, "rooms");
+
             if (uploadResult && uploadResult.success) {
                 updateData.image = uploadResult.url;
             } else if (uploadResult) {

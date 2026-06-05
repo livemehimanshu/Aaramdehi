@@ -110,41 +110,41 @@ const Rooms = () => {
   const filteredRooms = rooms.filter(room => room.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-[#0a0a0a] min-h-screen text-zinc-100">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 uppercase tracking-tighter">Room Management</h1>
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">Homepage Content Editor</p>
+          <h1 className="text-2xl font-black text-white uppercase tracking-tighter">Room Management</h1>
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mt-1">Homepage Content Editor</p>
         </div>
-        <button onClick={() => handleOpenModal()} className="bg-[#1a365d] text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit">
+        <button onClick={() => handleOpenModal()} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg active:scale-95 transition-all w-fit">
           <FiPlus size={20} /> Add New Room
         </button>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm mb-6 flex items-center">
+      <div className="bg-[#141414] p-4 rounded-2xl border border-zinc-800 shadow-sm mb-6 flex items-center">
         <div className="relative flex-1 max-w-md">
-          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+          <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input type="text" placeholder="Search rooms..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 rounded-xl border-transparent focus:border-[#1a365d] focus:bg-white transition-all text-sm font-medium outline-none" />
+            className="w-full pl-12 pr-4 py-3 bg-zinc-900 rounded-xl border border-zinc-800 focus:border-blue-500 transition-all text-sm font-medium outline-none text-white" />
         </div>
       </div>
 
       {loading ? (
-        <div className="bg-white rounded-3xl h-64 flex items-center justify-center border border-gray-100 animate-pulse text-gray-400 font-bold uppercase">Loading Rooms...</div>
+        <div className="bg-[#141414] rounded-3xl h-64 flex items-center justify-center border border-zinc-800 animate-pulse text-zinc-600 font-bold uppercase">Loading Rooms...</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredRooms.map((room) => (
-            <div key={room._id} className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden group hover:shadow-xl transition-all duration-500">
+            <div key={room._id} className="bg-[#141414] rounded-3xl border border-zinc-800 shadow-sm overflow-hidden group hover:shadow-xl hover:border-zinc-700 transition-all duration-500">
               <div className="relative aspect-[16/10] overflow-hidden">
                 <img src={room.image || 'https://placehold.co/600x400'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt={room.name} />
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <button onClick={() => handleOpenModal(room)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-full text-blue-900 shadow-sm hover:bg-[#1a365d] hover:text-white transition-all"><FiEdit2 size={16} /></button>
+                  <button onClick={() => handleOpenModal(room)} className="p-2.5 bg-black/60 backdrop-blur-md rounded-full text-white shadow-sm hover:bg-blue-600 transition-all border border-white/10"><FiEdit2 size={16} /></button>
                   <button onClick={() => handleDelete(room._id)} className="p-2.5 bg-white/90 backdrop-blur-md rounded-full text-rose-500 shadow-sm hover:bg-rose-500 hover:text-white transition-all"><FiTrash2 size={16} /></button>
                 </div>
               </div>
               <div className="p-6">
-                <h3 className="text-lg font-black uppercase tracking-tighter text-gray-900 mb-1">{room.name}</h3>
-                <div className="flex items-center gap-2 text-[10px] text-[#1a365d] font-black bg-blue-50 w-fit px-3 py-1.5 rounded-full mb-3 uppercase">
+                <h3 className="text-lg font-black uppercase tracking-tighter text-white mb-1">{room.name}</h3>
+                <div className="flex items-center gap-2 text-[10px] text-blue-400 font-black bg-blue-500/10 w-fit px-3 py-1.5 rounded-full mb-3 uppercase border border-blue-500/20">
                   <FiExternalLink /> {room.categorySlug}
                 </div>
                 <p className="text-gray-500 text-xs line-clamp-2 leading-relaxed">{room.description || "No description."}</p>
@@ -156,23 +156,23 @@ const Rooms = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
-             <div className="p-8 border-b border-gray-100 flex items-center justify-between">
-                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tighter">{editingRoom ? 'Edit Room' : 'Add New Room'}</h2>
-                <button onClick={handleCloseModal} className="p-3 bg-gray-50 rounded-full text-gray-400 hover:text-gray-900 transition-all"><FiX size={20} /></button>
+          <div className="bg-[#141414] w-full max-w-2xl rounded-[32px] shadow-2xl border border-zinc-800 overflow-hidden relative max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200">
+             <div className="p-8 border-b border-zinc-800 flex items-center justify-between">
+                <h2 className="text-xl font-black text-white uppercase tracking-tighter">{editingRoom ? 'Edit Room' : 'Add New Room'}</h2>
+                <button onClick={handleCloseModal} className="p-3 bg-zinc-800 rounded-full text-zinc-400 hover:text-white transition-all"><FiX size={20} /></button>
              </div>
 
              <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Name</label>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Room Name</label>
                     <input name="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} placeholder="e.g. Living Room" 
-                      className="w-full px-5 py-3.5 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-[#1a365d] focus:bg-white outline-none transition-all font-bold" />
+                      className="w-full px-5 py-3.5 bg-zinc-900 rounded-2xl border-2 border-zinc-800 focus:border-blue-500 outline-none transition-all font-bold text-white" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Target Category</label>
+                    <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Target Category</label>
                     <select name="categorySlug" value={formData.categorySlug} onChange={(e) => setFormData({...formData, categorySlug: e.target.value})}
-                      className="w-full px-5 py-3.5 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-[#1a365d] focus:bg-white outline-none transition-all font-bold appearance-none">
+                      className="w-full px-5 py-3.5 bg-zinc-900 rounded-2xl border-2 border-zinc-800 focus:border-blue-500 outline-none transition-all font-bold appearance-none text-white">
                       <option value="">Select Category</option>
                       {categories.map(cat => <option key={cat._id} value={cat.slug}>{cat.name}</option>)}
                     </select>
@@ -180,15 +180,15 @@ const Rooms = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Description</label>
                   <textarea name="description" value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} rows="3"
-                    placeholder="Short summary..." className="w-full px-5 py-3.5 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-[#1a365d] focus:bg-white outline-none transition-all font-medium" />
+                    placeholder="Short summary..." className="w-full px-5 py-3.5 bg-zinc-900 rounded-2xl border-2 border-zinc-800 focus:border-blue-500 outline-none transition-all font-medium text-white" />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Image</label>
+                  <label className="text-[10px] font-black text-zinc-500 uppercase tracking-widest ml-1">Room Image</label>
                   <div className="relative group">
-                    <div className={`w-full h-48 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden ${imagePreview ? 'border-solid border-blue-100' : 'border-gray-200 bg-gray-50'}`}>
+                    <div className={`w-full h-48 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden ${imagePreview ? 'border-solid border-blue-500/50' : 'border-zinc-800 bg-zinc-900 hover:border-zinc-700'}`}>
                       {imagePreview ? (
                         <img src={imagePreview} className="w-full h-full object-cover" alt="preview" />
                       ) : (
@@ -202,7 +202,7 @@ const Rooms = () => {
                   </div>
                 </div>
                 
-                <button type="submit" disabled={isSubmitting} className="w-full bg-[#1a365d] text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-black active:scale-[0.98] transition-all disabled:bg-gray-300 shadow-xl shadow-blue-900/10">
+                <button type="submit" disabled={isSubmitting} className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-500 active:scale-[0.98] transition-all disabled:bg-zinc-800 disabled:text-zinc-600 shadow-xl shadow-blue-500/10">
                   {isSubmitting ? 'Saving...' : editingRoom ? 'Update Room' : 'Create Room'}
                 </button>
              </form>

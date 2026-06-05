@@ -27,6 +27,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.1.1",
     "nodemailer": "^8.0.7",
+    "sharp": "^0.33.5",
     "slugify": "^1.6.9"
   },
   "devDependencies": {

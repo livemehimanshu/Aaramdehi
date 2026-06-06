@@ -175,9 +175,8 @@ export async function placeOrderAPI(orderData) {
 
 export async function getUserOrdersAPI() {
   try {
-    // Ensure this does NOT start with /api/ and uses plural 'orders'
-    // Correct: /orders/my-orders
-    const res = await api.get('/orders/my-orders'); 
+    // Fixed: Use relative path (no leading /api) and plural 'orders'
+    const res = await api.get('/orders/my-orders');
     return res.data;
   } catch (e) {
     return { success: false, data: [], message: e.message };

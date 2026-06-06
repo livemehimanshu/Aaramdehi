@@ -33,7 +33,7 @@ const Orders = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const res = await axiosInstance.get('/api/order');
+                const res = await axiosInstance.get('/orders');
                 if (res.success) {
                     setOrders(res.data);
                 }

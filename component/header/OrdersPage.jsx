@@ -23,8 +23,8 @@ const OrdersPage = () => {
             setLoading(true);
             setError(null);
             
-            // ✅ Standardized path with /api prefix
-            const response = await api.get('/api/order/my-orders');
+            // Base URL already includes /api, so use the backend route path directly
+            const response = await api.get('/orders/my-orders');
             
             // Backend response structures: .data (standard) or .orders (common custom)
             if (response.data && response.data.success) {

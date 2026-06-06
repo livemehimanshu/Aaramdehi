@@ -101,7 +101,7 @@ export const createProduct = async (req, res) => {
             // Auto-calculate discount if percent isn't explicitly sent
             discountPercent: Number(discountPercent) || Math.round(((mrpNum - sellingPriceNum) / mrpNum) * 100),
             stock: Number(stock),
-                sku: sku || `SKU-${Date.now()}-${slug.slice(0,5)}`,
+            sku: sku || `SKU-${Date.now()}-${slug.slice(0,5)}`,
             images,
             thumbnail: images.length > 0 ? images[0].url : "",
             specifications: (specifications && typeof specifications === 'string' && specifications.startsWith('{')) ? JSON.parse(specifications) : {},

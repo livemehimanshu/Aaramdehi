@@ -304,7 +304,7 @@ export const validateCoupon = async (req, res) => {
       
       return res.status(400).json({
         success: false,
-        message: `Coupon "${searchCode}" exists nahi karta.`,
+        message: `Coupon "${searchCode}" does not exist.`,
       });
     }
 

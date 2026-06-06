@@ -177,7 +177,7 @@ export const getAllProducts = async (req, res) => {
             });
         }
 
-        // ✅ Pagination (client-side)
+        // 6. ✅ Pagination
         const paginatedProducts = products.slice(skip, skip + l);
 
         return res.json({

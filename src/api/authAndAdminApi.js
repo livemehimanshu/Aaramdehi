@@ -175,7 +175,8 @@ export async function placeOrderAPI(orderData) {
 
 export async function getUserOrdersAPI() {
   try {
-    const res = await api.get('/orders/me'); // Standardized REST GET
+    // Fixed path: Remove redundant '/api' and ensure plural 'orders'
+    const res = await api.get('/orders/my-orders'); 
     return res.data;
   } catch (e) {
     return { success: false, data: [], message: e.message };

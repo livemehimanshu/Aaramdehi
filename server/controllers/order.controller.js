@@ -180,7 +180,7 @@ export const getMyOrders = async (req, res) => {
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .map(order => ({
                 ...order,
-                orderItems: order.orderItems.map(item => {
+                orderItems: (order.orderItems || []).map(item => {
                     const p = productMap[item.productId || item.product];
                     return {
                         ...item,

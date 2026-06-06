@@ -9,6 +9,7 @@ const RoomProductsPage = () => {
     const { slug } = useParams();
     const [room, setRoom] = useState(null);
     const [products, setProducts] = useState([]);
+    const [isCurated, setIsCurated] = useState(false); // ✅ Type track karne ke liye
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -21,10 +22,13 @@ const RoomProductsPage = () => {
                     getAllCategoriesAPI()
                 ]);
 
-                const foundRoom = roomsRes.data?.find(r => r.slug === slug);
+                // ✅ Case-insensitive and trimmed slug matching
+                const foundRoom = roomsRes.data?.find(r => 
+                    String(r.slug).trim().toLowerCase() === String(slug).trim().toLowerCase()
+                );
                 
-                // Agar room meta mil jaye toh theek, warna hum slug ko hi category maangenge
-                setRoom(foundRoom || { name: slug.replace(/-/g, ' '), categorySlug: slug });
+                // Metadata set karein
+                setRoom(foundRoom || { name: slug.replace(/-/g, ' '), categorySlug: slug, description: "Explore this curated collection." });
 
                 // ✅ Parse curated products safely (handles both Array and JSON string from DB)
                 let productIds = foundRoom?.products || [];
@@ -34,24 +38,25 @@ const RoomProductsPage = () => {
 
                 let productsRes;
                 // ✅ New Logic: Check if specific products are curated for this room
-                if (productIds.length > 0) {
+                if (foundRoom && productIds.length > 0) {
                     // Fetch only those specific products selected in Admin
+                    // Note: 'ids' param backend controller mein handle hona chahiye
+                    console.log(`🎯 Room "${slug}": Fetching ${productIds.length} Curated Products.`);
                     productsRes = await getAllProductsAPI({ ids: productIds.join(','), limit: 100 });
+                    setIsCurated(true);
                 } else {
                     // ✅ SMART FALLBACK: Resolve Slug to actual Category Name
-                    // Kyunki products "Living Room" name se store hote hain, "living-room" slug se nahi.
-                    const targetSlug = foundRoom ? foundRoom.categorySlug : slug;
+                    const targetSlug = foundRoom?.categorySlug || slug;
                     const categoryObj = catsRes.data?.find(c => c.slug === targetSlug);
-                    
-                    // Agar category name mil jaye toh use karein (Living Room), warna slug (living-room)
                     const categoryToFilter = categoryObj ? categoryObj.name : targetSlug;
 
-                    console.log(`🔍 Room Fallback Fetch: Mapping slug "${targetSlug}" to name "${categoryToFilter}"`);
-                    
+                    console.log(`🔍 Curated list empty, falling back to Category: "${categoryToFilter}"`);
                     productsRes = await getAllProductsAPI({ category: categoryToFilter, limit: 50 });
+                    setIsCurated(false);
                 }
                 
-                setProducts(productsRes.data || []);
+                // Ensure results match the category/IDs filter strictly
+                setProducts(productsRes?.data || productsRes?.products || []);
             } catch (err) {
                 console.error("Error fetching room products:", err);
             } finally {
@@ -87,9 +92,12 @@ const RoomProductsPage = () => {
                     {room?.image && (
                         <img src={room.image} alt={room.name} className="absolute inset-0 w-full h-full object-cover opacity-30" />
                     )}
-                    <div className="relative z-10 max-w-2xl">
+                    <div className="relative z-10 max-w-3xl">
+                        {isCurated && (
+                            <span className="bg-emerald-500 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block shadow-lg">Curated Gallery</span>
+                        )}
                         <h1 className="text-4xl md:text-6xl font-serif tracking-tight mb-4 capitalize">
-                            {room?.name} Collection
+                            {room?.name} {isCurated ? 'Essentials' : 'Collection'}
                         </h1>
                         <p className="text-sm md:text-lg text-white/80 font-medium leading-relaxed">
                             {room?.description || `Explore our curated selection of premium essentials for your ${room?.name}. Handpicked for comfort and style.`}

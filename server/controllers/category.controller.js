@@ -102,7 +102,7 @@ export const createCategory = async (req, res) => {
     }
 
     const { name, description, isActive, icon, subCategories } = req.body;
-    let finalIcon = icon; // डिफ़ॉल्ट रूप से इमोजी
+    let finalIcon = icon; // Default to emoji if no image is uploaded
 
     if (!name) {
       return res.status(400).json({ success: false, message: 'Category name is required' });

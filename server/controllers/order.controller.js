@@ -274,9 +274,9 @@ export const getOrderById = async (req, res) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        // Security Check: Ensure user only sees their own orders
+        // Security Check: Allow Admins to see any order, but users can only see their own
         const userId = req.userId || req.user?._id || req.user?.id;
-        if (String(order.userId) !== String(userId)) {
+        if (req.user?.role !== 'ADMIN' && String(order.userId) !== String(userId)) {
             return res.status(403).json({ success: false, message: "You are not authorized to view this order." });
         }
 
@@ -348,7 +348,7 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
             }
         });
 
-        // फ्रीक्वेंसी के आधार पर सॉर्ट करें और टॉप 3 प्रोडक्ट्स निकालें
+        // Sort by frequency and extract top 3 products
         const topProductIds = Object.entries(frequencyMap)
             .sort((a, b) => b[1] - a[1])
             .slice(0, 3)

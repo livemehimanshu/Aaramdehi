@@ -9,7 +9,7 @@ export const getAllBanners = async (req, res) => {
     const { page = 1, limit = 10, category, isActive } = req.query;
     const skip = (page - 1) * limit;
 
-    // Firebase se saara data lao
+    // Fetch all data from Firebase
     let banners = await findAll(COLLECTION);
 
     // Manual Filtering

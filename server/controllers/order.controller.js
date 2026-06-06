@@ -203,7 +203,31 @@ export const getAllOrders = async (req, res) => {
         const orders = await findAll(COLLECTION);
         orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        return res.json({ success: true, data: orders });
+        // ✅ Optimization: Fetch products related to these orders for name/image enrichment
+        const productIds = [...new Set(orders.flatMap(order => 
+            (order.orderItems || []).map(item => item.productId || item.product)
+        ))].filter(Boolean);
+
+        const products = await Promise.all(productIds.map(id => findById(PRODUCT_COLLECTION, id)));
+        
+        const productMap = products.filter(Boolean).reduce((acc, p) => {
+            acc[p._id || p.id] = p;
+            return acc;
+        }, {});
+
+        const enrichedOrders = orders.map(order => ({
+            ...order,
+            orderItems: (order.orderItems || []).map(item => {
+                const p = productMap[item.productId || item.product];
+                return {
+                    ...item,
+                    name: p?.name || item.name,
+                    image: p?.thumbnail || p?.images?.[0]?.url || item.image
+                };
+            })
+        }));
+
+        return res.json({ success: true, data: enrichedOrders });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

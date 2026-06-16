@@ -115,23 +115,43 @@ class MultiversalEngine:
 
         return score, is_match
 
-    # ✅ 100k users ke liye caching zaroori hai
-    @lru_cache(maxsize=1024)
-    def search(self, query, user_context):
-        start_t = time.perf_counter()
-        query_terms = [term for term in query.lower().split() if term]
-        
-        # Pre-normalize query terms once per search
-        norm_query_terms = [re.sub(r'(.)\1+', r'\1', term) for term in query_terms]
-        
-        # Tuple conversion for hashable context (needed for lru_cache)
+    def _normalize_context(self, user_context):
+        if user_context is None:
+            return tuple()
+        if isinstance(user_context, dict):
+            return tuple(sorted(user_context.items()))
+        if isinstance(user_context, list):
+            return tuple(user_context)
+        if isinstance(user_context, tuple):
+            return user_context
+        return tuple(user_context)
+
+    def _extract_category(self, user_context):
         category = None
-        for key, val in user_context:
-            if key == 'category':
-                category = val
+        for kv in user_context:
+            if not isinstance(kv, tuple) or len(kv) != 2:
+                continue
+            key, val = kv
+            if key == 'category' and val:
+                category = str(val).strip()
+                break
+        return category
+
+    def _normalize_query(self, query):
+        if not isinstance(query, str):
+            query = str(query or '')
+        query = query.lower().strip()
+        return [term for term in re.findall(r"\w+", query) if term and term not in STOP_WORDS]
+
+    @lru_cache(maxsize=1024)
+    def _search_cached(self, query, context_tuple):
+        start_t = time.perf_counter()
+        query_terms = self._normalize_query(query)
+        norm_query_terms = [re.sub(r'(.)\1+', r'\1', term) for term in query_terms]
+        category = self._extract_category(context_tuple)
 
         scored = []
-        for item in self.items: # Search through ALL items
+        for item in self.items:  # Search through ALL items
             score, is_match = self._score_item(item, query_terms, norm_query_terms, category)
             if not query_terms or is_match:
                 scored.append({
@@ -146,7 +166,12 @@ class MultiversalEngine:
         top_results = heapq.nlargest(self.top_k, scored, key=lambda x: x['score'])
         latency = f"{(time.perf_counter() - start_t) * 1000:.4f}ms"
 
-        self.history.append({'query': query, 'context': user_context, 'results': top_results})
+        self.history.append({'query': query, 'context': context_tuple, 'results': top_results})
         if len(self.history) > self.max_history:
             self.history.pop(0)
         return {'latency_ms': latency, 'results': top_results}
+
+    def search(self, query, user_context=None):
+        normalized_context = self._normalize_context(user_context)
+        normalized_query = query if isinstance(query, str) else str(query or '')
+        return self._search_cached(normalized_query, normalized_context)

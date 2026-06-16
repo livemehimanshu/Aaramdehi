@@ -45,20 +45,31 @@ const app = express();
 app.set('trust proxy', 1);
 
 // --- CORS & Options (SAHI TARIKA) ---
+const allowedCorsOrigins = [
+    'https://www.aaramdehi.co.in',
+    'https://aaramdehi.co.in',
+    'https://aaramdehi.vercel.app',
+    'https://aaramdehi-backend.onrender.com',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+];
+
 const corsOptions = {
-    origin: [
-        'https://www.aaramdehi.co.in',
-        'https://aaramdehi.co.in',
-        'https://aaramdehi.vercel.app',
-        'http://localhost:5173',
-        'http://127.0.0.1:5173'
-    ],
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        const isAllowed = allowedCorsOrigins.includes(normalizedOrigin)
+            || normalizedOrigin.endsWith('.aaramdehi.co.in')
+            || normalizedOrigin.endsWith('.aaramdehi.vercel.app');
+        callback(null, isAllowed);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "accessToken", "accesstoken"]
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Ensure preflight OPTIONS is handled for all routes
 
 // --- Middlewares ---
 app.use(express.json({ limit: '10mb' }));
@@ -92,6 +103,8 @@ apiRouter.use("/rooms", roomRouter);
 apiRouter.use("/team", teamRouter);
 
 app.use("/api", apiRouter);
+app.use("/products", productRouter); // Allow legacy direct product access
+app.use("/settings", settingsRouter); // Allow legacy direct settings access
 
 // Sync route
 apiRouter.post("/admin/sync-ai-search", async (req, res) => {

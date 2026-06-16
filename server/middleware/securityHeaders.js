@@ -9,6 +9,7 @@ export const securityHeaders = (req, res, next) => {
     'https://www.aaramdehi.co.in', 
     'https://aaramdehi.co.in', // Naked domain also added
     'https://aaramdehi.vercel.app', 
+    'https://aaramdehi-backend.onrender.com',
     'http://localhost:5173'
   ];
   const origin = req.headers.origin;
@@ -16,7 +17,13 @@ export const securityHeaders = (req, res, next) => {
   // Standardize origin check to ignore trailing slashes and handle cases correctly
   const normalizedOrigin = origin ? origin.replace(/\/$/, "") : null;
 
-  if (normalizedOrigin && allowedOrigins.includes(normalizedOrigin)) {
+  const isAllowedOrigin = normalizedOrigin && (
+    allowedOrigins.includes(normalizedOrigin) ||
+    normalizedOrigin.endsWith('.aaramdehi.co.in') ||
+    normalizedOrigin.endsWith('.aaramdehi.vercel.app')
+  );
+
+  if (isAllowedOrigin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin'); // Important for proxies like Cloudflare/Render
   }

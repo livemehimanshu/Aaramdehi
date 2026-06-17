@@ -11,17 +11,19 @@ STOP_WORDS = set([
     'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'has', 'he', 'in', 'is', 'it', 'its', 'of', 'on', 'that', 'the', 'to', 'was', 'were', 'will', 'with',
     'hai', 'ko', 'ka', 'ke', 'ki', 'mein', 'me', 'main', 'aur', 'ek', 'se', 'par', 'bhi', 'ya', 'yeh', 'woh', 'jo', 'jab', 'tab', 'kya', 'kyun', 'kaise', 'kon', 'kaha', 'kabhi', 'har', 'sabhi', 'apna', 'apne', 'apni', 'hum', 'tum', 'unka', 'unki', 'unke', 'mera', 'meri', 'mere', 'tera', 'teri', 'tere', 'usko', 'uska', 'uski', 'uske', 'ismein', 'usmein', 'yahan', 'wahan', 'idhar', 'udhar', 'lekin', 'magar', 'aur', 'fir', 'phir', 'toh', 'tabhi', 'jabki', 'jaisa', 'jaise', 'jaisi', 'aisa', 'aise', 'aisi', 'kuch', 'kisi', 'kuchh', 'kisi', 'sab', 'sabhi', 'kya', 'kaun', 'kaise', 'kabhi', 'kahin', 'kaunse', 'kis', 'kisne', 'kiske', 'kiski'])
 class EngineItem:
-    __slots__ = ('id', 'title', 'category', 'is_essential', 'base_score', 'search_text', 'thumbnail', 'sellingPrice', 'tokens', 'norm_tokens', 'title_lower')
+    __slots__ = ('id', 'title', 'category', 'brand', 'is_essential', 'base_score', 'search_text', 'thumbnail', 'sellingPrice', 'tokens', 'norm_tokens', 'title_lower')
 
-    def __init__(self, id, title, category, is_essential, thumbnail=None, sellingPrice=0):
+    def __init__(self, id, title, category, brand, is_essential, thumbnail=None, sellingPrice=0, tags=None, description=""):
         self.id = id
         self.title = title
         self.category = category
+        self.brand = brand
         self.is_essential = is_essential
         self.thumbnail = thumbnail
         self.sellingPrice = sellingPrice
         self.base_score = 1.0
-        self.search_text = f"{title} {category}".lower()
+        # Broaden search text to include tags and description for better recall
+        self.search_text = f"{title} {category} {brand} {' '.join(tags or [])} {description}".lower() 
         self.title_lower = title.lower()
         
         # Pre-calculate tokens and normalized versions for performance
@@ -38,13 +40,26 @@ class MultiversalEngine:
         self.max_history = 100
 
         for item in catalog:
-            item_id = item.get('id') or item.get('_id')
-            title = item.get('title', '')
-            category = item.get('category', '')
-            is_essential = bool(item.get('is_essential', False))
-            thumbnail = item.get('thumbnail')
-            price = item.get('sellingPrice') or item.get('price', 0)
-            engine_item = EngineItem(item_id, title, category, is_essential, thumbnail, price)
+            # ✅ Robust key mapping for multiple data sources (RTDB vs Express)
+            item_id = str(item.get('id') or item.get('_id') or item.get('productId') or 'unknown')
+            title = item.get('title') or item.get('name') or item.get('productName') or 'Untitled Product'
+            
+            category_raw = item.get('category')
+            if isinstance(category_raw, dict):
+                category = category_raw.get('name') or category_raw.get('label') or 'General'
+            else:
+                category = str(category_raw or 'General')
+
+            brand = str(item.get('brand') or '')
+            tags = item.get('tags') if isinstance(item.get('tags'), list) else []
+            description = str(item.get('description') or item.get('shortDescription') or '')
+            
+            # ✅ Handle variations in boolean/float fields
+            is_essential = bool(item.get('is_essential') or item.get('essential') or False)
+            thumbnail = item.get('thumbnail') or item.get('image') or ''
+            price = float(item.get('sellingPrice') or item.get('price') or item.get('mrp') or 0)
+
+            engine_item = EngineItem(item_id, title, category, brand, is_essential, thumbnail, price, tags, description)
             self.items.append(engine_item)
             self.category_index[category].append(engine_item)
 
@@ -150,8 +165,13 @@ class MultiversalEngine:
         norm_query_terms = [re.sub(r'(.)\1+', r'\1', term) for term in query_terms]
         category = self._extract_category(context_tuple)
 
+        # ✅ Optimization: Filter items by category first if provided
         scored = []
-        for item in self.items:  # Search through ALL items
+        items_to_search = self.items
+        if category and category.lower() != 'all': # Assuming 'all' means no specific category filter
+            items_to_search = self.category_index.get(category, [])
+
+        for item in items_to_search:  # Search through filtered items or ALL items
             score, is_match = self._score_item(item, query_terms, norm_query_terms, category)
             if not query_terms or is_match:
                 scored.append({

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ShoppingCart, User, ChevronDown, MapPin, Heart } from 'lucide-react';
+import { ShoppingCart, User, ChevronDown, MapPin, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
+import Search from '../search/index'; // ✅ Search component import kiya
 
 const Header = () => {
   const navigate = useNavigate();
@@ -82,13 +83,10 @@ const Header = () => {
         </Link>
 
         {/* Search Bar */}
-        <div className="hidden md:flex flex-grow max-w-2xl relative">
-          <input 
-            type="text" 
-            placeholder="Search for furniture, home decor and more..." 
-            className="w-full bg-white border-none py-2.5 px-4 pl-11 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-all text-sm shadow-inner"
-          />
-          <Search className="absolute left-4 top-3.5 text-gray-400" size={16} />
+        {/* OLD CODE (Isey Hatao): */}
+        {/* NEW CODE (Isey Lagao): */}
+        <div className="hidden md:flex flex-grow max-w-2xl justify-center z-50">
+          <Search />
         </div>
 
         {/* User Actions */}

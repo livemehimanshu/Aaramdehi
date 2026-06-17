@@ -134,33 +134,54 @@ export const createProduct = async (req, res) => {
 };
 
 // ✅ 2. GET ALL PRODUCTS (Search & Filter)
+// ✅ FIXED FOR FRONTEND COMPATIBILITY & ROBUSTNESS
 export const getAllProducts = async (req, res) => {
     try {
         const { category, subCategory, page, limit, search, sort = "-createdAt" } = req.query;
         console.log("🔎 getAllProducts params:", { category, subCategory, page, limit, search, sort });
         
         const p = Number(page) || 1;
-        const l = Number(limit) || 10;
+        const l = Number(limit) || 10; // Default limit 10
         const skip = (p - 1) * l;
 
-        let products = [];
+        let rawProducts = [];
         // ✅ Optimization: Use native Firebase query for category or subCategory
         if (subCategory && subCategory !== "" && subCategory !== "undefined") {
-            products = await findByQuery(COLLECTION, 'subCategory', subCategory);
+            rawProducts = await findByQuery(COLLECTION, 'subCategory', subCategory);
         } else if (category && category !== "" && category !== "undefined") {
-            products = await findByQuery(COLLECTION, 'category', category);
+            rawProducts = await findByQuery(COLLECTION, 'category', category);
         } else {
-            products = await findAll(COLLECTION) || [];
+            rawProducts = await findAll(COLLECTION) || [];
         }
 
-        products = Array.isArray(products) ? products : [];
+        // ✅ Safe conversion: Ensure it behaves like an array and format for Frontend structure
+        let products = Array.isArray(rawProducts) 
+            ? rawProducts 
+            : (rawProducts && typeof rawProducts === 'object' 
+                ? Object.keys(rawProducts).map(key => ({ _id: key, ...rawProducts[key] })) 
+                : []);
+
+        // ✅ Map 'name' to 'title' dynamically so frontend 'item.title' never breaks
+        products = products.map(prod => ({
+            ...prod,
+            id: prod.id || prod._id, // Ensure a consistent 'id' field
+            title: prod.title || prod.name || prod.productName || "Unnamed Product", // Fixes Frontend drop-down blank issue
+            // Ensure category is a string for consistent filtering
+            category: typeof prod.category === 'object' ? prod.category.name || prod.category.label || '' : prod.category || ''
+        }));
 
         // ✅ Search by name or brand (client-side search)
         if (search && search !== "" && search !== "undefined") {
             const searchLower = String(search).toLowerCase();
             products = products.filter(prod => 
                 String(prod.name || "").toLowerCase().includes(searchLower) || 
-                String(prod.brand || "").toLowerCase().includes(searchLower)
+                String(prod.title || "").toLowerCase().includes(searchLower) ||
+                String(prod.brand || "").toLowerCase().includes(searchLower) ||
+                String(prod.productName || "").toLowerCase().includes(searchLower) ||
+                String(prod.category || "").toLowerCase().includes(searchLower) ||
+                String(prod.description || "").toLowerCase().includes(searchLower) ||
+                (prod.tags && Array.isArray(prod.tags) && prod.tags.some(t => String(t).toLowerCase().includes(searchLower))) ||
+                (prod.sizes && Array.isArray(prod.sizes) && prod.sizes.some(s => String(s.label || s).toLowerCase().includes(searchLower)))
             );
         }
 

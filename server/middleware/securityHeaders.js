@@ -3,40 +3,10 @@
  * Implements OWASP recommended security headers
  */
 
-export const securityHeaders = (req, res, next) => {
-  // 0. CORS Headers - Allow your production domain
-  const allowedOrigins = [
-    'https://www.aaramdehi.co.in', 
-    'https://aaramdehi.co.in', // Naked domain also added
-    'https://aaramdehi.vercel.app', 
-    'https://aaramdehi-backend.onrender.com',
-    'http://localhost:5173'
-  ];
-  const origin = req.headers.origin;
-
-  // Standardize origin check to ignore trailing slashes and handle cases correctly
-  const normalizedOrigin = origin ? origin.replace(/\/$/, "") : null;
-
-  const isAllowedOrigin = normalizedOrigin && (
-    allowedOrigins.includes(normalizedOrigin) ||
-    normalizedOrigin.endsWith('.aaramdehi.co.in') ||
-    normalizedOrigin.endsWith('.aaramdehi.vercel.app')
-  );
-
-  if (isAllowedOrigin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin'); // Important for proxies like Cloudflare/Render
-  }
-  
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-  // Added 'accesstoken' to headers as your backend logic often looks for it specifically
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, accesstoken, X-Requested-With, X-API-Version');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-  // Handle Preflight (OPTIONS) requests immediately
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+const securityHeaders = (req, res, next) => {
+  // CORS headers are handled by the 'cors' middleware globally in index.js.
+  // This middleware focuses on other security headers.
+  // The 'cors' middleware also handles preflight OPTIONS requests.
 
   // 1. Content Security Policy (CSP)
   // Prevents XSS attacks by controlling which resources can be loaded

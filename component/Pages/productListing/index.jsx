@@ -26,6 +26,7 @@ const ProductListing = ({ forcedCategory }) => {
   // ✅ READ PARAMS FROM URL DYNAMICALLY
   const categoryParam = searchParams.get('category');
   const subCategoryParam = searchParams.get('subCategory');
+  const searchParam = searchParams.get('search'); // Extract search query
 
   const [selectedCategory, setSelectedCategory] = useState(forcedCategory || categoryParam || 'All');
   const [selectedSubCategory, setSelectedSubCategory] = useState(subCategoryParam || null);
@@ -75,29 +76,44 @@ const ProductListing = ({ forcedCategory }) => {
         setLoading(true);
         const currentCategory = forcedCategory || categoryParam || 'All';
         const currentSubCategory = subCategoryParam || undefined;
+        const currentSearch = searchParam || undefined;
 
         // Update UI states based on current params
         setSelectedCategory(currentCategory);
         setSelectedSubCategory(currentSubCategory);
         setPage(1); // Reset to first page
 
-        // ✅ IMPROVED API CALL: Only send params if they're not 'All'
-        const res = await getAllProductsAPI({ 
+        // ✅ Passing search parameter to API
+        const response = await getAllProductsAPI({
           category: currentCategory !== 'All' ? currentCategory : undefined,
           subCategory: currentSubCategory,
-          limit: 100 
+          search: currentSearch,
+          limit: 100
         });
 
-        console.log(`✅ Products fetched for Category: ${currentCategory}, SubCategory: ${currentSubCategory}`, res);
-        
-        if (res && res.success && Array.isArray(res.data)) {
-          setProducts(res.data);
-        } else if (Array.isArray(res)) {
-          setProducts(res);
+        console.log(`📡 Raw API response [Search: ${currentSearch || 'None'}]:`, response);
+
+        // ✅ ROBUST CHECK: Ensure productsData is always a clean array
+        let productsData = [];
+        if (response?.data?.data && Array.isArray(response.data.data)) {
+          productsData = response.data.data;
+          console.log(`✅ Extracted from response.data.data (${productsData.length} items)`);
+        } else if (Array.isArray(response?.data)) {
+          productsData = response.data;
+          console.log(`✅ Extracted from response.data (${productsData.length} items)`);
+        } else if (Array.isArray(response)) {
+          productsData = response;
+          console.log(`✅ Extracted from direct array (${productsData.length} items)`);
         } else {
-          console.warn("Unexpected API response structure:", res);
-          setProducts([]);
+          console.warn(`⚠️ No array found in response, defaulting to empty array`);
+          productsData = [];
         }
+
+        console.log(`📊 Products loaded [Search: "${currentSearch || 'All'}"]:`, {
+          count: productsData.length,
+          items: productsData.slice(0, 2)
+        });
+        setProducts(productsData);
       } catch (error) {
         console.error("Failed to fetch products:", error);
         setProducts([]);
@@ -107,7 +123,7 @@ const ProductListing = ({ forcedCategory }) => {
     };
 
     loadProducts();
-  }, [forcedCategory, categoryParam, subCategoryParam, searchParams]);
+  }, [forcedCategory, categoryParam, subCategoryParam, searchParam, searchParams]);
 
   // Debugging: Log data whenever it changes
   useEffect(() => {
@@ -294,7 +310,8 @@ const ProductListing = ({ forcedCategory }) => {
         <div className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-gray-100">
           {/* ✅ Dynamic Title: Selected category ke hisaab se change hoga */}
           <h2 className="font-black text-blue-900 text-xl tracking-tight uppercase">
-            {selectedCategory === 'All' ? 'Premium Collection' : selectedCategory}
+            {searchParam ? `Search Results for "${searchParam}"` : 
+             (selectedCategory === 'All' ? 'Premium Collection' : selectedCategory)}
           </h2>
           
           <select 

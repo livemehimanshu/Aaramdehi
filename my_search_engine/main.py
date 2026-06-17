@@ -18,13 +18,20 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 # ✅ AI Catalog Model for stricter validation
+# ✅ Updated Python Catalog Model to support comprehensive search data
 class ProductItem(BaseModel):
     id: str
     title: str
     category: str = "General"
+    brand: str = ""                         # Added brand support
     sellingPrice: float = 0.0
     thumbnail: str = ""
     is_essential: bool = False
+    tags: Optional[list[str]] = []          # Added tags support
+    description: Optional[str] = ""         # Added description support
+
+    class Config:
+        extra = "allow" # Prevents validation failure if extra DB parameters are sent
 
 class SearchRequest(BaseModel):
     query: str
@@ -107,6 +114,9 @@ def load_catalog_from_rtdb():
                     'is_essential': bool(data.get('is_essential') or data.get('essential') or False),
                     'thumbnail': data.get('thumbnail') or data.get('image') or '',
                     'sellingPrice': float(data.get('sellingPrice') or data.get('price') or data.get('mrp') or 0),
+                    'brand': data.get('brand') or '',      # Explicitly collect brand from database
+                    'tags': data.get('tags') if isinstance(data.get('tags'), list) else [], # Explicit parsing
+                    'description': data.get('description') or data.get('shortDescription') or ''
                 })
 
         logger.info('Loaded %d product(s) from Realtime Database.', len(catalog))
@@ -155,6 +165,10 @@ def search_get(q: str, category: str | None = None):
 def sync_catalog(catalog: list[ProductItem]):
     global engine
     # Ensure we use model_dump() for Pydantic v2 or dict() for v1
+    # ✅ Cache completely clear target implementation to release locked threads memory
+    if hasattr(engine._search_cached, "cache_clear"):
+        engine._search_cached.cache_clear()
+
     catalog_dicts = [item.model_dump() if hasattr(item, "model_dump") else item.dict() for item in catalog]
     engine = MultiversalEngine(catalog_dicts)
     logger.info(f"Successfully indexed {len(catalog_dicts)} products via Sync API!")

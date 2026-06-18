@@ -520,12 +520,6 @@ const ARStudio = () => {
       </div>
 
       <div className="relative z-10 min-h-screen">
-        <div className="absolute top-5 left-1/2 z-20 w-[min(94%,920px)] -translate-x-1/2 rounded-[28px] border border-white/10 bg-slate-950/90 p-5 text-center shadow-[0_28px_120px_rgba(0,0,0,0.25)]">
-          <div className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-semibold">Aaramdehi Live AI Studio</div>
-          <div className="mt-3 text-lg font-black text-white md:text-xl">{statusMessage}</div>
-          {loadingProducts && <div className="mt-2 text-sm text-slate-400">Loading AR catalog…</div>}
-          {cameraError && <div className="mt-2 text-sm text-rose-400">{cameraError}</div>}
-        </div>
 
         {isFaceDetected && (
           <div className="absolute inset-0 z-20 flex items-center justify-center px-6">
@@ -537,58 +531,6 @@ const ARStudio = () => {
           </div>
         )}
 
-        <div className="absolute top-5 right-5 z-20 flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-slate-900/90 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:bg-slate-800"
-          >
-            <span>🔄</span>
-            Switch Camera
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="inline-flex items-center justify-center rounded-full border border-white/10 bg-slate-900/90 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-black/30 transition hover:bg-slate-800"
-          >
-            Back to Store
-          </button>
-        </div>
-
-        {showDimensions && (
-          <div className="absolute left-5 top-28 z-20 w-[min(360px,calc(100vw-40px))] rounded-[28px] border border-white/10 bg-slate-950/80 p-5 shadow-2xl shadow-black/20 backdrop-blur-xl">
-            <div className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-semibold">Dynamic Reticle Scaling</div>
-            <div className="mt-3 text-sm font-black uppercase tracking-[0.15em] text-white">Surface Measurement Tag</div>
-            <div className="mt-4 grid gap-3 text-sm text-slate-200">
-              <div className="rounded-3xl bg-white/5 p-3">
-                <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Target Zone</div>
-                <div className="mt-2 text-lg font-semibold text-white">{placementMode === 'wall' ? 'Wall' : 'Bed / Floor'}</div>
-              </div>
-              <div className="rounded-3xl bg-white/5 p-3">
-                <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Measured Dimensions</div>
-                <div className="mt-2 text-lg font-semibold text-white">{calculatedArea.length} ft × {calculatedArea.width} ft</div>
-              </div>
-              <div className="rounded-3xl bg-white/5 p-3">
-                <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Fit Status</div>
-                <div className="mt-2 text-lg font-semibold text-emerald-200">{calculatedArea.fitStatus}</div>
-              </div>
-              <div className="rounded-3xl bg-slate-900/70 p-3 text-sm text-slate-300">
-                Auto-Fit Matrix: {modelScaleFactor}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="absolute left-6 top-5 z-20 flex items-center gap-3 rounded-full border border-white/10 bg-slate-950/90 px-4 py-3 text-sm text-slate-100 shadow-xl shadow-black/20 backdrop-blur-xl">
-          <span className="text-emerald-400">•</span>
-          <span>AR Fit Engine active</span>
-        </div>
-        {voiceBadge && (
-          <div className={`absolute left-1/2 top-20 z-20 -translate-x-1/2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-200 shadow-xl shadow-black/20 backdrop-blur-xl transition-opacity duration-500 ${voiceBadgeVisible ? 'opacity-100' : 'opacity-0'}`}>
-            <span className={`inline-flex pr-2 ${voiceBadge === 'Voice active' ? 'animate-pulse' : voiceBadge === 'Command recognized' ? 'animate-[pulse_0.4s_ease-in-out_infinite]' : ''}`}>•</span>
-            {voiceBadge}
-          </div>
-        )}
         {!isFaceDetected && currentModel && (
           <div className="absolute inset-0 z-10 pointer-events-none">
             <model-viewer
@@ -622,100 +564,129 @@ const ARStudio = () => {
         )}
 
         <div className="absolute inset-x-3 bottom-3 z-20 rounded-[32px] border border-white/10 bg-slate-950/90 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-6">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">AR Control Center</div>
-              <div className="mt-2 text-sm font-black uppercase tracking-[0.14em] text-white">Surface · Voice · Lighting</div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowDimensions((prev) => !prev)}
-              className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200 transition hover:bg-white/10"
-              style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
-            >
-              {showDimensions ? 'Hide' : 'Show'} Dimensions
-            </button>
-          </div>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <button
-              type="button"
-              onClick={startSurfaceScanning}
-              className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-emerald-500 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-2xl shadow-black/30 transition hover:bg-emerald-400"
-              style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
-            >
-              📐 Scan Surface
-            </button>
-            <div className="grid gap-2">
-              <button
-                type="button"
-                onClick={startVoiceAssistant}
-                className={`inline-flex min-h-[46px] items-center justify-center rounded-full ${voiceAssistantActive ? 'bg-sky-500' : 'bg-white/5'} px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-800`}
-                style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
-              >
-                <span className="mr-2">🎙️</span>
-                Voice Assist
-                {voiceAssistantActive && <span className="ml-2 inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" /><span className="h-2 w-2 rounded-full bg-emerald-200 animate-[pulse_1.2s_ease-in-out_infinite]" /></span>}
-              </button>
-              {voiceAssistantActive && (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">AR Control Center</div>
+                <div className="mt-2 text-sm font-black uppercase tracking-[0.14em] text-white">Surface · Voice · Lighting</div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200">AR Fit Engine active</span>
                 <button
                   type="button"
-                  onClick={stopVoiceAssistant}
-                  className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-700"
+                  onClick={() => setShowDimensions((prev) => !prev)}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200 transition hover:bg-white/10"
                   style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
                 >
-                  ⏹️ Stop Voice
+                  {showDimensions ? 'Hide' : 'Show'} Dimensions
                 </button>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-3xl border border-white/10 bg-slate-900/70 px-3 py-3 text-sm text-slate-300">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-slate-400">
-                {voiceAssistantActive ? <VoiceWaveIndicator /> : <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500" />}
-                Voice Status
               </div>
-              {voiceAssistantActive && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Listening</span>}
             </div>
-            <div className="mt-2 text-sm text-slate-200">{voiceStatusMessage}</div>
-          </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {ambientThemeOrder.map((theme) => (
+            <div className="grid gap-3 sm:grid-cols-2">
               <button
-                key={theme}
                 type="button"
-                onClick={() => setAmbientThemeDebounced(theme)}
-                className={`rounded-full px-2 py-2 text-[10px] font-semibold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
+                onClick={startSurfaceScanning}
+                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-emerald-500 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-2xl shadow-black/30 transition hover:bg-emerald-400"
                 style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
               >
-                {ambientThemeLabels[theme]}
+                📐 Scan Surface
               </button>
-            ))}
-          </div>
-
-          {currentProduct ? (
-            <div className="mt-4 space-y-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                <img
-                  src={currentProduct.thumbnail || currentProduct.images?.[0]?.url || 'https://placehold.co/120x120?text=AR'}
-                  alt={currentProduct.name || 'AR Product'}
-                  className="h-16 w-16 rounded-3xl border border-white/10 object-cover sm:h-20 sm:w-20"
-                />
-                <div className="min-w-0">
-                  <div className="text-lg font-black text-white sm:text-xl">{currentProduct.name || 'Suggested Product'}</div>
-                  <div className="mt-1 text-xs sm:text-sm text-slate-400">{currentProduct.category || currentProduct.placementType || 'Home decor'}</div>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 rounded-3xl bg-white/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-sm font-semibold text-white">₹{Number(currentProduct.sellingPrice || currentProduct.price || 0).toLocaleString()}</span>
-                <span className="self-start rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-200 sm:self-auto">{placementMode}</span>
+              <div className="grid gap-2">
+                <button
+                  type="button"
+                  onClick={startVoiceAssistant}
+                  className={`inline-flex min-h-[46px] items-center justify-center rounded-full ${voiceAssistantActive ? 'bg-sky-500' : 'bg-white/5'} px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-800`}
+                  style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
+                >
+                  <span className="mr-2">🎙️</span>
+                  Voice Assist
+                  {voiceAssistantActive && <span className="ml-2 inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" /><span className="h-2 w-2 rounded-full bg-emerald-200 animate-[pulse_1.2s_ease-in-out_infinite]" /></span>}
+                </button>
+                {voiceAssistantActive && (
+                  <button
+                    type="button"
+                    onClick={stopVoiceAssistant}
+                    className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-700"
+                    style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
+                  >
+                    ⏹️ Stop Voice
+                  </button>
+                )}
               </div>
             </div>
-          ) : (
-            <div className="mt-4 text-sm leading-7 text-slate-300">AI will automatically choose a product depending on your room surface scan and the available AR catalog.</div>
-          )}
+
+            <div className="rounded-3xl border border-white/10 bg-slate-900/70 px-3 py-3 text-sm text-slate-300">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-slate-400">
+                  {voiceAssistantActive ? <VoiceWaveIndicator /> : <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500" />}
+                  Voice Status
+                </div>
+                {voiceAssistantActive && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Listening</span>}
+              </div>
+              <div className="mt-2 text-sm text-slate-200">{voiceStatusMessage}</div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {ambientThemeOrder.map((theme) => (
+                <button
+                  key={theme}
+                  type="button"
+                  onClick={() => setAmbientThemeDebounced(theme)}
+                  className={`rounded-full px-2 py-2 text-[10px] font-semibold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
+                  style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
+                >
+                  {ambientThemeLabels[theme]}
+                </button>
+              ))}
+            </div>
+
+            {showDimensions && (
+              <div className="rounded-3xl border border-white/10 bg-slate-950/80 p-4 text-sm text-slate-200">
+                <div className="text-[10px] uppercase tracking-[0.28em] text-slate-400 font-semibold">Dynamic Reticle Scaling</div>
+                <div className="mt-3 text-sm font-black uppercase tracking-[0.15em] text-white">Surface Measurement Tag</div>
+                <div className="mt-4 grid gap-3 text-sm text-slate-200">
+                  <div className="rounded-3xl bg-white/5 p-3">
+                    <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Target Zone</div>
+                    <div className="mt-2 text-lg font-semibold text-white">{placementMode === 'wall' ? 'Wall' : 'Bed / Floor'}</div>
+                  </div>
+                  <div className="rounded-3xl bg-white/5 p-3">
+                    <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Measured Dimensions</div>
+                    <div className="mt-2 text-lg font-semibold text-white">{calculatedArea.length} ft × {calculatedArea.width} ft</div>
+                  </div>
+                  <div className="rounded-3xl bg-white/5 p-3">
+                    <div className="text-[10px] uppercase tracking-[0.24em] text-slate-400">Fit Status</div>
+                    <div className="mt-2 text-lg font-semibold text-emerald-200">{calculatedArea.fitStatus}</div>
+                  </div>
+                  <div className="rounded-3xl bg-slate-900/70 p-3 text-sm text-slate-300">
+                    Auto-Fit Matrix: {modelScaleFactor}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {currentProduct ? (
+              <div className="mt-4 space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <img
+                    src={currentProduct.thumbnail || currentProduct.images?.[0]?.url || 'https://placehold.co/120x120?text=AR'}
+                    alt={currentProduct.name || 'AR Product'}
+                    className="h-16 w-16 rounded-3xl border border-white/10 object-cover sm:h-20 sm:w-20"
+                  />
+                  <div className="min-w-0">
+                    <div className="text-lg font-black text-white sm:text-xl">{currentProduct.name || 'Suggested Product'}</div>
+                    <div className="mt-1 text-xs sm:text-sm text-slate-400">{currentProduct.category || currentProduct.placementType || 'Home decor'}</div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 rounded-3xl bg-white/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm font-semibold text-white">₹{Number(currentProduct.sellingPrice || currentProduct.price || 0).toLocaleString()}</span>
+                  <span className="self-start rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-black uppercase tracking-[0.18em] text-emerald-200 sm:self-auto">{placementMode}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-4 text-sm leading-7 text-slate-300">AI will automatically choose a product depending on your room surface scan and the available AR catalog.</div>
+            )}
+          </div>
         </div>
       </div>
     </div>

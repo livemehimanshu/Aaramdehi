@@ -8,23 +8,29 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-export const uploadImageCloudinary = async (fileBuffer, folderName = "Aaramdehi_Uploads") => {
+export const uploadImageCloudinary = async (fileBuffer, folderName = "Aaramdehi_Uploads", options = {}) => {
     try {
         if (!process.env.CLOUDINARY_API_KEY) {
             throw new Error("Cloudinary credentials missing");
         }
 
+        const uploadOptions = {
+            folder: folderName,
+            resource_type: "auto",
+            ...options
+        };
+
+        if (!Object.prototype.hasOwnProperty.call(uploadOptions, 'transformation')) {
+            uploadOptions.transformation = [
+                { width: 800, crop: "limit" },
+                { quality: "auto" },
+                { fetch_format: "auto" }
+            ];
+        }
+
         const uploadResponse = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
-                {
-                    folder: folderName, 
-                    resource_type: "auto",      
-                    transformation: [
-                        { width: 800, crop: "limit" }, 
-                        { quality: "auto" },           
-                        { fetch_format: "auto" }        
-                    ]
-                },
+                uploadOptions,
                 (error, result) => {
                     if (error) return reject(error);
                     resolve(result);

@@ -24,10 +24,10 @@ const productRouter = Router();
 productRouter.get('/admin/stats', isAuthenticatedUser, isAdmin, getDashboardStats);
 
 // Add new product
-productRouter.post('/create', isAuthenticatedUser, isAdmin, upload.array('images', 10), createProduct);
+productRouter.post('/create', isAuthenticatedUser, isAdmin, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'model3d', maxCount: 1 }]), createProduct);
 
 // Update product
-productRouter.put('/:id', isAuthenticatedUser, isAdmin, upload.array('images', 10), updateProduct);
+productRouter.put('/:id', isAuthenticatedUser, isAdmin, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'model3d', maxCount: 1 }]), updateProduct);
 
 // Delete product
 productRouter.delete('/:id', isAuthenticatedUser, isAdmin, deleteProduct);

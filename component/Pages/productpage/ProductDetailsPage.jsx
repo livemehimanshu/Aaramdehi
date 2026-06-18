@@ -95,6 +95,7 @@ const ProductDetailsPage = () => {
               name: found.name,
               description: found.description || "Premium quality product.",
               images: found.images?.length ? found.images : [found.thumbnail],
+              model3dUrl: found.model3dUrl || found.modelUrl || '',
               sizes: found.sizes?.length 
                 ? found.sizes.map(s => ({ ...s, oldPrice: null })) 
                 : [{ 
@@ -340,6 +341,7 @@ const ProductDetailsPage = () => {
           activeImg={selectedImage}
           onActiveImgChange={setSelectedImage}
           imageAlt={productData.name}
+          model3dUrl={productData.model3dUrl}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
           onOpenARStudio={handleOpenARStudio}
@@ -348,50 +350,41 @@ const ProductDetailsPage = () => {
           isInWishlist={isInWishlist(productData?.id || id)}
         />
 
-        <div className="pt-6 border-t mt-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Offers & Coupons</p>
-            {appliedDiscount > 0 && (
-              <button onClick={handleRemoveCoupon} className="text-[10px] font-black text-rose-500 uppercase border-b-2 border-rose-500 pb-0.5">Remove</button>
-            )}
+        {!appliedDiscount ? (
+          <div 
+            onClick={() => setIsCouponModalOpen(true)}
+            className="group flex items-center justify-between p-4 border border-dashed border-red-200 rounded-2xl bg-red-50 cursor-pointer hover:bg-red-100 transition-all"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-red-500">
+                <BsLightningCharge size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-black text-gray-800 uppercase">Best Offers & Coupons</p>
+                <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">View available offers for you</p>
+              </div>
+            </div>
+            <FiArrowRight className="text-red-500 group-hover:translate-x-1 transition-transform" />
           </div>
-
-          {!appliedDiscount ? (
-            <div 
-              onClick={() => setIsCouponModalOpen(true)}
-              className="group flex items-center justify-between p-4 border border-dashed border-red-200 rounded-2xl bg-red-50 cursor-pointer hover:bg-red-100 transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-red-500">
-                  <BsLightningCharge size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-black text-gray-800 uppercase">Best Offers & Coupons</p>
-                  <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">View available offers for you</p>
-                </div>
+        ) : (
+          <div className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                <FiCheck size={20} />
               </div>
-              <FiArrowRight className="text-red-500 group-hover:translate-x-1 transition-transform" />
-            </div>
-          ) : (
-            <div className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
-                  <FiCheck size={20} />
-                </div>
-                <div>
-                  <p className="text-xs font-black text-gray-900 uppercase">'{couponMessage.code}' Applied</p>
-                  <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">{couponMessage.text}</p>
-                </div>
+              <div>
+                <p className="text-xs font-black text-gray-900 uppercase">'{couponMessage.code}' Applied</p>
+                <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">{couponMessage.text}</p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {couponMessage.type === 'error' && (
-            <div className="mt-3 flex items-center gap-2 text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
-              <span className="text-[10px] font-black uppercase tracking-tighter">{couponMessage.text}</span>
-            </div>
-          )}
-        </div>
+        {couponMessage.type === 'error' && (
+          <div className="mt-3 flex items-center gap-2 text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
+            <span className="text-[10px] font-black uppercase tracking-tighter">{couponMessage.text}</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-b pb-6">
           <div className="space-y-2">

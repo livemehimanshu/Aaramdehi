@@ -15,7 +15,7 @@ export const createProduct = async (req, res) => {
         const { 
             name, brand, description, shortDescription, category, subCategory, 
             tags, mrp, sellingPrice, discountPercent, stock, sku, 
-            specifications, seoTitle, seoDescription, seoKeywords 
+            specifications, seoTitle, seoDescription, seoKeywords, model3dUrl 
         } = req.body;
         const userId = req.userId || req.user?._id || req.user?.id;
 
@@ -48,26 +48,21 @@ export const createProduct = async (req, res) => {
         }
 
         let images = [];
-        // Robust handling for req.files (array or object) and req.file
-        console.log("📂 Incoming files check:", { hasFiles: !!req.files, hasFile: !!req.file });
-        
-        const filesToUpload = req.files 
-            ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat()) 
-            : (req.file ? [req.file] : []);
+        const uploadedImages = Array.isArray(req.files?.images) ? req.files.images : [];
+        const uploadedModelFiles = Array.isArray(req.files?.model3d) ? req.files.model3d : [];
 
-        if (filesToUpload.length > 0) {
-            console.log(`Processing ${filesToUpload.length} files...`);
-            for (const file of filesToUpload) {
-                // Check if buffer exists (memoryStorage) or path exists (diskStorage)
+        console.log("📂 Incoming files check:", { hasFiles: !!req.files, imageCount: uploadedImages.length, modelFileCount: uploadedModelFiles.length });
+
+        if (uploadedImages.length > 0) {
+            console.log(`Processing ${uploadedImages.length} image files...`);
+            for (const file of uploadedImages) {
                 const fileContent = file.buffer || file.path;
                 if (!fileContent) {
-                    console.error("❌ File content is missing for file:", file.originalname);
+                    console.error("❌ File content is missing for image file:", file.originalname);
                     continue;
                 }
 
-                // ✅ Suggestion: Use a specific subfolder for products
                 const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
-                
                 if (uploadResult && uploadResult.success) {
                     images.push({
                         url: uploadResult.url,
@@ -78,10 +73,24 @@ export const createProduct = async (req, res) => {
                     console.error(`❌ Cloudinary Upload Error [${file.originalname}]:`, uploadResult?.message || "Unknown error");
                 }
             }
-            
-            // Agar files bheji gayi thi par ek bhi upload nahi hui toh error return karein
-            if (filesToUpload.length > 0 && images.length === 0) {
+
+            if (uploadedImages.length > 0 && images.length === 0) {
                 return res.status(500).json({ success: false, message: "Could not upload images to Cloudinary. Check server logs." });
+            }
+        }
+
+        let model3dUrlFromUpload = '';
+        if (uploadedModelFiles.length > 0) {
+            const modelFile = uploadedModelFiles[0];
+            const fileContent = modelFile.buffer || modelFile.path;
+            if (fileContent) {
+                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/models", { transformation: [] });
+                if (uploadResult && uploadResult.success) {
+                    model3dUrlFromUpload = uploadResult.url;
+                } else {
+                    console.error(`❌ Cloudinary 3D model upload failed [${modelFile.originalname}]:`, uploadResult?.message || "Unknown error");
+                    return res.status(500).json({ success: false, message: "Failed to upload 3D model. Please try again." });
+                }
             }
         }
 
@@ -111,6 +120,10 @@ export const createProduct = async (req, res) => {
             slug,
             createdBy: userId || null
         };
+
+        if (model3dUrl || model3dUrlFromUpload) {
+            productData.model3dUrl = model3dUrl || model3dUrlFromUpload;
+        }
 
         const savedProduct = await create(COLLECTION, productData);
         // Server-side: write a lightweight search index entry using Admin SDK (bypasses RTDB security rules)
@@ -370,11 +383,11 @@ export const updateProduct = async (req, res) => {
             }
         }
 
-        // ✅ Image Merging Logic: Handle images the user wants to keep.
+        // ✅ Image + 3D model update handling
         let finalImages = [];
         const hasExistingImages = req.body.existingImages !== undefined;
         const hasExistingImagesField = hasExistingImages;
-        
+
         if (hasExistingImagesField) {
             try {
                 finalImages = typeof req.body.existingImages === 'string' ? JSON.parse(req.body.existingImages) : req.body.existingImages;
@@ -386,35 +399,50 @@ export const updateProduct = async (req, res) => {
         }
 
         console.log("📂 Update incoming files:", { hasFiles: !!req.files, hasFile: !!req.file, hasExistingImages: hasExistingImagesField });
-        
-        const filesToUpload = req.files 
-            ? (Array.isArray(req.files) ? req.files : Object.values(req.files).flat()) 
-            : (req.file ? [req.file] : []);
 
-        if (filesToUpload.length > 0) {
-            for (const file of filesToUpload) {
+        const uploadedImages = req.files?.images
+            ? (Array.isArray(req.files.images) ? req.files.images : [req.files.images])
+            : [];
+        const uploadedModelFiles = req.files?.model3d
+            ? (Array.isArray(req.files.model3d) ? req.files.model3d : [req.files.model3d])
+            : [];
+
+        if (uploadedImages.length > 0) {
+            for (const file of uploadedImages) {
                 const fileContent = file.buffer || file.path;
                 if (!fileContent) {
-                    console.error("❌ Update: File content is missing for file:", file.originalname);
+                    console.error("❌ Update: File content is missing for image file:", file.originalname);
                     continue;
                 }
 
-                // ✅ Standardized folder path
                 const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
                 if (uploadResult && uploadResult.success) {
-                    finalImages.push({ 
-                        url: uploadResult.url, 
+                    finalImages.push({
+                        url: uploadResult.url,
                         public_id: uploadResult.public_id,
-                        alt: name || "product image" 
+                        alt: name || "product image"
                     });
                 } else {
-                    console.error(`❌ Update: Cloudinary Error [${file.originalname}]:`, uploadResult?.message);
+                    console.error(`❌ Update: Cloudinary image upload failed [${file.originalname}]:`, uploadResult?.message);
+                }
+            }
+        }
+
+        if (uploadedModelFiles.length > 0) {
+            const modelFile = uploadedModelFiles[0];
+            const fileContent = modelFile.buffer || modelFile.path;
+            if (fileContent) {
+                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/models");
+                if (uploadResult && uploadResult.success) {
+                    updateData.model3dUrl = uploadResult.url;
+                } else {
+                    console.error(`❌ Update: Cloudinary 3D model upload failed [${modelFile.originalname}]:`, uploadResult?.message);
                 }
             }
         }
 
         // Only update image array if user sent existing set or uploaded new files
-        if (hasExistingImagesField || filesToUpload.length > 0) {
+        if (hasExistingImagesField || uploadedImages.length > 0) {
             updateData.images = finalImages;
             if (finalImages.length > 0) {
                 updateData.thumbnail = finalImages[0].url;

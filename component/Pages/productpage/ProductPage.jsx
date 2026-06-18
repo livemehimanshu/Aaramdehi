@@ -34,6 +34,7 @@ const ProductPage = ({
   onShare,
   onToggleWishlist,
   isInWishlist = false,
+  model3dUrl,
   pincode,
   onPincodeChange,
   onCheckDelivery,
@@ -89,8 +90,13 @@ const ProductPage = ({
             />
           ))}
         </div>
-        <div className="main-image">
+        <div className="main-image relative">
           <img src={currentActiveImg} alt={imageAlt || title} />
+          {model3dUrl && (
+            <div className="absolute left-4 top-4 rounded-full border border-amber-300/20 bg-black/60 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-amber-200 shadow-lg shadow-black/40">
+              3D Available
+            </div>
+          )}
           <div className="absolute top-4 right-4 flex flex-col gap-2">
             <button onClick={onToggleWishlist} className="p-3 bg-white rounded-full shadow-lg hover:scale-110 transition-transform">
               <FiHeart className={isInWishlist ? 'fill-red-500 text-red-500' : 'text-gray-300'} />
@@ -160,9 +166,9 @@ const ProductPage = ({
           <div className="cta-buttons">
             <button type="button" className="btn btn-secondary" onClick={handleAddToCart}>ADD TO CART</button>
             <button type="button" className="btn btn-primary" onClick={handleBuyNow}>BUY NOW</button>
-            {onOpenARStudio && (
-              <button type="button" className="btn btn-outline" onClick={onOpenARStudio}>
-                VIEW 360 AR
+            {model3dUrl && onOpenARStudio && (
+              <button type="button" className="btn btn-outline bg-slate-950/80 border-amber-300/30 text-amber-200 hover:bg-slate-900 hover:border-amber-400" onClick={onOpenARStudio}>
+                ✨ VIEW IN 360° AR
               </button>
             )}
           </div>

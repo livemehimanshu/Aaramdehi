@@ -8,20 +8,21 @@ import path from 'path';
 // 1. Storage Strategy: Memory storage (Direct Cloudinary upload ke liye)
 const storage = multer.memoryStorage();
 
-// 2. File Filter: Check if the file is actually an image
+// 2. File Filter: Allow images and 3D model files (.glb/.gltf)
 const fileFilter = (req, file, cb) => {
-    const allowedFileTypes = /jpeg|jpg|png|webp/;
+    const allowedFileTypes = /jpeg|jpg|png|webp|glb|gltf/;
+    const allowedMimeTypes = /jpeg|jpg|png|webp|model\/gltf\+binary|model\/gltf\+json|application\/octet-stream/;
     
     // Check Extension
     const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
     
     // Check MimeType
-    const mimetype = allowedFileTypes.test(file.mimetype);
+    const mimetype = file.mimetype ? allowedMimeTypes.test(file.mimetype.toLowerCase()) : false;
 
     if (extname && mimetype) {
         return cb(null, true);
     } else {
-        cb(new Error("Error: Only Images (JPEG, JPG, PNG, WEBP) are allowed!"));
+        cb(new Error("Error: Only image files and 3D models (.glb, .gltf) are allowed."));
     }
 };
 

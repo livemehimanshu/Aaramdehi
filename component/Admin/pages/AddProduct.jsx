@@ -31,6 +31,7 @@ const AddProduct = () => {
   });
 
   const [imageFiles, setImageFiles] = useState([]);
+  const [model3dFile, setModel3dFile] = useState(null);
   const [previews, setPreviews] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [subCategoriesList, setSubCategoriesList] = useState([]);
@@ -120,6 +121,27 @@ const AddProduct = () => {
     setPreviews(previews.filter((_, i) => i !== index));
   };
 
+  const handleModel3dChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedExtensions = /\.(glb|gltf)$/i;
+    const allowedTypes = [/model\/gltf-binary/i, /model\/gltf\+json/i, /application\/octet-stream/i];
+    const isAllowedType = !file.type || allowedTypes.some((pattern) => pattern.test(file.type));
+
+    if (!allowedExtensions.test(file.name) || !isAllowedType) {
+      setMessage({ type: 'error', text: 'Only .glb or .gltf 3D model files are allowed.' });
+      return;
+    }
+
+    setModel3dFile(file);
+    setMessage({ type: 'success', text: `3D model selected: ${file.name}` });
+  };
+
+  const removeModel3d = () => {
+    setModel3dFile(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.brand || !formData.category || !formData.sellingPrice || !formData.mrp || !formData.stock) {
@@ -142,6 +164,7 @@ const AddProduct = () => {
       
       data.append('seoKeywords', keywords.join(', ')); 
       imageFiles.forEach(file => data.append('images', file));
+      if (model3dFile) data.append('model3d', model3dFile);
 
       // 3. API Call
       const res = await createProductAPI(data);
@@ -210,6 +233,24 @@ const AddProduct = () => {
                   )}
                 </div>
               ))}
+            </div>
+
+            <div className="mt-6">
+              <label className="block text-[10px] font-black uppercase text-gray-500 mb-3 tracking-widest">3D Model File</label>
+              <label className="group cursor-pointer border-2 border-dashed border-gray-800 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 text-sm text-gray-400 hover:border-emerald-500 transition-all">
+                <div className="flex items-center gap-2">
+                  <Upload size={18} className="text-emerald-500" />
+                  <span>{model3dFile ? model3dFile.name : 'Upload .glb / .gltf file'}</span>
+                </div>
+                <span className="text-[10px] uppercase tracking-[0.28em]">Max 1 3D model file</span>
+                <input type="file" accept=".glb,.gltf" className="hidden" onChange={handleModel3dChange} />
+              </label>
+              {model3dFile && (
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-emerald-200">
+                  <p className="truncate text-sm font-semibold">{model3dFile.name}</p>
+                  <button type="button" onClick={removeModel3d} className="text-xs font-black uppercase tracking-[0.24em] text-rose-400 hover:text-rose-200">Remove</button>
+                </div>
+              )}
             </div>
           </div>
         </div>

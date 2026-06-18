@@ -31,6 +31,9 @@ const EditProduct = () => {
     const [existingImages, setExistingImages] = useState([]); // Preserve old images
     const [selectedFiles, setSelectedFiles] = useState([]); // ✅ Store actual File objects
     const [previews, setPreviews] = useState([]); // Images preview ke liye
+    const [model3dFile, setModel3dFile] = useState(null);
+    const [existingModel3dUrl, setExistingModel3dUrl] = useState('');
+    const [removeExistingModel3d, setRemoveExistingModel3d] = useState(false);
 
     // ✅ Pre-Indexing Helpers
     const STOPWORDS = ["is", "the", "a", "an", "and", "for", "ke", "liye", "mujhe", "chahiye", "ko", "par", "ek", "hai", "mein", "this", "that", "with"];
@@ -79,6 +82,7 @@ const EditProduct = () => {
                         setPreviews(previewUrls);
                         setExistingImages(Array.isArray(p.images) ? p.images : []);
                     }
+                    setExistingModel3dUrl(p.model3dUrl || p.modelUrl || '');
                 }
             } catch (error) {
                 console.error("❌ Fetch error:", error);
@@ -142,6 +146,24 @@ const EditProduct = () => {
         }
     };
 
+    const handleModel3dChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const allowedExtensions = /\.(glb|gltf)$/i;
+        if (!allowedExtensions.test(file.name)) {
+            alert('Only .glb or .gltf 3D model files are allowed.');
+            return;
+        }
+
+        setRemoveExistingModel3d(false);
+        setModel3dFile(file);
+    };
+
+    const removeModel3d = () => {
+        setModel3dFile(null);
+    };
+
     const convertToWebP = (file) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -183,6 +205,14 @@ const EditProduct = () => {
         formData.append('seoKeywords', JSON.stringify(updatedKeywords)); // backend expects seoKeywords
         if (existingImages.length > 0) {
             formData.append('existingImages', JSON.stringify(existingImages));
+        }
+
+        if (model3dFile) {
+            formData.append('model3d', model3dFile);
+        }
+
+        if (removeExistingModel3d) {
+            formData.append('removeModel3d', 'true');
         }
 
         // Backend 'images' (plural) expect karta hai
@@ -260,6 +290,35 @@ const EditProduct = () => {
                             <IoCloudUploadOutline size={40} className="text-gray-600 mb-2" />
                             <p className="text-xs text-slate-500 font-bold">Click or Drag images here</p>
                             <input type="file" name="images" multiple onChange={handleFileChange} accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer" />
+                        </div>
+                    </div>
+
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-slate-500">3D Model File</label>
+                        <div className="border-2 border-dashed border-gray-800 bg-gray-950 rounded-xl p-4">
+                            <label className="flex flex-col gap-2 cursor-pointer">
+                                <span className="text-xs text-slate-500 font-bold">Upload .glb / .gltf file to replace existing model</span>
+                                <input type="file" accept=".glb,.gltf" onChange={handleModel3dChange} className="w-full text-slate-200" />
+                            </label>
+                            {(existingModel3dUrl || model3dFile) && (
+                                <div className="mt-3 p-3 rounded-xl border border-gray-800 bg-gray-900 text-sm text-white space-y-2">
+                                    {existingModel3dUrl && !model3dFile && (
+                                        <p className="truncate">Current model: <a href={existingModel3dUrl} target="_blank" rel="noreferrer" className="text-emerald-400 hover:text-emerald-200">View</a></p>
+                                    )}
+                                    {model3dFile && (
+                                        <div className="flex items-center justify-between gap-3">
+                                            <p className="truncate">Selected file: {model3dFile.name}</p>
+                                            <button type="button" onClick={removeModel3d} className="text-xs font-black uppercase tracking-[0.24em] text-rose-400 hover:text-rose-200">Remove</button>
+                                        </div>
+                                    )}
+                                    {existingModel3dUrl && !model3dFile && (
+                                        <label className="inline-flex items-center gap-2 mt-2 text-xs text-gray-300">
+                                            <input type="checkbox" checked={removeExistingModel3d} onChange={(e) => setRemoveExistingModel3d(e.target.checked)} className="form-checkbox h-4 w-4 text-emerald-500 rounded" />
+                                            Remove existing 3D model without uploading replacement
+                                        </label>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 

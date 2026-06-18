@@ -306,29 +306,37 @@ const ARStudio = () => {
         {!isFaceDetected && currentModel && (
           <div className="absolute inset-0 z-10 pointer-events-none">
             <model-viewer
-              src={currentModel}
-              ar
-              ar-modes="webxr scene-viewer"
-              camera-controls
-              auto-rotate
-              auto-rotate-delay="1000"
-              field-of-view="35deg"
-              camera-orbit="0deg 70deg 1.8m"
-              min-camera-orbit="0deg 40deg 1.0m"
-              max-camera-orbit="0deg 90deg 2.8m"
-              camera-target="0m 0.7m 0m"
-              ar-scale="auto"
-              exposure="1.2"
-              touch-action="none"
-              style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-            >
-              <button
-                slot="ar-button"
-                className="absolute bottom-10 left-1/2 z-40 -translate-x-1/2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-white shadow-2xl shadow-black/40"
-              >
-                ✨ Tap to Place AI Suggestion
-              </button>
-            </model-viewer>
+    src={currentModel}
+    ar
+    ar-modes="webxr scene-viewer"
+    camera-controls
+    auto-rotate
+    auto-rotate-delay="1000"
+    
+    // 🔥 AUTO SCALING: Isse model screen size ke mutabik automatic fit hoga
+    field-of-view="auto"
+    camera-orbit="0deg 75deg auto"
+    min-camera-orbit="auto auto auto"
+    max-camera-orbit="auto auto auto"
+    camera-target="auto auto auto"
+    
+    // Dynamic placement (wall par decor, floor par bed/chair)
+    ar-placement={selectedProduct?.placementType || "floor"}
+    ar-scale="auto"
+    exposure="1.2"
+    touch-action="none"
+    
+    // Changing pointerEvents to 'auto' so user can pinch/zoom/rotate the model on screen
+    style={{ width: '100%', height: '100%', pointerEvents: 'auto' }}
+  >
+    <button
+      slot="ar-button"
+      className="absolute bottom-10 left-1/2 z-40 -translate-x-1/2 rounded-full bg-emerald-500 px-6 py-3 text-sm font-black uppercase tracking-[0.18em] text-white shadow-2xl shadow-black/40"
+      style={{ pointerEvents: 'auto' }} // Ensure button is always clickable
+    >
+      ✨ Tap to Place AI Suggestion
+    </button>
+  </model-viewer>
           </div>
         )}
 

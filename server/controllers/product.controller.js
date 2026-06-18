@@ -1,5 +1,4 @@
-import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
-// Assume a utility exists or add one for Cloudinary deletion
+import { uploadImageCloudinary, deleteImageCloudinary, extractCloudinaryPublicIdFromUrl } from "../utils/uploadImageCloudinary.js";
 import { findAll, findById, create, updateById, deleteById, findByQuery, db } from "../config/db.js";
 
 const COLLECTION = 'products';
@@ -80,6 +79,7 @@ export const createProduct = async (req, res) => {
         }
 
         let model3dUrlFromUpload = '';
+        let model3dPublicIdFromUpload = '';
         if (uploadedModelFiles.length > 0) {
             const modelFile = uploadedModelFiles[0];
             const fileContent = modelFile.buffer || modelFile.path;
@@ -87,6 +87,7 @@ export const createProduct = async (req, res) => {
                 const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/models", { transformation: [] });
                 if (uploadResult && uploadResult.success) {
                     model3dUrlFromUpload = uploadResult.url;
+                    model3dPublicIdFromUpload = uploadResult.public_id;
                 } else {
                     console.error(`❌ Cloudinary 3D model upload failed [${modelFile.originalname}]:`, uploadResult?.message || "Unknown error");
                     return res.status(500).json({ success: false, message: "Failed to upload 3D model. Please try again." });
@@ -123,6 +124,9 @@ export const createProduct = async (req, res) => {
 
         if (model3dUrl || model3dUrlFromUpload) {
             productData.model3dUrl = model3dUrl || model3dUrlFromUpload;
+            if (model3dPublicIdFromUpload) {
+                productData.model3dPublicId = model3dPublicIdFromUpload;
+            }
         }
 
         const savedProduct = await create(COLLECTION, productData);
@@ -328,6 +332,11 @@ export const updateProduct = async (req, res) => {
             return res.status(400).json({ success: false, message: "Product ID is required" });
         }
 
+        const existingProduct = await findById(COLLECTION, id);
+        if (!existingProduct) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({ success: false, message: "Update payload missing. Ensure you are sending FormData." });
         }
@@ -429,16 +438,35 @@ export const updateProduct = async (req, res) => {
         }
 
         if (uploadedModelFiles.length > 0) {
+            const oldModel3dPublicId = existingProduct.model3dPublicId || extractCloudinaryPublicIdFromUrl(existingProduct.model3dUrl || existingProduct.modelUrl);
+            if (oldModel3dPublicId) {
+                const deleteResult = await deleteImageCloudinary(oldModel3dPublicId, { resource_type: 'auto' });
+                if (!deleteResult.success) {
+                    console.warn('⚠️ Unable to delete old Cloudinary 3D model:', deleteResult.message);
+                }
+            }
+
             const modelFile = uploadedModelFiles[0];
             const fileContent = modelFile.buffer || modelFile.path;
             if (fileContent) {
-                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/models");
+                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/models", { transformation: [] });
                 if (uploadResult && uploadResult.success) {
                     updateData.model3dUrl = uploadResult.url;
+                    updateData.model3dPublicId = uploadResult.public_id;
                 } else {
                     console.error(`❌ Update: Cloudinary 3D model upload failed [${modelFile.originalname}]:`, uploadResult?.message);
                 }
             }
+        } else if (req.body.removeModel3d === 'true' || req.body.removeModel3d === true) {
+            const oldModel3dPublicId = existingProduct.model3dPublicId || extractCloudinaryPublicIdFromUrl(existingProduct.model3dUrl || existingProduct.modelUrl);
+            if (oldModel3dPublicId) {
+                const deleteResult = await deleteImageCloudinary(oldModel3dPublicId, { resource_type: 'auto' });
+                if (!deleteResult.success) {
+                    console.warn('⚠️ Unable to delete old Cloudinary 3D model:', deleteResult.message);
+                }
+            }
+            updateData.model3dUrl = '';
+            updateData.model3dPublicId = '';
         }
 
         // Only update image array if user sent existing set or uploaded new files

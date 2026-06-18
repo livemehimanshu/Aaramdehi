@@ -237,6 +237,74 @@ export const getProductById = async (req, res) => {
     }
 };
 
+// ✅ 4. ROOM ANALYSIS / PRODUCT SUGGESTIONS
+export const analyzeRoom = async (req, res) => {
+    try {
+        const {
+            productId,
+            roomType,
+            roomDimensions,
+            wallColor,
+            flooring,
+            furnitureStyle,
+            specialRequests
+        } = req.body || {};
+
+        if (!productId) {
+            return res.status(400).json({ success: false, message: 'productId is required for room analysis.' });
+        }
+
+        const product = await findById(COLLECTION, productId);
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        const rawProducts = await findAll(COLLECTION) || [];
+        let products = Array.isArray(rawProducts)
+            ? rawProducts
+            : (rawProducts && typeof rawProducts === 'object'
+                ? Object.keys(rawProducts).map(key => ({ _id: key, ...rawProducts[key] }))
+                : []);
+
+        const filteredSuggestions = products
+            .filter((item) => String(item._id) !== String(productId))
+            .sort((a, b) => {
+                const aRating = Number(a.rating || a.ratings?.average || 0);
+                const bRating = Number(b.rating || b.ratings?.average || 0);
+                return bRating - aRating;
+            })
+            .slice(0, 8)
+            .map((item) => ({
+                id: item._id || item.id,
+                name: item.name || item.title || 'Recommended product',
+                thumbnail: item.thumbnail || item.images?.[0]?.url || item.image || '',
+                sellingPrice: item.sellingPrice || item.price || item.newPrice || 0,
+                category: item.category || ''
+            }));
+
+        const summaryParts = [
+            roomType ? `a ${roomType.toLowerCase()}` : 'your space',
+            roomDimensions ? `measuring ${roomDimensions}` : 'with flexible dimensions',
+            wallColor ? `featuring ${wallColor} walls` : 'with neutral tones',
+            flooring ? `and ${flooring} flooring` : 'and adaptable flooring',
+            furnitureStyle ? `styled for ${furnitureStyle.toLowerCase()} furniture` : ''
+        ].filter(Boolean);
+
+        const summary = `This ${summaryParts.join(', ')} is a great fit for ${product.name || 'your selected product'}. We recommend matching it with clean silhouettes, warm textures, and layered lighting to keep the room balanced.`;
+
+        return res.json({
+            success: true,
+            data: {
+                summary,
+                suggestions: filteredSuggestions
+            }
+        });
+    } catch (error) {
+        console.error('❌ analyzeRoom error:', error);
+        return res.status(500).json({ success: false, message: 'Failed to analyze room.', error: error.message });
+    }
+};
+
 // ✅ 4. UPDATE PRODUCT
 export const updateProduct = async (req, res) => {
     try {

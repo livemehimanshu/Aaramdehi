@@ -5,7 +5,8 @@ import {
     createProduct,
     updateProduct,
     deleteProduct,
-    getDashboardStats
+    getDashboardStats,
+    analyzeRoom
 } from '../controllers/product.controller.js';
 
 // ✅ FIX: Named import use karein { isAuthenticatedUser, isAdmin }
@@ -32,6 +33,7 @@ productRouter.put('/:id', isAuthenticatedUser, isAdmin, upload.array('images', 1
 productRouter.delete('/:id', isAuthenticatedUser, isAdmin, deleteProduct);
 
 // 1. Public Routes (Sab dekh sakte hain) - MUST COME AFTER protected routes
+productRouter.post('/analyze-room', analyzeRoom);
 productRouter.get('/', getAllProducts);  // Get all products
 productRouter.get('/:id', getProductById);  // Get single product
 

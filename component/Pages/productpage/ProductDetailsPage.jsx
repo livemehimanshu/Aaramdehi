@@ -257,6 +257,12 @@ const ProductDetailsPage = () => {
     navigate('/checkout');
   };
 
+  const handleOpenARStudio = () => {
+    if (!productData) return;
+    const productId = productData.id || productData._id || id;
+    navigate(`/ar-studio?productId=${encodeURIComponent(productId)}`);
+  };
+
   const productKeywords = useMemo(() => {
     if (!productData) return '';
     const keywordsArray = [productData.name, productData.brand, productData.category, ...(productData.tags || [])];
@@ -336,6 +342,7 @@ const ProductDetailsPage = () => {
           imageAlt={productData.name}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
+          onOpenARStudio={handleOpenARStudio}
           onShare={handleShare}
           onToggleWishlist={handleToggleWishlist}
           isInWishlist={isInWishlist(productData?.id || id)}
@@ -348,7 +355,7 @@ const ProductDetailsPage = () => {
               <button onClick={handleRemoveCoupon} className="text-[10px] font-black text-rose-500 uppercase border-b-2 border-rose-500 pb-0.5">Remove</button>
             )}
           </div>
-          
+
           {!appliedDiscount ? (
             <div 
               onClick={() => setIsCouponModalOpen(true)}

@@ -30,6 +30,7 @@ const ProductPage = ({
   imageAlt,
   onAddToCart,
   onBuyNow,
+  onOpenARStudio,
   onShare,
   onToggleWishlist,
   isInWishlist = false,
@@ -159,6 +160,11 @@ const ProductPage = ({
           <div className="cta-buttons">
             <button type="button" className="btn btn-secondary" onClick={handleAddToCart}>ADD TO CART</button>
             <button type="button" className="btn btn-primary" onClick={handleBuyNow}>BUY NOW</button>
+            {onOpenARStudio && (
+              <button type="button" className="btn btn-outline" onClick={onOpenARStudio}>
+                VIEW 360 AR
+              </button>
+            )}
           </div>
         </div>
       </div>

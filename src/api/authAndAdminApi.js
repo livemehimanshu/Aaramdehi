@@ -137,6 +137,16 @@ export async function validateCouponAPI(params) {
   }
 }
 
+export async function analyzeRoomAPI(params) {
+  try {
+    const res = await api.post('/products/analyze-room', params);
+    return res.data;
+  } catch (e) {
+    console.error('❌ analyzeRoomAPI error:', e);
+    return { success: false, message: e.response?.data?.message || e.message || 'Room analysis failed.' };
+  }
+}
+
 export async function getAdminDetailsAPI() {
   try {
     const res = await api.get('/user/details');

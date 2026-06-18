@@ -61,6 +61,7 @@ import EditBanner from '../component/Admin/pages/EditBanner.jsx'
 import CheckoutPage from '../component/checkout/CheckoutPage.jsx'
 import PaymentPage from '../component/payment/PaymentPage.jsx'
 import OrderSuccess from '../component/Pages/OrderSuccess/OrderSuccess.jsx'
+import ARStudio from '../component/Pages/ARStudio.jsx'
 
 function AppContent() {
   const location = useLocation()
@@ -161,6 +162,7 @@ function AppContent() {
               <Route path="/product" element={<ProductListing/>}/>
               <Route path="/products" element={<ProductListing/>}/>
               <Route path="/product/:id" element={<ProductDetailsPage />} />
+              <Route path="/ar-studio" element={<ARStudio />} />
               <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
               <Route path="/compare" element={<ComparePage />} />
               <Route path="/login" element={<AuthPage />} /> 

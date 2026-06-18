@@ -4,7 +4,7 @@ import { IoHeart } from 'react-icons/io5';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product";
 
-const ProductCard = ({ product, onOpenModal }) => {
+const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
   const [isAdded, setIsAdded] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
 
@@ -119,7 +119,7 @@ const ProductCard = ({ product, onOpenModal }) => {
         </div>
       </div>
 
-      <div className="mt-4 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+      <div className="mt-4 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 space-y-2">
         <button 
           onClick={handleAddToCart}
           className={`w-full py-2.5 rounded-sm text-[10px] font-black uppercase tracking-widest transition-all ${
@@ -129,6 +129,19 @@ const ProductCard = ({ product, onOpenModal }) => {
           <FiShoppingCart className="inline mr-2" />
           {isAdded ? 'Added' : 'Add to Cart'}
         </button>
+        {onOpenARStudio && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onOpenARStudio(product);
+            }}
+            className="w-full py-2.5 rounded-sm border border-gray-200 bg-white text-[10px] font-black uppercase tracking-widest text-slate-700 hover:bg-slate-100 transition-all"
+          >
+            View in AR Studio
+          </button>
+        )}
       </div>
     </div>
   );

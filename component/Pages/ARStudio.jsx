@@ -561,7 +561,7 @@ const ARStudio = () => {
           autoPlay
           playsInline
           muted
-          className="h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover"
         />
         <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none`} />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-950/10 to-slate-950/80" />
@@ -636,9 +636,9 @@ const ARStudio = () => {
           </div>
         )}
 
-        <div className="absolute inset-x-3 bottom-3 z-20 rounded-[32px] border border-white/15 bg-white/10 p-4 shadow-2xl shadow-black/30 backdrop-blur-xl sm:p-5">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3 rounded-3xl bg-slate-950/80 p-4 shadow-sm shadow-black/10 sm:flex-row sm:items-center sm:justify-between">
+        <div className="absolute inset-x-3 bottom-3 z-20 max-h-[56vh] overflow-hidden rounded-[32px] border border-white/15 bg-white/10 p-4 shadow-2xl shadow-black/30 backdrop-blur-3xl sm:p-5">
+          <div className="flex flex-col gap-4 overflow-hidden">
+            <div className="flex flex-col gap-3 rounded-3xl border border-white/10 bg-white/10 p-4 shadow-sm shadow-black/10 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">AR Product Preview</div>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-lg font-black text-white sm:text-xl">

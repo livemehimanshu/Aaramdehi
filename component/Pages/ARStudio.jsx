@@ -31,7 +31,7 @@ const ARStudio = () => {
   const [scanStep, setScanStep] = useState('instruction');
   const [scanProgress, setScanProgress] = useState(0);
   const [surfaceDetected, setSurfaceDetected] = useState(false);
-  const [calculatedArea, setCalculatedArea] = useState({ length: '6.5', width: '6.0', fitStatus: 'Perfect Fit' });
+  const [calculatedArea, setCalculatedArea] = useState({ length: '5.7', width: '4.6', fitStatus: 'Perfect Fit' });
   const [modelScaleFactor, setModelScaleFactor] = useState('100%');
   const [ambientTheme, setAmbientTheme] = useState('neutral');
   const [showDimensions, setShowDimensions] = useState(true);
@@ -362,7 +362,7 @@ const ARStudio = () => {
       } catch (error) {
         console.error('Failed to load AR products:', error);
         setAiStatus('Failed to load AR product catalog.');
-      } fill/0 py-2 font-bold leading-none tracking-wide text-white" text-slate-400">Loading products...</div>;
+      }
     };
 
     loadAaramdehiProducts();
@@ -474,7 +474,6 @@ const ARStudio = () => {
       } catch (error) {
         console.error('Selected product load failed:', error);
         setAiStatus('Selected product could not be loaded.');
-      } fill/0 py-2 font-bold leading-none tracking-wide text-white" text-slate-400">Loading details...</div>;
       } finally {
         setLoadingSelectedProduct(false);
       }
@@ -539,15 +538,16 @@ const ARStudio = () => {
       : aiStatus;
 
   return (
-    <div className="fixed inset-0 z-[99999] w-screen h-screen bg-slate-950 text-white overflow-hidden select-none touch-none">
+    <div className="flex flex-col min-h-screen w-screen bg-slate-950 text-white overflow-x-hidden select-none">
       <SEO
         title="360 AR Studio"
         description="Automatic AR room scanning and product placement for Aaramdehi."
         keywords="automatic AR, live room scan, product placement, aaramdehi"
       />
 
-      {/* Pure Viewport Background for Camera */}
-      <div className="absolute inset-0 z-0 w-full h-full">
+      {/* Top Section: Camera & 3D Viewer Layer */}
+      <div className="relative w-full flex-1 min-h-[50vh] bg-black overflow-hidden">
+        {/* Live Video Frame */}
         <video
           ref={videoRef}
           autoPlay
@@ -556,91 +556,89 @@ const ARStudio = () => {
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300`} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 pointer-events-none" />
-      </div>
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 pointer-events-none" />
 
-      {/* 3D Model Engine Canvas Layer */}
-      {!isFaceDetected && currentModel && (
-        <div className="absolute inset-0 z-10 w-full h-full pointer-events-auto">
-          <model-viewer
-            ref={modelViewerRef}
-            src={currentModel}
-            ar
-            ar-modes="webxr scene-viewer"
-            camera-controls
-            auto-rotate
-            auto-rotate-delay="1000"
-            field-of-view="auto"
-            camera-orbit="0deg 75deg auto"
-            min-camera-orbit="auto auto auto"
-            max-camera-orbit="auto auto auto"
-            camera-target="auto auto auto"
-            ar-placement={selectedProduct?.placementType || 'floor'}
-            ar-scale={computedModelScale}
-            exposure="1.2"
-            style={{ width: '100%', height: '100%' }}
-          >
-            <button
-              slot="ar-button"
-              className="absolute bottom-48 left-1/2 z-30 -translate-x-1/2 rounded-full bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-2xl shadow-black/40 hover:bg-emerald-400 active:scale-95 transition"
+        {/* <model-viewer> Integration */}
+        {!isFaceDetected && currentModel && (
+          <div className="absolute inset-0 w-full h-full pointer-events-auto">
+            <model-viewer
+              ref={modelViewerRef}
+              src={currentModel}
+              ar
+              ar-modes="webxr scene-viewer"
+              camera-controls
+              auto-rotate
+              auto-rotate-delay="1000"
+              field-of-view="auto"
+              camera-orbit="0deg 75deg auto"
+              min-camera-orbit="auto auto auto"
+              max-camera-orbit="auto auto auto"
+              camera-target="auto auto auto"
+              ar-placement={selectedProduct?.placementType || 'floor'}
+              ar-scale={computedModelScale}
+              exposure="1.2"
+              style={{ width: '100%', height: '100%' }}
             >
-              ✨ Tap to Place AI Suggestion
-            </button>
-          </model-viewer>
-        </div>
-      )}
-
-      {/* Human Face Detection Safety Block */}
-      {isFaceDetected && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center px-6 bg-black/60 backdrop-blur-sm">
-          <div className="max-w-md rounded-[28px] border border-rose-400/20 bg-rose-500/10 p-6 text-center backdrop-blur-xl">
-            <div className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-300">Face detected</div>
-            <div className="mt-3 text-2xl font-black text-white">AR paused for safety</div>
-            <div className="mt-2 text-sm leading-6 text-rose-200">Please step back or move your face out of view to resume AR placement.</div>
+              <button
+                slot="ar-button"
+                className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-2xl hover:bg-emerald-400 active:scale-95 transition"
+              >
+                ✨ Tap to Place AI Suggestion
+              </button>
+            </model-viewer>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* High Intensity Navigation Bar */}
-      <div className="absolute inset-x-4 top-4 z-40 flex items-center justify-between pointer-events-none">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/90 px-4 py-2 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
-        >
-          ← Back
-        </button>
+        {/* Human Face Detection Safety Block */}
+        {isFaceDetected && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center px-6 bg-black/60 backdrop-blur-sm">
+            <div className="max-w-md rounded-[28px] border border-rose-400/20 bg-rose-500/10 p-6 text-center backdrop-blur-xl">
+              <div className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-300">Face detected</div>
+              <div className="mt-3 text-2xl font-black text-white">AR paused for safety</div>
+              <div className="mt-2 text-sm leading-6 text-rose-200">Please move face out of view to resume placement.</div>
+            </div>
+          </div>
+        )}
 
-        <div className="absolute left-1/2 top-0 -translate-x-1/2 transform">
+        {/* Floating Top Nav Actions */}
+        <div className="absolute inset-x-4 top-4 z-40 flex items-center justify-between pointer-events-none">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/90 px-4 py-2 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
+          >
+            ← Back
+          </button>
+
           {voiceBadge && (
             <div className={`inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-slate-950/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200 shadow-xl backdrop-blur-md transition-opacity duration-500 ${voiceBadgeVisible ? 'opacity-100' : 'opacity-0'}`}>
               <span className={`inline-flex h-2 w-2 rounded-full ${voiceAssistantActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
               {voiceBadge}
             </div>
           )}
+
+          <button
+            type="button"
+            onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
+            className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
+          >
+            🔄
+          </button>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
-          className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
-        >
-          🔄
-        </button>
+        {/* Toast Notification Container */}
+        {toastMessage && (
+          <div className="absolute top-16 left-1/2 z-50 -translate-x-1/2 transform pointer-events-none">
+            <div className={`rounded-xl px-4 py-2 text-xs font-bold shadow-2xl backdrop-blur-md border ${toastType === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' : toastType === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-200' : 'bg-slate-900/90 border-white/10 text-slate-200'}`}>
+              {toastMessage}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Notification Toast Trigger Tracker */}
-      {toastMessage && (
-        <div className="absolute top-20 left-1/2 z-50 -translate-x-1/2 transform pointer-events-none">
-          <div className={`rounded-xl px-4 py-2 text-xs font-bold shadow-2xl backdrop-blur-md border ${toastType === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' : toastType === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-200' : 'bg-slate-900/90 border-white/10 text-slate-200'}`}>
-            {toastMessage}
-          </div>
-        </div>
-      )}
-
-      {/* Optimized Fixed Action Studio Drawer */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 max-h-[42vh] overflow-y-auto rounded-t-[32px] border-t border-white/10 bg-slate-950/90 p-4 shadow-2xl backdrop-blur-xl transition-all duration-300 scrollbar-none sm:p-5 pointer-events-auto touch-auto">
-        <div className="flex flex-col gap-3.5">
+      {/* Bottom Section: Dedicated Action Drawer (Strictly Under the Camera) */}
+      <div className="w-full bg-slate-950 border-t border-white/10 p-4 sm:p-5">
+        <div className="mx-auto max-w-5xl flex flex-col gap-3.5">
           
           {/* Product Header Card */}
           <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 sm:flex-row sm:items-center sm:justify-between">
@@ -656,20 +654,18 @@ const ARStudio = () => {
               type="button"
               onClick={addToCart}
               disabled={cartAdded}
-              className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] transition active:scale-95 ${cartAdded ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/10'}`}
-              style={{ touchAction: 'manipulation' }}
+              className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] transition active:scale-95 ${cartAdded ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'}`}
             >
               {cartAdded ? 'Added 🛒' : 'Add to Cart 🛒'}
             </button>
           </div>
 
-          {/* Controller Core Actions Grid */}
+          {/* Action Grid Matrix */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <button
               type="button"
               onClick={startSurfaceScanning}
               className="inline-flex min-h-[40px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
-              style={{ touchAction: 'manipulation' }}
             >
               🔍 {scanStep === 'scanning' ? `Scanning ${scanProgress}%` : 'Scan Space'}
             </button>
@@ -677,7 +673,6 @@ const ARStudio = () => {
               type="button"
               onClick={voiceAssistantActive ? stopVoiceAssistant : startVoiceAssistant}
               className={`inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${voiceAssistantActive ? 'bg-sky-500/20 border-sky-500/40 text-sky-200 animate-pulse' : 'bg-white/5 border-white/5 text-white hover:bg-white/10'}`}
-              style={{ touchAction: 'manipulation' }}
             >
               🎙️ {voiceAssistantActive ? 'Stop Voice' : 'Voice Assist'}
             </button>
@@ -685,7 +680,6 @@ const ARStudio = () => {
               type="button"
               onClick={() => setShowDimensions((prev) => !prev)}
               className={`inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${showDimensions ? 'bg-white/10 border-white/10 text-white' : 'bg-transparent border-white/5 text-slate-400 hover:text-white'}`}
-              style={{ touchAction: 'manipulation' }}
             >
               📐 Dimensions
             </button>
@@ -693,13 +687,12 @@ const ARStudio = () => {
               type="button"
               onClick={captureScreenshot}
               className="inline-flex min-h-[40px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
-              style={{ touchAction: 'manipulation' }}
             >
               📸 Capture
             </button>
           </div>
 
-          {/* Ambient Lighting Selector Matrix */}
+          {/* Lighting Controls */}
           <div className="flex items-center overflow-x-auto gap-2 rounded-2xl border border-white/5 bg-slate-900/50 p-2 text-xs scrollbar-none">
             <span className="text-[9px] uppercase tracking-[0.18em] text-slate-500 font-bold px-2 whitespace-nowrap">Lighting:</span>
             {ambientThemeOrder.map((theme) => (
@@ -708,14 +701,13 @@ const ARStudio = () => {
                 type="button"
                 onClick={() => setAmbientThemeDebounced(theme)}
                 className={`rounded-full px-3 py-1.5 text-[9px] font-bold uppercase transition whitespace-nowrap ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
-                style={{ touchAction: 'manipulation' }}
               >
                 {ambientThemeLabels[theme]}
               </button>
             ))}
           </div>
 
-          {/* Room Context Metrics Grid */}
+          {/* Live Context Data Grid */}
           {showDimensions && (
             <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-3 text-xs text-slate-300">
               <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold">Live Room Context</div>
@@ -741,7 +733,7 @@ const ARStudio = () => {
             </div>
           )}
 
-          {/* Live Voice Status Indicator */}
+          {/* Live Voice Assistant Tracking Output */}
           {voiceAssistantActive && (
             <div className="flex items-center justify-between px-2 py-1 bg-sky-500/10 border border-sky-500/10 rounded-xl text-[10px] text-sky-200">
               <span className="truncate tracking-wide">🎙️ {voiceStatusMessage}</span>

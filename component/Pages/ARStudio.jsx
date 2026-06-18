@@ -621,9 +621,12 @@ const ARStudio = () => {
           </div>
         )}
 
-        <div className="absolute left-3 right-3 bottom-3 z-20 w-[min(420px,calc(100vw-26px))] max-w-[420px] rounded-[32px] border border-white/10 bg-slate-950/90 p-4 sm:p-6 shadow-2xl shadow-black/40 backdrop-blur-xl">
-          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">{selectedProduct ? 'Selected Product Preview' : 'Auto Recommendation'}</div>
+        <div className="absolute inset-x-3 bottom-3 z-20 rounded-[32px] border border-white/10 bg-slate-950/90 p-4 shadow-2xl shadow-black/40 backdrop-blur-xl sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">AR Control Center</div>
+              <div className="mt-2 text-sm font-black uppercase tracking-[0.14em] text-white">Surface · Voice · Lighting</div>
+            </div>
             <button
               type="button"
               onClick={() => setShowDimensions((prev) => !prev)}
@@ -633,63 +636,65 @@ const ARStudio = () => {
               {showDimensions ? 'Hide' : 'Show'} Dimensions
             </button>
           </div>
-          <div className="mt-4 flex flex-col gap-3">
-            <div className="grid gap-2 sm:grid-cols-2">
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={startSurfaceScanning}
+              className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-emerald-500 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-2xl shadow-black/30 transition hover:bg-emerald-400"
+              style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
+            >
+              📐 Scan Surface
+            </button>
+            <div className="grid gap-2">
               <button
                 type="button"
-                onClick={startSurfaceScanning}
-                className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-emerald-500 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-slate-950 shadow-2xl shadow-black/30 transition hover:bg-emerald-400"
+                onClick={startVoiceAssistant}
+                className={`inline-flex min-h-[46px] items-center justify-center rounded-full ${voiceAssistantActive ? 'bg-sky-500' : 'bg-white/5'} px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-800`}
                 style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
               >
-                📐 Scan Surface
+                <span className="mr-2">🎙️</span>
+                Voice Assist
+                {voiceAssistantActive && <span className="ml-2 inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" /><span className="h-2 w-2 rounded-full bg-emerald-200 animate-[pulse_1.2s_ease-in-out_infinite]" /></span>}
               </button>
-              <div className="grid gap-2">
+              {voiceAssistantActive && (
                 <button
                   type="button"
-                  onClick={startVoiceAssistant}
-                  className={`inline-flex min-h-[46px] items-center justify-center rounded-full ${voiceAssistantActive ? 'bg-sky-500' : 'bg-white/5'} px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-800`}
+                  onClick={stopVoiceAssistant}
+                  className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-700"
                   style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
                 >
-                  <span className="mr-2">🎙️</span>
-                  Voice Assist
-                  {voiceAssistantActive && <span className="ml-2 inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-emerald-300 animate-pulse" /><span className="h-2 w-2 rounded-full bg-emerald-200 animate-[pulse_1.2s_ease-in-out_infinite]" /></span>}
+                  ⏹️ Stop Voice
                 </button>
-                {voiceAssistantActive && (
-                  <button
-                    type="button"
-                    onClick={stopVoiceAssistant}
-                    className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-slate-700 bg-slate-800 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white shadow-2xl shadow-black/30 transition hover:bg-slate-700"
-                    style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
-                  >
-                    ⏹️ Stop Voice
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-slate-900/70 px-3 py-3 text-sm text-slate-300">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-slate-400">
-                  {voiceAssistantActive ? <VoiceWaveIndicator /> : <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500" />}
-                  Voice Status
-                </div>
-                {voiceAssistantActive && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Listening</span>}
-              </div>
-              <div className="mt-2 text-sm text-slate-200">{voiceStatusMessage}</div>
-            </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {ambientThemeOrder.map((theme) => (
-                <button
-                  key={theme}
-                  type="button"
-                  onClick={() => setAmbientThemeDebounced(theme)}
-                  className={`rounded-full px-2 py-2 text-[10px] font-semibold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
-                  style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
-                >
-                  {ambientThemeLabels[theme]}
-                </button>
-              ))}
+              )}
             </div>
           </div>
+
+          <div className="mt-4 rounded-3xl border border-white/10 bg-slate-900/70 px-3 py-3 text-sm text-slate-300">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-slate-400">
+                {voiceAssistantActive ? <VoiceWaveIndicator /> : <span className="inline-block h-1.5 w-1.5 rounded-full bg-slate-500" />}
+                Voice Status
+              </div>
+              {voiceAssistantActive && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-200">Listening</span>}
+            </div>
+            <div className="mt-2 text-sm text-slate-200">{voiceStatusMessage}</div>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {ambientThemeOrder.map((theme) => (
+              <button
+                key={theme}
+                type="button"
+                onClick={() => setAmbientThemeDebounced(theme)}
+                className={`rounded-full px-2 py-2 text-[10px] font-semibold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-200 hover:bg-white/10'}`}
+                style={{ pointerEvents: 'auto', touchAction: 'manipulation' }}
+              >
+                {ambientThemeLabels[theme]}
+              </button>
+            ))}
+          </div>
+
           {currentProduct ? (
             <div className="mt-4 space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -362,9 +362,7 @@ const ARStudio = () => {
       } catch (error) {
         console.error('Failed to load AR products:', error);
         setAiStatus('Failed to load AR product catalog.');
-      } finally {
-        setLoadingProducts(false);
-      }
+      } fill/0 py-2 font-bold leading-none tracking-wide text-white" text-slate-400">Loading products...</div>;
     };
 
     loadAaramdehiProducts();
@@ -476,6 +474,7 @@ const ARStudio = () => {
       } catch (error) {
         console.error('Selected product load failed:', error);
         setAiStatus('Selected product could not be loaded.');
+      } fill/0 py-2 font-bold leading-none tracking-wide text-white" text-slate-400">Loading details...</div>;
       } finally {
         setLoadingSelectedProduct(false);
       }
@@ -540,14 +539,14 @@ const ARStudio = () => {
       : aiStatus;
 
   return (
-    <div className="fixed inset-0 w-full h-screen bg-slate-950 text-white overflow-hidden select-none">
+    <div className="fixed inset-0 z-[99999] w-screen h-screen bg-slate-950 text-white overflow-hidden select-none touch-none">
       <SEO
         title="360 AR Studio"
         description="Automatic AR room scanning and product placement for Aaramdehi."
         keywords="automatic AR, live room scan, product placement, aaramdehi"
       />
 
-      {/* Full-Screen Camera Viewport Stack */}
+      {/* Pure Viewport Background for Camera */}
       <div className="absolute inset-0 z-0 w-full h-full">
         <video
           ref={videoRef}
@@ -557,12 +556,12 @@ const ARStudio = () => {
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300`} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 pointer-events-none" />
       </div>
 
-      {/* Main 3D AR Engine Viewport Layer */}
+      {/* 3D Model Engine Canvas Layer */}
       {!isFaceDetected && currentModel && (
-        <div className="absolute inset-0 z-10 w-full h-full">
+        <div className="absolute inset-0 z-10 w-full h-full pointer-events-auto">
           <model-viewer
             ref={modelViewerRef}
             src={currentModel}
@@ -583,7 +582,7 @@ const ARStudio = () => {
           >
             <button
               slot="ar-button"
-              className="absolute bottom-40 left-1/2 z-30 -translate-x-1/2 rounded-full bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-2xl shadow-black/40 hover:bg-emerald-400 active:scale-95 transition"
+              className="absolute bottom-48 left-1/2 z-30 -translate-x-1/2 rounded-full bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-2xl shadow-black/40 hover:bg-emerald-400 active:scale-95 transition"
             >
               ✨ Tap to Place AI Suggestion
             </button>
@@ -591,9 +590,9 @@ const ARStudio = () => {
         </div>
       )}
 
-      {/* Floating System-Level Messages (Face Safety Alert) */}
+      {/* Human Face Detection Safety Block */}
       {isFaceDetected && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center px-6 bg-black/40 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center px-6 bg-black/60 backdrop-blur-sm">
           <div className="max-w-md rounded-[28px] border border-rose-400/20 bg-rose-500/10 p-6 text-center backdrop-blur-xl">
             <div className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-300">Face detected</div>
             <div className="mt-3 text-2xl font-black text-white">AR paused for safety</div>
@@ -602,12 +601,12 @@ const ARStudio = () => {
         </div>
       )}
 
-      {/* Top Minimal Navigation Overlay */}
+      {/* High Intensity Navigation Bar */}
       <div className="absolute inset-x-4 top-4 z-40 flex items-center justify-between pointer-events-none">
         <button
           type="button"
           onClick={() => navigate(-1)}
-          className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/80 px-4 py-2 text-sm font-semibold text-white shadow-lg backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
+          className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/90 px-4 py-2 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
         >
           ← Back
         </button>
@@ -624,13 +623,13 @@ const ARStudio = () => {
         <button
           type="button"
           onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
-          className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/80 text-sm shadow-lg backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
+          className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
         >
           🔄
         </button>
       </div>
 
-      {/* Toast Feedback Tracker Overlay */}
+      {/* Notification Toast Trigger Tracker */}
       {toastMessage && (
         <div className="absolute top-20 left-1/2 z-50 -translate-x-1/2 transform pointer-events-none">
           <div className={`rounded-xl px-4 py-2 text-xs font-bold shadow-2xl backdrop-blur-md border ${toastType === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' : toastType === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-200' : 'bg-slate-900/90 border-white/10 text-slate-200'}`}>
@@ -639,15 +638,15 @@ const ARStudio = () => {
         </div>
       )}
 
-      {/* Consolidated Bottom Floating Action Drawer */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 max-h-[48vh] overflow-y-auto rounded-t-[32px] border-t border-white/10 bg-slate-950/85 p-4 shadow-2xl backdrop-blur-xl transition-all duration-300 scrollbar-none sm:p-5">
-        <div className="flex flex-col gap-4">
+      {/* Optimized Fixed Action Studio Drawer */}
+      <div className="absolute bottom-0 left-0 right-0 z-40 max-h-[42vh] overflow-y-auto rounded-t-[32px] border-t border-white/10 bg-slate-950/90 p-4 shadow-2xl backdrop-blur-xl transition-all duration-300 scrollbar-none sm:p-5 pointer-events-auto touch-auto">
+        <div className="flex flex-col gap-3.5">
           
-          {/* Dynamic Action Sheet Header Row (Product & Add to Cart) */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+          {/* Product Header Card */}
+          <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-[0.3em] text-slate-400 font-bold">{statusMessage}</div>
-              <div className="mt-1 flex flex-wrap items-center gap-2 text-base font-black text-white">
+              <div className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-bold">{statusMessage}</div>
+              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-base font-black text-white">
                 <span className="truncate">{currentProduct?.name || selectedProduct?.name || 'Auto-suggested AR Item'}</span>
                 <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-emerald-200">{placementMode}</span>
               </div>
@@ -664,12 +663,12 @@ const ARStudio = () => {
             </button>
           </div>
 
-          {/* Interactive Core Feature Buttons Grid */}
+          {/* Controller Core Actions Grid */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <button
               type="button"
               onClick={startSurfaceScanning}
-              className="inline-flex min-h-[42px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
               style={{ touchAction: 'manipulation' }}
             >
               🔍 {scanStep === 'scanning' ? `Scanning ${scanProgress}%` : 'Scan Space'}
@@ -677,7 +676,7 @@ const ARStudio = () => {
             <button
               type="button"
               onClick={voiceAssistantActive ? stopVoiceAssistant : startVoiceAssistant}
-              className={`inline-flex min-h-[42px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${voiceAssistantActive ? 'bg-sky-500/20 border-sky-500/40 text-sky-200 animate-pulse' : 'bg-white/5 border-white/5 text-white hover:bg-white/10'}`}
+              className={`inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${voiceAssistantActive ? 'bg-sky-500/20 border-sky-500/40 text-sky-200 animate-pulse' : 'bg-white/5 border-white/5 text-white hover:bg-white/10'}`}
               style={{ touchAction: 'manipulation' }}
             >
               🎙️ {voiceAssistantActive ? 'Stop Voice' : 'Voice Assist'}
@@ -685,7 +684,7 @@ const ARStudio = () => {
             <button
               type="button"
               onClick={() => setShowDimensions((prev) => !prev)}
-              className={`inline-flex min-h-[42px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${showDimensions ? 'bg-white/10 border-white/10 text-white' : 'bg-transparent border-white/5 text-slate-400 hover:text-white'}`}
+              className={`inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${showDimensions ? 'bg-white/10 border-white/10 text-white' : 'bg-transparent border-white/5 text-slate-400 hover:text-white'}`}
               style={{ touchAction: 'manipulation' }}
             >
               📐 Dimensions
@@ -693,14 +692,14 @@ const ARStudio = () => {
             <button
               type="button"
               onClick={captureScreenshot}
-              className="inline-flex min-h-[42px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
+              className="inline-flex min-h-[40px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
               style={{ touchAction: 'manipulation' }}
             >
               📸 Capture
             </button>
           </div>
 
-          {/* Horizontal Ambient Lighting Selector Pill Matrix */}
+          {/* Ambient Lighting Selector Matrix */}
           <div className="flex items-center overflow-x-auto gap-2 rounded-2xl border border-white/5 bg-slate-900/50 p-2 text-xs scrollbar-none">
             <span className="text-[9px] uppercase tracking-[0.18em] text-slate-500 font-bold px-2 whitespace-nowrap">Lighting:</span>
             {ambientThemeOrder.map((theme) => (
@@ -716,24 +715,24 @@ const ARStudio = () => {
             ))}
           </div>
 
-          {/* Collapsible Measurement Feedback Container */}
+          {/* Room Context Metrics Grid */}
           {showDimensions && (
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-3.5 text-xs text-slate-300">
+            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-3 text-xs text-slate-300">
               <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold">Live Room Context</div>
-              <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <div className="rounded-xl bg-white/5 p-2.5">
+              <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div className="rounded-xl bg-white/5 p-2">
                   <div className="text-[8px] uppercase tracking-[0.15em] text-slate-400">Target Zone</div>
-                  <div className="mt-1 text-sm font-bold text-white">{placementMode === 'wall' ? 'Wall Surface' : 'Floor Matrix'}</div>
+                  <div className="mt-0.5 text-sm font-bold text-white">{placementMode === 'wall' ? 'Wall Surface' : 'Floor Matrix'}</div>
                 </div>
-                <div className="rounded-xl bg-white/5 p-2.5">
+                <div className="rounded-xl bg-white/5 p-2">
                   <div className="text-[8px] uppercase tracking-[0.15em] text-slate-400">Measured Area</div>
-                  <div className="mt-1 text-sm font-bold text-white">{calculatedArea.length} ft × {calculatedArea.width} ft</div>
+                  <div className="mt-0.5 text-sm font-bold text-white">{calculatedArea.length} ft × {calculatedArea.width} ft</div>
                 </div>
-                <div className="rounded-xl bg-white/5 p-2.5">
+                <div className="rounded-xl bg-white/5 p-2">
                   <div className="text-[8px] uppercase tracking-[0.15em] text-slate-400">Auto-Fit Matrix</div>
-                  <div className="mt-1 text-sm font-bold text-emerald-300">{modelScaleFactor}</div>
+                  <div className="mt-0.5 text-sm font-bold text-emerald-300">{modelScaleFactor}</div>
                 </div>
-                <div className="rounded-xl bg-white/5 p-2.5 flex items-center justify-center text-center">
+                <div className="rounded-xl bg-white/5 p-2 flex items-center justify-center text-center">
                   <div className="text-[9px] font-semibold text-slate-400 italic">
                     {calculatedArea.fitStatus}
                   </div>
@@ -742,7 +741,7 @@ const ARStudio = () => {
             </div>
           )}
 
-          {/* Mini Real-Time Voice Audio State Trace */}
+          {/* Live Voice Status Indicator */}
           {voiceAssistantActive && (
             <div className="flex items-center justify-between px-2 py-1 bg-sky-500/10 border border-sky-500/10 rounded-xl text-[10px] text-sky-200">
               <span className="truncate tracking-wide">🎙️ {voiceStatusMessage}</span>

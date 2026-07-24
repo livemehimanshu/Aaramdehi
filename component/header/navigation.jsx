@@ -29,11 +29,13 @@ const Navigation = ({ categories = [] }) => {
         {categories.map((cat) => (
           /* Safe key handling agar _id missing ho */
           <div key={cat._id || cat.id || cat.name} className="group relative flex flex-col items-center cursor-pointer">
-            <Link to={`/products?category=${cat.name}`} className="flex flex-col items-center">
-              <div className="w-15 h-20 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100 overflow-hidden">
-                {getIcon(cat)}
-              </div>
-            </Link>
+       <Link to={`/products?category=${cat.name}`} className="group flex flex-col items-center">
+  <div className="w-20 h-20 bg-transparent rounded-full flex items-center justify-center overflow-hidden">
+    <div className="w-full h-full flex items-center justify-center p-3 transition-transform duration-300 scale-90 group-hover:scale-110">
+      {getIcon(cat)}
+    </div>
+  </div>
+</Link>
             
             {/* Dropdown for Subcategories (Flipkart Style) */}
             {cat.subCategories?.length > 0 && (

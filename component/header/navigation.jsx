@@ -30,7 +30,7 @@ const Navigation = ({ categories = [] }) => {
           /* Safe key handling agar _id missing ho */
           <div key={cat._id || cat.id || cat.name} className="group relative flex flex-col items-center cursor-pointer">
             <Link to={`/products?category=${cat.name}`} className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100 overflow-hidden">
+              <div className="w-15 h-20 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100 overflow-hidden">
                 {getIcon(cat)}
               </div>
             </Link>

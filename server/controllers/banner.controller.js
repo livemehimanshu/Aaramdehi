@@ -76,7 +76,7 @@ export const getBannerById = async (req, res) => {
 // Create new banner
 export const createBanner = async (req, res) => {
   try {
-    const { title, link, category, position, altText, startDate, endDate } =
+    const { title, description, link, category, position, altText, startDate, endDate } =
       req.body;
 
     if (!title) {
@@ -125,6 +125,7 @@ export const createBanner = async (req, res) => {
 
     const bannerData = {
       title,
+      description: description || '',
       image: imageUrl,
       imagePublicId,
       link: link || "",
@@ -157,7 +158,7 @@ export const createBanner = async (req, res) => {
 export const updateBanner = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, link, category, position, altText, isActive, startDate, endDate } =
+    const { title, description, link, category, position, altText, isActive, startDate, endDate } =
       req.body;
 
     // ✅ FIX: Use Firebase findById helper instead of Mongoose Banner model
@@ -171,6 +172,7 @@ export const updateBanner = async (req, res) => {
     }
 
     if (title) banner.title = title;
+    if (description !== undefined) banner.description = description || '';
     if (link !== undefined) banner.link = link; // Empty string bhi valid hai
     if (category) banner.category = category;
     if (position !== undefined) banner.position = position;

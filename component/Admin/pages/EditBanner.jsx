@@ -25,6 +25,7 @@ const EditBanner = () => {
 
     const [formData, setFormData] = useState({
         title: '',
+        description: '',
         link: '',
         category: '',
         position: 0,
@@ -38,6 +39,7 @@ const EditBanner = () => {
                 if (res.success) {
                     setFormData({
                         title: res.data.title || '',
+                        description: res.data.description || '',
                         link: res.data.link || '',
                         category: res.data.category || '',
                         position: res.data.position || 0,
@@ -101,6 +103,7 @@ const EditBanner = () => {
         try {
             const data = new FormData();
             data.append('title', formData.title);
+            data.append('description', formData.description);
             data.append('link', formData.link);
             data.append('category', formData.category);
             data.append('position', formData.position);

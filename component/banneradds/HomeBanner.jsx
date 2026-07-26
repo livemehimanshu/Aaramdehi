@@ -66,7 +66,7 @@ const HomeBanner = ({ section = 'hero' }) => {
                                         {banner.title || 'Shop the latest collection'}
                                     </h2>
                                     <p className="max-w-xl text-sm text-slate-600 sm:text-base">
-                                        Discover curated offers and polished banner placements designed to match your brand theme seamlessly.
+                                        {banner.description || 'Discover curated offers and polished banner placements designed to match your brand theme seamlessly.'}
                                     </p>
                                     <div className="flex flex-wrap gap-3">
                                         <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">

@@ -24,6 +24,7 @@ const AddBanner = () => {
 
     const [formData, setFormData] = useState({
         title: '',
+        description: '',
         link: '',
         category: '',
         position: 0
@@ -95,6 +96,7 @@ const AddBanner = () => {
             data.append('title', formData.title);
             data.append('link', formData.link);
             data.append('category', formData.category);
+            data.append('description', formData.description);
             data.append('position', Number(formData.position));
             data.append('image', imageFile);
 
@@ -180,6 +182,21 @@ const AddBanner = () => {
                             </select>
                         </div>
 
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-black uppercase text-slate-500">Banner Description</label>
+                            <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                                rows={4}
+                                className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition-all resize-none"
+                                placeholder="E.g. Discover curated offers and polished banner placements designed to match your brand theme seamlessly."
+                            />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Target Link */}
                         <div className="space-y-2">
                             <label className="text-xs font-black uppercase text-slate-500">Target Link (URL)</label>

@@ -82,7 +82,8 @@ const BannerList = () => {
                                         </td>
                                         <td className="p-5">
                                             <p className="font-bold text-white text-sm">{banner.title}</p>
-                                            <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-1">
+                                            <p className="text-slate-400 text-xs mt-2 line-clamp-2">{banner.description || 'No description set.'}</p>
+                                            <div className="flex items-center gap-1 text-[10px] text-slate-500 mt-3">
                                                 <ExternalLink size={10} /> {banner.link || 'No Link Attached'}
                                             </div>
                                         </td>
@@ -93,8 +94,10 @@ const BannerList = () => {
                                         </td>
                                         <td className="p-5">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">Active</span>
+                                                <div className={`w-2 h-2 rounded-full ${banner.isActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></div>
+                                                <span className={`text-[10px] font-bold uppercase tracking-widest ${banner.isActive ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                    {banner.isActive ? 'Active' : 'Inactive'}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="p-5 text-right">

@@ -59,9 +59,11 @@ const HomeBanner = ({ section = 'hero' }) => {
                         <Link to={banner.link || '/'} className="block">
                             <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-4 md:p-6 xl:p-8 rounded-[28px] shadow-xl">
                                 <div className="space-y-5">
+                                    {banner.category?.toLowerCase() !== 'hero' && (
                                     <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
                                         {banner.category || 'Featured'}
                                     </span>
+                                )}
                                     <h2 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">
                                         {banner.title || 'Shop the latest collection'}
                                     </h2>

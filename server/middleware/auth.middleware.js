@@ -43,16 +43,16 @@ export const isAuthenticatedUser = async (req, res, next) => {
     }
 };
 
-// 2. Admin Check Middleware (Isse SyntaxError solve ho jayega)
+// 2. Admin Check Middleware
 export const isAdmin = async (req, res, next) => {
     try {
-        // req.user humein 'isAuthenticatedUser' se milta hai
         if (!req.user || req.user.role !== "ADMIN") {
             return res.status(403).json({
                 success: false,
                 message: "Access Denied: Admin privileges required."
             });
         }
+
         next();
     } catch (error) {
         return res.status(500).json({

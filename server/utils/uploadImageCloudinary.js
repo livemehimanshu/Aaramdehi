@@ -20,8 +20,10 @@ export const uploadImageCloudinary = async (fileBuffer, folderName = "Aaramdehi_
             ...options
         };
 
-        if (!Object.prototype.hasOwnProperty.call(uploadOptions, 'transformation')) {
-            uploadOptions.transformation = [
+        const { noTransformation, ...cloudinaryOptions } = uploadOptions;
+
+        if (!Object.prototype.hasOwnProperty.call(uploadOptions, 'transformation') && !noTransformation) {
+            cloudinaryOptions.transformation = [
                 { width: 800, crop: "limit" },
                 { quality: "auto" },
                 { fetch_format: "auto" }

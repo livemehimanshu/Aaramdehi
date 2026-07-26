@@ -32,7 +32,7 @@ const upload = multer({
     fileFilter: fileFilter,
     limits: {
         fileSize: 5 * 1024 * 1024, // 5MB limit (Aaramdehi project ke liye thoda badha diya hai)
-        files: 10 // Multi-image support for products
+        files: 100 // Support many product images and variant image uploads
     }
 });
 

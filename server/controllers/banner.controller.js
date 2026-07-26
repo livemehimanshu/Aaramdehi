@@ -104,7 +104,7 @@ export const createBanner = async (req, res) => {
       const fileToUpload = req.file.buffer || req.file.path;
       if (!fileToUpload) throw new Error("File content is missing");
 
-      const uploadResult = await uploadImageCloudinary(fileToUpload, "banners");
+      const uploadResult = await uploadImageCloudinary(fileToUpload, "banners", { noTransformation: true });
       // Check if upload was successful. If not, return the detailed error message.
       if (uploadResult && !uploadResult.success) {
           return res.status(500).json({
@@ -185,7 +185,7 @@ export const updateBanner = async (req, res) => {
       const fileToUpload = req.file.buffer || req.file.path;
       if (!fileToUpload) throw new Error("File content is missing for update.");
 
-      const uploadResult = await uploadImageCloudinary(fileToUpload, "banners");
+      const uploadResult = await uploadImageCloudinary(fileToUpload, "banners", { noTransformation: true });
       // Check if upload was successful. If not, return the detailed error message.
       if (uploadResult && !uploadResult.success) {
           return res.status(500).json({

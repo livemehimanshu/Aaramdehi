@@ -55,7 +55,14 @@ const Orders = () => {
         }
     };
 
-    // 3. Search और Status के आधार पर फिल्टर करें
+    const formatItemVariant = (item) => {
+        const sizeLabel = typeof item.selectedSize === 'string'
+            ? item.selectedSize
+            : item.selectedSize?.label || item.selectedSize?.name || item.selectedSize?.value;
+        const colorLabel = item.color?.name || item.color?.label || item.color?.value || item.color;
+        return [sizeLabel, colorLabel].filter(Boolean).join(' • ');
+    };
+
     const filteredOrders = orders.filter(order => {
         const orderNum = order.orderNumber || '';
         const userName = order.userId?.name || '';
@@ -148,6 +155,7 @@ const Orders = () => {
                         <tr className="bg-gray-800/50 border-b border-gray-800">
                             <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Order Details</th>
                             <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Items</th>
                             <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount & Payment</th>
                             <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
                             <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Update Status</th>
@@ -164,6 +172,20 @@ const Orders = () => {
                                     </div>
                                 </td>
                                 <td className="p-4 text-sm font-bold text-gray-300">{order.userId?.name || 'Unknown User'}</td>
+                                <td className="p-4 text-sm text-gray-300 max-w-[320px]">
+                                    <div className="space-y-2">
+                                        {(order.orderItems || []).slice(0, 2).map((item, idx) => (
+                                            <div key={idx} className="rounded-2xl border border-gray-800/60 bg-gray-950/5 p-2">
+                                                <p className="text-[11px] font-black text-white line-clamp-1">{item.name}</p>
+                                                {formatItemVariant(item) && <p className="text-[10px] text-gray-400 uppercase tracking-[0.18em]">{formatItemVariant(item)}</p>}
+                                                <p className="text-[10px] text-gray-500">Qty {item.quantity} · ₹{((item.price || 0) * item.quantity).toLocaleString()}</p>
+                                            </div>
+                                        ))}
+                                        {(order.orderItems || []).length > 2 && (
+                                            <p className="text-[10px] text-gray-500 uppercase tracking-widest">+{order.orderItems.length - 2} more item(s)</p>
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="p-4">
                                     <p className="text-sm font-black text-white">₹{order.totalAmount.toLocaleString()}</p>
                                     <p className="text-[9px] font-bold text-gray-500 uppercase">{formatPaymentMethod(order.paymentMethod)} - {order.paymentStatus}</p>

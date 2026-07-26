@@ -1,26 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
-import { Loader2, AlertCircle, CheckCircle, Upload, X, Box, Save, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle, Upload, X, Box, Save, ArrowLeft, Plus, Trash2, Palette, Ruler } from 'lucide-react';
 import { createProductAPI, getAllCategoriesAPI } from '../../../src/api/authAndAdminApi';
-import imageCompression from 'browser-image-compression'; // ✅ Image optimization
+import imageCompression from 'browser-image-compression';
 import { generateKeywordsOnTheFly } from '../../../src/utils/searchIndexer';
 import { useNavigate } from 'react-router-dom';
-
-const modules = {
-  toolbar: [
-    [{ 'header': [1, 2, 3, false] }],
-    ['bold', 'italic', 'underline', 'strike'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-    ['link', 'clean'] 
-  ],
-};
 
 const AddProduct = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
-    brand: 'Aaramdehi', // Defaulting to your brand name
+    brand: 'Aaramdehi',
     category: '',
     subCategory: '',
     sellingPrice: '',
@@ -30,34 +19,35 @@ const AddProduct = () => {
     description: ''
   });
 
+  const [sizesList, setSizesList] = useState([]);
+  const [sizeInput, setSizeInput] = useState('');
+  
+  // ✅ Color Variant Multiple Images State (Unlimited support)
+  const [colorVariants, setColorVariants] = useState([]);
+  const [colorInput, setColorInput] = useState({ name: '', price: '', mrp: '', imageFiles: [], previews: [] });
+
   const [imageFiles, setImageFiles] = useState([]);
   const [model3dFile, setModel3dFile] = useState(null);
   const [previews, setPreviews] = useState([]);
   const [categoriesList, setCategoriesList] = useState([]);
   const [subCategoriesList, setSubCategoriesList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [imageProcessing, setImageProcessing] = useState(false); // ✅ Processing state for UI feedback
+  const [imageProcessing, setImageProcessing] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Fetch categories for the dropdown
   useEffect(() => {
     const fetchCats = async () => {
       const res = await getAllCategoriesAPI();
-      if (res.success) setCategoriesList(res.data);
+      if (res?.success) setCategoriesList(res.data);
     };
     fetchCats();
   }, []);
 
-  // Handle category change and update subcategories dynamically
   const handleCategoryChange = (e) => {
     const categoryName = e.target.value;
-    
-    // Update category and reset subcategory
     setFormData(prev => ({ ...prev, category: categoryName, subCategory: '' }));
 
-    // Find the selected category and extract its subcategories
     const selectedCat = categoriesList.find(cat => cat.name === categoryName);
-
     if (selectedCat && Array.isArray(selectedCat.subCategories)) {
       setSubCategoriesList(selectedCat.subCategories);
     } else {
@@ -65,7 +55,86 @@ const AddProduct = () => {
     }
   };
 
-  // ✅ Optimized Image Selection & WebP Conversion (Frontend Processing)
+  const addSize = () => {
+    if (sizeInput.trim() && !sizesList.includes(sizeInput.trim())) {
+      setSizesList([...sizesList, sizeInput.trim()]);
+      setSizeInput('');
+    }
+  };
+
+  const removeSize = (indexToRemove) => {
+    setSizesList(sizesList.filter((_, idx) => idx !== indexToRemove));
+  };
+
+  // ✅ Multiple Images Handler (Ek baar me multiple select kar sakte hain)
+  const processUploadFile = async (file, maxSizeMB, maxWidthOrHeight) => {
+    try {
+      const compressedFile = await imageCompression(file, { maxSizeMB, maxWidthOrHeight });
+      const webpFile = await convertToWebP(compressedFile);
+      return webpFile;
+    } catch (err) {
+      console.warn('Upload conversion failed, using original file instead:', err);
+      return file;
+    }
+  };
+
+  const handleColorImagesChange = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    try {
+      const processedFiles = [];
+      const newPreviews = [];
+
+      for (const file of files) {
+        const finalFile = await processUploadFile(file, 0.5, 1000);
+        processedFiles.push(finalFile);
+        newPreviews.push(URL.createObjectURL(finalFile));
+      }
+
+      setColorInput(prev => ({
+        ...prev,
+        imageFiles: [...prev.imageFiles, ...processedFiles],
+        previews: [...prev.previews, ...newPreviews]
+      }));
+    } catch (err) {
+      console.error("Color images processing error:", err);
+      setMessage({ type: 'error', text: 'Failed to process color variant images. Please try again.' });
+    }
+  };
+
+  const removeColorImageInput = (idx) => {
+    setColorInput(prev => ({
+      ...prev,
+      imageFiles: prev.imageFiles.filter((_, i) => i !== idx),
+      previews: prev.previews.filter((_, i) => i !== idx)
+    }));
+  };
+
+  const addColorVariant = () => {
+    if (!colorInput.name.trim()) {
+      return setMessage({ type: 'error', text: 'Color variant name is required.' });
+    }
+
+    setColorVariants([
+      ...colorVariants,
+      {
+        name: colorInput.name.trim(),
+        price: colorInput.price ? Number(colorInput.price) : Number(formData.sellingPrice || 0),
+        mrp: colorInput.mrp ? Number(colorInput.mrp) : Number(formData.mrp || 0),
+        imageFiles: colorInput.imageFiles,
+        previews: colorInput.previews
+      }
+    ]);
+
+    // Input form reset
+    setColorInput({ name: '', price: '', mrp: '', imageFiles: [], previews: [] });
+  };
+
+  const removeColorVariant = (index) => {
+    setColorVariants(colorVariants.filter((_, i) => i !== index));
+  };
+
   const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -76,19 +145,15 @@ const AddProduct = () => {
 
     try {
       for (const file of files) {
-        // 1. Compress Image (Max 0.5MB, optimized for high-res screens)
-        const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1200 });
-        // 2. Convert to WebP
-        const webpFile = await convertToWebP(compressedFile);
-        
-        processedFiles.push(webpFile);
-        newPreviews.push(URL.createObjectURL(webpFile));
+        const finalFile = await processUploadFile(file, 0.5, 1200);
+        processedFiles.push(finalFile);
+        newPreviews.push(URL.createObjectURL(finalFile));
       }
-      setImageFiles(prev => [...prev, ...processedFiles].slice(0, 5));
-      setPreviews(prev => [...prev, ...newPreviews].slice(0, 5));
+      setImageFiles(prev => [...prev, ...processedFiles]);
+      setPreviews(prev => [...prev, ...newPreviews]);
     } catch (err) {
       console.error("Image processing error:", err);
-      setMessage({ type: 'error', text: 'Failed to process images. Please try again.' });
+      setMessage({ type: 'error', text: 'Failed to process images.' });
     } finally {
       setImageProcessing(false);
     }
@@ -126,10 +191,7 @@ const AddProduct = () => {
     if (!file) return;
 
     const allowedExtensions = /\.(glb|gltf)$/i;
-    const allowedTypes = [/model\/gltf-binary/i, /model\/gltf\+json/i, /application\/octet-stream/i];
-    const isAllowedType = !file.type || allowedTypes.some((pattern) => pattern.test(file.type));
-
-    if (!allowedExtensions.test(file.name) || !isAllowedType) {
+    if (!allowedExtensions.test(file.name)) {
       setMessage({ type: 'error', text: 'Only .glb or .gltf 3D model files are allowed.' });
       return;
     }
@@ -138,24 +200,18 @@ const AddProduct = () => {
     setMessage({ type: 'success', text: `3D model selected: ${file.name}` });
   };
 
-  const removeModel3d = () => {
-    setModel3dFile(null);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name || !formData.brand || !formData.category || !formData.sellingPrice || !formData.mrp || !formData.stock) {
-        return setMessage({ type: 'error', text: "Validation Failed: Mandatory fields missing. Please fill all required fields before publishing." });
+        return setMessage({ type: 'error', text: "Validation Failed: Mandatory fields missing." });
     }
 
     setLoading(true);
     setMessage({ type: '', text: '' });
 
     try {
-      // 1. Keyword Generation for SEO/Search
       const keywords = generateKeywordsOnTheFly(formData.name, formData.description).slice(0, 50);
 
-      // 2. Prepare FormData for Image Upload
       const data = new FormData();
       Object.keys(formData).forEach(key => {
           const val = (key === 'sellingPrice' || key === 'mrp' || key === 'stock') ? Number(formData[key]) : formData[key];
@@ -163,10 +219,31 @@ const AddProduct = () => {
       });
       
       data.append('seoKeywords', keywords.join(', ')); 
+      data.append('sizes', JSON.stringify(sizesList));
+      
+      const colorsPayload = colorVariants.map(c => ({
+        name: c.name,
+        label: c.name,
+        price: c.price,
+        mrp: c.mrp
+      }));
+      const colorsJson = JSON.stringify(colorsPayload);
+      data.append('colors', colorsJson);
+      data.append('colorVariants', colorsJson); // fallback for alternate backend keys
+      data.append('variants', colorsJson); // additional compatibility fallback
+
+      // ✅ Append Dynamic Color Images (Multiple Images per Variant)
+      colorVariants.forEach((variant, variantIdx) => {
+        if (variant.imageFiles && variant.imageFiles.length > 0) {
+          variant.imageFiles.forEach((file) => {
+            data.append(`color_images_${variantIdx}[]`, file);
+          });
+        }
+      });
+
       imageFiles.forEach(file => data.append('images', file));
       if (model3dFile) data.append('model3d', model3dFile);
 
-      // 3. API Call
       const res = await createProductAPI(data);
 
       if (res.success) {
@@ -201,10 +278,11 @@ const AddProduct = () => {
       )}
 
       <form onSubmit={handleSubmit} className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Images Grid */}
+        
+        {/* Main Product Gallery & 3D Model */}
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-gray-900 p-6 rounded-2xl border border-gray-800 shadow-xl">
-            <h3 className="text-xs font-black uppercase text-gray-500 mb-4 tracking-widest">Product Gallery</h3>
+            <h3 className="text-xs font-black uppercase text-gray-500 mb-4 tracking-widest">Main Product Gallery</h3>
             
             <label className={`group h-48 border-2 border-dashed border-gray-800 bg-gray-950 rounded-2xl flex flex-col items-center justify-center transition-all ${imageProcessing ? 'cursor-wait opacity-50' : 'cursor-pointer hover:border-emerald-500/50'}`}>
               {imageProcessing ? (
@@ -214,7 +292,7 @@ const AddProduct = () => {
                   <div className="p-4 bg-gray-900 rounded-full text-gray-500 group-hover:text-emerald-500 group-hover:scale-110 transition-all">
                     <Upload size={24} />
                   </div>
-                  <span className="text-[10px] font-black text-gray-500 mt-3 uppercase tracking-tighter">Click to upload images</span>
+                  <span className="text-[10px] font-black text-gray-500 mt-3 uppercase tracking-tighter">Click to upload main images</span>
                 </>
               )}
               <input type="file" disabled={imageProcessing} multiple className="hidden" onChange={handleImageChange} accept="image/*" />
@@ -242,21 +320,15 @@ const AddProduct = () => {
                   <Upload size={18} className="text-emerald-500" />
                   <span>{model3dFile ? model3dFile.name : 'Upload .glb / .gltf file'}</span>
                 </div>
-                <span className="text-[10px] uppercase tracking-[0.28em]">Max 1 3D model file</span>
                 <input type="file" accept=".glb,.gltf" className="hidden" onChange={handleModel3dChange} />
               </label>
-              {model3dFile && (
-                <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-emerald-200">
-                  <p className="truncate text-sm font-semibold">{model3dFile.name}</p>
-                  <button type="button" onClick={removeModel3d} className="text-xs font-black uppercase tracking-[0.24em] text-rose-400 hover:text-rose-200">Remove</button>
-                </div>
-              )}
             </div>
           </div>
         </div>
 
-        {/* Right: Form Details */}
+        {/* Form Details, Sizes & Multi-Image Color Variants */}
         <div className="lg:col-span-2 bg-gray-900 p-6 md:p-8 rounded-2xl border border-gray-800 space-y-6 shadow-2xl">
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-gray-500 ml-1">Product Title *</label>
@@ -275,8 +347,8 @@ const AddProduct = () => {
             </div>
             <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase text-gray-500 ml-1">Sub Category</label>
-                <select value={formData.subCategory} onChange={(e) => setFormData({...formData, subCategory: e.target.value})} disabled={subCategoriesList.length === 0} className="w-full p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-gray-300 font-bold transition-all appearance-none disabled:opacity-50 disabled:cursor-not-allowed">
-                    <option value="">{subCategoriesList.length === 0 ? "No Sub-categories Available" : "Choose Sub Category"}</option>
+                <select value={formData.subCategory} onChange={(e) => setFormData({...formData, subCategory: e.target.value})} disabled={subCategoriesList.length === 0} className="w-full p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-gray-300 font-bold transition-all appearance-none disabled:opacity-50">
+                    <option value="">{subCategoriesList.length === 0 ? "No Sub-categories" : "Choose Sub Category"}</option>
                     {subCategoriesList.map((sub, idx) => <option key={idx} value={sub}>{sub}</option>)}
                 </select>
             </div>
@@ -288,14 +360,94 @@ const AddProduct = () => {
             </div>
           </div>
 
+          {/* SIZES SECTION */}
+          <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-3">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2">
+              <Ruler size={14} className="text-emerald-500" /> Available Sizes
+            </label>
+            <div className="flex gap-2">
+              <input type="text" placeholder="e.g. 16 X 24 Inch or XL" value={sizeInput} onChange={(e) => setSizeInput(e.target.value)} className="flex-1 p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-sm text-white" />
+              <button type="button" onClick={addSize} className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex items-center gap-1 text-xs">
+                <Plus size={16} /> Add Size
+              </button>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 pt-2">
+              {sizesList.map((size, idx) => (
+                <span key={idx} className="bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-300 flex items-center gap-2">
+                  {size}
+                  <button type="button" onClick={() => removeSize(idx)} className="text-rose-400 hover:text-rose-200"><X size={12} /></button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* COLOR VARIANTS (MULTI-IMAGE UP TO 10) */}
+          <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-4">
+            <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2">
+              <Palette size={14} className="text-emerald-500" /> Color Variants (Add as many images as needed)
+            </label>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input type="text" placeholder="Color Name (e.g. Royal Blue)" value={colorInput.name} onChange={(e) => setColorInput({...colorInput, name: e.target.value})} className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white" />
+              <input type="number" placeholder="Variant Price (₹)" value={colorInput.price} onChange={(e) => setColorInput({...colorInput, price: e.target.value})} className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400" />
+              <input type="number" placeholder="Variant MRP (₹)" value={colorInput.mrp} onChange={(e) => setColorInput({...colorInput, mrp: e.target.value})} className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400" />
+            </div>
+
+            {/* Multiple Upload Field */}
+            <label className="p-3 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-emerald-500 flex items-center justify-center gap-2 text-xs text-gray-400 w-full">
+              <Upload size={14} className="text-emerald-500" />
+              <span>Select variant images (multiple files at once)</span>
+              <input type="file" accept="image/*" multiple className="hidden" onChange={handleColorImagesChange} />
+            </label>
+
+            {/* Selected Images Preview in Input State */}
+            {colorInput.previews.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto py-2">
+                {colorInput.previews.map((img, i) => (
+                  <div key={i} className="relative w-12 h-12 flex-shrink-0">
+                    <img src={img} className="w-full h-full object-cover rounded-lg border border-gray-700" alt="variant preview" />
+                    <button type="button" onClick={() => removeColorImageInput(i)} className="absolute -top-1 -right-1 bg-rose-600 text-white rounded-full p-0.5"><X size={10} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button type="button" onClick={addColorVariant} className="w-full py-2.5 bg-gray-900 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white transition-all rounded-xl font-bold text-xs flex items-center justify-center gap-2">
+              <Plus size={16} /> Add Color Variant
+            </button>
+
+            {/* Added Color Variants List */}
+            <div className="space-y-2 pt-2">
+              {colorVariants.map((col, idx) => (
+                <div key={idx} className="p-3 bg-gray-900 rounded-xl border border-gray-800 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex gap-1 overflow-x-auto max-w-[150px]">
+                      {col.previews && col.previews.map((previewUrl, pIdx) => (
+                        <img key={pIdx} src={previewUrl} alt={col.name} className="w-8 h-8 object-cover rounded-md border border-gray-700 flex-shrink-0" />
+                      ))}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-white">{col.name} <span className="text-[10px] text-gray-500">({col.imageFiles.length} Images)</span></p>
+                      <p className="text-[10px] text-emerald-400 font-mono">₹{col.price} <span className="text-gray-500 line-through">₹{col.mrp}</span></p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => removeColorVariant(idx)} className="text-rose-400 hover:text-rose-200 p-2">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <label className="text-[10px] font-black uppercase text-gray-500 ml-1 tracking-widest">Detailed Description</label>
-            <ReactQuill 
-                theme="snow" 
-                value={formData.description}
-                onChange={(val) => setFormData({...formData, description: val})}
-                modules={modules}
-                className="h-64 mb-14 bg-gray-950 rounded-2xl overflow-hidden border border-gray-800" 
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              rows={10}
+              className="w-full min-h-[220px] p-4 bg-gray-950 border border-gray-800 rounded-2xl text-sm text-gray-200 outline-none focus:border-emerald-500"
+              placeholder="Write your product description here..."
             />
           </div>
 
@@ -309,4 +461,4 @@ const AddProduct = () => {
   );
 };
 
-export default AddProduct;
+export default AddProduct;  

@@ -6,10 +6,12 @@ import {
     updateProduct,
     deleteProduct,
     getDashboardStats,
-    analyzeRoom
+    analyzeRoom,
+    addProductReview,
+    deleteProductReview
 } from '../controllers/product.controller.js';
 
-// ✅ FIX: Named import use karein { isAuthenticatedUser, isAdmin }
+// ✅ Protected Middleware
 import { isAuthenticatedUser, isAdmin } from '../middleware/auth.middleware.js';
 
 import { upload } from "../middleware/multer.js";
@@ -23,17 +25,20 @@ const productRouter = Router();
 // Dashboard stats
 productRouter.get('/admin/stats', isAuthenticatedUser, isAdmin, getDashboardStats);
 
-// Add new product
-productRouter.post('/create', isAuthenticatedUser, isAdmin, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'model3d', maxCount: 1 }]), createProduct);
+// ✅ FIX: upload.fields() ki jagah upload.any() use kiya hai
+// Isse 'images', 'model3d', aur dynamic 'color_images_0', 'color_images_1' sabhi accept ho jayenge without 500 Error
+productRouter.post('/create', isAuthenticatedUser, isAdmin, upload.any(), createProduct);
 
 // Update product
-productRouter.put('/:id', isAuthenticatedUser, isAdmin, upload.fields([{ name: 'images', maxCount: 10 }, { name: 'model3d', maxCount: 1 }]), updateProduct);
+productRouter.put('/:id', isAuthenticatedUser, isAdmin, upload.any(), updateProduct);
 
 // Delete product
 productRouter.delete('/:id', isAuthenticatedUser, isAdmin, deleteProduct);
 
 // 1. Public Routes (Sab dekh sakte hain) - MUST COME AFTER protected routes
 productRouter.post('/analyze-room', analyzeRoom);
+productRouter.post('/:id/review', isAuthenticatedUser, addProductReview);
+productRouter.delete('/:id/review/:reviewId', isAuthenticatedUser, isAdmin, deleteProductReview);
 productRouter.get('/', getAllProducts);  // Get all products
 productRouter.get('/:id', getProductById);  // Get single product
 

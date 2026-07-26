@@ -20,7 +20,8 @@ router.get("/", isAuthenticatedUser, isAdmin, getAllBanners);
 router.get("/:id", isAuthenticatedUser, isAdmin, getBannerById);
 router.post("/create", isAuthenticatedUser, isAdmin, upload.single("image"), createBanner);
 router.put("/:id", isAuthenticatedUser, isAdmin, upload.single("image"), updateBanner);
+router.put("/update/:id", isAuthenticatedUser, isAdmin, upload.single("image"), updateBanner); // Alias for legacy frontend paths
 router.delete("/:id", isAuthenticatedUser, isAdmin, deleteBanner);
-router.delete("/delete/:id", isAuthenticatedUser, isAdmin, deleteBanner); // ✅ Fix: Added alias to match frontend request
+router.delete("/delete/:id", isAuthenticatedUser, isAdmin, deleteBanner); // Alias to match existing frontend requests
 
 export default router;

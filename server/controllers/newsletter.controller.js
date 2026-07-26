@@ -1,0 +1,100 @@
+import { findAll, create, findByQuery } from '../config/db.js';
+import { validateEmail } from '../utils/validation.js';
+import sendEmail from '../config/sendEmail.js';
+
+const COLLECTION = 'newsletterSubscribers';
+
+export const subscribeNewsletter = async (req, res) => {
+  try {
+    const email = String(req.body.email || '').trim().toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    const existingSubscribers = await findByQuery(COLLECTION, 'email', email);
+    if (existingSubscribers.length > 0) {
+      return res.status(400).json({ success: false, message: 'This email is already subscribed.' });
+    }
+
+    const newSubscriber = await create(COLLECTION, {
+      email,
+      subscribedAt: new Date().toISOString(),
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Thank you for subscribing to our newsletter!',
+      subscriber: newSubscriber,
+    });
+  } catch (error) {
+    console.error('❌ [Newsletter Subscribe Error]:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getNewsletterSubscribers = async (req, res) => {
+  try {
+    const subscribers = await findAll(COLLECTION);
+    const sorted = subscribers.sort((a, b) => new Date(b.subscribedAt) - new Date(a.subscribedAt));
+    return res.json({ success: true, data: sorted });
+  } catch (error) {
+    console.error('❌ [Newsletter Subscribers Error]:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const sendNewsletter = async (req, res) => {
+  try {
+    const { subject, message } = req.body;
+
+    if (!subject || !subject.trim()) {
+      return res.status(400).json({ success: false, message: 'Subject is required.' });
+    }
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ success: false, message: 'Message is required.' });
+    }
+
+    const subscribers = await findAll(COLLECTION);
+    if (!subscribers.length) {
+      return res.status(400).json({ success: false, message: 'No subscribers available to send newsletter.' });
+    }
+
+    const template = (email) => `
+      <div style="font-family:Arial,Helvetica,sans-serif;color:#111;line-height:1.6;">
+        <h1 style="color:#1A365D;">Aaramdehi Newsletter</h1>
+        <p>Hi,</p>
+        <p>${message.replace(/\n/g, '<br/>')}</p>
+        <p style="margin-top:30px;">Thank you for staying connected with us.</p>
+        <p style="font-size:12px;color:#555;">If you no longer wish to receive these emails, please reply with "unsubscribe".</p>
+      </div>
+    `;
+
+    const sendPromises = subscribers.map((subscriber) =>
+      sendEmail({
+        sendTo: subscriber.email,
+        subject: subject.trim(),
+        html: template(subscriber.email),
+      }).then((result) => ({ email: subscriber.email, success: result.success }))
+        .catch((error) => ({ email: subscriber.email, success: false, error: error.message }))
+    );
+
+    const results = await Promise.allSettled(sendPromises);
+    const sent = results.filter((item) => item.status === 'fulfilled' && item.value.success).length;
+    const failed = results.filter((item) => item.status === 'fulfilled' && !item.value.success).length + results.filter((item) => item.status === 'rejected').length;
+
+    return res.json({
+      success: true,
+      message: `Newsletter has been queued for ${sent} subscriber(s). ${failed ? `${failed} delivery(s) failed.` : ''}`,
+      stats: { sent, failed },
+    });
+  } catch (error) {
+    console.error('❌ [Send Newsletter Error]:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};

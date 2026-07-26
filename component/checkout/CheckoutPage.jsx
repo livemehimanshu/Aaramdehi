@@ -197,14 +197,19 @@ const CheckoutPage = () => {
             const appliedCouponCode = cartItems.find(item => item.appliedCoupon)?.appliedCoupon || null;
 
             const orderPayload = {
-                orderItems: cartItems.map(item => ({
-                    product: item._id || item.id, 
-                    productId: item._id || item.id,
-                    name: item.name,
-                    quantity: Number(quantities[item._id || item.id] || item.qty || 1),
-                    price: Number(item.price || item.sellingPrice || 0), 
-                    image: item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/150x150?text=Product'
-                })),
+                orderItems: cartItems.map(item => {
+                    const itemId = item._id || item.id;
+                    const quantityValue = Number(quantities[itemId] || item.qty || item.quantity || 1);
+                    return {
+                        ...item,
+                        product: itemId,
+                        productId: itemId,
+                        quantity: quantityValue,
+                        qty: quantityValue,
+                        price: Number(item.price || item.sellingPrice || item.newPrice || 0),
+                        image: item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/150x150?text=Product'
+                    };
+                }),
                 shippingAddress: {
                     fullName: userAddress.name || 'Anonymous',
                     address: userAddress.address,

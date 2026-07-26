@@ -1,8 +1,75 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { FiTruck, FiRotateCcw, FiShield, FiGift, FiHeadphones } from 'react-icons/fi';
-import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaPinterestP } from 'react-icons/fa';
+import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
+import { firestore } from '../../src/api/firebase.js';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
 
 const NewsletterFooter = () => {
+  const [email, setEmail] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const isValidEmail = (value) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  };
+
+  const handleSubscribe = async () => {
+    if (!email.trim()) {
+      return toast.error('Please enter your email address.');
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isValidEmail(normalizedEmail)) {
+      return toast.error('Please enter a valid email address.');
+    }
+
+    if (!agreed) {
+      return toast.error('Please accept the terms and privacy policy.');
+    }
+
+    if (!firestore) {
+      return toast.error('Unable to connect to Firebase.');
+    }
+
+    setLoading(true);
+    try {
+      const collectionRef = collection(firestore, 'newsletter_subscribers');
+      const emailQuery = query(collectionRef, where('email', '==', normalizedEmail));
+      const snapshot = await getDocs(emailQuery);
+
+      if (!snapshot.empty) {
+        toast('You are already subscribed to Aaramdehi updates!', { icon: '✅' });
+        setEmail('');
+        setAgreed(false);
+        return;
+      }
+
+      await addDoc(collectionRef, {
+        email: normalizedEmail,
+        subscribedAt: serverTimestamp(),
+        status: 'active',
+        source: 'footer_newsletter',
+      });
+
+      toast.success('Thank you for subscribing to Aaramdehi!');
+      setEmail('');
+      setAgreed(false);
+    } catch (error) {
+      console.error(error);
+      toast.error('Subscription failed. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-[#1A365D] text-white border-t border-gray-100">
       
@@ -72,14 +139,26 @@ const NewsletterFooter = () => {
             <div className="space-y-4">
               <input 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Your Email Address" 
                 className="w-full bg-white/10 border border-white/20 px-4 py-3 text-sm text-white placeholder-white/50 outline-none focus:border-white/50 focus:bg-white/20 transition-all rounded-lg"
               />
-              <button className="bg-white text-[#1A365D] font-semibold text-xs px-8 py-3 uppercase tracking-widest hover:bg-[#FAF9F6] transition-colors w-full rounded-lg shadow-lg">
-                Subscribe
+              <button 
+                disabled={loading}
+                onClick={handleSubscribe}
+                className="bg-white text-[#1A365D] font-semibold text-xs px-8 py-3 uppercase tracking-widest hover:bg-[#FAF9F6] transition-colors w-full rounded-lg shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {loading ? 'Subscribing...' : 'Subscribe'}
               </button>
               <div className="flex items-start gap-3 mt-4">
-                <input type="checkbox" className="mt-1 accent-white" id="terms" />
+                <input 
+                  type="checkbox" 
+                  className="mt-1 accent-white" 
+                  id="terms" 
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                />
                 <label htmlFor="terms" className="text-white/60 text-xs leading-tight">
                   I agree to the terms and conditions and the privacy policy
                 </label>

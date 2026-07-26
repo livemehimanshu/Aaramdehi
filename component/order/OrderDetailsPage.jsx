@@ -11,6 +11,14 @@ const OrderDetailsPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const formatOrderItemVariant = (item) => {
+        const sizeLabel = typeof item.selectedSize === 'string'
+            ? item.selectedSize
+            : item.selectedSize?.label || item.selectedSize?.name || item.selectedSize?.value;
+        const colorLabel = item.color?.name || item.color?.label || item.color?.value || item.color;
+        return [sizeLabel, colorLabel].filter(Boolean).join(' • ');
+    };
+
     useEffect(() => {
         const fetchOrder = async () => {
             try {
@@ -76,6 +84,11 @@ const OrderDetailsPage = () => {
                                         <img src={item.image} className="w-20 h-20 object-contain bg-gray-50 rounded-2xl border border-gray-100" alt={item.name} />
                                         <div className="flex-1 min-w-0">
                                             <Link to={`/product/${item.productId}`} className="text-sm font-black text-gray-800 hover:text-blue-900 transition-colors line-clamp-1 uppercase">{item.name}</Link>
+                                            {formatOrderItemVariant(item) && (
+                                                <p className="text-[11px] text-gray-500 mt-1 uppercase tracking-[0.2em]">
+                                                    {formatOrderItemVariant(item)}
+                                                </p>
+                                            )}
                                             <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Qty: {item.quantity} × ₹{item.price.toLocaleString()}</p>
                                         </div>
                                         <p className="text-sm font-black text-blue-900">₹{(item.price * item.quantity).toLocaleString()}</p>

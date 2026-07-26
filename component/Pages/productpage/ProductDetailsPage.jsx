@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
   FiHeart, FiShoppingCart, FiPlus, FiMinus, FiCheck, FiArrowRight, FiX 
 } from 'react-icons/fi';
-import { getAllProductsAPI, validateCouponAPI } from '@/api/authAndAdminApi';
+import { getAllProductsAPI, getProductByIdAPI, validateCouponAPI, createProductReviewAPI, deleteProductReviewAPI } from '@/api/authAndAdminApi';
 import { BsLightningCharge } from 'react-icons/bs';
 import SEO from '../../header/SEO'; 
 import { AiFillStar } from 'react-icons/ai';
@@ -22,6 +22,75 @@ import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/600x750?text=No+Image";
 
+const parseVariantData = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+};
+
+const normalizeProductPayload = (found) => {
+  const source = found?.data || found || {};
+  const parsedColors = parseVariantData(source.colors || found?.colors);
+  const parsedSizes = parseVariantData(source.sizes || found?.sizes);
+
+  const normalizedColors = parsedColors.length
+    ? parsedColors.map((color) => {
+        if (typeof color === 'string') {
+          return { name: color, images: [] };
+        }
+        return {
+          ...color,
+          name: color?.name || color?.label || color?.color || 'Variant',
+          images: Array.isArray(color?.images) ? color.images : []
+        };
+      })
+    : [];
+
+  const normalizedSizes = parsedSizes.length
+    ? parsedSizes.map((size) => {
+        if (typeof size === 'string') {
+          return { label: size, name: size, price: source.sellingPrice || source.price || 0, oldPrice: null };
+        }
+        return {
+          ...size,
+          label: size?.label || size?.name || size?.value || 'Standard',
+          name: size?.name || size?.label || size?.value || 'Standard',
+          price: size && (size.price !== undefined ? size.price : (size.amount !== undefined ? size.amount : (size.cost !== undefined ? size.cost : (source.sellingPrice || source.price || 0)))),
+          oldPrice: size && (size.oldPrice !== undefined ? size.oldPrice : (size.mrp !== undefined ? size.mrp : null))
+        };
+      })
+    : [{ label: 'Standard', name: 'Standard', price: source.sellingPrice || source.price || 0, oldPrice: null }];
+
+  const normalizedImages = Array.isArray(source.images)
+    ? source.images
+    : (source.thumbnail ? [source.thumbnail] : []);
+
+  return {
+    id: source._id || source.id,
+    brand: source.brand || 'Aaramdehi Luxe',
+    name: source.name || source.title || 'Unnamed Product',
+    description: source.description || 'Premium quality product.',
+    images: normalizedImages,
+    model3dUrl: source.model3dUrl || source.modelUrl || '',
+    colors: normalizedColors,
+    sizes: normalizedSizes,
+    price: source.sellingPrice || source.price || 0,
+    sellingPrice: source.sellingPrice || source.price || 0,
+    mrp: source.mrp || source.originalPrice || source.price || 0,
+    rating: source.ratings?.average || 5,
+    reviews: [],
+    category: source.category || '',
+    tags: source.tags || []
+  };
+};
+
 const ProductDetailsPage = () => {
   const navigate = useNavigate(); 
   const { id } = useParams();
@@ -35,14 +104,17 @@ const ProductDetailsPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviews, setReviews] = useState([]);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false); 
+  const [isAdminUser, setIsAdminUser] = useState(false);
   
   // ✅ Setup React Hook Form for Reviews
-  const { register, handleSubmit, formState: { errors: reviewErrors }, reset: resetReview } = useForm({
+  const { register, handleSubmit, setValue, watch, formState: { errors: reviewErrors }, reset: resetReview } = useForm({
     resolver: zodResolver(reviewSchema),
     defaultValues: { rating: 5, comment: '', userName: '' }
   });
 
+  const ratingValue = watch('rating');
   const [couponInput, setCouponInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0); 
   const [couponMessage, setCouponMessage] = useState({ type: '', text: '', code: '' });
@@ -82,35 +154,67 @@ const ProductDetailsPage = () => {
           setSelectedSize(data.sizes[0]);
           setReviews(data.reviews || []);
         } else {
-          const res = await getAllProductsAPI({ limit: 1000 }); 
-          
-          // Robust parsing: handles both {data: [...]} and [...]
-          const productsArray = Array.isArray(res) ? res : (res.data || []);
-          const found = productsArray.find(p => String(p._id || p.id) === String(id));
-          
-          if (found) {
-            const mappedData = {
-              id: found._id || found.id,
-              brand: found.brand || "Aaramdehi Luxe",
-              name: found.name,
-              description: found.description || "Premium quality product.",
-              images: found.images?.length ? found.images : [found.thumbnail],
-              model3dUrl: found.model3dUrl || found.modelUrl || '',
-              sizes: found.sizes?.length 
-                ? found.sizes.map(s => ({ ...s, oldPrice: null })) 
-                : [{ 
-                    label: 'Standard', 
-                    price: found.sellingPrice || found.price, 
-                    oldPrice: null 
-                  }],
-              rating: found.ratings?.average || 5,
-              reviews: [],
-              category: found.category || '', 
-              tags: found.tags || []
-            }; 
-            setProductData(mappedData);
-            setSelectedImage((mappedData.images[0]?.url || mappedData.images[0]) || PLACEHOLDER_IMAGE);
-            setSelectedSize(mappedData.sizes[0]);
+          try {
+            const res = await getProductByIdAPI(id);
+            const found = res?.success ? (res.data || null) : null;
+
+            if (found) {
+              const parsedColors = parseVariantData(found.colors);
+              const parsedSizes = parseVariantData(found.sizes);
+              const normalizedColors = parsedColors.length
+                ? parsedColors.map((color) => {
+                    if (typeof color === 'string') {
+                      return { name: color, images: [] };
+                    }
+                    return {
+                      ...color,
+                      name: color?.name || color?.label || color?.color || 'Variant',
+                      images: Array.isArray(color?.images) ? color.images : []
+                    };
+                  })
+                : [];
+              const normalizedSizes = parsedSizes.length
+                ? parsedSizes.map((size) => {
+                    if (typeof size === 'string') {
+                      return { label: size, name: size, price: found.sellingPrice || found.price, oldPrice: null };
+                    }
+                    return {
+                      ...size,
+                      label: size?.label || size?.name || size?.value || 'Standard',
+                      name: size?.name || size?.label || size?.value || 'Standard',
+                      price: size && (size.price !== undefined ? size.price : (size.amount !== undefined ? size.amount : (size.cost !== undefined ? size.cost : (found.sellingPrice || found.price)))),
+                      oldPrice: size && (size.oldPrice !== undefined ? size.oldPrice : (size.mrp !== undefined ? size.mrp : null))
+                    };
+                  })
+                : [{ label: 'Standard', name: 'Standard', price: found.sellingPrice || found.price, oldPrice: null }];
+              const normalizedImages = Array.isArray(found.images)
+                ? found.images
+                : (found.thumbnail ? [found.thumbnail] : []);
+
+              const mappedData = {
+                id: found._id || found.id,
+                brand: found.brand || "Aaramdehi Luxe",
+                name: found.name || found.title || 'Unnamed Product',
+                description: found.description || "Premium quality product.",
+                images: normalizedImages,
+                model3dUrl: found.model3dUrl || found.modelUrl || '',
+                colors: normalizedColors,
+                sizes: normalizedSizes,
+                price: found.sellingPrice || found.price,
+                sellingPrice: found.sellingPrice || found.price,
+                mrp: found.mrp || found.originalPrice || found.price,
+                rating: found.ratings?.average || found.rating || 5,
+                reviews: Array.isArray(found.reviews) ? found.reviews : [],
+                category: found.category || '',
+                tags: found.tags || []
+              };
+              setProductData(mappedData);
+              setSelectedImage((mappedData.images[0]?.url || mappedData.images[0]) || PLACEHOLDER_IMAGE);
+              setSelectedSize(mappedData.sizes[0]);
+              setReviews(mappedData.reviews);
+            }
+          } catch (err) {
+            console.error('Fallback product fetch failed:', err);
           }
         }
       } catch (err) {
@@ -134,11 +238,26 @@ const ProductDetailsPage = () => {
     }
   }, [productData, id, selectedSize, selectedImage]);
 
+  useEffect(() => {
+    try {
+      const rawUserData = localStorage.getItem('userData');
+      const parsedUser = rawUserData ? JSON.parse(rawUserData) : null;
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase?.();
+      const isAdmin = parsedUser?.role?.toUpperCase?.() === 'ADMIN' ||
+        (parsedUser?.email && adminEmail && parsedUser.email.toLowerCase() === adminEmail);
+      setIsAdminUser(Boolean(isAdmin));
+    } catch {
+      setIsAdminUser(false);
+    }
+  }, []);
+
   // Calculate Final Price after Coupon
   const finalPrice = useMemo(() => {
-    const basePrice = parsePrice(selectedSize?.price);
+    const basePrice = selectedSize?.price != null
+      ? parsePrice(selectedSize.price)
+      : parsePrice(productData?.sellingPrice ?? productData?.price ?? 0);
     return Math.max(0, basePrice - appliedDiscount);
-  }, [selectedSize, appliedDiscount]);
+  }, [selectedSize, appliedDiscount, productData]);
 
   // --- FUNCTIONALITY HANDLERS ---
 
@@ -234,27 +353,33 @@ const ProductDetailsPage = () => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (payload) => {
     const productId = productData.id || id;
+    const normalizedPayload = payload || {};
+    const selectedSizeValue = normalizedPayload.size || selectedSize;
+    const selectedColorValue = normalizedPayload.color || productData.colors?.[0] || null;
 
     const productToAdd = {
       ...productData,
+      ...normalizedPayload,
       id: productId,
       qty: quantity,
-      price: finalPrice, 
-      originalPrice: parsePrice(selectedSize?.price),
+      quantity,
+      price: finalPrice,
+      originalPrice: parsePrice(selectedSizeValue?.price ?? selectedSize?.price),
       appliedCoupon: appliedDiscount > 0 ? couponInput : null,
-      discountAmount: appliedDiscount, // Assuming appliedDiscount is the amount saved, not percentage
-      image: selectedImage,
-      selectedSize: selectedSize?.label
+      discountAmount: appliedDiscount,
+      image: normalizedPayload.image || selectedImage,
+      selectedSize: selectedSizeValue?.label || selectedSizeValue?.name || selectedSizeValue || selectedSize?.label || selectedSize?.name || selectedSize,
+      color: selectedColorValue,
     };
 
     addToCartContext(productToAdd, quantity);
-    toast.success(`${sanitizationUtils.sanitizeText(productData.name)} added to cart!`); // ✅ Beautiful Toast
+    toast.success(`${sanitizationUtils.sanitizeText(productData.name)} added to cart!`);
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
+  const handleBuyNow = (payload) => {
+    handleAddToCart(payload);
     navigate('/checkout');
   };
 
@@ -294,11 +419,57 @@ const ProductDetailsPage = () => {
     ];
   }, [productData?.description]);
 
-  const onReviewSubmit = (data) => {
-    const newEntry = { user: data.userName, comment: data.comment, rating: data.rating, id: Date.now(), date: "Today" };
-    setReviews([newEntry, ...reviews]);
-    setShowReviewForm(false);
-    resetReview();
+  const onReviewSubmit = async (data) => {
+    if (!productData?.id) return;
+    setReviewSubmitting(true);
+
+    try {
+      const res = await createProductReviewAPI(productData.id, data);
+      const savedReview = res?.data;
+
+      const newEntry = {
+        id: savedReview?.id || savedReview?.userId || Date.now(),
+        user: savedReview?.name || data.userName,
+        name: savedReview?.name || data.userName,
+        comment: savedReview?.comment || data.comment,
+        rating: savedReview?.rating || data.rating,
+        createdAt: savedReview?.createdAt || new Date().toISOString(),
+        date: savedReview?.createdAt ? new Date(savedReview.createdAt).toLocaleDateString() : 'Today'
+      };
+
+      const updatedReviews = [newEntry, ...reviews];
+      setReviews(updatedReviews);
+      setProductData((prev) => prev ? {
+        ...prev,
+        rating: parseFloat((updatedReviews.reduce((sum, review) => sum + (review.rating || 0), 0) / updatedReviews.length).toFixed(1))
+      } : prev);
+
+      resetReview({ rating: 5, comment: '', userName: '' });
+      setShowReviewForm(false);
+      toast.success('Review posted successfully');
+    } catch (err) {
+      console.error('Review submission failed:', err);
+      toast.error(err.response?.data?.message || 'Unable to post review.');
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!productData?.id || !reviewId) return;
+
+    try {
+      const res = await deleteProductReviewAPI(productData.id, reviewId);
+      if (res.success) {
+        setReviews((prev) => prev.filter((rev) => String(rev.id) !== String(reviewId)));
+        toast.success(res.message || 'Review deleted successfully');
+      } else {
+        toast.error(res.message || 'Unable to delete review');
+      }
+    } catch (err) {
+      console.error('Delete review failed:', err);
+      toast.error(err.response?.data?.message || 'Unable to delete review');
+    }
   };
 
   if (loading) {
@@ -328,7 +499,10 @@ const ProductDetailsPage = () => {
         
         {/* PRODUCT TOP SECTION (Gallery + Info) */}
         <ProductPage
+          product={productData}
           images={productData.images.map((img) => (img?.url || img) || PLACEHOLDER_IMAGE)}
+          colors={productData.colors || []}
+          sizes={productData.sizes || []}
           brand={productData.brand}
           title={productData.name}
           subtitle={productData.category || 'Premium Comfort Pillow'}
@@ -386,20 +560,6 @@ const ProductDetailsPage = () => {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-b pb-6">
-          <div className="space-y-2">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Select Size</p>
-            <div className="flex gap-2">
-              {productData.sizes.map((s) => (
-                <button key={s.label} onClick={() => setSelectedSize(s)} 
-                  className={`flex-1 py-2.5 rounded-xl text-[11px] font-black border-2 transition-all ${selectedSize?.label === s.label ? 'bg-[#1a365d] text-white border-[#1a365d] shadow-md' : 'bg-white text-gray-600 border-gray-100 hover:border-gray-300'}`}>
-                  {s.label} <span className="block text-[8px] opacity-60">{s.dimensions}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
         {/* --- DYNAMIC FREQUENTLY BOUGHT TOGETHER --- */}
         <FrequentlyBoughtTogether 
             mainProduct={productData} 
@@ -433,6 +593,20 @@ const ProductDetailsPage = () => {
                     {reviewErrors.userName && <p className="text-red-500 text-[10px] mt-1">{reviewErrors.userName.message}</p>}
                   </div>
                   <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Rating</label>
+                    <select
+                      {...register('rating', { valueAsNumber: true })}
+                      className={`w-full p-3 bg-gray-50 rounded-xl outline-none border ${reviewErrors.rating ? 'border-red-500' : 'border-transparent'}`}
+                      value={ratingValue}
+                      onChange={(e) => setValue('rating', Number(e.target.value))}
+                    >
+                      {[5, 4, 3, 2, 1].map((value) => (
+                        <option key={value} value={value}>{value} Star{value > 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                    {reviewErrors.rating && <p className="text-red-500 text-[10px] mt-1">{reviewErrors.rating.message}</p>}
+                  </div>
+                  <div>
                     <textarea 
                       placeholder="Share your experience..." 
                       rows="3" 
@@ -441,16 +615,29 @@ const ProductDetailsPage = () => {
                     ></textarea>
                     {reviewErrors.comment && <p className="text-red-500 text-[10px] mt-1">{reviewErrors.comment.message}</p>}
                   </div>
-                  <button type="submit" className="w-full bg-blue-900 text-white py-4 rounded-xl font-black text-[10px] uppercase active:scale-95 transition-transform">Post Review</button>
+                  <button type="submit" disabled={reviewSubmitting} className="w-full bg-blue-900 text-white py-4 rounded-xl font-black text-[10px] uppercase active:scale-95 transition-transform disabled:opacity-50">
+                    {reviewSubmitting ? 'Posting...' : 'Post Review'}
+                  </button>
                 </form>
               )}
             </div>
             <div className="lg:w-2/3 space-y-6">
               {reviews.map(rev => (
                 <div key={rev.id} className="p-6 bg-gray-50/50 rounded-[25px] border border-gray-100 space-y-3">
-                  <div className="flex justify-between items-start">
-                    <div><p className="font-black text-gray-900 uppercase">{rev.user}</p></div>
-                    <span className="text-[10px] font-bold text-gray-300 uppercase">{rev.date}</span>
+                  <div className="flex justify-between items-start gap-4">
+                    <div><p className="font-black text-gray-900 uppercase">{rev.user || rev.name || rev.userName || 'Customer'}</p></div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-bold text-gray-300 uppercase">{rev.date || (rev.createdAt ? new Date(rev.createdAt).toLocaleDateString() : '')}</span>
+                      {isAdminUser && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReview(rev.id)}
+                          className="text-rose-500 text-[10px] uppercase font-bold tracking-widest hover:text-rose-700"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <p className="text-gray-600 italic leading-relaxed">"{rev.comment}"</p>
                 </div>

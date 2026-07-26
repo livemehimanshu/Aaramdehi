@@ -3,6 +3,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getDatabase } from "firebase/database";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getFirestore } from "firebase/firestore";
 
 // Firebase configuration for Aaramdehi
 // Best practice: Store these in your f:\Aramdehi\.env.local file using VITE_ prefix
@@ -34,12 +35,14 @@ let firebaseApp = null;
 let firebaseAuth = null;
 let firebaseDb = null;
 let firebaseStorage = null;
+let firebaseFirestore = null;
 
 if (isFirebaseConfigured) {
   firebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   firebaseAuth = getAuth(firebaseApp);
   firebaseDb = getDatabase(firebaseApp);
   firebaseStorage = getStorage(firebaseApp);
+  firebaseFirestore = getFirestore(firebaseApp);
 } else {
   console.warn('⚠️ Firebase initialization skipped because required config is missing.');
 }
@@ -48,6 +51,7 @@ if (isFirebaseConfigured) {
 export const auth = firebaseAuth;
 export const db = firebaseDb;
 export const storage = firebaseStorage;
+export const firestore = firebaseFirestore;
 
 // ✅ Graceful Analytics Initialization: Prevent 'config-fetch-failed' from blocking UI
 let firebaseAnalytics = null;

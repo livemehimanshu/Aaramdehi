@@ -3,10 +3,178 @@ import { findAll, findById, create, updateById, deleteById, findByQuery, db } fr
 
 const COLLECTION = 'products';
 
-// ✅ 1. CREATE NEW PRODUCT
+const normalizeImageValue = (value) => {
+    if (value == null) return [];
+    if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) return [];
+        try {
+            return normalizeImageValue(JSON.parse(trimmed));
+        } catch {
+            return [{ url: trimmed }];
+        }
+    }
+    if (Array.isArray(value)) {
+        return value.flatMap((item) => normalizeImageValue(item));
+    }
+    if (typeof value === 'object') {
+        if (value.url || value.src || value.image || value.path || value.thumb || value.thumbnail) {
+            return [{ url: value.url || value.src || value.image || value.path || value.thumb || value.thumbnail, public_id: value.public_id || value.publicId || '', alt: value.alt || '' }];
+        }
+        if (value.images) return normalizeImageValue(value.images);
+        return Object.values(value).flatMap((item) => normalizeImageValue(item));
+    }
+    return [];
+};
+
+const normalizeSizeValue = (size, index, fallbackPrice, fallbackMrp) => {
+    if (typeof size === 'string') {
+        return { label: size, name: size, value: size, price: fallbackPrice, mrp: fallbackMrp };
+    }
+
+    if (!size || typeof size !== 'object') {
+        return { label: `Size ${index + 1}`, name: `Size ${index + 1}`, value: `Size ${index + 1}`, price: fallbackPrice, mrp: fallbackMrp };
+    }
+
+    return {
+        ...size,
+        label: size.label || size.name || size.value || size.size || `Size ${index + 1}`,
+        name: size.name || size.label || size.value || size.size || `Size ${index + 1}`,
+        value: size.value || size.name || size.label || size.size || `Size ${index + 1}`,
+        price: size.price ?? size.amount ?? size.cost ?? fallbackPrice,
+        mrp: size.mrp ?? size.oldPrice ?? size.originalPrice ?? size.listPrice ?? fallbackMrp
+    };
+};
+
+const normalizeColorValue = (color, index, fallbackPrice, fallbackMrp) => {
+    if (typeof color === 'string') {
+        return {
+            name: color,
+            label: color,
+            images: [],
+            img: '',
+            swatchImg: '',
+            price: fallbackPrice,
+            mrp: fallbackMrp,
+            modelUrl: ''
+        };
+    }
+
+    if (!color || typeof color !== 'object') {
+        return {
+            name: `Variant ${index + 1}`,
+            label: `Variant ${index + 1}`,
+            images: [],
+            img: '',
+            swatchImg: '',
+            price: fallbackPrice,
+            mrp: fallbackMrp,
+            modelUrl: ''
+        };
+    }
+
+    const images = normalizeImageValue(color.images || color.image || color.img || color.gallery || color.urls || color.media);
+
+    return {
+        ...color,
+        name: color.name || color.label || color.color || color.variant || `Variant ${index + 1}`,
+        label: color.label || color.name || color.color || color.variant || `Variant ${index + 1}`,
+        images,
+        img: color.img || color.image || (images[0]?.url || ''),
+        swatchImg: color.swatchImg || color.thumb || color.thumbnail || color.image || color.img || (images[0]?.url || ''),
+        price: color.price ?? color.amount ?? color.cost ?? fallbackPrice,
+        mrp: color.mrp ?? color.oldPrice ?? color.originalPrice ?? color.listPrice ?? fallbackMrp,
+        modelUrl: color.modelUrl || color.model || color.glb || color.gltf || color.threeDModel || ''
+    };
+};
+
+const normalizeProductForResponse = (product) => {
+    const source = product || {};
+    const fallbackPrice = Number(source.sellingPrice ?? source.price ?? 0);
+    const fallbackMrp = Number(source.mrp ?? source.originalPrice ?? source.price ?? 0);
+    const images = normalizeImageValue(source.images || source.gallery || source.productImages || source.image || []);
+    const colors = Array.isArray(source.colors)
+        ? source.colors.map((color, index) => normalizeColorValue(color, index, fallbackPrice, fallbackMrp))
+        : [];
+    const sizes = Array.isArray(source.sizes)
+        ? source.sizes.map((size, index) => normalizeSizeValue(size, index, fallbackPrice, fallbackMrp))
+        : [{ label: 'Standard', name: 'Standard', value: 'Standard', price: fallbackPrice, mrp: fallbackMrp }];
+    const specs = source.specifications || source.specs || {
+        Brand: source.brand || 'Aaramdehi',
+        Size: sizes.map((size) => size.label).join(', ') || 'Standard',
+        Material: source.material || 'Microfiber',
+        'Weave Type': source.weaveType || 'Low profile non-slip'
+    };
+    const features = Array.isArray(source.features)
+        ? source.features
+        : (Array.isArray(source.highlights)
+            ? source.highlights
+            : [
+                'Easy care microfiber surface',
+                'Anti-skid backing for secure placement',
+                'Machine washable for everyday use',
+                'Soft, plush finish for comfort'
+            ]);
+    const modelUrl = source.modelUrl || source.model3dUrl || source.model || source.glb || source.gltf || source.threeDModel || '';
+    const normalizedReviews = (() => {
+        const rawReviews = Array.isArray(source.reviews)
+            ? source.reviews
+            : typeof source.reviews === 'string'
+                ? (() => {
+                    try { return JSON.parse(source.reviews); } catch { return []; }
+                })()
+                : [];
+
+        return Array.isArray(rawReviews)
+            ? rawReviews.map((item, idx) => ({
+                ...item,
+                id: item.id || item._id || item.userId || `review-${idx}`,
+                name: item.name || item.user || item.userName || 'Customer',
+                user: item.user || item.name || item.userName || 'Customer',
+                userName: item.userName || item.user || item.name || 'Customer',
+                rating: Number(item.rating ?? item.stars ?? 0),
+                comment: item.comment || item.text || '',
+                createdAt: item.createdAt || item.date || new Date().toISOString()
+            }))
+            : [];
+    })();
+
+    const normalizedRatings = source.ratings || {
+        average: normalizedReviews.length > 0
+            ? parseFloat((normalizedReviews.reduce((acc, item) => acc + (item.rating || 0), 0) / normalizedReviews.length).toFixed(1))
+            : 5,
+        count: normalizedReviews.length
+    };
+
+    return {
+        ...source,
+        id: source.id || source._id,
+        title: source.title || source.name || source.productName || 'Product Name',
+        name: source.name || source.title || source.productName || 'Product Name',
+        brand: source.brand || 'Aaramdehi',
+        price: source.price ?? source.sellingPrice ?? 0,
+        sellingPrice: source.sellingPrice ?? source.price ?? 0,
+        mrp: source.mrp ?? source.originalPrice ?? source.price ?? 0,
+        images,
+        colors,
+        sizes,
+        subtitle: source.subtitle || source.category || 'Premium comfort',
+        deliveryDate: source.deliveryDate || 'Sunday, 2 August',
+        location: source.location || 'Meerut 250001',
+        modelUrl,
+        model3dUrl: source.model3dUrl || modelUrl,
+        specs,
+        features,
+        stock: source.stock ?? source.available ?? 12,
+        discountPercent: source.discountPercent ?? source.discount ?? 0,
+        reviews: normalizedReviews,
+        ratings: normalizedRatings
+    };
+};
+
+// ✅ 1. CREATE NEW PRODUCT (With Dynamic Multi-Image Color Variants & Sizes Support)
 export const createProduct = async (req, res) => {
     try {
-        // ✅ Defensive check: Ensure req.body exists after Multer parsing
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({ success: false, message: "Request body is empty. Check your FormData and Multer configuration." });
         }
@@ -14,15 +182,17 @@ export const createProduct = async (req, res) => {
         const { 
             name, brand, description, shortDescription, category, subCategory, 
             tags, mrp, sellingPrice, discountPercent, stock, sku, 
-            specifications, seoTitle, seoDescription, seoKeywords, model3dUrl 
+            specifications, seoTitle, seoDescription, seoKeywords, model3dUrl, modelUrl,
+            subtitle, deliveryDate, location, specs, features,
+            sizes, colors 
         } = req.body;
+        
         const userId = req.userId || req.user?._id || req.user?.id;
 
-        // ✅ 1. Advanced Validation: Check precisely for missing fields
-        // Stock 0 ho sakta hai, isliye hum undefined/null check karenge
+        // Validation
         const missingFields = [];
         if (!name) missingFields.push("name");
-        if (!brand) missingFields.push("brand"); // ✅ Added brand to validation
+        if (!brand) missingFields.push("brand");
         if (!category) missingFields.push("category");
         if (mrp === undefined || mrp === "") missingFields.push("mrp");
         if (sellingPrice === undefined || sellingPrice === "") missingFields.push("sellingPrice");
@@ -36,30 +206,33 @@ export const createProduct = async (req, res) => {
             });
         }
 
-        // Generate URL-friendly Slug
+        // Generate Slug
         const rawSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         let slug = rawSlug;
 
-        // Ensure unique slug when product names repeat
         const existingSlugs = await findByQuery(COLLECTION, 'slug', slug);
         if (existingSlugs.length > 0) {
             slug = `${rawSlug}-${Date.now()}`;
         }
 
-        let images = [];
-        const uploadedImages = Array.isArray(req.files?.images) ? req.files.images : [];
-        const uploadedModelFiles = Array.isArray(req.files?.model3d) ? req.files.model3d : [];
+        // Multer upload.any() files array normalize karein
+        const allUploadedFiles = Array.isArray(req.files) ? req.files : [];
 
-        console.log("📂 Incoming files check:", { hasFiles: !!req.files, imageCount: uploadedImages.length, modelFileCount: uploadedModelFiles.length });
+        if (process.env.NODE_ENV === 'development') {
+            console.debug('✅ createProduct req.files count:', allUploadedFiles.length);
+            console.debug('✅ createProduct req.files fieldnames:', allUploadedFiles.map(f => ({ fieldname: f.fieldname, originalname: f.originalname, mimeType: f.mimetype })));
+            console.debug('✅ createProduct req.body keys:', Object.keys(req.body));
+        }
+
+        // Upload Product Main Images
+        let images = [];
+        const uploadedImages = allUploadedFiles.filter(f => f.fieldname === 'images' || f.fieldname === 'images[]');
+        const uploadedModelFiles = allUploadedFiles.filter(f => f.fieldname === 'model3d' || f.fieldname === 'model3d[]');
 
         if (uploadedImages.length > 0) {
-            console.log(`Processing ${uploadedImages.length} image files...`);
             for (const file of uploadedImages) {
                 const fileContent = file.buffer || file.path;
-                if (!fileContent) {
-                    console.error("❌ File content is missing for image file:", file.originalname);
-                    continue;
-                }
+                if (!fileContent) continue;
 
                 const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
                 if (uploadResult && uploadResult.success) {
@@ -68,16 +241,89 @@ export const createProduct = async (req, res) => {
                         public_id: uploadResult.public_id,
                         alt: name
                     });
-                } else {
-                    console.error(`❌ Cloudinary Upload Error [${file.originalname}]:`, uploadResult?.message || "Unknown error");
                 }
             }
 
             if (uploadedImages.length > 0 && images.length === 0) {
-                return res.status(500).json({ success: false, message: "Could not upload images to Cloudinary. Check server logs." });
+                return res.status(500).json({ success: false, message: "Could not upload main images to Cloudinary." });
             }
         }
 
+        // ✅ Parse Sizes Array
+        let parsedSizes = [];
+        if (sizes) {
+            try {
+                parsedSizes = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
+            } catch (e) {
+                parsedSizes = typeof sizes === 'string' ? sizes.split(',').map(s => s.trim()) : [];
+            }
+        }
+
+        // ✅ FIXED: Parse Colors Array & Upload Dynamic Multiple Variant Images (color_images_0, color_images_1, etc.)
+        let parsedColors = [];
+        const rawColorsInput = colors || req.body.colorVariants || req.body.variants || req.body.color || req.body.colours;
+        if (rawColorsInput) {
+            let rawColors = [];
+            try {
+                rawColors = typeof rawColorsInput === 'string' ? JSON.parse(rawColorsInput) : rawColorsInput;
+            } catch (e) {
+                rawColors = [];
+            }
+
+            const getVariantFiles = (files, index) => files.filter(
+                (f) => f.fieldname === `color_images_${index}` || f.fieldname === `color_images_${index}[]`
+            );
+
+            if (Array.isArray(rawColors)) {
+                for (let i = 0; i < rawColors.length; i++) {
+                    let colorObj = typeof rawColors[i] === 'string' ? { name: rawColors[i] } : { ...rawColors[i] };
+                    
+                    // Frontend 'color_images_0', 'color_images_0[]' dono support karein
+                    const variantFiles = getVariantFiles(allUploadedFiles, i);
+                    let variantImages = [];
+
+                    if (variantFiles.length > 0) {
+                        for (const file of variantFiles) {
+                            const fileContent = file.buffer || file.path;
+                            if (fileContent) {
+                                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/variants");
+                                if (uploadResult && uploadResult.success) {
+                                    variantImages.push({
+                                        url: uploadResult.url,
+                                        public_id: uploadResult.public_id
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback to main product image if variant images are missing
+                    if (variantImages.length === 0 && images.length > 0) {
+                        variantImages.push({
+                            url: images[0].url,
+                            public_id: images[0].public_id
+                        });
+                    }
+
+                    const normalizedVariantImages = variantImages.length > 0
+                        ? variantImages
+                        : (Array.isArray(colorObj.images) ? normalizeImageValue(colorObj.images) : []);
+
+                    parsedColors.push({
+                        name: colorObj.name || "Standard",
+                        label: colorObj.label || colorObj.name || "Standard",
+                        images: normalizedVariantImages,
+                        img: normalizedVariantImages.length > 0 ? normalizedVariantImages[0].url : "",
+                        swatchImg: colorObj.swatchImg || colorObj.thumb || colorObj.thumbnail || (normalizedVariantImages[0]?.url || ''),
+                        price: Number(colorObj.price || sellingPrice),
+                        mrp: Number(colorObj.mrp || mrp),
+                        modelUrl: colorObj.modelUrl || colorObj.model || colorObj.glb || colorObj.gltf || colorObj.threeDModel || ''
+                    });
+                }
+            }
+        }
+
+        // 3D Model Upload Handle
         let model3dUrlFromUpload = '';
         let model3dPublicIdFromUpload = '';
         if (uploadedModelFiles.length > 0) {
@@ -88,18 +334,23 @@ export const createProduct = async (req, res) => {
                 if (uploadResult && uploadResult.success) {
                     model3dUrlFromUpload = uploadResult.url;
                     model3dPublicIdFromUpload = uploadResult.public_id;
-                } else {
-                    console.error(`❌ Cloudinary 3D model upload failed [${modelFile.originalname}]:`, uploadResult?.message || "Unknown error");
-                    return res.status(500).json({ success: false, message: "Failed to upload 3D model. Please try again." });
                 }
             }
         }
 
         const mrpNum = Number(mrp);
         const sellingPriceNum = Number(sellingPrice);
+        const incomingModelUrl = model3dUrl || modelUrl || req.body.model || req.body.glb || req.body.gltf || req.body.threeDModel || '';
+        const parsedSpecs = (specifications && typeof specifications === 'string' && specifications.trim().startsWith('{')) ? JSON.parse(specifications) : (typeof specs === 'string' ? JSON.parse(specs) : (specs || {}));
+        const parsedFeatures = Array.isArray(features)
+            ? features
+            : (typeof features === 'string' && features.trim()
+                ? features.split(',').map((item) => item.trim()).filter(Boolean)
+                : []);
 
         const productData = {
             name,
+            title: name,
             brand,
             description: description || "",
             shortDescription: shortDescription || "",
@@ -108,13 +359,22 @@ export const createProduct = async (req, res) => {
             tags: (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : [],
             mrp: mrpNum,
             sellingPrice: sellingPriceNum,
-            // Auto-calculate discount if percent isn't explicitly sent
             discountPercent: Number(discountPercent) || Math.round(((mrpNum - sellingPriceNum) / mrpNum) * 100),
             stock: Number(stock),
             sku: sku || `SKU-${Date.now()}-${slug.slice(0,5)}`,
             images,
             thumbnail: images.length > 0 ? images[0].url : "",
-            specifications: (specifications && typeof specifications === 'string' && specifications.startsWith('{')) ? JSON.parse(specifications) : {},
+            subtitle: subtitle || category || 'Premium comfort',
+            deliveryDate: deliveryDate || 'Sunday, 2 August',
+            location: location || 'Meerut 250001',
+
+            // Save Variants Array & Sizes
+            sizes: Array.isArray(parsedSizes) ? parsedSizes : [],
+            colors: parsedColors,
+
+            specifications: parsedSpecs,
+            specs: parsedSpecs,
+            features: parsedFeatures,
             seoTitle: seoTitle || name,
             seoDescription: seoDescription || shortDescription || "",
             seoKeywords: (typeof seoKeywords === 'string' && seoKeywords.trim()) ? seoKeywords.split(',').map(k => k.trim()) : [],
@@ -122,15 +382,15 @@ export const createProduct = async (req, res) => {
             createdBy: userId || null
         };
 
-        if (model3dUrl || model3dUrlFromUpload) {
-            productData.model3dUrl = model3dUrl || model3dUrlFromUpload;
-            if (model3dPublicIdFromUpload) {
-                productData.model3dPublicId = model3dPublicIdFromUpload;
-            }
+        if (incomingModelUrl || model3dUrlFromUpload) {
+            productData.model3dUrl = incomingModelUrl || model3dUrlFromUpload;
+            productData.modelUrl = incomingModelUrl || model3dUrlFromUpload;
+            if (model3dPublicIdFromUpload) productData.model3dPublicId = model3dPublicIdFromUpload;
         }
 
         const savedProduct = await create(COLLECTION, productData);
-        // Server-side: write a lightweight search index entry using Admin SDK (bypasses RTDB security rules)
+
+        // Search Indexing
         try {
             const indexEntry = {
                 name: productData.name,
@@ -140,9 +400,10 @@ export const createProduct = async (req, res) => {
             };
             await db.ref('product_indexes').push(indexEntry);
         } catch (indexErr) {
-            console.warn('⚠️ Failed to write product index (server):', indexErr.message);
+            console.warn('⚠️ Search index entry failed:', indexErr.message);
         }
-        return res.status(201).json({ success: true, message: "Product created successfully", data: savedProduct });
+
+        return res.status(201).json({ success: true, message: "Product created successfully", data: normalizeProductForResponse(savedProduct) });
 
     } catch (error) {
         console.error("❌ Error creating product:", error);
@@ -150,19 +411,16 @@ export const createProduct = async (req, res) => {
     }
 };
 
-// ✅ 2. GET ALL PRODUCTS (Search & Filter)
-// ✅ FIXED FOR FRONTEND COMPATIBILITY & ROBUSTNESS
+// ✅ 2. GET ALL PRODUCTS
 export const getAllProducts = async (req, res) => {
     try {
         const { category, subCategory, page, limit, search, sort = "-createdAt" } = req.query;
-        console.log("🔎 getAllProducts params:", { category, subCategory, page, limit, search, sort });
         
         const p = Number(page) || 1;
-        const l = Number(limit) || 10; // Default limit 10
+        const l = Number(limit) || 10;
         const skip = (p - 1) * l;
 
         let rawProducts = [];
-        // ✅ Optimization: Use native Firebase query for category or subCategory
         if (subCategory && subCategory !== "" && subCategory !== "undefined") {
             rawProducts = await findByQuery(COLLECTION, 'subCategory', subCategory);
         } else if (category && category !== "" && category !== "undefined") {
@@ -171,40 +429,35 @@ export const getAllProducts = async (req, res) => {
             rawProducts = await findAll(COLLECTION) || [];
         }
 
-        // ✅ Safe conversion: Ensure it behaves like an array and format for Frontend structure
         let products = Array.isArray(rawProducts) 
             ? rawProducts 
             : (rawProducts && typeof rawProducts === 'object' 
                 ? Object.keys(rawProducts).map(key => ({ _id: key, ...rawProducts[key] })) 
                 : []);
 
-        // ✅ Map 'name' to 'title' dynamically so frontend 'item.title' never breaks
-        products = products.map(prod => ({
-            ...prod,
-            id: prod.id || prod._id, // Ensure a consistent 'id' field
-            title: prod.title || prod.name || prod.productName || "Unnamed Product", // Fixes Frontend drop-down blank issue
-            // Ensure category is a string for consistent filtering
-            category: typeof prod.category === 'object' ? prod.category.name || prod.category.label || '' : prod.category || ''
-        }));
+        products = products.map((prod) => {
+            const normalizedProduct = normalizeProductForResponse(prod);
+            return {
+                ...normalizedProduct,
+                category: typeof prod.category === 'object' ? prod.category.name || prod.category.label || '' : prod.category || '',
+                sizes: Array.isArray(prod.sizes) ? prod.sizes : [],
+                colors: Array.isArray(prod.colors) ? prod.colors : []
+            };
+        });
 
-        // ✅ Search by name or brand (client-side search)
         if (search && search !== "" && search !== "undefined") {
             const searchLower = String(search).toLowerCase();
             products = products.filter(prod => 
                 String(prod.name || "").toLowerCase().includes(searchLower) || 
-                String(prod.title || "").toLowerCase().includes(searchLower) ||
                 String(prod.brand || "").toLowerCase().includes(searchLower) ||
-                String(prod.productName || "").toLowerCase().includes(searchLower) ||
                 String(prod.category || "").toLowerCase().includes(searchLower) ||
-                String(prod.description || "").toLowerCase().includes(searchLower) ||
-                (prod.tags && Array.isArray(prod.tags) && prod.tags.some(t => String(t).toLowerCase().includes(searchLower))) ||
+                (prod.colors && Array.isArray(prod.colors) && prod.colors.some(c => String(c.name || c).toLowerCase().includes(searchLower))) ||
                 (prod.sizes && Array.isArray(prod.sizes) && prod.sizes.some(s => String(s.label || s).toLowerCase().includes(searchLower)))
             );
         }
 
         const totalProducts = products.length;
 
-        // ✅ Sort (client-side sorting)
         if (sort) {
             const sortField = sort.replace('-', '');
             const isDesc = sort.startsWith('-');
@@ -215,7 +468,6 @@ export const getAllProducts = async (req, res) => {
             });
         }
 
-        // 6. ✅ Pagination
         const paginatedProducts = products.slice(skip, skip + l);
 
         return res.json({
@@ -232,40 +484,29 @@ export const getAllProducts = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
 // ✅ 3. GET SINGLE PRODUCT
 export const getProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!id) {
-            console.error("❌ getProductById called without id", req.params);
-            return res.status(400).json({ success: false, message: "ID is required" });
-        }
+        if (!id) return res.status(400).json({ success: false, message: "ID is required" });
 
         const product = await findById(COLLECTION, id);
-        if (!product) {
-            console.warn(`⚠️ Product not found for ID [${id}]`);
-            return res.status(404).json({ success: false, message: "Product not found" });
-        }
+        if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
-        return res.json({ success: true, data: product });
+        const formattedProduct = normalizeProductForResponse(product);
+
+        return res.json({ success: true, data: formattedProduct });
     } catch (error) {
         console.error(`❌ Error fetching product [${req.params.id}]:`, error);
         return res.status(500).json({ success: false, message: "Internal server error while fetching product", error: error.message });
     }
 };
 
-// ✅ 4. ROOM ANALYSIS / PRODUCT SUGGESTIONS
+// ✅ 4. ROOM ANALYSIS
 export const analyzeRoom = async (req, res) => {
     try {
-        const {
-            productId,
-            roomType,
-            roomDimensions,
-            wallColor,
-            flooring,
-            furnitureStyle,
-            specialRequests
-        } = req.body || {};
+        const { productId, roomType, roomDimensions, wallColor, flooring, furnitureStyle } = req.body || {};
 
         if (!productId) {
             return res.status(400).json({ success: false, message: 'productId is required for room analysis.' });
@@ -285,11 +526,7 @@ export const analyzeRoom = async (req, res) => {
 
         const filteredSuggestions = products
             .filter((item) => String(item._id) !== String(productId))
-            .sort((a, b) => {
-                const aRating = Number(a.rating || a.ratings?.average || 0);
-                const bRating = Number(b.rating || b.ratings?.average || 0);
-                return bRating - aRating;
-            })
+            .sort((a, b) => (Number(b.rating || b.ratings?.average || 0)) - (Number(a.rating || a.ratings?.average || 0)))
             .slice(0, 8)
             .map((item) => ({
                 id: item._id || item.id,
@@ -311,10 +548,7 @@ export const analyzeRoom = async (req, res) => {
 
         return res.json({
             success: true,
-            data: {
-                summary,
-                suggestions: filteredSuggestions
-            }
+            data: { summary, suggestions: filteredSuggestions }
         });
     } catch (error) {
         console.error('❌ analyzeRoom error:', error);
@@ -322,31 +556,24 @@ export const analyzeRoom = async (req, res) => {
     }
 };
 
-// ✅ 4. UPDATE PRODUCT
+// ✅ 5. UPDATE PRODUCT
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
-
-        if (!id) {
-            console.error("❌ updateProduct called without id", req.params);
-            return res.status(400).json({ success: false, message: "Product ID is required" });
-        }
+        if (!id) return res.status(400).json({ success: false, message: "Product ID is required" });
 
         const existingProduct = await findById(COLLECTION, id);
-        if (!existingProduct) {
-            return res.status(404).json({ success: false, message: "Product not found" });
-        }
+        if (!existingProduct) return res.status(404).json({ success: false, message: "Product not found" });
 
         if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).json({ success: false, message: "Update payload missing. Ensure you are sending FormData." });
+            return res.status(400).json({ success: false, message: "Update payload missing." });
         }
         
-        // ✅ Security Sanitization: Explicitly map allowed fields.
-        // Prevents manipulation of sensitive fields like 'createdBy', 'userId', or '_id'.
         const { 
             name, brand, description, shortDescription, category, subCategory, isActive,
             tags, mrp, sellingPrice, discountPercent, stock, sku, 
-            specifications, seoTitle, seoDescription, seoKeywords 
+            specifications, seoTitle, seoDescription, seoKeywords,
+            sizes, colors 
         } = req.body;
 
         let updateData = {
@@ -360,21 +587,26 @@ export const updateProduct = async (req, res) => {
             seoTitle: seoTitle || name,
             seoDescription
         };
-        
-        // ✅ Cleanup: Remove undefined/NaN fields to prevent database corruption.
+
+        if (sizes !== undefined) {
+            try {
+                updateData.sizes = typeof sizes === 'string' ? JSON.parse(sizes) : sizes;
+            } catch (e) {
+                updateData.sizes = typeof sizes === 'string' ? sizes.split(',').map(s => s.trim()) : [];
+            }
+        }
+
+        if (colors !== undefined) {
+            try {
+                updateData.colors = typeof colors === 'string' ? JSON.parse(colors) : colors;
+            } catch (e) {
+                updateData.colors = [];
+            }
+        }
+
         updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && !Number.isNaN(v)));
 
-        // Handle parsing of stringified fields from FormData
-        console.log("📦 updateProduct payload:", {
-            id,
-            bodyKeys: Object.keys(req.body),
-            hasExistingImages: req.body.existingImages !== undefined,
-            fileCount: req.files ? (Array.isArray(req.files) ? req.files.length : Object.values(req.files).flat().length) : 0
-        });
-
-        if (tags) {
-            updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
-        }
+        if (tags) updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
 
         const searchKeywordsRaw = req.body.seoKeywords || req.body.searchKeywords;
         if (searchKeywordsRaw) {
@@ -387,42 +619,30 @@ export const updateProduct = async (req, res) => {
             try {
                 updateData.specifications = specifications.trim().startsWith('{') ? JSON.parse(specifications) : specifications;
             } catch (parseError) {
-                console.error("❌ Invalid specifications JSON:", parseError, specifications);
                 updateData.specifications = specifications;
             }
         }
 
-        // ✅ Image + 3D model update handling
+        const allUploadedFiles = Array.isArray(req.files) ? req.files : [];
         let finalImages = [];
         const hasExistingImages = req.body.existingImages !== undefined;
-        const hasExistingImagesField = hasExistingImages;
 
-        if (hasExistingImagesField) {
+        if (hasExistingImages) {
             try {
                 finalImages = typeof req.body.existingImages === 'string' ? JSON.parse(req.body.existingImages) : req.body.existingImages;
                 if (!Array.isArray(finalImages)) finalImages = [];
             } catch (e) {
-                console.error("❌ Error parsing existingImages:", e);
                 finalImages = [];
             }
         }
 
-        console.log("📂 Update incoming files:", { hasFiles: !!req.files, hasFile: !!req.file, hasExistingImages: hasExistingImagesField });
-
-        const uploadedImages = req.files?.images
-            ? (Array.isArray(req.files.images) ? req.files.images : [req.files.images])
-            : [];
-        const uploadedModelFiles = req.files?.model3d
-            ? (Array.isArray(req.files.model3d) ? req.files.model3d : [req.files.model3d])
-            : [];
+        const uploadedImages = allUploadedFiles.filter(f => f.fieldname === 'images');
+        const uploadedModelFiles = allUploadedFiles.filter(f => f.fieldname === 'model3d');
 
         if (uploadedImages.length > 0) {
             for (const file of uploadedImages) {
                 const fileContent = file.buffer || file.path;
-                if (!fileContent) {
-                    console.error("❌ Update: File content is missing for image file:", file.originalname);
-                    continue;
-                }
+                if (!fileContent) continue;
 
                 const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
                 if (uploadResult && uploadResult.success) {
@@ -431,8 +651,6 @@ export const updateProduct = async (req, res) => {
                         public_id: uploadResult.public_id,
                         alt: name || "product image"
                     });
-                } else {
-                    console.error(`❌ Update: Cloudinary image upload failed [${file.originalname}]:`, uploadResult?.message);
                 }
             }
         }
@@ -440,10 +658,7 @@ export const updateProduct = async (req, res) => {
         if (uploadedModelFiles.length > 0) {
             const oldModel3dPublicId = existingProduct.model3dPublicId || extractCloudinaryPublicIdFromUrl(existingProduct.model3dUrl || existingProduct.modelUrl);
             if (oldModel3dPublicId) {
-                const deleteResult = await deleteImageCloudinary(oldModel3dPublicId, { resource_type: 'auto' });
-                if (!deleteResult.success) {
-                    console.warn('⚠️ Unable to delete old Cloudinary 3D model:', deleteResult.message);
-                }
+                await deleteImageCloudinary(oldModel3dPublicId, { resource_type: 'auto' });
             }
 
             const modelFile = uploadedModelFiles[0];
@@ -453,24 +668,18 @@ export const updateProduct = async (req, res) => {
                 if (uploadResult && uploadResult.success) {
                     updateData.model3dUrl = uploadResult.url;
                     updateData.model3dPublicId = uploadResult.public_id;
-                } else {
-                    console.error(`❌ Update: Cloudinary 3D model upload failed [${modelFile.originalname}]:`, uploadResult?.message);
                 }
             }
         } else if (req.body.removeModel3d === 'true' || req.body.removeModel3d === true) {
             const oldModel3dPublicId = existingProduct.model3dPublicId || extractCloudinaryPublicIdFromUrl(existingProduct.model3dUrl || existingProduct.modelUrl);
             if (oldModel3dPublicId) {
-                const deleteResult = await deleteImageCloudinary(oldModel3dPublicId, { resource_type: 'auto' });
-                if (!deleteResult.success) {
-                    console.warn('⚠️ Unable to delete old Cloudinary 3D model:', deleteResult.message);
-                }
+                await deleteImageCloudinary(oldModel3dPublicId, { resource_type: 'auto' });
             }
             updateData.model3dUrl = '';
             updateData.model3dPublicId = '';
         }
 
-        // Only update image array if user sent existing set or uploaded new files
-        if (hasExistingImagesField || uploadedImages.length > 0) {
+        if (hasExistingImages || uploadedImages.length > 0) {
             updateData.images = finalImages;
             if (finalImages.length > 0) {
                 updateData.thumbnail = finalImages[0].url;
@@ -479,7 +688,7 @@ export const updateProduct = async (req, res) => {
 
         const updatedProduct = await updateById(COLLECTION, id, updateData);
 
-        // ✅ Update Search Index
+        // Update Search Index
         try {
             const indexResults = await findByQuery('product_indexes', 'productId', id);
             if (indexResults.length > 0) {
@@ -499,9 +708,8 @@ export const updateProduct = async (req, res) => {
     }
 };
 
-// ✅ 4.5 ADD PRODUCT REVIEW
+// ✅ 6. ADD PRODUCT REVIEW
 export const addProductReview = async (req, res) => {
-    // This system calculates average ratings and enforces a one-review-per-user policy.
     try {
         const { id } = req.params;
         const { rating, comment } = req.body;
@@ -517,13 +725,14 @@ export const addProductReview = async (req, res) => {
 
         const reviews = Array.isArray(product.reviews) ? product.reviews : [];
         
-        // ✅ Duplicate Check: Prevent multiple reviews from the same user ID.
         const alreadyReviewed = reviews.find(r => String(r.userId) === String(userId));
         if (alreadyReviewed) {
             return res.status(400).json({ success: false, message: "Product already reviewed by you" });
         }
 
+        const reviewId = `${Date.now()}-${Math.floor(Math.random() * 10000)}`;
         const review = {
+            id: reviewId,
             userId,
             name: userName,
             rating: Number(rating),
@@ -533,7 +742,6 @@ export const addProductReview = async (req, res) => {
 
         reviews.push(review);
 
-        // ✅ Rating Logic: Recalculate average whenever a new review is added.
         const ratingsCount = reviews.length;
         const avgRating = reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount;
 
@@ -554,28 +762,28 @@ export const addProductReview = async (req, res) => {
     }
 };
 
-// ✅ 4.7 DELETE PRODUCT REVIEW (Admin/User)
+// ✅ 7. DELETE PRODUCT REVIEW
 export const deleteProductReview = async (req, res) => {
     try {
-        const { id, reviewId } = req.params; // reviewId would be the timestamp or userId
+        const { id, reviewId } = req.params;
         const product = await findById(COLLECTION, id);
         if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
         let reviews = Array.isArray(product.reviews) ? product.reviews : [];
         
-        // Filter out the review (assuming we identify by userId)
         const initialCount = reviews.length;
-        reviews = reviews.filter(r => String(r.userId) !== String(reviewId));
+        reviews = reviews.filter(
+            (r) => String(r.id) !== String(reviewId) && String(r.userId) !== String(reviewId)
+        );
 
         if (reviews.length === initialCount) {
             return res.status(404).json({ success: false, message: "Review not found" });
         }
 
-        // Recalculate average
         const ratingsCount = reviews.length;
         const avgRating = ratingsCount > 0 
             ? reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount 
-            : 5; // Default back to 5 if no reviews left
+            : 5;
 
         await updateById(COLLECTION, id, {
             reviews,
@@ -591,7 +799,7 @@ export const deleteProductReview = async (req, res) => {
     }
 };
 
-// ✅ 4.6 TOGGLE PRODUCT STATUS (Visibility)
+// ✅ 8. TOGGLE PRODUCT STATUS
 export const toggleProductStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -616,7 +824,7 @@ export const toggleProductStatus = async (req, res) => {
     }
 };
 
-// ✅ 5. DELETE PRODUCT
+// ✅ 9. DELETE PRODUCT
 export const deleteProduct = async (req, res) => {
     try {
         await deleteById(COLLECTION, req.params.id);
@@ -626,24 +834,18 @@ export const deleteProduct = async (req, res) => {
     }
 };
 
-// ✅ 6. ADMIN DASHBOARD STATS
+// ✅ 10. ADMIN DASHBOARD STATS
 export const getDashboardStats = async (req, res) => {
     try {
-        // ✅ FIREBASE: Get all products
         const allProducts = (await findAll(COLLECTION)) || [];
-
         const totalProducts = allProducts.length;
-
-        // ✅ Calculate total stock by summing all product stocks
         const totalStock = allProducts.reduce((sum, prod) => sum + (prod.stock || 0), 0);
 
-        // ✅ Find low stock products (stock < 10)
         const lowStockProducts = allProducts
             .filter(prod => prod.stock < 10)
             .sort((a, b) => a.stock - b.stock)
             .slice(0, 5);
 
-        // ✅ Find recent products (sorted by createdAt descending)
         const recentProducts = allProducts
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 5);

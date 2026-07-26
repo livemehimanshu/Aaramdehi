@@ -38,6 +38,7 @@ import teamRouter from './routes/team.route.js';
 import orderRouter from './routes/order.route.js';
 import shopsRouter from './routes/shops.route.js';
 import roomRouter from './routes/room.route.js';
+import newsletterRouter from './routes/newsletter.route.js';
 
 const app = express();
 
@@ -98,6 +99,7 @@ apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/refunds", refundRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/rooms", roomRouter);
+apiRouter.use('/newsletter', newsletterRouter);
 apiRouter.use("/team", teamRouter);
 
 app.use("/api", apiRouter);

@@ -97,7 +97,7 @@ export async function createBannerAPI(bannerData) {
 
 export async function updateBannerAPI(id, bannerData) {
   try {
-    const res = await api.put(`/banners/update/${id}`, bannerData);
+    const res = await api.put(`/banners/${id}`, bannerData);
     return res.data;
   } catch (e) {
     throw e;
@@ -106,7 +106,7 @@ export async function updateBannerAPI(id, bannerData) {
 
 export async function deleteBannerAPI(id) {
   try {
-    const res = await api.delete(`/banners/delete/${id}`);
+    const res = await api.delete(`/banners/${id}`);
     return res.data;
   } catch (e) {
     throw e;
@@ -200,6 +200,51 @@ export async function getOrderDetailsAPI(orderId) {
   } catch (e) {
     // If API returns 404, we want to know why
     throw e;
+  }
+}
+
+export async function createProductReviewAPI(productId, reviewData) {
+  try {
+    const res = await api.post(`/products/${productId}/review`, reviewData);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function deleteProductReviewAPI(productId, reviewId) {
+  try {
+    const res = await api.delete(`/products/${productId}/review/${reviewId}`);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function subscribeNewsletterAPI(email) {
+  try {
+    const res = await api.post('/newsletter/subscribe', { email });
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
+export async function getNewsletterSubscribersAPI() {
+  try {
+    const res = await api.get('/newsletter/subscribers');
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
+export async function sendNewsletterAPI(payload) {
+  try {
+    const res = await api.post('/newsletter/send', payload);
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
   }
 }
 

@@ -259,16 +259,16 @@ const ProductPage = (props) => {
   const galleryImages = activeImages.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-3 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-screen-xl rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_-30px_rgba(15,23,42,0.35)]">
-        <div className="grid gap-6 p-4 sm:p-6 md:grid-cols-[1.05fr_0.95fr] md:gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-8">
+    <div className="min-h-full bg-slate-50 px-2 py-4 sm:px-4 lg:px-6">
+      <div className="mx-auto w-full max-w-6xl rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_-30px_rgba(15,23,42,0.35)]">
+        <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-[1.08fr_0.92fr] md:gap-8 lg:p-8">
           <section className="space-y-6">
             <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-3 sm:p-4">
               <div className="relative overflow-hidden rounded-[20px] bg-white" ref={mainImageRef}>
                 <img
                   src={selectedImage || PLACEHOLDER_IMAGE}
                   alt={titleLabel}
-                  className="h-[280px] w-full object-contain sm:h-[340px] md:h-[420px] lg:h-[520px]"
+                  className="h-[220px] w-full object-contain sm:h-[300px] md:h-[380px] lg:h-[520px]"
                   onError={handleImageError}
                 />
                 <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm">
@@ -282,7 +282,7 @@ const ProductPage = (props) => {
                 <button
                   type="button"
                   key={`${imgUrl}-${index}`}
-                  className={`h-16 w-16 sm:h-20 sm:w-20 shrink-0 overflow-hidden rounded-2xl border bg-white transition ${selectedImage === imgUrl ? 'border-orange-500 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-300'}`}
+                  className={`h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-2xl border bg-white transition ${selectedImage === imgUrl ? 'border-orange-500 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-300'}`}
                   onClick={() => {
                     if (props.onActiveImgChange) {
                       props.onActiveImgChange(imgUrl);
@@ -296,43 +296,34 @@ const ProductPage = (props) => {
               ))}
             </div>
 
-            <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">3D preview</p>
-                  <p className="text-sm text-slate-500">Interactive model support for select products</p>
+            {currentModelUrl && (
+              <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
+                <div className="mb-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">3D preview</p>
+                    <p className="text-sm text-slate-500">Interactive model support for select products</p>
+                  </div>
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    Available
+                  </span>
                 </div>
-                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white p-2">
+                  <model-viewer
+                    src={currentModelUrl}
+                    alt={titleLabel}
+                    ar
+                    ar-modes="webxr scene-viewer quick-look"
+                    camera-controls
+                    touch-action="pan-y"
+                    auto-rotate
+                    className="h-[220px] w-full rounded-[16px] bg-slate-100 sm:h-[240px] md:h-[280px] lg:h-[320px]"
+                  />
+                </div>
+                <span className="mt-4 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
                   Available
                 </span>
               </div>
-
-              {currentModelUrl ? (
-                <>
-                  <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white p-2">
-                    <model-viewer
-                      src={currentModelUrl}
-                      alt={titleLabel}
-                      ar
-                      ar-modes="webxr scene-viewer quick-look"
-                      camera-controls
-                      touch-action="pan-y"
-                      auto-rotate
-                      className="h-[220px] w-full rounded-[16px] bg-slate-100 sm:h-[260px] md:h-[300px] lg:h-[320px]"
-                    />
-                  </div>
-                  <span className="mt-4 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    Available
-                  </span>
-                </>
-              ) : (
-                <div className="flex h-[220px] flex-col items-center justify-center rounded-[20px] border border-dashed border-slate-300 bg-white px-6 text-center sm:h-[260px] md:h-[300px] lg:h-[320px]">
-                  <FiPackage className="mb-3 h-8 w-8 text-slate-400" />
-                  <p className="text-sm font-semibold text-slate-700">No 3D file attached yet</p>
-                  <p className="mt-1 text-sm text-slate-500">Upload a .glb or .gltf file from the admin panel to enable this preview.</p>
-                </div>
-              )}
-            </div>
+            )}
           </section>
 
           <aside className="space-y-5">
@@ -482,6 +473,12 @@ const ProductPage = (props) => {
                 </button>
               </div>
             </div>
+
+            {props.sidebarPromo && (
+              <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                {props.sidebarPromo}
+              </div>
+            )}
 
             <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <p className="text-sm font-semibold text-slate-900">Why shoppers love this</p>

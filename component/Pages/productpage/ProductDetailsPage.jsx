@@ -522,43 +522,46 @@ const ProductDetailsPage = () => {
           onShare={handleShare}
           onToggleWishlist={handleToggleWishlist}
           isInWishlist={isInWishlist(productData?.id || id)}
+          sidebarPromo={
+            <div className="space-y-3">
+              {!appliedDiscount ? (
+                <button
+                  type="button"
+                  onClick={() => setIsCouponModalOpen(true)}
+                  className="group w-full flex items-center justify-between p-4 border border-dashed border-red-200 rounded-2xl bg-red-50 hover:bg-red-100 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-red-500">
+                      <BsLightningCharge size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-gray-800 uppercase">Best Offers & Coupons</p>
+                      <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">View available offers for you</p>
+                    </div>
+                  </div>
+                  <FiArrowRight className="text-red-500 group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
+                <div className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                      <FiCheck size={20} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-gray-900 uppercase">'{couponMessage.code}' Applied</p>
+                      <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">{couponMessage.text}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {couponMessage.type === 'error' && (
+                <div className="flex items-center gap-2 text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
+                  <span className="text-[10px] font-black uppercase tracking-tighter">{couponMessage.text}</span>
+                </div>
+              )}
+            </div>
+          }
         />
-
-        {!appliedDiscount ? (
-          <div 
-            onClick={() => setIsCouponModalOpen(true)}
-            className="group flex items-center justify-between p-4 border border-dashed border-red-200 rounded-2xl bg-red-50 cursor-pointer hover:bg-red-100 transition-all"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm text-red-500">
-                <BsLightningCharge size={20} />
-              </div>
-              <div>
-                <p className="text-sm font-black text-gray-800 uppercase">Best Offers & Coupons</p>
-                <p className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">View available offers for you</p>
-              </div>
-            </div>
-            <FiArrowRight className="text-red-500 group-hover:translate-x-1 transition-transform" />
-          </div>
-        ) : (
-          <div className="bg-emerald-50 border-2 border-emerald-100 p-4 rounded-2xl flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center text-white">
-                <FiCheck size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-black text-gray-900 uppercase">'{couponMessage.code}' Applied</p>
-                <p className="text-[10px] font-bold text-emerald-600 uppercase mt-0.5">{couponMessage.text}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {couponMessage.type === 'error' && (
-          <div className="mt-3 flex items-center gap-2 text-rose-500 bg-rose-50 p-3 rounded-xl border border-rose-100">
-            <span className="text-[10px] font-black uppercase tracking-tighter">{couponMessage.text}</span>
-          </div>
-        )}
 
         {/* --- DYNAMIC FREQUENTLY BOUGHT TOGETHER --- */}
         <FrequentlyBoughtTogether 

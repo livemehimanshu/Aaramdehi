@@ -7,6 +7,7 @@ import generatedAccessToken from '../utils/generatedAccessToken.js';
 import generatedRefreshToken from '../utils/generatedRefreshToken.js';
 import forgotPasswordTemplate from '../utils/forgotPasswordTemplate.js';
 import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
+import { mapUserForAdmin } from '../utils/adminUserUtils.js';
 
 const COLLECTION = 'users';
 
@@ -240,6 +241,45 @@ export const getUserDetailsController = async (req, res) => {
 
         const { password, forgot_password_otp, forgot_password_expiry, ...rest } = user;
         return res.json({ success: true, user: rest });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const listUsersForAdminController = async (req, res) => {
+    try {
+        const users = await findAll(COLLECTION);
+        const orderSnapshot = await db.ref('orders').once('value');
+        const orders = orderSnapshot.val() ? Object.values(orderSnapshot.val()) : [];
+
+        const orderCountByUser = orders.reduce((acc, order) => {
+            const userKey = order.userId || order.user?.id || order.user?.uid;
+            if (!userKey) return acc;
+            acc[String(userKey)] = (acc[String(userKey)] || 0) + 1;
+            return acc;
+        }, {});
+
+        const mappedUsers = users
+            .map((user) => mapUserForAdmin(user, orderCountByUser[String(user._id || user.id)] || 0))
+            .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        return res.json({ success: true, data: mappedUsers });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const toggleUserBlockStatusController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = await findById(COLLECTION, id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        const updatedUser = await updateById(COLLECTION, id, {
+            isBlocked: !Boolean(user.isBlocked)
+        });
+
+        return res.json({ success: true, message: 'User status updated', data: updatedUser });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

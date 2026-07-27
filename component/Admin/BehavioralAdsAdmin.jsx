@@ -161,13 +161,13 @@ const BehavioralAdsAdmin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#05070b] p-6 text-slate-100">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Behavioral Ads & Targeting</h1>
-            <p className="text-gray-600 mt-1">Manage retargeting rules and dynamic offers</p>
+            <h1 className="text-3xl font-bold text-white">Behavioral Ads & Targeting</h1>
+            <p className="text-slate-400 mt-1">Manage retargeting rules and dynamic offers</p>
           </div>
           <button
             onClick={() => {
@@ -185,7 +185,7 @@ const BehavioralAdsAdmin = () => {
               setEditingRuleId(null);
               setShowForm(!showForm);
             }}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition"
+            className="flex items-center gap-2 bg-[#2563eb] text-white px-6 py-3 rounded-lg hover:bg-[#1d4ed8] transition"
           >
             <FiPlus size={20} />
             New Rule
@@ -194,8 +194,8 @@ const BehavioralAdsAdmin = () => {
 
         {/* Form */}
         {showForm && (
-          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h2 className="text-2xl font-bold mb-6">
+          <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-2xl shadow-black/30 p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-white">
               {editingRuleId ? 'Edit Rule' : 'Create New Rule'}
             </h2>
 
@@ -299,14 +299,14 @@ const BehavioralAdsAdmin = () => {
                     type="color"
                     value={formData.bannerColor}
                     onChange={(e) => setFormData({ ...formData, bannerColor: e.target.value })}
-                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                    className="w-12 h-10 border border-slate-700 rounded cursor-pointer bg-slate-900"
                   />
                   <input
                     type="text"
                     value={formData.bannerColor}
                     onChange={(e) => setFormData({ ...formData, bannerColor: e.target.value })}
                     placeholder="#FF6B6B"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    className="flex-1 px-4 py-2 border border-slate-700 bg-slate-900 text-white rounded-lg"
                   />
                 </div>
               </div>
@@ -329,14 +329,14 @@ const BehavioralAdsAdmin = () => {
               <div className="md:col-span-2 flex gap-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium"
+                  className="flex-1 bg-[#2563eb] text-white px-6 py-3 rounded-lg hover:bg-[#1d4ed8] transition font-medium"
                 >
                   {editingRuleId ? 'Update Rule' : 'Create Rule'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium"
+                  className="flex-1 bg-slate-800 text-slate-100 px-6 py-3 rounded-lg hover:bg-slate-700 transition font-medium"
                 >
                   Cancel
                 </button>
@@ -346,14 +346,14 @@ const BehavioralAdsAdmin = () => {
         )}
 
         {/* Rules List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900">
+        <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white">
               All Retargeting Rules ({rules.length})
             </h2>
             <button
               onClick={fetchRules}
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition"
+              className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition"
             >
               <FiRefreshCw size={18} />
               Refresh
@@ -361,15 +361,15 @@ const BehavioralAdsAdmin = () => {
           </div>
 
           {loading ? (
-            <div className="p-6 text-center text-gray-500">Loading rules...</div>
+            <div className="p-6 text-center text-slate-400">Loading rules...</div>
           ) : rules.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
+            <div className="p-6 text-center text-slate-400">
               No rules created yet. Create your first rule to get started.
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-slate-900/70 border-b border-slate-800">
                   <tr>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
                       Rule Name
@@ -394,14 +394,14 @@ const BehavioralAdsAdmin = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-800">
                   {rules.map((rule) => (
-                    <tr key={rule.ruleId} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <tr key={rule.ruleId} className="hover:bg-slate-900/60 transition">
+                      <td className="px-6 py-4 text-sm font-medium text-white">
                         {rule.ruleName}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium">
+                      <td className="px-6 py-4 text-sm text-slate-300">
+                        <span className="bg-blue-500/15 text-blue-300 px-3 py-1 rounded-full text-xs font-medium">
                           {rule.category}
                         </span>
                       </td>
@@ -410,7 +410,7 @@ const BehavioralAdsAdmin = () => {
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         <div>{rule.discountCode}</div>
-                        <div className="text-xs text-gray-500">{rule.discountValue}</div>
+                        <div className="text-xs text-slate-400">{rule.discountValue}</div>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {rule.bannerLayout}
@@ -420,8 +420,8 @@ const BehavioralAdsAdmin = () => {
                           onClick={() => handleToggleActive(rule)}
                           className={`px-3 py-1 rounded-full text-xs font-medium transition ${
                             rule.isActive
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                              ? 'bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25'
+                              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                           }`}
                         >
                           {rule.isActive ? 'Active' : 'Inactive'}
@@ -431,14 +431,14 @@ const BehavioralAdsAdmin = () => {
                         <div className="flex items-center justify-center gap-3">
                           <button
                             onClick={() => handleEdit(rule)}
-                            className="text-blue-600 hover:text-blue-700 transition"
+                            className="text-blue-400 hover:text-blue-300 transition"
                             title="Edit"
                           >
                             <FiEdit size={18} />
                           </button>
                           <button
                             onClick={() => handleDelete(rule.ruleId)}
-                            className="text-red-600 hover:text-red-700 transition"
+                            className="text-rose-400 hover:text-rose-300 transition"
                             title="Delete"
                           >
                             <FiTrash2 size={18} />

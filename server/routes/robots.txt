@@ -5,4 +5,4 @@ Disallow: /api/
 Disallow: /temp/
 
 # Sitemap location
-Sitemap: https://aaramdehi.com/api/seo/sitemap.xml
+Sitemap: https://www.aaramdehi.co.in/sitemap.xml

@@ -20,14 +20,14 @@ const SEO = ({ title, description, keywords, ogImage, ogUrl }) => {
       <title>{fullTitle}</title>
       <meta name='description' content={description || defaultDescription} />
       <meta name='keywords' content={keywords || "furniture, luxury bedding, home decor, Aaramdehi"} />
-      <link rel="canonical" href={ogUrl || window.location.href} />
+      <link rel="canonical" href={ogUrl || (typeof window !== 'undefined' ? window.location.href : 'https://www.aaramdehi.co.in')} />
 
       {/* Open Graph / Facebook */}
       <meta property="og:type" content="website" />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description || defaultDescription} />
       <meta property="og:image" content={ogImage || "/logo.png"} />
-      <meta property="og:url" content={ogUrl || window.location.href} />
+      <meta property="og:url" content={ogUrl || (typeof window !== 'undefined' ? window.location.href : 'https://www.aaramdehi.co.in')} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />

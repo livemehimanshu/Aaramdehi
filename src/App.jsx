@@ -66,6 +66,7 @@ import CheckoutPage from '../component/checkout/CheckoutPage.jsx'
 import PaymentPage from '../component/payment/PaymentPage.jsx'
 import OrderSuccess from '../component/Pages/OrderSuccess/OrderSuccess.jsx'
 import ARStudio from '../component/Pages/ARStudio.jsx'
+import NotFound from '../component/Pages/NotFound.jsx'
 
 function AppContent() {
   const location = useLocation()
@@ -193,6 +194,7 @@ function AppContent() {
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/blog" element={<BlogList />} />
               <Route path="/blog/:slug" element={<BlogDetail />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
         </div>

@@ -8,7 +8,9 @@ import {
     getUserAddresses,
     addUserAddress,
     getMyCoupons,
-    deleteAccount
+    deleteAccount,
+    listUsersForAdminController,
+    toggleUserBlockStatusController
 } from '../controllers/user.controller.js'; // loginController is not used here
 
 // ✅ Fix: Named import use kiya hai kyunki auth.middleware.js mein 'export const' hai
@@ -24,6 +26,10 @@ const userRouter = Router();
  */
 
 // --- 2. Private Routes (Sirf logged-in users ke liye) ---
+
+// Admin customer management
+userRouter.get('/admin/list', isAuthenticatedUser, listUsersForAdminController);
+userRouter.patch('/admin/toggle-block/:id', isAuthenticatedUser, toggleUserBlockStatusController);
 
 // Avatar Image Upload (Multer + Cloudinary)
 // ✅ Fix: 'auth' ki jagah 'isAuthenticatedUser' use kiya gaya hai

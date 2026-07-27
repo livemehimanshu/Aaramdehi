@@ -7,6 +7,7 @@ import SEO from '../header/SEO';
 // CDN Scripts for TensorFlow.js and COCO-SSD (Object Detection)
 const TFJS_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js';
 const COCO_SSD_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
+const MODEL_VIEWER_SCRIPT = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
 
 const ARStudio = () => {
   const navigate = useNavigate();
@@ -451,7 +452,8 @@ const ARStudio = () => {
 
         setAiStatus('Loading AI Object Detector...');
         
-        // Dynamically load TensorFlow.js and COCO-SSD
+        // Dynamically load model-viewer, TensorFlow.js and COCO-SSD
+        await loadScript(MODEL_VIEWER_SCRIPT);
         await loadScript(TFJS_SCRIPT);
         await loadScript(COCO_SSD_SCRIPT);
 

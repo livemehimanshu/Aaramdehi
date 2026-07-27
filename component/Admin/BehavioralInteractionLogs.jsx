@@ -120,41 +120,41 @@ const BehavioralInteractionLogs = () => {
   const getInteractionIcon = (type) => {
     switch(type) {
       case 'image_click':
-        return <FiShoppingBag className="text-blue-600" />;
+        return <FiShoppingBag className="text-sky-400" />;
       case 'zoom_open':
-        return <FiZap className="text-yellow-600" />;
+        return <FiZap className="text-amber-400" />;
       case 'hover_8s':
-        return <FiClock className="text-purple-600" />;
+        return <FiClock className="text-violet-400" />;
       case 'variant_switch':
-        return <FiFilter className="text-green-600" />;
+        return <FiFilter className="text-emerald-400" />;
       case 'modal_open':
-        return <FiShoppingBag className="text-indigo-600" />;
+        return <FiShoppingBag className="text-indigo-400" />;
       default:
-        return <FiUser className="text-gray-600" />;
+        return <FiUser className="text-slate-400" />;
     }
   };
 
   const getInteractionBadgeColor = (type) => {
     switch(type) {
       case 'image_click':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-sky-500/15 text-sky-200';
       case 'zoom_open':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-500/15 text-amber-200';
       case 'hover_8s':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-violet-500/15 text-violet-200';
       case 'variant_switch':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-500/15 text-emerald-200';
       case 'modal_open':
-        return 'bg-indigo-100 text-indigo-800';
+        return 'bg-indigo-500/15 text-indigo-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-slate-700 text-slate-200';
     }
   };
 
   const getPointsColor = (points) => {
-    if (points >= 5) return 'text-green-600 font-bold';
-    if (points >= 3) return 'text-orange-600 font-bold';
-    return 'text-gray-600';
+    if (points >= 5) return 'text-emerald-300 font-bold';
+    if (points >= 3) return 'text-amber-300 font-bold';
+    return 'text-slate-300';
   };
 
   const downloadCSV = () => {
@@ -198,89 +198,89 @@ const BehavioralInteractionLogs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-[#05070b] p-6 text-slate-100">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">User Interaction Logs</h1>
-          <p className="text-gray-600 mt-1">Real-time tracking of all user interactions - see who clicked what, when, and on which product</p>
+          <h1 className="text-3xl font-bold text-white">User Interaction Logs</h1>
+          <p className="text-slate-400 mt-1">Real-time tracking of all user interactions - see who clicked what, when, and on which product</p>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl shadow-black/30 p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <FiShoppingBag className="text-blue-600" size={20} />
+              <div className="bg-slate-900 p-3 rounded-2xl">
+                <FiShoppingBag className="text-[#2563eb]" size={20} />
               </div>
               <div>
-                <p className="text-xs text-gray-600">Image Clicks</p>
-                <p className="text-2xl font-bold">{interactionTypeStats.image_click}</p>
+                <p className="text-xs text-slate-400">Image Clicks</p>
+                <p className="text-2xl font-bold text-white">{interactionTypeStats.image_click}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl shadow-black/30 p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-yellow-100 p-3 rounded-lg">
-                <FiZap className="text-yellow-600" size={20} />
+              <div className="bg-slate-900 p-3 rounded-2xl">
+                <FiZap className="text-yellow-400" size={20} />
               </div>
               <div>
-                <p className="text-xs text-gray-600">Zooms</p>
-                <p className="text-2xl font-bold">{interactionTypeStats.zoom_open}</p>
+                <p className="text-xs text-slate-400">Zooms</p>
+                <p className="text-2xl font-bold text-white">{interactionTypeStats.zoom_open}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl shadow-black/30 p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <FiClock className="text-purple-600" size={20} />
+              <div className="bg-slate-900 p-3 rounded-2xl">
+                <FiClock className="text-violet-400" size={20} />
               </div>
               <div>
-                <p className="text-xs text-gray-600">Long Hovers</p>
-                <p className="text-2xl font-bold">{interactionTypeStats.hover_8s}</p>
+                <p className="text-xs text-slate-400">Long Hovers</p>
+                <p className="text-2xl font-bold text-white">{interactionTypeStats.hover_8s}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl shadow-black/30 p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-green-100 p-3 rounded-lg">
-                <FiFilter className="text-green-600" size={20} />
+              <div className="bg-slate-900 p-3 rounded-2xl">
+                <FiFilter className="text-emerald-400" size={20} />
               </div>
               <div>
-                <p className="text-xs text-gray-600">Variants</p>
-                <p className="text-2xl font-bold">{interactionTypeStats.variant_switch}</p>
+                <p className="text-xs text-slate-400">Variants</p>
+                <p className="text-2xl font-bold text-white">{interactionTypeStats.variant_switch}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl shadow-black/30 p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-indigo-100 p-3 rounded-lg">
-                <FiShoppingBag className="text-indigo-600" size={20} />
+              <div className="bg-slate-900 p-3 rounded-2xl">
+                <FiShoppingBag className="text-indigo-400" size={20} />
               </div>
               <div>
-                <p className="text-xs text-gray-600">Total</p>
-                <p className="text-2xl font-bold">{logs.length}</p>
+                <p className="text-xs text-slate-400">Total</p>
+                <p className="text-2xl font-bold text-white">{logs.length}</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl shadow-black/30 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {/* Search */}
             <div className="relative">
-              <FiSearch className="absolute left-3 top-3 text-gray-400" size={20} />
+              <FiSearch className="absolute left-3 top-3 text-slate-500" size={20} />
               <input
                 type="text"
                 placeholder="Search by User ID, Product, or Session ID..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
               />
             </div>
 
@@ -288,7 +288,7 @@ const BehavioralInteractionLogs = () => {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-slate-700 rounded-lg bg-slate-900 text-white focus:outline-none focus:ring-2 focus:ring-[#2563eb]"
             >
               <option value="all">All Interactions</option>
               <option value="image_click">Image Clicks</option>
@@ -303,14 +303,14 @@ const BehavioralInteractionLogs = () => {
               <button
                 onClick={fetchInteractionLogs}
                 disabled={loading}
-                className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                className="flex items-center gap-2 bg-[#2563eb] text-white px-4 py-2 rounded-lg hover:bg-[#1d4ed8] transition disabled:opacity-50"
               >
                 <FiRefreshCw size={18} className={loading ? 'animate-spin' : ''} />
                 Refresh
               </button>
               <button
                 onClick={downloadCSV}
-                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition"
+                className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition"
               >
                 <FiDownload size={18} />
                 Export CSV
@@ -323,29 +323,29 @@ const BehavioralInteractionLogs = () => {
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => setAutoRefresh(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300"
+              className="w-4 h-4 rounded border-slate-600 bg-slate-900"
             />
-            <span className="text-sm font-medium text-gray-700">Auto-refresh (15s)</span>
+            <span className="text-sm font-medium text-slate-300">Auto-refresh (15s)</span>
           </label>
         </div>
 
         {/* Logs Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-bold text-gray-900">
+        <div className="bg-[#0f172a] border border-slate-800 rounded-3xl shadow-2xl shadow-black/30 overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-800">
+            <h2 className="text-lg font-bold text-white">
               Interactions ({filteredLogs.length})
             </h2>
           </div>
 
           {loading && filteredLogs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-slate-400">
               <div className="animate-spin inline-block">
                 <FiRefreshCw size={24} />
               </div>
               <p className="mt-2">Loading interactions...</p>
             </div>
           ) : filteredLogs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-slate-400">
               <FiUser size={32} className="mx-auto mb-2 opacity-50" />
               <p>No interactions found</p>
               <p className="text-xs mt-1">Users haven't interacted with products yet</p>
@@ -353,52 +353,52 @@ const BehavioralInteractionLogs = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-slate-900/80 border-b border-slate-800">
                   <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Timestamp
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       User ID
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Product ID
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Interaction
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Points
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Session Score
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Session ID
                     </th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Coupon
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-slate-800">
                   {filteredLogs.map((log, idx) => (
-                    <tr key={`${log.sessionId}-${idx}`} className="hover:bg-gray-50 transition">
-                      <td className="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                    <tr key={`${log.sessionId}-${idx}`} className="hover:bg-slate-900/60 transition">
+                      <td className="px-6 py-4 text-sm text-slate-300 whitespace-nowrap">
                         <div className="text-xs">
                           <div className="font-medium">{formatTime(log.timestamp)}</div>
-                          <div className="text-gray-500">{formatDate(log.timestamp)}</div>
+                          <div className="text-slate-500">{formatDate(log.timestamp)}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm font-mono text-gray-900">
-                        <span className="bg-blue-100 px-2 py-1 rounded text-xs">
+                      <td className="px-6 py-4 text-sm font-mono text-white">
+                        <span className="bg-slate-900 px-2 py-1 rounded text-xs text-slate-200">
                           {log.userId?.substring(0, 12) || 'N/A'}...
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        <span className="font-medium">{log.productId || 'N/A'}</span>
+                      <td className="px-6 py-4 text-sm text-slate-300">
+                        <span className="font-medium text-white">{log.productId || 'N/A'}</span>
                         {log.colorVariant && (
-                          <div className="text-xs text-gray-500 mt-1">{log.colorVariant}</div>
+                          <div className="text-xs text-slate-500 mt-1">{log.colorVariant}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm">
@@ -413,22 +413,22 @@ const BehavioralInteractionLogs = () => {
                         +{log.points} pts
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-bold">
+                        <span className="bg-orange-500/15 text-orange-200 px-3 py-1 rounded-full text-sm font-bold">
                           {log.sessionScore} pts
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm font-mono text-gray-600">
-                        <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                      <td className="px-6 py-4 text-sm font-mono text-slate-300">
+                        <code className="bg-slate-900 px-2 py-1 rounded text-xs text-slate-200">
                           {log.sessionId.substring(0, 10)}...
                         </code>
                       </td>
                       <td className="px-6 py-4 text-sm">
                         {log.couponCode ? (
-                          <code className="bg-green-100 text-green-800 px-2 py-1 rounded font-mono text-xs font-bold">
+                          <code className="bg-emerald-500/15 text-emerald-200 px-2 py-1 rounded font-mono text-xs font-bold">
                             {log.couponCode}
                           </code>
                         ) : (
-                          <span className="text-gray-400">-</span>
+                          <span className="text-slate-400">-</span>
                         )}
                       </td>
                     </tr>
@@ -440,8 +440,8 @@ const BehavioralInteractionLogs = () => {
         </div>
 
         {/* Info */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-900">
+        <div className="mt-6 p-4 bg-[#0f172a] border border-slate-800 rounded-lg">
+          <p className="text-sm text-slate-300">
             <strong>📊 Interaction Tracking:</strong> This log shows every interaction users make on products - clicks, zooms, hovers, etc. 
             Each interaction earns points. When a user's total score reaches a rule's threshold, a retargeting offer is triggered. 
             Use filters to find specific users or products, and export data for analysis.

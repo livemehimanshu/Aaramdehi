@@ -15,6 +15,26 @@ import {
 import '@/styles/zoom-magnify.css';
 
 const PLACEHOLDER_IMAGE = 'https://placehold.co/600x600?text=No+Image';
+const MODEL_VIEWER_SCRIPT = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+
+const loadExternalScript = (src) => new Promise((resolve, reject) => {
+  if (typeof document === 'undefined') {
+    reject(new Error('Document is not available'));
+    return;
+  }
+
+  if (document.querySelector(`script[src="${src}"]`)) {
+    resolve();
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.src = src;
+  script.async = true;
+  script.onload = resolve;
+  script.onerror = () => reject(new Error(`Failed to load ${src}`));
+  document.body.appendChild(script);
+});
 
 const formatPrice = (value) => {
   const numericValue = Number(value || 0);
@@ -350,6 +370,20 @@ const ProductPage = (props) => {
   const activeDiscount = discountPercent || (activeMrp > activePrice ? Math.round(((activeMrp - activePrice) / activeMrp) * 100) : 0);
   const titleLabel = activeVariant.name ? `${title} — ${activeVariant.name}` : title;
   const currentModelUrl = activeVariant.modelUrl || modelUrl || '';
+
+  useEffect(() => {
+    if (!currentModelUrl) return;
+
+    const loadViewer = async () => {
+      try {
+        await loadExternalScript(MODEL_VIEWER_SCRIPT);
+      } catch (error) {
+        console.warn('Failed to load model-viewer:', error);
+      }
+    };
+
+    loadViewer();
+  }, [currentModelUrl]);
 
   const handleSelectCustomOption = (attrIndex, optionIndex) => {
     setSelectedCustomOptions((prev) => ({

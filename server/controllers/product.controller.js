@@ -348,6 +348,17 @@ export const createProduct = async (req, res) => {
                 ? features.split(',').map((item) => item.trim()).filter(Boolean)
                 : []);
 
+        let parsedCustomAttributes = [];
+        if (req.body.customAttributes) {
+            try {
+                parsedCustomAttributes = typeof req.body.customAttributes === 'string'
+                    ? JSON.parse(req.body.customAttributes)
+                    : req.body.customAttributes;
+            } catch (e) {
+                parsedCustomAttributes = [];
+            }
+        }
+
         const productData = {
             name,
             title: name,
@@ -371,6 +382,7 @@ export const createProduct = async (req, res) => {
             // Save Variants Array & Sizes
             sizes: Array.isArray(parsedSizes) ? parsedSizes : [],
             colors: parsedColors,
+            customAttributes: Array.isArray(parsedCustomAttributes) ? parsedCustomAttributes : [],
 
             specifications: parsedSpecs,
             specs: parsedSpecs,
@@ -604,6 +616,16 @@ export const updateProduct = async (req, res) => {
             }
         }
 
+        if (req.body.customAttributes !== undefined) {
+            try {
+                updateData.customAttributes = typeof req.body.customAttributes === 'string'
+                    ? JSON.parse(req.body.customAttributes)
+                    : req.body.customAttributes;
+            } catch (e) {
+                updateData.customAttributes = [];
+            }
+        }
+
         updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && !Number.isNaN(v)));
 
         if (tags) updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
@@ -626,6 +648,17 @@ export const updateProduct = async (req, res) => {
         const allUploadedFiles = Array.isArray(req.files) ? req.files : [];
         let finalImages = [];
         const hasExistingImages = req.body.existingImages !== undefined;
+        const imageOrderRaw = req.body.imageOrder;
+        let imageOrder = [];
+
+        if (imageOrderRaw) {
+            try {
+                imageOrder = typeof imageOrderRaw === 'string' ? JSON.parse(imageOrderRaw) : imageOrderRaw;
+                if (!Array.isArray(imageOrder)) imageOrder = [];
+            } catch (e) {
+                imageOrder = [];
+            }
+        }
 
         if (hasExistingImages) {
             try {
@@ -639,7 +672,52 @@ export const updateProduct = async (req, res) => {
         const uploadedImages = allUploadedFiles.filter(f => f.fieldname === 'images');
         const uploadedModelFiles = allUploadedFiles.filter(f => f.fieldname === 'model3d');
 
-        if (uploadedImages.length > 0) {
+        if (imageOrder.length > 0) {
+            const existingQueue = [...finalImages];
+            const newFilesQueue = [...uploadedImages];
+            const orderedImages = [];
+
+            for (const orderItem of imageOrder) {
+                if (orderItem && orderItem.type === 'existing') {
+                    const existingImage = existingQueue.shift();
+                    if (existingImage) orderedImages.push(existingImage);
+                } else if (orderItem && orderItem.type === 'new') {
+                    const file = newFilesQueue.shift();
+                    if (file) {
+                        const fileContent = file.buffer || file.path;
+                        if (!fileContent) continue;
+                        const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
+                        if (uploadResult && uploadResult.success) {
+                            orderedImages.push({
+                                url: uploadResult.url,
+                                public_id: uploadResult.public_id,
+                                alt: name || "product image"
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Append any remaining existing or new images if order was incomplete
+            while (existingQueue.length > 0) {
+                orderedImages.push(existingQueue.shift());
+            }
+            while (newFilesQueue.length > 0) {
+                const file = newFilesQueue.shift();
+                const fileContent = file.buffer || file.path;
+                if (!fileContent) continue;
+                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
+                if (uploadResult && uploadResult.success) {
+                    orderedImages.push({
+                        url: uploadResult.url,
+                        public_id: uploadResult.public_id,
+                        alt: name || "product image"
+                    });
+                }
+            }
+
+            finalImages = orderedImages;
+        } else if (uploadedImages.length > 0) {
             for (const file of uploadedImages) {
                 const fileContent = file.buffer || file.path;
                 if (!fileContent) continue;

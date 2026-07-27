@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { IoCloudUploadOutline, IoArrowBackOutline, IoSaveOutline } from 'react-icons/io5';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Palette, Trash2 } from 'lucide-react';
 import { getProductByIdAPI, updateProductAPI, getAllCategoriesAPI } from '../../../src/api/authAndAdminApi';
 import imageCompression from 'browser-image-compression'; // ✅ Import imageCompression
 
@@ -28,12 +28,16 @@ const EditProduct = () => {
     
     const [categoriesList, setCategoriesList] = useState([]);
     const [subCategoriesList, setSubCategoriesList] = useState([]);
-    const [existingImages, setExistingImages] = useState([]); // Preserve old images
-    const [selectedFiles, setSelectedFiles] = useState([]); // ✅ Store actual File objects
-    const [previews, setPreviews] = useState([]); // Images preview ke liye
+    const [mainImages, setMainImages] = useState([]); // Unified image list for ordering
     const [model3dFile, setModel3dFile] = useState(null);
     const [existingModel3dUrl, setExistingModel3dUrl] = useState('');
     const [removeExistingModel3d, setRemoveExistingModel3d] = useState(false);
+
+    const [colorVariants, setColorVariants] = useState([]);
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
+    const [colorInput, setColorInput] = useState({ name: '', price: '', mrp: '', imageFiles: [], previews: [] });
+    const [customAttributes, setCustomAttributes] = useState([]);
+    const [customAttributeInput, setCustomAttributeInput] = useState({ title: '', options: [{ label: '', priceModifier: '', mrpModifier: '', stock: '' }] });
 
     // ✅ Pre-Indexing Helpers
     const STOPWORDS = ["is", "the", "a", "an", "and", "for", "ke", "liye", "mujhe", "chahiye", "ko", "par", "ek", "hai", "mein", "this", "that", "with"];
@@ -77,12 +81,27 @@ const EditProduct = () => {
                         tags: Array.isArray(p.tags) ? p.tags.join(', ') : '',
                         specifications: JSON.stringify(p.specifications || {}, null, 2)
                     });
-                    if (p.images) {
-                        const previewUrls = p.images.map(img => img.url || img);
-                        setPreviews(previewUrls);
-                        setExistingImages(Array.isArray(p.images) ? p.images : []);
+                    if (Array.isArray(p.images)) {
+                        setMainImages(p.images.map((img, index) => ({
+                            id: `existing-${index}`,
+                            isExisting: true,
+                            data: img,
+                            file: null,
+                            preview: img.url || img
+                        })));
                     }
                     setExistingModel3dUrl(p.model3dUrl || p.modelUrl || '');
+
+                    if (Array.isArray(p.colors)) {
+                        setColorVariants(p.colors.map((color) => ({
+                            name: color.name || color.label || '',
+                            price: color.price ?? p.sellingPrice ?? 0,
+                            mrp: color.mrp ?? p.mrp ?? 0,
+                            imageFiles: [],
+                            previews: Array.isArray(color.images) ? color.images.map(img => img.url || img) : [],
+                            existingImages: Array.isArray(color.images) ? color.images : []
+                        })));
+                    }
                 }
             } catch (error) {
                 console.error("❌ Fetch error:", error);
@@ -125,25 +144,45 @@ const EditProduct = () => {
         if (files.length === 0) return;
 
         setImageProcessing(true); // ✅ Start image processing
-        const compressedFiles = [];
-        const previewUrls = [];
+        const newMainImages = [];
 
         try {
-            for (const file of files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1000 });
-                const webpFile = await convertToWebP(compressedFile); 
-                
-                compressedFiles.push(webpFile);
-                previewUrls.push(URL.createObjectURL(webpFile));
+                const webpFile = await convertToWebP(compressedFile);
+                const previewUrl = URL.createObjectURL(webpFile);
+
+                newMainImages.push({
+                    id: `new-${Date.now()}-${i}`,
+                    isExisting: false,
+                    data: null,
+                    file: webpFile,
+                    preview: previewUrl
+                });
             }
-            setSelectedFiles(compressedFiles); // ✅ Store compressed/webp files
-            setPreviews(previewUrls); // ✅ Update previews
+
+            setMainImages(prev => [...prev, ...newMainImages]);
         } catch (err) {
             console.error("Image processing failed:", err);
             // Optionally show a message to the user
         } finally {
             setImageProcessing(false); // ✅ End image processing
         }
+    };
+
+    const moveMainImage = (index, direction) => {
+        setMainImages(prev => {
+            const next = [...prev];
+            const targetIndex = direction === 'left' ? index - 1 : index + 1;
+            if (targetIndex < 0 || targetIndex >= next.length) return prev;
+            [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+            return next;
+        });
+    };
+
+    const removeMainImage = (index) => {
+        setMainImages(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleModel3dChange = (e) => {
@@ -162,6 +201,187 @@ const EditProduct = () => {
 
     const removeModel3d = () => {
         setModel3dFile(null);
+    };
+
+    const handleColorFilesChange = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        try {
+            const processedFiles = [];
+            const previewUrls = [];
+
+            for (const file of files) {
+                const compressedFile = await imageCompression(file, { maxSizeMB: 0.5, maxWidthOrHeight: 1000 });
+                const webpFile = await convertToWebP(compressedFile);
+                processedFiles.push(webpFile);
+                previewUrls.push(URL.createObjectURL(webpFile));
+            }
+
+            setColorInput(prev => ({
+                ...prev,
+                imageFiles: [...prev.imageFiles, ...processedFiles],
+                previews: [...prev.previews, ...previewUrls]
+            }));
+        } catch (error) {
+            console.error('Color images processing failed:', error);
+        }
+    };
+
+    const removeColorImage = (index) => {
+        setColorInput(prev => ({
+            ...prev,
+            imageFiles: prev.imageFiles.filter((_, i) => i !== index),
+            previews: prev.previews.filter((_, i) => i !== index)
+        }));
+    };
+
+    const addColorVariant = () => {
+        if (!colorInput.name.trim()) return;
+
+        setColorVariants(prev => {
+            const next = [
+                ...prev,
+                {
+                    name: colorInput.name.trim(),
+                    price: Number(colorInput.price || productData.sellingPrice || 0),
+                    mrp: Number(colorInput.mrp || productData.mrp || 0),
+                    imageFiles: colorInput.imageFiles,
+                    previews: colorInput.previews,
+                    existingImages: []
+                }
+            ];
+            setSelectedVariantIndex(next.length - 1);
+            return next;
+        });
+
+        setColorInput({ name: '', price: '', mrp: '', imageFiles: [], previews: [] });
+    };
+
+    const removeColorVariant = (index) => {
+        setColorVariants(prev => prev.filter((_, i) => i !== index));
+        setSelectedVariantIndex(prev => {
+            if (prev === index) return Math.max(0, prev - 1);
+            if (prev > index) return prev - 1;
+            return prev;
+        });
+    };
+
+    const handleVariantFieldChange = (index, key, value) => {
+        setColorVariants(prev => prev.map((variant, idx) => idx === index ? { ...variant, [key]: value } : variant));
+    };
+
+    const removeExistingVariantImage = (variantIndex, imageIndex) => {
+        setColorVariants(prev => prev.map((variant, idx) => {
+            if (idx !== variantIndex) return variant;
+            return {
+                ...variant,
+                existingImages: variant.existingImages?.filter((_, imgIdx) => imgIdx !== imageIndex) || []
+            };
+        }));
+    };
+
+    const removeVariantPreviewImage = (variantIndex, imageIndex) => {
+        setColorVariants(prev => prev.map((variant, idx) => {
+            if (idx !== variantIndex) return variant;
+            return {
+                ...variant,
+                previews: variant.previews?.filter((_, imgIdx) => imgIdx !== imageIndex) || [],
+                imageFiles: variant.imageFiles?.filter((_, imgIdx) => imgIdx !== imageIndex) || []
+            };
+        }));
+    };
+
+    const moveVariantImage = (variantIndex, imageIndex, direction, isExisting = false) => {
+        setColorVariants(prev => prev.map((variant, idx) => {
+            if (idx !== variantIndex) return variant;
+            if (isExisting) {
+                const existing = [...(variant.existingImages || [])];
+                const targetIndex = direction === 'left' ? imageIndex - 1 : imageIndex + 1;
+                if (targetIndex < 0 || targetIndex >= existing.length) return variant;
+                [existing[imageIndex], existing[targetIndex]] = [existing[targetIndex], existing[imageIndex]];
+                return { ...variant, existingImages: existing };
+            }
+            const previews = [...(variant.previews || [])];
+            const imageFiles = [...(variant.imageFiles || [])];
+            const targetIndex = direction === 'left' ? imageIndex - 1 : imageIndex + 1;
+            if (targetIndex < 0 || targetIndex >= previews.length) return variant;
+            [previews[imageIndex], previews[targetIndex]] = [previews[targetIndex], previews[imageIndex]];
+            [imageFiles[imageIndex], imageFiles[targetIndex]] = [imageFiles[targetIndex], imageFiles[imageIndex]];
+            return { ...variant, previews, imageFiles };
+        }));
+    };
+
+    const resetCustomAttributeInput = () => {
+        setCustomAttributeInput({ title: '', options: [{ label: '', priceModifier: '', mrpModifier: '', stock: '' }] });
+    };
+
+    const addCustomAttributeOptionRow = () => {
+        setCustomAttributeInput(prev => ({
+            ...prev,
+            options: [...prev.options, { label: '', priceModifier: '', mrpModifier: '', stock: '' }]
+        }));
+    };
+
+    const handleCustomAttributeInputChange = (key, value) => {
+        setCustomAttributeInput(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleCustomAttributeOptionInputChange = (index, key, value) => {
+        setCustomAttributeInput(prev => ({
+            ...prev,
+            options: prev.options.map((option, idx) => idx === index ? { ...option, [key]: value } : option)
+        }));
+    };
+
+    const addCustomAttribute = () => {
+        if (!customAttributeInput.title.trim()) return;
+        const formattedOptions = customAttributeInput.options
+            .filter(opt => opt.label.trim())
+            .map(opt => ({
+                label: opt.label.trim(),
+                priceModifier: Number(opt.priceModifier || 0),
+                mrpModifier: Number(opt.mrpModifier || 0),
+                stock: Number(opt.stock || 0)
+            }));
+        if (formattedOptions.length === 0) return;
+        setCustomAttributes(prev => ([...prev, { title: customAttributeInput.title.trim(), options: formattedOptions }]));
+        resetCustomAttributeInput();
+    };
+
+    const handleCustomAttributeChange = (attrIndex, key, value) => {
+        setCustomAttributes(prev => prev.map((attr, idx) => idx === attrIndex ? { ...attr, [key]: value } : attr));
+    };
+
+    const handleCustomAttributeOptionChange = (attrIndex, optionIndex, key, value) => {
+        setCustomAttributes(prev => prev.map((attr, idx) => {
+            if (idx !== attrIndex) return attr;
+            return {
+                ...attr,
+                options: attr.options.map((option, optIdx) => optIdx === optionIndex ? { ...option, [key]: value } : option)
+            };
+        }));
+    };
+
+    const addCustomAttributeOption = (attrIndex) => {
+        setCustomAttributes(prev => prev.map((attr, idx) => idx === attrIndex ? {
+            ...attr,
+            options: [...(attr.options || []), { label: '', priceModifier: '', mrpModifier: '', stock: '' }]
+        } : attr));
+    };
+
+    const removeCustomAttributeOption = (attrIndex, optionIndex) => {
+        setCustomAttributes(prev => prev.map((attr, idx) => {
+            if (idx !== attrIndex) return attr;
+            return {
+                ...attr,
+                options: attr.options.filter((_, optIdx) => optIdx !== optionIndex)
+            };
+        }));
+    };
+
+    const removeCustomAttribute = (attrIndex) => {
+        setCustomAttributes(prev => prev.filter((_, idx) => idx !== attrIndex));
     };
 
     const convertToWebP = (file) => {
@@ -202,9 +422,22 @@ const EditProduct = () => {
             formData.append(key, productData[key]);
         });
 
-        formData.append('seoKeywords', JSON.stringify(updatedKeywords)); // backend expects seoKeywords
-        if (existingImages.length > 0) {
-            formData.append('existingImages', JSON.stringify(existingImages));
+        formData.append('seoKeywords', JSON.stringify(updatedKeywords));
+
+        const orderedMainImages = mainImages;
+        const existingImagesPayload = orderedMainImages
+            .filter(item => item.isExisting)
+            .map(item => {
+                if (!item.data) return { url: item.preview };
+                return typeof item.data === 'string' ? { url: item.data } : item.data;
+            });
+        const newMainFiles = orderedMainImages
+            .filter(item => !item.isExisting)
+            .map(item => item.file);
+
+        formData.append('existingImages', JSON.stringify(existingImagesPayload));
+        if (orderedMainImages.length > 0) {
+            formData.append('imageOrder', JSON.stringify(orderedMainImages.map(item => item.isExisting ? { type: 'existing' } : { type: 'new' })));
         }
 
         if (model3dFile) {
@@ -216,9 +449,32 @@ const EditProduct = () => {
         }
 
         // Backend 'images' (plural) expect karta hai
-        selectedFiles.forEach(file => {
+        newMainFiles.forEach(file => {
             formData.append('images', file);
         });
+
+        if (colorVariants.length > 0) {
+            const variantsPayload = colorVariants.map(({ name, price, mrp, existingImages }) => ({
+                name,
+                price,
+                mrp,
+                images: existingImages || []
+            }));
+            const colorsJson = JSON.stringify(variantsPayload);
+            formData.append('colors', colorsJson);
+            formData.append('colorVariants', colorsJson); // backend compatibility fallback
+            formData.append('variants', colorsJson);
+
+            colorVariants.forEach((variant, variantIdx) => {
+                variant.imageFiles?.forEach((file) => {
+                    formData.append(`color_images_${variantIdx}[]`, file);
+                });
+            });
+        }
+
+        if (customAttributes.length > 0) {
+            formData.append('customAttributes', JSON.stringify(customAttributes));
+        }
 
         try {
             const res = await updateProductAPI(id, formData);
@@ -285,7 +541,7 @@ const EditProduct = () => {
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-[10px] font-black uppercase text-slate-500">Images (Select multiple to replace old ones)</label>
+                        <label className="text-[10px] font-black uppercase text-slate-500">Main Images (Upload new images and reorder as needed)</label>
                         <div className="border-2 border-dashed border-gray-800 bg-gray-950 rounded-xl p-6 flex flex-col items-center justify-center hover:bg-gray-800/50 transition-colors cursor-pointer relative">
                             <IoCloudUploadOutline size={40} className="text-gray-600 mb-2" />
                             <p className="text-xs text-slate-500 font-bold">Click or Drag images here</p>
@@ -323,18 +579,301 @@ const EditProduct = () => {
                     </div>
 
                     {/* Image Previews */}
+                    <p className="text-[10px] text-slate-500 mb-2">Use the arrows to reorder main images and the trash icon to remove one.</p>
                     <div className="flex gap-4 overflow-x-auto py-2">
-                        {previews.map((src, idx) => (
-                            <div key={idx} className="w-24 h-24 rounded-lg border border-gray-800 overflow-hidden flex-shrink-0 bg-gray-950">
-                                <img src={src} className="w-full h-full object-contain" alt="preview" />
+                        {mainImages.map((image, idx) => (
+                            <div key={image.id} className="relative w-28 h-28 rounded-xl border border-gray-800 overflow-hidden flex-shrink-0 bg-gray-950">
+                                <img src={image.preview} className="w-full h-full object-contain" alt={`preview-${idx}`} />
+                                <div className="absolute inset-0 flex flex-col justify-between p-2">
+                                    <div className="flex justify-end gap-1">
+                                        <button
+                                            type="button"
+                                            disabled={idx === 0}
+                                            onClick={() => moveMainImage(idx, 'left')}
+                                            className="w-7 h-7 rounded-full bg-black/70 text-white disabled:opacity-40"
+                                        >
+                                            ←
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={idx === mainImages.length - 1}
+                                            onClick={() => moveMainImage(idx, 'right')}
+                                            className="w-7 h-7 rounded-full bg-black/70 text-white disabled:opacity-40"
+                                        >
+                                            →
+                                        </button>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeMainImage(idx)}
+                                        className="w-7 h-7 rounded-full bg-rose-500 text-white self-end"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
                             </div>
                         ))}
+                    </div>
+
+                    {/* Color Variants Editor */}
+                    <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-5">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">Color Variants</h3>
+                                <p className="text-[11px] text-gray-400">Add / edit color variants and upload multiple images per variant.</p>
+                            </div>
+                            <span className="text-[10px] uppercase tracking-[0.3em] text-emerald-400">CRUD ready</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input value={colorInput.name} onChange={(e) => setColorInput(prev => ({ ...prev, name: e.target.value }))} placeholder="Variant name" className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white" />
+                            <input value={colorInput.price} onChange={(e) => setColorInput(prev => ({ ...prev, price: e.target.value }))} type="number" placeholder="Variant price" className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400" />
+                            <input value={colorInput.mrp} onChange={(e) => setColorInput(prev => ({ ...prev, mrp: e.target.value }))} type="number" placeholder="Variant MRP" className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400" />
+                        </div>
+
+                        <label className="p-3 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-emerald-500 text-xs text-gray-400 flex items-center justify-center gap-2">
+                            Upload variant images (multiple)
+                            <input type="file" accept="image/*" multiple className="hidden" onChange={handleColorFilesChange} />
+                        </label>
+
+                        {colorInput.previews.length > 0 && (
+                            <div className="flex gap-2 overflow-x-auto py-2">
+                                {colorInput.previews.map((src, idx) => (
+                                    <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-800">
+                                        <img src={src} alt="variant preview" className="w-full h-full object-cover" />
+                                        <button type="button" className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full" onClick={() => removeColorImage(idx)}><Trash2 size={12} /></button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <button type="button" onClick={addColorVariant} className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-[0.2em] hover:bg-emerald-500 transition-all">
+                            <div className="flex items-center justify-center gap-2"><Plus size={16} /> Add / Update Variant</div>
+                        </button>
+
+                        {colorVariants.length > 0 && (
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {colorVariants.map((variant, idx) => (
+                                        <button
+                                            type="button"
+                                            key={`variant-card-${idx}`}
+                                            onClick={() => setSelectedVariantIndex(idx)}
+                                            className={`rounded-2xl border p-3 text-left transition ${selectedVariantIndex === idx ? 'border-emerald-500 bg-emerald-950/70 shadow-sm' : 'border-gray-800 bg-gray-900 hover:border-emerald-500'}`}
+                                        >
+                                            <p className="text-sm font-semibold text-white truncate">{variant.name || `Variant ${idx + 1}`}</p>
+                                            <p className="text-[11px] text-gray-400">₹{variant.price} · ₹{variant.mrp}</p>
+                                            <p className="mt-2 text-[10px] uppercase tracking-[0.28em] text-slate-500">Click to preview</p>
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <div className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
+                                    <div className="flex items-center justify-between gap-3 mb-3">
+                                        <div>
+                                            <p className="text-sm font-bold text-white">Selected variant</p>
+                                            <p className="text-[11px] text-gray-400">{colorVariants[selectedVariantIndex]?.name || `Variant ${selectedVariantIndex + 1}`}</p>
+                                        </div>
+                                        <div className="text-right text-[11px] text-gray-400">
+                                            <p>Images: {((colorVariants[selectedVariantIndex]?.existingImages?.length || 0) + (colorVariants[selectedVariantIndex]?.previews?.length || 0))}</p>
+                                            <p>Price: ₹{colorVariants[selectedVariantIndex]?.price} · MRP: ₹{colorVariants[selectedVariantIndex]?.mrp}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-wrap gap-3">
+                                        {(colorVariants[selectedVariantIndex]?.existingImages || []).map((img, imgIdx) => (
+                                            <div key={`selected-existing-${imgIdx}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-800 bg-gray-950">
+                                                <img src={img.url || img} alt="variant existing" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 flex items-end justify-between p-1 bg-gradient-to-t from-black/70 to-transparent">
+                                                    <button type="button" onClick={() => removeExistingVariantImage(selectedVariantIndex, imgIdx)} className="rounded-full bg-rose-500 p-1 text-white text-[10px]">Del</button>
+                                                    <div className="flex gap-1">
+                                                        <button type="button" disabled={imgIdx === 0} onClick={() => moveVariantImage(selectedVariantIndex, imgIdx, 'left', true)} className="rounded-full bg-black/70 p-1 text-white text-[10px]">←</button>
+                                                        <button type="button" disabled={imgIdx === (colorVariants[selectedVariantIndex]?.existingImages?.length || 0) - 1} onClick={() => moveVariantImage(selectedVariantIndex, imgIdx, 'right', true)} className="rounded-full bg-black/70 p-1 text-white text-[10px]">→</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {(colorVariants[selectedVariantIndex]?.previews || []).map((src, imgIdx) => (
+                                            <div key={`selected-new-${imgIdx}`} className="relative w-20 h-20 rounded-xl overflow-hidden border border-emerald-600 bg-gray-950">
+                                                <img src={src} alt="variant preview" className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 flex items-end justify-between p-1 bg-gradient-to-t from-black/70 to-transparent">
+                                                    <button type="button" onClick={() => removeVariantPreviewImage(selectedVariantIndex, imgIdx)} className="rounded-full bg-rose-500 p-1 text-white text-[10px]">Del</button>
+                                                    <div className="flex gap-1">
+                                                        <button type="button" disabled={imgIdx === 0} onClick={() => moveVariantImage(selectedVariantIndex, imgIdx, 'left')} className="rounded-full bg-black/70 p-1 text-white text-[10px]">←</button>
+                                                        <button type="button" disabled={imgIdx === (colorVariants[selectedVariantIndex]?.previews?.length || 0) - 1} onClick={() => moveVariantImage(selectedVariantIndex, imgIdx, 'right')} className="rounded-full bg-black/70 p-1 text-white text-[10px]">→</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {((colorVariants[selectedVariantIndex]?.existingImages?.length || 0) + (colorVariants[selectedVariantIndex]?.previews?.length || 0)) === 0 && (
+                                            <p className="text-xs text-gray-400">No images uploaded yet for this variant.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            {colorVariants.map((variant, idx) => (
+                                <div key={idx} className="bg-gray-900 border border-gray-800 rounded-2xl p-4">
+                                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                                        <div>
+                                            <p className="text-sm font-bold text-white">{variant.name || `Variant ${idx + 1}`}</p>
+                                            <p className="text-[11px] text-gray-400">Price: ₹{variant.price} · MRP: ₹{variant.mrp}</p>
+                                        </div>
+                                        <button type="button" onClick={() => removeColorVariant(idx)} className="text-rose-400 hover:text-rose-200 text-xs uppercase tracking-[0.24em]">Remove</button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                                        <input value={variant.name} onChange={(e) => handleVariantFieldChange(idx, 'name', e.target.value)} placeholder="Variant name" className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white" />
+                                        <input value={variant.price} onChange={(e) => handleVariantFieldChange(idx, 'price', e.target.value)} type="number" placeholder="Price" className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400" />
+                                        <input value={variant.mrp} onChange={(e) => handleVariantFieldChange(idx, 'mrp', e.target.value)} type="number" placeholder="MRP" className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400" />
+                                    </div>
+
+                                    {(variant.previews?.length > 0 || variant.existingImages?.length > 0) && (
+                                        <div className="space-y-3">
+                                            <div className="flex flex-wrap gap-2">
+                                                {variant.existingImages?.map((img, imgIdx) => (
+                                                    <div key={`existing-${imgIdx}`} className="relative w-16 h-16 rounded-lg overflow-hidden border border-gray-800">
+                                                        <img src={img.url || img} alt="existing variant" className="w-full h-full object-cover" />
+                                                        <button type="button" onClick={() => removeExistingVariantImage(idx, imgIdx)} className="absolute top-1 right-1 p-1 bg-rose-500 text-white rounded-full opacity-90 hover:bg-rose-400">
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                {variant.previews?.map((src, imgIdx) => (
+                                                    <div key={`new-${imgIdx}`} className="w-16 h-16 rounded-lg overflow-hidden border border-emerald-600 ring-1 ring-emerald-600">
+                                                        <img src={src} alt="new variant" className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {variant.existingImages?.length > 0 && (
+                                                <p className="text-[10px] text-gray-400">Click the trash icon to remove an existing variant image from this color.</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-5">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">Custom Attributes / Set Count</h3>
+                                <p className="text-[11px] text-gray-400">Add dynamic attributes with modifiers and stock per option.</p>
+                            </div>
+                            <span className="text-[10px] uppercase tracking-[0.3em] text-emerald-400">Flexible</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <input
+                                value={customAttributeInput.title}
+                                onChange={(e) => handleCustomAttributeInputChange('title', e.target.value)}
+                                placeholder="Attribute title (e.g. Select Set)"
+                                className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white"
+                            />
+                            <button type="button" onClick={addCustomAttribute} className="p-3 bg-emerald-600 text-white rounded-xl text-xs font-bold uppercase tracking-[0.2em] hover:bg-emerald-500 transition-all">
+                                Add Attribute Group
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {customAttributeInput.options.map((option, optIdx) => (
+                                <div key={optIdx} className="grid grid-cols-1 gap-3 md:grid-cols-5 items-end">
+                                    <input
+                                        value={option.label}
+                                        onChange={(e) => handleCustomAttributeOptionInputChange(optIdx, 'label', e.target.value)}
+                                        placeholder="Option label"
+                                        className="col-span-2 p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white"
+                                    />
+                                    <input
+                                        value={option.priceModifier}
+                                        onChange={(e) => handleCustomAttributeOptionInputChange(optIdx, 'priceModifier', e.target.value)}
+                                        type="number"
+                                        placeholder="Price modifier"
+                                        className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400"
+                                    />
+                                    <input
+                                        value={option.mrpModifier}
+                                        onChange={(e) => handleCustomAttributeOptionInputChange(optIdx, 'mrpModifier', e.target.value)}
+                                        type="number"
+                                        placeholder="MRP modifier"
+                                        className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400"
+                                    />
+                                    <input
+                                        value={option.stock}
+                                        onChange={(e) => handleCustomAttributeOptionInputChange(optIdx, 'stock', e.target.value)}
+                                        type="number"
+                                        placeholder="Stock"
+                                        className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-blue-600 text-xs text-white"
+                                    />
+                                </div>
+                            ))}
+                            <button type="button" onClick={addCustomAttributeOptionRow} className="w-full py-3 bg-gray-900 border border-emerald-500 text-emerald-400 rounded-xl text-xs font-bold uppercase tracking-[0.2em] hover:bg-emerald-500 hover:text-white transition-all">
+                                + Add New Option
+                            </button>
+                        </div>
+
+                        {customAttributes.length > 0 && (
+                            <div className="space-y-4">
+                                {customAttributes.map((attribute, attrIdx) => (
+                                    <div key={attrIdx} className="rounded-2xl border border-gray-800 bg-gray-900 p-4">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
+                                            <div>
+                                                <p className="text-sm font-bold text-white">{attribute.title}</p>
+                                                <p className="text-[11px] text-gray-400">{attribute.options.length} option(s)</p>
+                                            </div>
+                                            <button type="button" onClick={() => removeCustomAttribute(attrIdx)} className="text-rose-400 hover:text-rose-200 text-xs uppercase tracking-[0.24em]">Remove</button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {attribute.options.map((option, optionIndex) => (
+                                                <div key={optionIndex} className="grid grid-cols-1 gap-3 md:grid-cols-5 items-center">
+                                                    <input
+                                                        value={option.label}
+                                                        onChange={(e) => handleCustomAttributeOptionChange(attrIdx, optionIndex, 'label', e.target.value)}
+                                                        placeholder="Option label"
+                                                        className="col-span-2 p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white"
+                                                    />
+                                                    <input
+                                                        value={option.priceModifier}
+                                                        onChange={(e) => handleCustomAttributeOptionChange(attrIdx, optionIndex, 'priceModifier', e.target.value)}
+                                                        type="number"
+                                                        placeholder="Price modifier"
+                                                        className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400"
+                                                    />
+                                                    <input
+                                                        value={option.mrpModifier}
+                                                        onChange={(e) => handleCustomAttributeOptionChange(attrIdx, optionIndex, 'mrpModifier', e.target.value)}
+                                                        type="number"
+                                                        placeholder="MRP modifier"
+                                                        className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400"
+                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            value={option.stock}
+                                                            onChange={(e) => handleCustomAttributeOptionChange(attrIdx, optionIndex, 'stock', e.target.value)}
+                                                            type="number"
+                                                            placeholder="Stock"
+                                                            className="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-blue-600 text-xs text-white"
+                                                        />
+                                                        <button type="button" onClick={() => removeCustomAttributeOption(attrIdx, optionIndex)} className="rounded-xl bg-rose-500 px-3 py-3 text-xs font-bold text-white">Del</button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            <button type="button" onClick={() => addCustomAttributeOption(attrIdx)} className="w-full py-3 bg-gray-900 border border-emerald-500 text-emerald-400 rounded-xl text-xs font-bold uppercase tracking-[0.2em] hover:bg-emerald-500 hover:text-white transition-all">
+                                                + Add Option
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <button 
                         type="submit" 
                         disabled={submitting}
-                        className="w-full bg-blue-600 text-white py-4 rounded-lg font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed" // ✅ Disable cursor
+                        className="w-full bg-blue-600 text-white py-4 rounded-lg font-black uppercase tracking-widest hover:bg-blue-500 transition-all flex items-center justify-center gap-2 disabled:bg-gray-800 disabled:text-gray-500 disabled:cursor-not-allowed"
                     >
                         <IoSaveOutline size={20} />
                         {submitting ? 'Updating...' : 'Update Product'}

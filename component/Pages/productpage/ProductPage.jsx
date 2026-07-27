@@ -255,7 +255,7 @@ const ProductPage = (props) => {
     }
   };
 
-  const galleryImages = activeImages.slice(0, 5);
+  const galleryImages = activeImages;
 
   return (
     <div className="min-h-full bg-slate-50 px-2 py-4 sm:px-4 lg:px-6">

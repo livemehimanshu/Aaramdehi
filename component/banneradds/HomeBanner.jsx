@@ -7,6 +7,15 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
+const normalizeBannerLink = (link) => {
+    if (!link) return '/';
+    const trimmed = String(link).trim();
+    if (/^(https?:\/\/|mailto:|tel:|#)/i.test(trimmed)) return trimmed;
+    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+};
+
+const isExternalLink = (link) => /^(https?:\/\/|mailto:|tel:)/i.test(link);
+
 /**
  * HomeBanner Component
  * @param {string} section - Kaunsa section dikhana hai (e.g. 'hero', 'promotional')
@@ -15,6 +24,7 @@ const HomeBanner = ({ section = 'hero' }) => {
     const [banners, setBanners] = useState([]);
     const [loading, setLoading] = useState(true);
     const PLACEHOLDER = 'https://placehold.co/1200x400?text=Banner';
+    const swiperStyles = ".swiper-button-next, .swiper-button-prev { color: #fff !important; } .swiper-pagination-bullet-active { background: #dc2626 !important; }";
 
     useEffect(() => {
         const fetchBanners = async () => {
@@ -54,52 +64,55 @@ const HomeBanner = ({ section = 'hero' }) => {
                 loop={banners.length > 1}
                 className="rounded-2xl overflow-hidden shadow-lg border border-gray-100"
             >
-                {banners.map((banner) => (
-                    <SwiperSlide key={banner._id}>
-                        <Link to={banner.link || '/'} className="block">
-                            <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-4 md:p-6 xl:p-8 rounded-[28px] shadow-xl">
-                                <div className="space-y-5">
-                                    {banner.category?.toLowerCase() !== 'hero' && (
-                                    <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
-                                        {banner.category || 'Featured'}
-                                    </span>
-                                )}
-                                    <h2 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">
-                                        {banner.title || 'Shop the latest collection'}
-                                    </h2>
-                                    <p className="max-w-xl text-sm text-slate-600 sm:text-base">
-                                        {banner.description || 'Discover curated offers and polished banner placements designed to match your brand theme seamlessly.'}
-                                    </p>
-                                    <div className="flex flex-wrap gap-3">
-                                        <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-                                            Fresh arrivals
-                                        </span>
-                                        <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
-                                            On-trend deals
+                {banners.map((banner) => {
+                    const bannerUrl = normalizeBannerLink(banner.link);
+                    const external = isExternalLink(bannerUrl);
+                    const Wrapper = external ? 'a' : Link;
+                    const wrapperProps = external ? { href: bannerUrl, target: '_blank', rel: 'noreferrer' } : { to: bannerUrl };
+                    return (
+                        <SwiperSlide key={banner._id}>
+                            <Wrapper {...wrapperProps} className="block">
+                                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-4 md:p-6 xl:p-8 rounded-[28px] shadow-xl">
+                                    <div className="space-y-5">
+                                        {banner.category?.toLowerCase() !== 'hero' && (
+                                            <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
+                                                {banner.category || 'Featured'}
+                                            </span>
+                                        )}
+                                        <h2 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">
+                                            {banner.title || 'Shop the latest collection'}
+                                        </h2>
+                                        <p className="max-w-xl text-sm text-slate-600 sm:text-base">
+                                            {banner.description || 'Discover curated offers and polished banner placements designed to match your brand theme seamlessly.'}
+                                        </p>
+                                        <div className="flex flex-wrap gap-3">
+                                            <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+                                                Fresh arrivals
+                                            </span>
+                                            <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+                                                On-trend deals
+                                            </span>
+                                        </div>
+                                        <span className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                            Explore now
                                         </span>
                                     </div>
-                                    <button className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                                        Explore now
-                                    </button>
-                                </div>
 
-                                <div className="relative overflow-hidden rounded-[24px] bg-slate-100 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]">
-                                    <img
-                                        src={banner.image || PLACEHOLDER}
-                                        alt={banner.title}
-                                        className="h-full w-full object-contain"
-                                        onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }}
-                                    />
+                                    <div className="relative overflow-hidden rounded-[24px] bg-slate-100 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]">
+                                        <img
+                                            src={banner.image || PLACEHOLDER}
+                                            alt={banner.title}
+                                            className="h-full w-full object-contain"
+                                            onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        </Link>
-                    </SwiperSlide>
-                ))}
+                            </Wrapper>
+                        </SwiperSlide>
+                    );
+                })}
             </Swiper>
-            <style>{`
-                .swiper-button-next, .swiper-button-prev { color: #fff !important; }
-                .swiper-pagination-bullet-active { background: #dc2626 !important; }
-            `}</style>
+            <style>{swiperStyles}</style>
         </div>
     );
 };

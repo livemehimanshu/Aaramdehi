@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import ReactImageMagnify from 'react-image-magnify';
 import {
   FiRotateCcw,
   FiTruck,
@@ -186,9 +187,6 @@ const ProductPage = (props) => {
   const selectedImage = props.activeImg || internalSelectedImage;
   const quantity = props.quantity ?? internalQuantity;
 
-  const mainImageRef = useRef(null);
-  const thumbnailRef = useRef(null);
-
   const activeVariant = colors[selectedColor] || colors[0] || {};
   const activeImages = useMemo(() => {
     const variantImages = normalizeImageList(activeVariant.images || []);
@@ -206,6 +204,7 @@ const ProductPage = (props) => {
   useEffect(() => {
     setSelectedSize(sizes[0] || null);
   }, [sizes]);
+
 
   useEffect(() => {
     const nextImage = activeImages[0] || PLACEHOLDER_IMAGE;
@@ -264,17 +263,51 @@ const ProductPage = (props) => {
         <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-[1.08fr_0.92fr] md:gap-8 lg:p-8">
           <section className="space-y-6">
             <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-3 sm:p-4">
-              <div className="relative overflow-hidden rounded-[20px] bg-white" ref={mainImageRef}>
-                <img
-                  src={selectedImage || PLACEHOLDER_IMAGE}
-                  alt={titleLabel}
-                  className="h-[220px] w-full object-contain sm:h-[300px] md:h-[380px] lg:h-[520px]"
-                  onError={handleImageError}
-                />
-                <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm">
-                  {activeVariant.name || 'Standard'}
-                </div>
+              <div className="relative overflow-visible rounded-[20px] bg-white md:cursor-zoom-in">
+              <ReactImageMagnify
+                {...{
+                  smallImage: {
+                    alt: titleLabel,
+                    isFluidWidth: true,
+                    src: selectedImage || PLACEHOLDER_IMAGE
+                  },
+                  largeImage: {
+                    src: selectedImage || PLACEHOLDER_IMAGE,
+                    width: 1200,
+                    height: 1200
+                  },
+                  enlargedImageContainerDimensions: {
+                    width: '160%',
+                    height: '100%'
+                  },
+                  enlargedImagePosition: 'beside',
+                  lensStyle: { backgroundColor: 'rgba(15, 23, 42, 0.2)' },
+                  isHintEnabled: true,
+                  isActivatedOnTouch: true,
+                  isEnlargedImagePortalEnabled: true,
+                  isEnlargedImagePortalEnabledForTouch: true,
+                  enlargedImagePortalId: 'zoom-portal',
+                  hoverDelayInMs: 100,
+                  hoverOffDelayInMs: 50,
+                  fadeDurationInMs: 200,
+                  shouldUsePositiveSpaceLens: true,
+                  enlargedImageContainerClassName: 'rounded-[28px] border border-slate-200 bg-white shadow-xl',
+                  enlargedImageClassName: 'rounded-[28px]',
+                  enlargedImageContainerStyle: {
+                    zIndex: 9999,
+                    position: 'fixed',
+                    top: '12%',
+                    right: '1rem',
+                    width: '320px',
+                    height: '420px'
+                  }
+                }}
+              />
+              <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm">
+                {activeVariant.name || 'Standard'}
               </div>
+            </div>
+            <div id="zoom-portal" className="pointer-events-none" />
             </div>
 
             <div className="flex items-center gap-3 overflow-x-auto pb-1">
@@ -338,8 +371,8 @@ const ProductPage = (props) => {
                 </div>
               </div>
 
-              <h1 className="mt-4 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px] break-words">{titleLabel}</h1>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{subtitle}</p>
+              <h1 className="relative z-10 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px] break-words">{titleLabel}</h1>
+              <p className="relative z-10 mt-2 text-sm leading-6 text-slate-600">{subtitle}</p>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-600">

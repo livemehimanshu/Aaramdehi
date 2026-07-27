@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
 
 // Yeh component main navigation bar hai jo header ke niche dikhta hai
 // Ab yeh dynamic categories ko render karega
@@ -12,10 +11,10 @@ const Navigation = ({ categories = [] }) => {
         src={cat.icon} 
         onError={(e) => { e.target.src = "https://placehold.co/40x40?text=📦"; }}
         alt={cat.name} 
-        className="w-full h-full object-cover rounded-xl group-hover:scale-110 transition-transform duration-300" />;
+        className="w-full h-full object-contain rounded-xl" />;
     }
     return (
-      <span className="group-hover:scale-110 transition-transform duration-300">
+      <span className="text-2xl">
         {cat.icon || '🎁'}
       </span>
     );
@@ -30,8 +29,8 @@ const Navigation = ({ categories = [] }) => {
           /* Safe key handling agar _id missing ho */
           <div key={cat._id || cat.id || cat.name} className="group relative flex flex-col items-center cursor-pointer">
        <Link to={`/products?category=${cat.name}`} className="group flex flex-col items-center">
-  <div className="w-20 h-20 bg-transparent rounded-full flex items-center justify-center overflow-hidden">
-    <div className="w-full h-full flex items-center justify-center p-3 transition-transform duration-300 scale-90 group-hover:scale-110">
+  <div className="w-20 h-20 bg-transparent rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:bg-blue-50 group-hover:shadow-sm">
+    <div className="w-full h-full flex items-center justify-center p-3 transition-transform duration-300 group-hover:scale-105">
       {getIcon(cat)}
     </div>
   </div>

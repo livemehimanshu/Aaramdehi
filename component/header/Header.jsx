@@ -133,13 +133,13 @@ const Header = () => {
             <Link 
                 to={`/products?category=${item.name}`} 
                 key={index} 
-                className="flex flex-col items-center group cursor-pointer space-y-2 shrink-0 transition-transform hover:-translate-y-1"
+                className="flex flex-col items-center group cursor-pointer space-y-2 shrink-0"
             >
-              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center text-2xl group-hover:bg-blue-50 group-hover:shadow-md transition-all border border-transparent group-hover:border-blue-100 overflow-hidden">
+              <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center group-hover:bg-blue-50 group-hover:shadow-md transition-all duration-300 border border-transparent group-hover:border-blue-100 overflow-hidden group-hover:scale-105">
                 {item.icon?.startsWith('http') ? (
-                  <img src={item.icon} alt={item.name} className="w-full h-full object-cover rounded-xl group-hover:scale-110 transition-transform duration-300" />
+                  <img src={item.icon} alt={item.name} className="w-full h-full object-contain rounded-xl" />
                 ) : (
-                  <span className="group-hover:scale-110 transition-transform duration-300">
+                  <span className="text-2xl">
                     {item.icon || '🎁'}
                   </span>
                 )}

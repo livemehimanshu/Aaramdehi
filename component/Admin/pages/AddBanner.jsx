@@ -72,6 +72,13 @@ const AddBanner = () => {
         });
     };
 
+    const normalizeBannerLink = (link) => {
+        const raw = String(link || '').trim();
+        if (!raw) return '';
+        if (/^(https?:\/\/|mailto:|tel:|#)/i.test(raw)) return raw;
+        return raw.startsWith('/') ? raw : `/${raw}`;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
@@ -94,7 +101,7 @@ const AddBanner = () => {
             });
 
             data.append('title', formData.title);
-            data.append('link', formData.link);
+            data.append('link', normalizeBannerLink(formData.link));
             data.append('category', formData.category);
             data.append('description', formData.description);
             data.append('position', Number(formData.position));

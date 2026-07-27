@@ -242,6 +242,31 @@ export async function getSessionBehavior(sessionId) {
 }
 
 /**
+ * UPDATE: Change the status of an existing behavioral session
+ */
+export async function updateSessionStatus(sessionId, updateData) {
+  try {
+    const snapshot = await db.ref(`user_behavior_logs/${sessionId}`).once('value');
+
+    if (!snapshot.exists()) {
+      return { success: false, error: 'Session not found' };
+    }
+
+    const updated = {
+      ...snapshot.val(),
+      ...updateData,
+      updatedAt: new Date().toISOString()
+    };
+
+    await db.ref(`user_behavior_logs/${sessionId}`).set(updated);
+    return { success: true, session: updated };
+  } catch (error) {
+    console.error('Error updating session status:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * EVALUATE: Check if session qualifies for any active rules
  */
 export async function evaluateSessionAgainstRules(sessionId) {

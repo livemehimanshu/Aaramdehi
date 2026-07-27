@@ -361,9 +361,7 @@ export const updateSessionStatus = async (req, res) => {
       });
     }
     
-    // Safely attempt session status update if function exists in db layer
-    const updateFn = behavioralDB.updateSessionStatus || behavioralDB.updateRetargetingRule;
-    const result = await updateFn(sessionId, { status });
+    const result = await behavioralDB.updateSessionStatus(sessionId, { status });
     
     if (!result.success) {
       return res.status(500).json(result);

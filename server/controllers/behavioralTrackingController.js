@@ -164,10 +164,10 @@ export const trackBehavior = async (req, res) => {
   try {
     const { sessionId, userId, interaction } = req.body;
     
-    if (!userId || !sessionId) {
+    if (!sessionId) {
       return res.status(400).json({
         success: false,
-        message: 'Missing required fields: userId, sessionId'
+        message: 'Missing required field: sessionId'
       });
     }
     
@@ -212,15 +212,10 @@ export const createSession = async (req, res) => {
   try {
     const { userId, targetProductId, selectedColorVariant } = req.body;
     
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing userId'
-      });
-    }
+    const effectiveUserId = userId || req.userId || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     
     const sessionData = {
-      userId,
+      userId: effectiveUserId,
       intendScore: 0,
       targetProductId: targetProductId || null,
       selectedColorVariant: selectedColorVariant || null,

@@ -1,4 +1,4 @@
-import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
+import { uploadImageCloudinary, deleteImageCloudinary, extractCloudinaryPublicIdFromUrl, buildCloudinaryFolderPath } from "../utils/uploadImageCloudinary.js";
 import { findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js"; // findByQuery added
 
 const COLLECTION = 'banners';
@@ -222,6 +222,20 @@ export const updateBanner = async (req, res) => {
 export const deleteBanner = async (req, res) => {
   try {
     const { id } = req.params;
+    const banner = await findById(COLLECTION, id);
+
+    if (!banner) {
+      return res.status(404).json({
+        success: false,
+        message: "Banner not found",
+      });
+    }
+
+    const publicId = banner.imagePublicId || extractCloudinaryPublicIdFromUrl(banner.image);
+    if (publicId) {
+      await deleteImageCloudinary(publicId, { resource_type: 'auto' });
+    }
+
     await deleteById(COLLECTION, id);
 
     return res.json({

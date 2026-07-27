@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SEO from '../../header/SEO'; // SEO Component Import Kiya
+import JsonLdSchema from '../../../server/routes/JsonLdSchema.jsx';
 import { getAllProductsAPI, validateCouponAPI } from '../../../src/api/authAndAdminApi';
 import { BsLightningCharge } from 'react-icons/bs';
 import toast from 'react-hot-toast'; // ✅ Import toast
@@ -61,15 +62,22 @@ const ProductPage = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-[5px] animate-pulse">Loading Product...</div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product Not Found</div>;
 
+  const productTitle = `${product.name} | Aaramdehi`;
+  const productDescription = (product.shortDescription || product.description || `Shop ${product.name} at Aaramdehi for premium quality, comfort, and timeless style.`).replace(/\s+/g, ' ').trim();
+  const productKeywords = [product.category, product.brand, product.name, 'Aaramdehi', 'furniture', 'home decor']
+    .filter(Boolean)
+    .join(', ');
+
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 bg-white">
       <SEO 
-        title={product.name}
-        description={product.description}
-        keywords={product.tags?.join(', ')}
-        ogImage={product.thumbnail}
+        title={productTitle}
+        description={productDescription}
+        keywords={productKeywords}
+        ogImage={product.thumbnail || '/logo.png'}
         ogUrl={window.location.href}
       />
+      <JsonLdSchema product={product} />
 
       <div className="flex flex-col md:flex-row gap-8">
         {/* Left: Image Gallery */}

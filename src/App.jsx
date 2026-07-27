@@ -208,6 +208,17 @@ function App() {
     <HelmetProvider>
       <Router>
         <AppContent />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          "name": "Aaramdehi",
+          "url": "https://www.aaramdehi.co.in",
+          "logo": "https://www.aaramdehi.co.in/logo.png",
+          "sameAs": [
+            "https://www.instagram.com/aaramdehi",
+            "https://www.facebook.com/aaramdehi"
+          ]
+        })}</script>
       </Router>
     </HelmetProvider>
   )

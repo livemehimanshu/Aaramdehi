@@ -264,13 +264,27 @@ const ProductListing = ({ forcedCategory }) => {
     return filteredData.slice(startIndex, startIndex + 8);
   }, [filteredData, page]);
 
+  const pageTitle = searchParam
+    ? `Search Results for ${searchParam} | Aaramdehi`
+    : selectedCategory === 'All'
+      ? 'Premium Furniture & Home Decor Collection | Aaramdehi'
+      : `${selectedCategory} Collection | Aaramdehi`;
+
+  const pageDescription = searchParam
+    ? `Browse search results for ${searchParam} at Aaramdehi and discover premium furniture and decor.`
+    : `Explore ${selectedCategory === 'All' ? 'premium furniture and home decor' : selectedCategory} at Aaramdehi with elegant designs, comfort, and quality craftsmanship.`;
+
+  const pageKeywords = [selectedCategory, 'Aaramdehi', 'furniture', 'home decor', 'online shopping']
+    .filter(Boolean)
+    .join(', ');
+
   return (
     <div className="flex bg-[#f4f7f9] min-h-screen p-4 lg:p-8 gap-8 mt-20">
       {/* ✅ SEO Optimizer implementation */}
       <SEO 
-        title={selectedCategory === 'All' ? 'Premium Furniture Collection' : `${selectedCategory} Collection`}
-        description={`Explore the best ${selectedCategory} at Aaramdehi. Quality furniture designed for comfort and elegance.`}
-        keywords={`${selectedCategory}, Aaramdehi furniture, home decor online`}
+        title={pageTitle}
+        description={pageDescription}
+        keywords={pageKeywords}
       />
 
       <aside className="hidden lg:block w-[280px] sticky top-24 h-fit">

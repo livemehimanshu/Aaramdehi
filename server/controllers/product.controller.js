@@ -1,4 +1,4 @@
-import { uploadImageCloudinary, deleteImageCloudinary, extractCloudinaryPublicIdFromUrl } from "../utils/uploadImageCloudinary.js";
+import { uploadImageCloudinary, deleteImageCloudinary, extractCloudinaryPublicIdFromUrl, buildCloudinaryFolderPath } from "../utils/uploadImageCloudinary.js";
 import { findAll, findById, create, updateById, deleteById, findByQuery, db } from "../config/db.js";
 
 const COLLECTION = 'products';
@@ -86,6 +86,21 @@ const normalizeColorValue = (color, index, fallbackPrice, fallbackMrp) => {
         mrp: color.mrp ?? color.oldPrice ?? color.originalPrice ?? color.listPrice ?? fallbackMrp,
         modelUrl: color.modelUrl || color.model || color.glb || color.gltf || color.threeDModel || ''
     };
+};
+
+const collectCloudinaryPublicIds = (value, publicIds = []) => {
+    if (Array.isArray(value)) {
+        value.forEach((item) => collectCloudinaryPublicIds(item, publicIds));
+        return publicIds;
+    }
+
+    if (!value || typeof value !== 'object') return publicIds;
+
+    if (typeof value.public_id === 'string' && value.public_id) publicIds.push(value.public_id);
+    if (typeof value.publicId === 'string' && value.publicId) publicIds.push(value.publicId);
+
+    Object.values(value).forEach((item) => collectCloudinaryPublicIds(item, publicIds));
+    return publicIds;
 };
 
 const normalizeProductForResponse = (product) => {
@@ -234,7 +249,8 @@ export const createProduct = async (req, res) => {
                 const fileContent = file.buffer || file.path;
                 if (!fileContent) continue;
 
-                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
+                const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name);
+                const uploadResult = await uploadImageCloudinary(fileContent, productFolder);
                 if (uploadResult && uploadResult.success) {
                     images.push({
                         url: uploadResult.url,
@@ -286,7 +302,8 @@ export const createProduct = async (req, res) => {
                         for (const file of variantFiles) {
                             const fileContent = file.buffer || file.path;
                             if (fileContent) {
-                                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/variants");
+                                const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name);
+                                const uploadResult = await uploadImageCloudinary(fileContent, `${productFolder}/variants`);
                                 if (uploadResult && uploadResult.success) {
                                     variantImages.push({
                                         url: uploadResult.url,
@@ -330,7 +347,8 @@ export const createProduct = async (req, res) => {
             const modelFile = uploadedModelFiles[0];
             const fileContent = modelFile.buffer || modelFile.path;
             if (fileContent) {
-                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/models", { transformation: [] });
+                const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name);
+                const uploadResult = await uploadImageCloudinary(fileContent, `${productFolder}/models`, { transformation: [] });
                 if (uploadResult && uploadResult.success) {
                     model3dUrlFromUpload = uploadResult.url;
                     model3dPublicIdFromUpload = uploadResult.public_id;
@@ -686,7 +704,8 @@ export const updateProduct = async (req, res) => {
                     if (file) {
                         const fileContent = file.buffer || file.path;
                         if (!fileContent) continue;
-                        const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
+                        const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name || existingProduct?.name || 'product');
+                        const uploadResult = await uploadImageCloudinary(fileContent, productFolder);
                         if (uploadResult && uploadResult.success) {
                             orderedImages.push({
                                 url: uploadResult.url,
@@ -706,7 +725,8 @@ export const updateProduct = async (req, res) => {
                 const file = newFilesQueue.shift();
                 const fileContent = file.buffer || file.path;
                 if (!fileContent) continue;
-                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
+                const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name || existingProduct?.name || 'product');
+                const uploadResult = await uploadImageCloudinary(fileContent, productFolder);
                 if (uploadResult && uploadResult.success) {
                     orderedImages.push({
                         url: uploadResult.url,
@@ -722,7 +742,8 @@ export const updateProduct = async (req, res) => {
                 const fileContent = file.buffer || file.path;
                 if (!fileContent) continue;
 
-                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products");
+                const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name || existingProduct?.name || 'product');
+                const uploadResult = await uploadImageCloudinary(fileContent, productFolder);
                 if (uploadResult && uploadResult.success) {
                     finalImages.push({
                         url: uploadResult.url,
@@ -742,7 +763,8 @@ export const updateProduct = async (req, res) => {
             const modelFile = uploadedModelFiles[0];
             const fileContent = modelFile.buffer || modelFile.path;
             if (fileContent) {
-                const uploadResult = await uploadImageCloudinary(fileContent, "Aaramdehi_Uploads/products/models", { transformation: [] });
+                const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name || existingProduct?.name || 'product');
+                const uploadResult = await uploadImageCloudinary(fileContent, `${productFolder}/models`, { transformation: [] });
                 if (uploadResult && uploadResult.success) {
                     updateData.model3dUrl = uploadResult.url;
                     updateData.model3dPublicId = uploadResult.public_id;
@@ -905,6 +927,18 @@ export const toggleProductStatus = async (req, res) => {
 // ✅ 9. DELETE PRODUCT
 export const deleteProduct = async (req, res) => {
     try {
+        const product = await findById(COLLECTION, req.params.id);
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+
+        const publicIds = collectCloudinaryPublicIds(product);
+        for (const publicId of publicIds) {
+            if (publicId) {
+                await deleteImageCloudinary(publicId, { resource_type: 'auto' });
+            }
+        }
+
         await deleteById(COLLECTION, req.params.id);
         return res.json({ success: true, message: "Deleted successfully" });
     } catch (error) {

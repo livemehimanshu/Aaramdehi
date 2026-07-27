@@ -8,6 +8,19 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
+export const buildCloudinaryFolderPath = (baseFolder = 'Aaramdehi_Uploads', itemName = '') => {
+    const safeName = String(itemName || '')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    if (!safeName) return baseFolder;
+    return `${baseFolder}/${safeName}`.replace(/\/+/g, '/');
+};
+
 export const uploadImageCloudinary = async (fileBuffer, folderName = "Aaramdehi_Uploads", options = {}) => {
     try {
         if (!process.env.CLOUDINARY_API_KEY) {

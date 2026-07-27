@@ -1,9 +1,48 @@
 import { findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
-import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
+import { uploadImageCloudinary, deleteImageCloudinary, extractCloudinaryPublicIdFromUrl, buildCloudinaryFolderPath } from "../utils/uploadImageCloudinary.js";
 import slugify from 'slugify';
 import sharp from 'sharp'; // ✅ WebP conversion ke liye
 
 const COLLECTION = 'rooms';
+
+const getUploadedFile = (req, fieldName) => {
+    if (req.files?.[fieldName]?.[0]) return req.files[fieldName][0];
+    if (req.file?.fieldname === fieldName) return req.file;
+    return null;
+};
+
+const uploadRoomAsset = async (file, itemName, assetType = 'image') => {
+    if (!file) return { url: '', publicId: '' };
+
+    const fileBuffer = file.buffer || file.path;
+    if (!fileBuffer) throw new Error(`${assetType} file content is missing`);
+
+    const folderPath = buildCloudinaryFolderPath('Aaramdehi_Uploads/rooms', itemName || assetType);
+    const webpBuffer = await sharp(fileBuffer)
+        .webp({ quality: 80 })
+        .toBuffer();
+
+    const uploadResult = await uploadImageCloudinary(webpBuffer, folderPath, { noTransformation: true });
+    if (uploadResult && !uploadResult.success) {
+        throw new Error(uploadResult.message || `${assetType} upload failed`);
+    }
+
+    return {
+        url: uploadResult.url,
+        publicId: uploadResult.public_id
+    };
+};
+
+const deleteRoomAsset = async (assetUrl, assetPublicId) => {
+    const publicId = assetPublicId || extractCloudinaryPublicIdFromUrl(assetUrl);
+    if (!publicId) return;
+
+    try {
+        await deleteImageCloudinary(publicId, { resource_type: 'auto' });
+    } catch (error) {
+        console.error('❌ Room Asset Delete Error:', error.message);
+    }
+};
 
 // Get all rooms
 export const getAllRooms = async (req, res) => {
@@ -19,7 +58,8 @@ export const getAllRooms = async (req, res) => {
 // Create a new room
 export const createRoom = async (req, res) => {
     try {
-        if (!req.body || (Object.keys(req.body).length === 0 && !req.file)) {
+        const hasFiles = Boolean(req.file || req.files?.image?.length || req.files?.icon?.length);
+        if (!req.body || (Object.keys(req.body).length === 0 && !hasFiles)) {
             return res.status(400).json({ 
                 success: false, 
                 message: "Request body or image is empty. Ensure you are sending FormData and Multer is configured." 
@@ -40,30 +80,23 @@ export const createRoom = async (req, res) => {
         }
 
         let imageUrl = "";
-        // Robust file check: handles single upload or field uploads
-        const fileToUpload = req.file?.buffer || req.file?.path || 
-                             req.files?.image?.[0]?.buffer || 
-                             req.files?.image?.[0]?.path;
+        let imagePublicId = "";
+        let iconUrl = "";
+        let iconPublicId = "";
 
-        if (fileToUpload) {
-            // ✅ Image ko WebP mein convert karein upload se pehle
-            const webpBuffer = await sharp(fileToUpload)
-                .webp({ quality: 80 })
-                .toBuffer();
+        const imageFile = getUploadedFile(req, 'image');
+        const iconFile = getUploadedFile(req, 'icon');
 
-            const uploadResult = await uploadImageCloudinary(webpBuffer, "rooms");
-            
-            if (uploadResult) {
-                if (uploadResult.success) {
-                    imageUrl = uploadResult.url;
-                } else {
-                    console.error("❌ Cloudinary Upload Failed:", uploadResult.message);
-                    return res.status(500).json({ 
-                        success: false, 
-                        message: `Image upload failed: ${uploadResult.message}` 
-                    });
-                }
-            }
+        if (imageFile) {
+            const uploadedImage = await uploadRoomAsset(imageFile, name.trim(), 'image');
+            imageUrl = uploadedImage.url;
+            imagePublicId = uploadedImage.publicId;
+        }
+
+        if (iconFile) {
+            const uploadedIcon = await uploadRoomAsset(iconFile, name.trim(), 'icon');
+            iconUrl = uploadedIcon.url;
+            iconPublicId = uploadedIcon.publicId;
         }
 
         const roomData = {
@@ -72,6 +105,9 @@ export const createRoom = async (req, res) => {
             categorySlug,
             description: description || "",
             image: imageUrl,
+            imagePublicId,
+            icon: iconUrl,
+            iconPublicId,
             isActive: true,
             createdAt: new Date().toISOString(),
             createdBy: req.userId || req.user?._id || req.user?.id || null
@@ -103,8 +139,14 @@ export const getRoomBySlug = async (req, res) => {
 export const updateRoom = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!req.body || (Object.keys(req.body).length === 0 && !req.file)) {
+        const hasFiles = Boolean(req.file || req.files?.image?.length || req.files?.icon?.length);
+        if (!req.body || (Object.keys(req.body).length === 0 && !hasFiles)) {
             return res.status(400).json({ success: false, message: "No update data provided" });
+        }
+
+        const existingRoom = await findById(COLLECTION, id);
+        if (!existingRoom) {
+            return res.status(404).json({ success: false, message: "Room not found" });
         }
 
         const { name, categorySlug, description, isActive } = req.body;
@@ -118,24 +160,21 @@ export const updateRoom = async (req, res) => {
         if (description !== undefined) updateData.description = description;
         if (isActive !== undefined) updateData.isActive = isActive === 'true' || isActive === true;
 
-        const fileToUpload = req.file?.buffer || req.file?.path || 
-                             req.files?.image?.[0]?.buffer || 
-                             req.files?.image?.[0]?.path;
+        const imageFile = getUploadedFile(req, 'image');
+        const iconFile = getUploadedFile(req, 'icon');
 
-        if (fileToUpload) {
-            // ✅ Image ko WebP mein convert karein upload se pehle
-            const webpBuffer = await sharp(fileToUpload)
-                .webp({ quality: 80 })
-                .toBuffer();
+        if (imageFile) {
+            const uploadedImage = await uploadRoomAsset(imageFile, name ? name.trim() : existingRoom.name, 'image');
+            updateData.image = uploadedImage.url;
+            updateData.imagePublicId = uploadedImage.publicId;
+            await deleteRoomAsset(existingRoom.image, existingRoom.imagePublicId);
+        }
 
-            const uploadResult = await uploadImageCloudinary(webpBuffer, "rooms");
-
-            if (uploadResult && uploadResult.success) {
-                updateData.image = uploadResult.url;
-            } else if (uploadResult) {
-                console.error("❌ Cloudinary Update Error:", uploadResult.message);
-                return res.status(500).json({ success: false, message: "Image update failed" });
-            }
+        if (iconFile) {
+            const uploadedIcon = await uploadRoomAsset(iconFile, name ? name.trim() : existingRoom.name, 'icon');
+            updateData.icon = uploadedIcon.url;
+            updateData.iconPublicId = uploadedIcon.publicId;
+            await deleteRoomAsset(existingRoom.icon, existingRoom.iconPublicId);
         }
 
         const updated = await updateById(COLLECTION, id, updateData);
@@ -150,6 +189,14 @@ export const updateRoom = async (req, res) => {
 export const deleteRoom = async (req, res) => {
     try {
         const { id } = req.params;
+        const room = await findById(COLLECTION, id);
+
+        if (!room) {
+            return res.status(404).json({ success: false, message: "Room not found" });
+        }
+
+        await deleteRoomAsset(room.image, room.imagePublicId);
+        await deleteRoomAsset(room.icon, room.iconPublicId);
         await deleteById(COLLECTION, id);
         return res.json({ success: true, message: "Room deleted successfully" });
     } catch (error) {

@@ -10,8 +10,8 @@ router.get('/', getAllRooms);
 router.get('/:slug', getRoomBySlug);
 
 // Admin
-router.post('/create', isAuthenticatedUser, isAdmin, upload.single('image'), createRoom);
-router.put('/:id', isAuthenticatedUser, isAdmin, upload.single('image'), updateRoom);
+router.post('/create', isAuthenticatedUser, isAdmin, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'icon', maxCount: 1 }]), createRoom);
+router.put('/:id', isAuthenticatedUser, isAdmin, upload.fields([{ name: 'image', maxCount: 1 }, { name: 'icon', maxCount: 1 }]), updateRoom);
 router.delete('/:id', isAuthenticatedUser, isAdmin, deleteRoom);
 
 export default router;

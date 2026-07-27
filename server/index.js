@@ -15,6 +15,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import morgan from "morgan";
 import helmet from "helmet";
@@ -75,6 +76,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 // --- Middlewares ---
+app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());

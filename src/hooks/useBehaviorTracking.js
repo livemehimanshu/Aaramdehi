@@ -43,9 +43,8 @@ const useBehaviorTracking = (productId, userId) => {
     const initializeSession = async () => {
       try {
         const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-        const currentUserId = userId || localStorage.getItem('userId');
-        
-        if (!token || !currentUserId) return;
+        const currentUserId = userId || localStorage.getItem('userId') || sessionStorage.getItem('behavior_guest_id') || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+        sessionStorage.setItem('behavior_guest_id', currentUserId);
 
         // Check if session already exists in sessionStorage
         const existingSessionId = sessionStorage.getItem(`behavior_session_${productId}`);
@@ -56,12 +55,17 @@ const useBehaviorTracking = (productId, userId) => {
         }
 
         // Create new session
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
         const response = await fetch('/api/analytics/create-session', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+          headers,
           body: JSON.stringify({
             userId: currentUserId,
             targetProductId: productId,
@@ -104,17 +108,24 @@ const useBehaviorTracking = (productId, userId) => {
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
       const interactions = interactionQueueRef.current;
       interactionQueueRef.current = [];
+      const currentUserId = userId || localStorage.getItem('userId') || sessionStorage.getItem('behavior_guest_id') || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      sessionStorage.setItem('behavior_guest_id', currentUserId);
 
       for (const interaction of interactions) {
+        const headers = {
+          'Content-Type': 'application/json'
+        };
+
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+
         const response = await fetch('/api/analytics/track-behavior', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+          headers,
           body: JSON.stringify({
             sessionId,
-            userId: localStorage.getItem('userId'),
+            userId: currentUserId,
             intendScore,
             targetProductId: productId,
             selectedColorVariant: localStorage.getItem(`variant_${productId}`),
@@ -259,13 +270,17 @@ const useBehaviorTracking = (productId, userId) => {
   const markAsConverted = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
       
       await fetch('/api/analytics/update-session-status', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           sessionId,
           status: 'converted'
@@ -284,13 +299,17 @@ const useBehaviorTracking = (productId, userId) => {
   const markAsAbandoned = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
       
       await fetch('/api/analytics/update-session-status', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers,
         body: JSON.stringify({
           sessionId,
           status: 'abandoned'

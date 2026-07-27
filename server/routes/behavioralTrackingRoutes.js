@@ -7,14 +7,14 @@ const router = express.Router();
 // ==================== USER / CLIENT TRACKING ROUTES ====================
 
 // Frontend uses /api/analytics/create-session, /api/analytics/track-behavior, etc.
-// These are accessible to any authenticated user
-router.post('/create-session', isAuthenticatedUser, behavioralController.createSession);
+// These are accessible to guest visitors as well as authenticated users
+router.post('/create-session', behavioralController.createSession);
 
 // Track user behavior (clicks, hover, zoom)
-router.post('/track-behavior', isAuthenticatedUser, behavioralController.trackBehavior);
+router.post('/track-behavior', behavioralController.trackBehavior);
 
 // Update session status
-router.post('/update-session-status', isAuthenticatedUser, behavioralController.updateSessionStatus);
+router.post('/update-session-status', behavioralController.updateSessionStatus);
 
 
 // ==================== ADMIN RETARGETING RULES CRUD ====================

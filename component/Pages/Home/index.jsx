@@ -1,4 +1,5 @@
 import React from 'react'
+import SEO from '../../header/SEO';
 import Header from '../../header/index.jsx';
 import HomeBanner from '../../banneradds/HomeBanner.jsx';
 import PopularProducts from '../../slider/PopularProducts.jsx';
@@ -11,9 +12,27 @@ import RecentlyViewed from '../../banneradds/RecentlyViewed.jsx';
 const Home = () => {
   return (
     <main className="w-full bg-white">
+      <SEO
+        title="Premium Furniture & Home Decor | Aaramdehi"
+        description="Discover premium furniture, beds, sofas, and home decor at Aaramdehi. Shop modern and timeless designs curated for comfort and style."
+        keywords="furniture, home decor, beds, sofas, premium furniture, aaramdehi"
+        ogImage="/logo.png"
+        ogUrl={window.location.href}
+      />
       {/* 1. Premium Hero Banner Section */}
       <section className="relative">
         <HomeBanner section="hero" />
+      </section>
+
+      <section className="max-w-7xl mx-auto px-4 py-10 md:py-16">
+        <div className="max-w-3xl">
+          <h1 className="text-3xl md:text-5xl font-serif text-[#1A365D] tracking-tight mb-4">
+            Premium Furniture & Home Decor for Modern Living
+          </h1>
+          <p className="text-base md:text-lg text-gray-600 leading-8">
+            Aaramdehi brings together timeless furniture, elegant upholstery, and thoughtfully curated home decor to create spaces that feel luxurious, comfortable, and personal.
+          </p>
+        </div>
       </section>
 
       {/* 2. Bedroom Dynamic Banner with Premium Spacing */}

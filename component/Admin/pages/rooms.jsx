@@ -28,9 +28,11 @@ const Rooms = () => {
     categorySlug: '',
     description: '',
     image: null,
+    icon: null,
     products: [] // ✅ Ensured fallback default empty array
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const [iconPreview, setIconPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -63,9 +65,11 @@ const Rooms = () => {
         categorySlug: room.categorySlug, 
         description: room.description || '', 
         image: null,
+        icon: null,
         products: room.products || [] 
       });
-      setImagePreview(room.image);
+      setImagePreview(room.image || null);
+      setIconPreview(room.icon || null);
     } else {
       setEditingRoom(null);
       setFormData({ 
@@ -73,9 +77,11 @@ const Rooms = () => {
         categorySlug: '', 
         description: '', 
         image: null,
+        icon: null,
         products: [] 
       });
       setImagePreview(null);
+      setIconPreview(null);
     }
     setIsModalOpen(true);
   };
@@ -84,6 +90,7 @@ const Rooms = () => {
     setIsModalOpen(false);
     setEditingRoom(null);
     setImagePreview(null);
+    setIconPreview(null);
     setProductSearch('');
   };
 
@@ -97,6 +104,7 @@ const Rooms = () => {
     data.append('categorySlug', formData.categorySlug);
     data.append('description', formData.description);
     if (formData.image) data.append('image', formData.image);
+    if (formData.icon) data.append('icon', formData.icon);
     
     // Arrays need to be stringified or appended individually for Backend parsing
     data.append('products', JSON.stringify(formData.products));
@@ -265,19 +273,38 @@ const Rooms = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Image</label>
-                  <div className="relative group">
-                    <div className={`w-full h-40 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden ${imagePreview ? 'border-solid border-blue-200' : 'border-gray-200 bg-gray-50'}`}>
-                      {imagePreview ? (
-                        <img src={imagePreview} className="w-full h-full object-cover" alt="preview" />
-                      ) : (
-                        <><FiImage size={28} className="text-gray-300 mb-1" /><p className="text-[9px] text-gray-400 font-bold uppercase">Click to upload</p></>
-                      )}
-                      <input type="file" onChange={(e) => {
-                         const file = e.target.files[0];
-                         if (file) { setFormData({...formData, image: file}); setImagePreview(URL.createObjectURL(file)); }
-                      }} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Image</label>
+                    <div className="relative group">
+                      <div className={`w-full h-40 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden ${imagePreview ? 'border-solid border-blue-200' : 'border-gray-200 bg-gray-50'}`}>
+                        {imagePreview ? (
+                          <img src={imagePreview} className="w-full h-full object-cover" alt="preview" />
+                        ) : (
+                          <><FiImage size={28} className="text-gray-300 mb-1" /><p className="text-[9px] text-gray-400 font-bold uppercase">Click to upload</p></>
+                        )}
+                        <input type="file" onChange={(e) => {
+                           const file = e.target.files[0];
+                           if (file) { setFormData({...formData, image: file}); setImagePreview(URL.createObjectURL(file)); }
+                        }} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Room Icon</label>
+                    <div className="relative group">
+                      <div className={`w-full h-40 rounded-2xl border-2 border-dashed flex flex-col items-center justify-center transition-all overflow-hidden ${iconPreview ? 'border-solid border-blue-200' : 'border-gray-200 bg-gray-50'}`}>
+                        {iconPreview ? (
+                          <img src={iconPreview} className="w-full h-full object-cover" alt="icon preview" />
+                        ) : (
+                          <><FiImage size={28} className="text-gray-300 mb-1" /><p className="text-[9px] text-gray-400 font-bold uppercase">Upload icon</p></>
+                        )}
+                        <input type="file" onChange={(e) => {
+                           const file = e.target.files[0];
+                           if (file) { setFormData({...formData, icon: file}); setIconPreview(URL.createObjectURL(file)); }
+                        }} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -16,6 +16,7 @@ import { reviewSchema } from '@/schemas/validationSchemas';
 import { productDetailsData } from '@/data/productDetails';
 import { useCart } from '@/hooks/useCart';
 import { sanitizationUtils } from '@/utils/sanitizationUtils';
+import useBehaviorTracking from '@/hooks/useBehaviorTracking';
 import toast from 'react-hot-toast'; // ✅ Import Toast
 import ProductPage from './ProductPage';
 import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
@@ -95,6 +96,10 @@ const ProductDetailsPage = () => {
   const navigate = useNavigate(); 
   const { id } = useParams();
   const { addToCart: addToCartContext, addToWishlist, isInWishlist } = useCart(); 
+  
+  // ✅ Initialize behavioral tracking
+  const userId = localStorage.getItem('userId');
+  const { trackInteraction, sessionId } = useBehaviorTracking(id, userId);
 
   // --- STATES ---
   const [productData, setProductData] = useState(null);
@@ -516,6 +521,7 @@ const ProductDetailsPage = () => {
           onActiveImgChange={setSelectedImage}
           imageAlt={productData.name}
           model3dUrl={productData.model3dUrl}
+          trackInteraction={trackInteraction}
           onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
           onOpenARStudio={handleOpenARStudio}

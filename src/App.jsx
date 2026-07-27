@@ -57,6 +57,10 @@ import Rooms from '../component/Admin/pages/rooms.jsx'
 import BannerList from '../component/Admin/pages/BannerList.jsx'
 import AddBanner from '../component/Admin/pages/AddBanner.jsx'
 import EditBanner from '../component/Admin/pages/EditBanner.jsx'
+// Behavioral Tracking
+import BehavioralAdsAdmin from '../component/Admin/BehavioralAdsAdmin.jsx'
+import BehavioralAnalyticsDashboard from '../component/Admin/BehavioralAnalyticsDashboard.jsx'
+import BehavioralInteractionLogs from '../component/Admin/BehavioralInteractionLogs.jsx'
 // Checkout Pages
 import CheckoutPage from '../component/checkout/CheckoutPage.jsx'
 import PaymentPage from '../component/payment/PaymentPage.jsx'
@@ -148,6 +152,11 @@ function AppContent() {
                 <Route path="settings" element={<Settings />} />
                 <Route path="seo-global" element={<SeoGlobal />} />
                 <Route path="team" element={<Team />} />
+                {/* Behavioral Tracking & Retargeting */}
+                <Route path="behavioral-ads" element={<BehavioralAdsAdmin />} />
+                <Route path="behavioral-analytics" element={<BehavioralAnalyticsDashboard />} />
+                <Route path="analytics/dashboard" element={<BehavioralAnalyticsDashboard />} />
+                <Route path="interaction-logs" element={<BehavioralInteractionLogs />} />
                 <Route path="files" element={<FileManager />} />
                 <Route path="appointments" element={<Appointments />} />
                 <Route path="shops" element={<Shops />} />

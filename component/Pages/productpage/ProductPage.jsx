@@ -399,7 +399,12 @@ const ProductPage = (props) => {
         <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-[1.02fr_0.98fr] md:gap-8 lg:p-8">
           <section className="space-y-6">
             <div className="rounded-[26px] border border-slate-200 bg-slate-50 p-5 sm:p-6">
-              <div className="relative mx-auto flex w-full max-w-[95%] justify-center overflow-hidden rounded-[22px] bg-white p-3 md:max-w-[80%] lg:max-w-[80%] xl:max-w-[80%] md:cursor-zoom-in">
+              <div className="relative mx-auto flex w-full max-w-[95%] justify-center overflow-hidden rounded-[22px] bg-white p-3 md:max-w-[80%] lg:max-w-[80%] xl:max-w-[80%] md:cursor-zoom-in" onMouseEnter={() => {
+                // Track zoom interaction when user hovers over product image
+                if (props.trackInteraction) {
+                  props.trackInteraction('zoom_open', 4);
+                }
+              }}>
                 <div className="flex h-full w-full min-h-[320px] items-center justify-center rounded-[20px] bg-slate-100 p-4 shadow-inner sm:min-h-[360px]">
                   <ReactImageMagnify
                     {...{
@@ -491,6 +496,10 @@ const ProductPage = (props) => {
                         key={`${imgUrl}-${thumbnailStartIndex + index}`}
                         className={`relative h-16 w-16 flex-shrink-0 rounded-3xl overflow-hidden border bg-white transition ${selectedImage === imgUrl ? 'border-orange-500 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-300'}`}
                         onClick={() => {
+                          // Track image click for behavioral analytics
+                          if (props.trackInteraction) {
+                            props.trackInteraction('image_click', 2);
+                          }
                           if (props.onActiveImgChange) {
                             props.onActiveImgChange(imgUrl);
                           } else {

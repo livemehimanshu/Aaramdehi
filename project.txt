@@ -48,6 +48,7 @@ f:\Aramdehi
 │  ├─ controllers\
 │  │  ├─ analytics.controller.js
 │  │  ├─ appointment.controller.js
+│  │  ├─ behavioralTrackingController
 │  │  ├─ banner.controller.js
 │  │  ├─ category.controller.js
 │  │  ├─ coupon.controller.js
@@ -72,6 +73,7 @@ f:\Aramdehi
 │  │  ├─ banner.route.js
 │  │  ├─ category.route.js
 │  │  ├─ category.routes.js
+│  │  ├─ behavioralTrackingRoutes 
 │  │  ├─ coupon.route.js
 │  │  ├─ ImageWithFallback.jsx
 │  │  ├─ JsonLdSchema.jsx
@@ -87,7 +89,7 @@ f:\Aramdehi
 │  │  ├─ team.route.js
 │  │  └─ user.route.js
 │  ├─ scripts\
-│  ├─ utils\
+│  ├─ utils\db-behavioral
 │  └─ vercel.json
 ├─ src\
 │  ├─ api\

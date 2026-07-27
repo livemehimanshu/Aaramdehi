@@ -42,6 +42,7 @@ import orderRouter from './routes/order.route.js';
 import shopsRouter from './routes/shops.route.js';
 import roomRouter from './routes/room.route.js';
 import newsletterRouter from './routes/newsletter.route.js';
+import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
 
 const app = express();
 
@@ -98,6 +99,7 @@ apiRouter.use("/coupons", couponRouter);
 apiRouter.use("/shops", shopsRouter);
 apiRouter.use("/appointments", appointmentRouter);
 apiRouter.use("/analytics", analyticsRouter);
+apiRouter.use("/analytics", behavioralTrackingRouter); // Behavioral tracking under /api/analytics/
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/refunds", refundRouter);
 apiRouter.use("/settings", settingsRouter);

@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   X, LayoutDashboard, ShoppingBag, BarChart2, Package, Tags, 
   Layers, CreditCard, RefreshCcw, TrendingUp, Mail, Users, 
-  MessageSquare, Settings, Globe, ShieldCheck, LogOut, Image as ImageIcon, Store 
+  MessageSquare, Settings, Globe, ShieldCheck, LogOut, Image as ImageIcon, Store,
+  Target, Eye, Activity
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -49,6 +50,14 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'SEO Optimizer', path: '/admin/seo-optimizer', icon: TrendingUp },
         { name: 'Coupons', path: '/admin/coupons', icon: Tags },
         { name: 'Newsletter', path: '/admin/newsletter', icon: Mail },
+      ]
+    },
+    { 
+      title: "Behavioral Targeting", 
+      items: [
+        { name: 'Retargeting Rules', path: '/admin/behavioral-ads', icon: Target },
+        { name: 'Analytics Dashboard', path: '/admin/analytics/dashboard', icon: BarChart2 },
+        { name: 'Interaction Logs', path: '/admin/interaction-logs', icon: Activity },
       ]
     },
     { 

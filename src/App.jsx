@@ -1,7 +1,7 @@
 import './App.css'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { auth } from '../src/api/firebase.js'
 import { onAuthStateChanged } from 'firebase/auth'
 
@@ -13,60 +13,61 @@ import AdminRoute from '../component/auth/AdminRoute.jsx'
 import Sidebar from '../component/sidebar/Sidebar.jsx'
 
 // Public Pages
-import Home from '../component/Pages/Home/index.jsx'
-import ProductListing from '../component/Pages/productListing/index.jsx'
-import ProductDetailsPage from '../component/Pages/productpage/ProductDetailsPage.jsx'
-import RoomProductsPage from '../component/Pages/productListing/RoomProductsPage.jsx'
-import ComparePage from '../component/Pages/ComparePage/index.jsx'
-import { BlogList, BlogDetail } from '../component/Pages/blog/blog.jsx'
+const Home = lazy(() => import('../component/Pages/Home/index.jsx'))
+const ProductListing = lazy(() => import('../component/Pages/productListing/index.jsx'))
+const ProductDetailsPage = lazy(() => import('../component/Pages/productpage/ProductDetailsPage.jsx'))
+const RoomProductsPage = lazy(() => import('../component/Pages/productListing/RoomProductsPage.jsx'))
+const ComparePage = lazy(() => import('../component/Pages/ComparePage/index.jsx'))
+const BlogList = lazy(() => import('../component/Pages/blog/blog.jsx').then((mod) => ({ default: mod.BlogList })))
+const BlogDetail = lazy(() => import('../component/Pages/blog/blog.jsx').then((mod) => ({ default: mod.BlogDetail })))
 
 // Auth & User Pages
-import AccountSettings from '../component/auth/AccountSettings.jsx'
-import ManageAddresses from '../component/auth/ManageAddresses.jsx'
-import PanCardInfo from '../component/pancard/PanCardInfo.jsx'
-import GiftCards from '../component/giftcard/GiftCards.jsx'
-import MyCoupons from '../component/giftcard/MyCoupons.jsx'
-import Wishlist from '../component/WishlistDrawer/Wishlist.jsx'
-import MyOrders from '../component/order/MyOrders.jsx'
-import OrderDetailsPage from '../component/order/OrderDetailsPage.jsx'
-import AuthPage from '../component/auth/AuthPage.jsx' // ✅ Ismein OTP flow behtar hai
+const AccountSettings = lazy(() => import('../component/auth/AccountSettings.jsx'))
+const ManageAddresses = lazy(() => import('../component/auth/ManageAddresses.jsx'))
+const PanCardInfo = lazy(() => import('../component/pancard/PanCardInfo.jsx'))
+const GiftCards = lazy(() => import('../component/giftcard/GiftCards.jsx'))
+const MyCoupons = lazy(() => import('../component/giftcard/MyCoupons.jsx'))
+const Wishlist = lazy(() => import('../component/WishlistDrawer/Wishlist.jsx'))
+const MyOrders = lazy(() => import('../component/order/MyOrders.jsx'))
+const OrderDetailsPage = lazy(() => import('../component/order/OrderDetailsPage.jsx'))
+const AuthPage = lazy(() => import('../component/auth/AuthPage.jsx'))
 
 // Admin Pages
-import Dashboard from '../component/Admin/pages/Dashboard.jsx'
-import Analytics from '../component/Admin/pages/analytics.jsx'
-import AllProducts from '../component/Admin/pages/AllProducts.jsx'
-import AddProduct from '../component/Admin/pages/AddProduct.jsx' 
-import EditProduct from '../component/Admin/pages/EditProduct.jsx'
-import Categories from '../component/Admin/pages/categories.jsx' 
-import Inventory from '../component/Admin/pages/inventory.jsx' 
-import Orders from '../component/Admin/pages/orders.jsx'
-import Payments from '../component/Admin/pages/payments.jsx'
-import Refunds from '../component/Admin/pages/refunds.jsx' 
-import SeoOptimizer from '../component/Admin/pages/ProductSeoEditor.jsx'
-import Coupons from '../component/Admin/pages/coupons.jsx'
-import Newsletter from '../component/Admin/pages/newsletter.jsx'
-import Users from '../component/Admin/pages/users.jsx'
-import Reviews from '../component/Admin/pages/reviews.jsx'
-import Settings from '../component/Admin/pages/settings.jsx'
-import SeoGlobal from '../component/Admin/pages/seo-global.jsx'
-import Team from '../component/Admin/pages/team.jsx'
-import FileManager from '../component/Admin/component/filemanger/FileManager.jsx'
-import Appointments from '../component/Admin/pages/appointment.jsx'
-import Shops from '../component/Admin/pages/Shops.jsx'
-import Rooms from '../component/Admin/pages/rooms.jsx'
-import BannerList from '../component/Admin/pages/BannerList.jsx'
-import AddBanner from '../component/Admin/pages/AddBanner.jsx'
-import EditBanner from '../component/Admin/pages/EditBanner.jsx'
-// Behavioral Tracking
-import BehavioralAdsAdmin from '../component/Admin/BehavioralAdsAdmin.jsx'
-import BehavioralAnalyticsDashboard from '../component/Admin/BehavioralAnalyticsDashboard.jsx'
-import BehavioralInteractionLogs from '../component/Admin/BehavioralInteractionLogs.jsx'
+const Dashboard = lazy(() => import('../component/Admin/pages/Dashboard.jsx'))
+const Analytics = lazy(() => import('../component/Admin/pages/analytics.jsx'))
+const AllProducts = lazy(() => import('../component/Admin/pages/AllProducts.jsx'))
+const AddProduct = lazy(() => import('../component/Admin/pages/AddProduct.jsx'))
+const EditProduct = lazy(() => import('../component/Admin/pages/EditProduct.jsx'))
+const Categories = lazy(() => import('../component/Admin/pages/categories.jsx'))
+const Inventory = lazy(() => import('../component/Admin/pages/inventory.jsx'))
+const Orders = lazy(() => import('../component/Admin/pages/orders.jsx'))
+const Payments = lazy(() => import('../component/Admin/pages/payments.jsx'))
+const Refunds = lazy(() => import('../component/Admin/pages/refunds.jsx'))
+const SeoOptimizer = lazy(() => import('../component/Admin/pages/ProductSeoEditor.jsx'))
+const Coupons = lazy(() => import('../component/Admin/pages/coupons.jsx'))
+const Newsletter = lazy(() => import('../component/Admin/pages/newsletter.jsx'))
+const Users = lazy(() => import('../component/Admin/pages/users.jsx'))
+const Reviews = lazy(() => import('../component/Admin/pages/reviews.jsx'))
+const Settings = lazy(() => import('../component/Admin/pages/settings.jsx'))
+const SeoGlobal = lazy(() => import('../component/Admin/pages/seo-global.jsx'))
+const Team = lazy(() => import('../component/Admin/pages/team.jsx'))
+const FileManager = lazy(() => import('../component/Admin/component/filemanger/FileManager.jsx'))
+const Appointments = lazy(() => import('../component/Admin/pages/appointment.jsx'))
+const Shops = lazy(() => import('../component/Admin/pages/Shops.jsx'))
+const Rooms = lazy(() => import('../component/Admin/pages/rooms.jsx'))
+const BannerList = lazy(() => import('../component/Admin/pages/BannerList.jsx'))
+const AddBanner = lazy(() => import('../component/Admin/pages/AddBanner.jsx'))
+const EditBanner = lazy(() => import('../component/Admin/pages/EditBanner.jsx'))
+const BehavioralAdsAdmin = lazy(() => import('../component/Admin/BehavioralAdsAdmin.jsx'))
+const BehavioralAnalyticsDashboard = lazy(() => import('../component/Admin/BehavioralAnalyticsDashboard.jsx'))
+const BehavioralInteractionLogs = lazy(() => import('../component/Admin/BehavioralInteractionLogs.jsx'))
+
 // Checkout Pages
-import CheckoutPage from '../component/checkout/CheckoutPage.jsx'
-import PaymentPage from '../component/payment/PaymentPage.jsx'
-import OrderSuccess from '../component/Pages/OrderSuccess/OrderSuccess.jsx'
-import ARStudio from '../component/Pages/ARStudio.jsx'
-import NotFound from '../component/Pages/NotFound.jsx'
+const CheckoutPage = lazy(() => import('../component/checkout/CheckoutPage.jsx'))
+const PaymentPage = lazy(() => import('../component/payment/PaymentPage.jsx'))
+const OrderSuccess = lazy(() => import('../component/Pages/OrderSuccess/OrderSuccess.jsx'))
+const ARStudio = lazy(() => import('../component/Pages/ARStudio.jsx'))
+const NotFound = lazy(() => import('../component/Pages/NotFound.jsx'))
 
 function AppContent() {
   const location = useLocation()
@@ -131,71 +132,73 @@ function AppContent() {
           )}
 
           <div className="flex-1 w-full overflow-hidden">
-            <Routes>
-              {/* ADMIN ROUTES */}
-              <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-                <Route index element={<Dashboard />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="products" element={<AllProducts />} />
-                <Route path="add-product" element={<AddProduct />} />
-                <Route path="edit-product/:id" element={<EditProduct />} />
-                <Route path="categories" element={<Categories />} />
-                <Route path="inventory" element={<Inventory />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="payments" element={<Payments />} />
-                <Route path="refunds" element={<Refunds />} />
-                <Route path="seo-optimizer" element={<SeoOptimizer />} />
-                <Route path="coupons" element={<Coupons />} />
-                <Route path="newsletter" element={<Newsletter />} />
-                <Route path="users" element={<Users />} />
-                <Route path="reviews" element={<Reviews />} />
-                <Route path="settings" element={<Settings />} />
-                <Route path="seo-global" element={<SeoGlobal />} />
-                <Route path="team" element={<Team />} />
-                {/* Behavioral Tracking & Retargeting */}
-                <Route path="behavioral-ads" element={<BehavioralAdsAdmin />} />
-                <Route path="behavioral-analytics" element={<BehavioralAnalyticsDashboard />} />
-                <Route path="analytics/dashboard" element={<BehavioralAnalyticsDashboard />} />
-                <Route path="interaction-logs" element={<BehavioralInteractionLogs />} />
-                <Route path="files" element={<FileManager />} />
-                <Route path="appointments" element={<Appointments />} />
-                <Route path="shops" element={<Shops />} />
-                <Route path="rooms" element={<Rooms />} />
-                <Route path="banners" element={<BannerList />} />
-                <Route path="add-banner" element={<AddBanner />} />
-                <Route path="edit-banner/:id" element={<EditBanner />} />
-              </Route>
+            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-400">Loading page...</div>}>
+              <Routes>
+                {/* ADMIN ROUTES */}
+                <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                  <Route index element={<Dashboard />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="analytics" element={<Analytics />} />
+                  <Route path="products" element={<AllProducts />} />
+                  <Route path="add-product" element={<AddProduct />} />
+                  <Route path="edit-product/:id" element={<EditProduct />} />
+                  <Route path="categories" element={<Categories />} />
+                  <Route path="inventory" element={<Inventory />} />
+                  <Route path="orders" element={<Orders />} />
+                  <Route path="payments" element={<Payments />} />
+                  <Route path="refunds" element={<Refunds />} />
+                  <Route path="seo-optimizer" element={<SeoOptimizer />} />
+                  <Route path="coupons" element={<Coupons />} />
+                  <Route path="newsletter" element={<Newsletter />} />
+                  <Route path="users" element={<Users />} />
+                  <Route path="reviews" element={<Reviews />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="seo-global" element={<SeoGlobal />} />
+                  <Route path="team" element={<Team />} />
+                  {/* Behavioral Tracking & Retargeting */}
+                  <Route path="behavioral-ads" element={<BehavioralAdsAdmin />} />
+                  <Route path="behavioral-analytics" element={<BehavioralAnalyticsDashboard />} />
+                  <Route path="analytics/dashboard" element={<BehavioralAnalyticsDashboard />} />
+                  <Route path="interaction-logs" element={<BehavioralInteractionLogs />} />
+                  <Route path="files" element={<FileManager />} />
+                  <Route path="appointments" element={<Appointments />} />
+                  <Route path="shops" element={<Shops />} />
+                  <Route path="rooms" element={<Rooms />} />
+                  <Route path="banners" element={<BannerList />} />
+                  <Route path="add-banner" element={<AddBanner />} />
+                  <Route path="edit-banner/:id" element={<EditBanner />} />
+                </Route>
 
-              {/* PUBLIC ROUTES */}
-              <Route path="/" element={<Home/>}/>
-              <Route path="/product" element={<ProductListing/>}/>
-              <Route path="/products" element={<ProductListing/>}/>
-              <Route path="/product/:id" element={<ProductDetailsPage />} />
-              <Route path="/ar-studio" element={<ARStudio />} />
-              <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
-              <Route path="/compare" element={<ComparePage />} />
-              <Route path="/login" element={<AuthPage />} /> 
-              <Route path="/register" element={<AuthPage />} />
-              <Route path="/signup" element={<AuthPage />} />
-              <Route path="/account/profile" element={<AccountSettings />} />
-              <Route path="/account/addresses" element={<ManageAddresses />} />
-              <Route path="/account/pan" element={<PanCardInfo />} />
-              <Route path="/orders" element={<MyOrders />} />
-              <Route path="/order-details/:id" element={<OrderDetailsPage />} />
-              <Route path="/payments/giftcards" element={<GiftCards />} />
-              <Route path="/payments/upi" element={<PageWrapper title="Saved UPI" />} />
-              <Route path="/payments/cards" element={<PageWrapper title="Saved Cards" />} />
-              <Route path="/coupons" element={<MyCoupons />} />
-              <Route path="/wishlist" element={<Wishlist />} />
-              <Route path="/reviews" element={<PageWrapper title="My Reviews & Ratings" />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/payment" element={<PaymentPage />} />
-              <Route path="/order-success" element={<OrderSuccess />} />
-              <Route path="/blog" element={<BlogList />} />
-              <Route path="/blog/:slug" element={<BlogDetail />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                {/* PUBLIC ROUTES */}
+                <Route path="/" element={<Home/>}/>
+                <Route path="/product" element={<ProductListing/>}/>
+                <Route path="/products" element={<ProductListing/>}/>
+                <Route path="/product/:id" element={<ProductDetailsPage />} />
+                <Route path="/ar-studio" element={<ARStudio />} />
+                <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
+                <Route path="/compare" element={<ComparePage />} />
+                <Route path="/login" element={<AuthPage />} /> 
+                <Route path="/register" element={<AuthPage />} />
+                <Route path="/signup" element={<AuthPage />} />
+                <Route path="/account/profile" element={<AccountSettings />} />
+                <Route path="/account/addresses" element={<ManageAddresses />} />
+                <Route path="/account/pan" element={<PanCardInfo />} />
+                <Route path="/orders" element={<MyOrders />} />
+                <Route path="/order-details/:id" element={<OrderDetailsPage />} />
+                <Route path="/payments/giftcards" element={<GiftCards />} />
+                <Route path="/payments/upi" element={<PageWrapper title="Saved UPI" />} />
+                <Route path="/payments/cards" element={<PageWrapper title="Saved Cards" />} />
+                <Route path="/coupons" element={<MyCoupons />} />
+                <Route path="/wishlist" element={<Wishlist />} />
+                <Route path="/reviews" element={<PageWrapper title="My Reviews & Ratings" />} />
+                <Route path="/checkout" element={<CheckoutPage />} />
+                <Route path="/payment" element={<PaymentPage />} />
+                <Route path="/order-success" element={<OrderSuccess />} />
+                <Route path="/blog" element={<BlogList />} />
+                <Route path="/blog/:slug" element={<BlogDetail />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </div>
         </div>
       </main>

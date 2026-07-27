@@ -1,0 +1,63 @@
+/* Zoom Magnify Responsive Styles */
+
+.zoom-magnify-container {
+  border-radius: 28px !important;
+  border: 1px solid rgb(226, 232, 240) !important;
+  background: white !important;
+  box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.15) !important;
+}
+
+/* Desktop View (lg and above) - Show zoom to the right */
+@media (min-width: 1024px) {
+  .zoom-magnify-container {
+    position: fixed !important;
+    top: 50% !important;
+    right: 2rem !important;
+    transform: translateY(-50%) !important;
+    width: 340px !important;
+    height: 440px !important;
+    z-index: 9999 !important;
+  }
+}
+
+/* Tablet View (md to lg) - Position below or smaller */
+@media (max-width: 1023px) and (min-width: 768px) {
+  .zoom-magnify-container {
+    position: fixed !important;
+    bottom: 1rem !important;
+    right: 1rem !important;
+    width: 280px !important;
+    height: 360px !important;
+    z-index: 50 !important;
+  }
+}
+
+/* Mobile View (below md) - Hide zoom on mobile by default */
+@media (max-width: 767px) {
+  .zoom-magnify-container {
+    display: none !important;
+  }
+}
+
+/* Zoom Portal Container */
+#zoom-portal {
+  pointer-events: none;
+}
+
+@media (min-width: 1024px) {
+  #zoom-portal {
+    pointer-events: auto;
+  }
+}
+
+/* Magnifier Lens Style */
+.react-image-magnify-lens {
+  border: 2px solid rgb(15, 23, 42);
+  background-color: rgba(15, 23, 42, 0.2);
+  border-radius: 4px;
+}
+
+/* Enlarged Image Container */
+.react-image-magnify-enlarged-image {
+  border-radius: 28px;
+}

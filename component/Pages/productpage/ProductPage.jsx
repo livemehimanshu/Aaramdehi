@@ -12,6 +12,7 @@ import {
   FiCheckCircle,
   FiPackage
 } from 'react-icons/fi';
+import '@/styles/zoom-magnify.css';
 
 const PLACEHOLDER_IMAGE = 'https://placehold.co/600x600?text=No+Image';
 
@@ -109,6 +110,33 @@ const normalizeVariantList = (value, kind = 'color') => {
   return [];
 };
 
+const normalizeCustomAttributes = (value) => {
+  if (value == null) return [];
+  if (typeof value === 'string') {
+    try {
+      return normalizeCustomAttributes(JSON.parse(value));
+    } catch {
+      return [];
+    }
+  }
+  if (Array.isArray(value)) {
+    return value.map((item, index) => {
+      const rawOptions = Array.isArray(item?.options) ? item.options : [];
+      return {
+        title: item?.title || item?.name || item?.label || `Option ${index + 1}`,
+        options: rawOptions.map((option, optionIndex) => ({
+          label: option?.label || option?.name || `Option ${optionIndex + 1}`,
+          priceModifier: Number(option?.priceModifier ?? option?.price ?? 0),
+          mrpModifier: Number(option?.mrpModifier ?? option?.mrp ?? 0),
+          stock: Number(option?.stock ?? option?.inventory ?? 0),
+          ...option
+        }))
+      };
+    }).filter((attr) => Array.isArray(attr.options) && attr.options.length > 0);
+  }
+  return [];
+};
+
 const normalizeProduct = (item) => {
   const base = item || {};
   const rawImages = normalizeImageList(base.images || base.gallery || base.productImages || base.image || []);
@@ -145,6 +173,7 @@ const normalizeProduct = (item) => {
       Material: base.material || 'Microfiber',
       'Weave Type': base.weaveType || 'Low profile non-slip'
     },
+    customAttributes: normalizeCustomAttributes(base.customAttributes || base.sets || base.attributes),
     features: base.features || base.highlights || [
       'Easy care microfiber surface',
       'Anti-skid backing for secure placement',
@@ -173,16 +202,20 @@ const ProductPage = (props) => {
     stock,
     specs,
     features,
+    customAttributes,
     modelUrl
   } = normalized;
 
   const [selectedColor, setSelectedColor] = useState(0);
+  const [selectedCustomOptions, setSelectedCustomOptions] = useState({});
   const [selectedSize, setSelectedSize] = useState(sizes[0] || null);
   const [internalSelectedImage, setInternalSelectedImage] = useState(PLACEHOLDER_IMAGE);
   const [internalQuantity, setInternalQuantity] = useState(props.quantity || 1);
   const [pincodeInput, setPincodeInput] = useState('250001');
   const [deliveryStatus, setDeliveryStatus] = useState('Free delivery by Sunday, 2 Aug');
   const [isWishlisted, setIsWishlisted] = useState(Boolean(props.isInWishlist));
+  const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0);
+  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
 
   const selectedImage = props.activeImg || internalSelectedImage;
   const quantity = props.quantity ?? internalQuantity;
@@ -195,16 +228,70 @@ const ProductPage = (props) => {
     return [PLACEHOLDER_IMAGE];
   }, [activeVariant, images]);
 
-  const activePrice = Number(selectedSize?.price ?? activeVariant.price ?? price ?? 0);
-  const activeMrp = Number(selectedSize?.mrp ?? activeVariant.mrp ?? mrp ?? 0);
-  const activeDiscount = discountPercent || (activeMrp > activePrice ? Math.round(((activeMrp - activePrice) / activeMrp) * 100) : 0);
-  const titleLabel = activeVariant.name ? `${title} — ${activeVariant.name}` : title;
-  const currentModelUrl = activeVariant.modelUrl || modelUrl || '';
+  const activeImageIndex = useMemo(() => activeImages.findIndex((img) => img === selectedImage), [activeImages, selectedImage]);
+
+  const moveGalleryImage = (direction) => {
+    if (!activeImages.length) return;
+    const currentIndex = activeImageIndex >= 0 ? activeImageIndex : 0;
+    const nextIndex = direction === 'next'
+      ? (currentIndex + 1) % activeImages.length
+      : (currentIndex - 1 + activeImages.length) % activeImages.length;
+    const nextImage = activeImages[nextIndex];
+    if (props.onActiveImgChange) {
+      props.onActiveImgChange(nextImage);
+    } else {
+      setInternalSelectedImage(nextImage);
+    }
+  };
+
+  const galleryImages = activeImages;
+  const visibleThumbnails = galleryImages.slice(thumbnailStartIndex, thumbnailStartIndex + 6);
+  const canSlideThumbnailsPrev = thumbnailStartIndex > 0;
+  const canSlideThumbnailsNext = thumbnailStartIndex + 6 < galleryImages.length;
+
+  const slideThumbnails = (direction) => {
+    if (direction === 'next' && canSlideThumbnailsNext) {
+      setThumbnailStartIndex((prev) => Math.min(prev + 1, galleryImages.length - 6));
+    }
+    if (direction === 'prev' && canSlideThumbnailsPrev) {
+      setThumbnailStartIndex((prev) => Math.max(prev - 1, 0));
+    }
+  };
+
+  const handleImageError = (event) => {
+    if (!event?.target) return;
+    const currentSrc = event.target.getAttribute('src');
+    if (!currentSrc || currentSrc === PLACEHOLDER_IMAGE || event.target.dataset.fallbackApplied === 'true') {
+      return;
+    }
+    event.target.setAttribute('src', PLACEHOLDER_IMAGE);
+    event.target.dataset.fallbackApplied = 'true';
+  };
 
   useEffect(() => {
     setSelectedSize(sizes[0] || null);
   }, [sizes]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (Array.isArray(customAttributes) && customAttributes.length > 0) {
+      const initialSelection = customAttributes.reduce((acc, attribute, attrIndex) => {
+        const defaultIndex = Array.isArray(attribute.options) && attribute.options.length > 0 ? 0 : -1;
+        if (defaultIndex >= 0) acc[attrIndex] = defaultIndex;
+        return acc;
+      }, {});
+      setSelectedCustomOptions(initialSelection);
+    } else {
+      setSelectedCustomOptions({});
+    }
+  }, [customAttributes]);
 
   useEffect(() => {
     const nextImage = activeImages[0] || PLACEHOLDER_IMAGE;
@@ -217,14 +304,46 @@ const ProductPage = (props) => {
     setInternalSelectedImage((current) => (current && activeImages.includes(current) ? current : nextImage));
   }, [selectedColor, activeImages, props.activeImg, props.onActiveImgChange]);
 
-  const handleImageError = (event) => {
-    if (!event?.target) return;
-    const currentSrc = event.target.getAttribute('src');
-    if (!currentSrc || currentSrc === PLACEHOLDER_IMAGE || event.target.dataset.fallbackApplied === 'true') {
-      return;
-    }
-    event.target.setAttribute('src', PLACEHOLDER_IMAGE);
-    event.target.dataset.fallbackApplied = 'true';
+  useEffect(() => {
+    setThumbnailStartIndex(0);
+  }, [galleryImages]);
+
+  const selectedCustomAttributeSelections = useMemo(() => {
+    if (!Array.isArray(customAttributes)) return [];
+    return customAttributes.map((attribute, attrIndex) => {
+      const optionIndex = selectedCustomOptions[attrIndex];
+      return attribute.options?.[optionIndex] || null;
+    }).filter(Boolean);
+  }, [customAttributes, selectedCustomOptions]);
+
+  const customAttributePriceModifier = useMemo(() => {
+    return selectedCustomAttributeSelections.reduce((sum, option) => sum + Number(option.priceModifier || 0), 0);
+  }, [selectedCustomAttributeSelections]);
+
+  const customAttributeMrpModifier = useMemo(() => {
+    return selectedCustomAttributeSelections.reduce((sum, option) => sum + Number(option.mrpModifier || 0), 0);
+  }, [selectedCustomAttributeSelections]);
+
+  const customSelectionStock = useMemo(() => {
+    if (!selectedCustomAttributeSelections.length) return stock;
+    const stockValues = selectedCustomAttributeSelections.map((option) => Number(option.stock ?? 0)).filter((value) => !Number.isNaN(value));
+    if (!stockValues.length) return stock;
+    return Math.min(...stockValues);
+  }, [selectedCustomAttributeSelections, stock]);
+
+  const baseActivePrice = Number(selectedSize?.price ?? activeVariant.price ?? price ?? 0);
+  const baseActiveMrp = Number(selectedSize?.mrp ?? activeVariant.mrp ?? mrp ?? 0);
+  const activePrice = Math.max(0, baseActivePrice + customAttributePriceModifier);
+  const activeMrp = Math.max(0, baseActiveMrp + customAttributeMrpModifier);
+  const activeDiscount = discountPercent || (activeMrp > activePrice ? Math.round(((activeMrp - activePrice) / activeMrp) * 100) : 0);
+  const titleLabel = activeVariant.name ? `${title} — ${activeVariant.name}` : title;
+  const currentModelUrl = activeVariant.modelUrl || modelUrl || '';
+
+  const handleSelectCustomOption = (attrIndex, optionIndex) => {
+    setSelectedCustomOptions((prev) => ({
+      ...prev,
+      [attrIndex]: optionIndex
+    }));
   };
 
   const handleSelectColor = (index) => {
@@ -246,7 +365,14 @@ const ProductPage = (props) => {
   };
 
   const handleAction = (action) => {
-    const payload = { product: normalized, color: activeVariant, size: selectedSize, quantity, image: selectedImage };
+    const payload = {
+      product: normalized,
+      color: activeVariant,
+      size: selectedSize,
+      quantity,
+      image: selectedImage,
+      selectedCustomAttributes: selectedCustomAttributeSelections
+    };
     if (action === 'cart') {
       props.onAddToCart?.(payload);
     }
@@ -255,79 +381,126 @@ const ProductPage = (props) => {
     }
   };
 
-  const galleryImages = activeImages;
-
   return (
-    <div className="min-h-full bg-slate-50 px-2 py-4 sm:px-4 lg:px-6">
-      <div className="mx-auto w-full max-w-6xl rounded-[28px] border border-slate-200 bg-white shadow-[0_20px_60px_-30px_rgba(15,23,42,0.35)]">
-        <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-[1.08fr_0.92fr] md:gap-8 lg:p-8">
+    <div className="min-h-full bg-slate-100 px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1480px] rounded-[32px] border border-slate-200 bg-white shadow-[0_32px_80px_-38px_rgba(15,23,42,0.24)]">
+        <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-[1.02fr_0.98fr] md:gap-8 lg:p-8">
           <section className="space-y-6">
-            <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-3 sm:p-4">
-              <div className="relative overflow-visible rounded-[20px] bg-white md:cursor-zoom-in">
-              <ReactImageMagnify
-                {...{
-                  smallImage: {
-                    alt: titleLabel,
-                    isFluidWidth: true,
-                    src: selectedImage || PLACEHOLDER_IMAGE
-                  },
-                  largeImage: {
-                    src: selectedImage || PLACEHOLDER_IMAGE,
-                    width: 1200,
-                    height: 1200
-                  },
-                  enlargedImageContainerDimensions: {
-                    width: '160%',
-                    height: '100%'
-                  },
-                  enlargedImagePosition: 'beside',
-                  lensStyle: { backgroundColor: 'rgba(15, 23, 42, 0.2)' },
-                  isHintEnabled: true,
-                  isActivatedOnTouch: true,
-                  isEnlargedImagePortalEnabled: true,
-                  isEnlargedImagePortalEnabledForTouch: true,
-                  enlargedImagePortalId: 'zoom-portal',
-                  hoverDelayInMs: 100,
-                  hoverOffDelayInMs: 50,
-                  fadeDurationInMs: 200,
-                  shouldUsePositiveSpaceLens: true,
-                  enlargedImageContainerClassName: 'rounded-[28px] border border-slate-200 bg-white shadow-xl',
-                  enlargedImageClassName: 'rounded-[28px]',
-                  enlargedImageContainerStyle: {
-                    zIndex: 9999,
-                    position: 'fixed',
-                    top: '12%',
-                    right: '1rem',
-                    width: '320px',
-                    height: '420px'
-                  }
-                }}
-              />
-              <div className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm">
-                {activeVariant.name || 'Standard'}
-              </div>
-            </div>
-            <div id="zoom-portal" className="pointer-events-none" />
-            </div>
-
-            <div className="flex items-center gap-3 overflow-x-auto pb-1">
-              {galleryImages.map((imgUrl, index) => (
+            <div className="rounded-[26px] border border-slate-200 bg-slate-50 p-5 sm:p-6">
+              <div className="relative mx-auto flex w-full max-w-[95%] justify-center overflow-hidden rounded-[22px] bg-white p-3 md:max-w-[80%] lg:max-w-[80%] xl:max-w-[80%] md:cursor-zoom-in">
+                <div className="flex h-full w-full min-h-[320px] items-center justify-center rounded-[20px] bg-slate-100 p-4 shadow-inner sm:min-h-[360px]">
+                  <ReactImageMagnify
+                    {...{
+                      smallImage: {
+                        alt: titleLabel,
+                        isFluidWidth: true,
+                        src: selectedImage || PLACEHOLDER_IMAGE
+                      },
+                      largeImage: {
+                        src: selectedImage || PLACEHOLDER_IMAGE,
+                        width: 1200,
+                        height: 1200
+                      },
+                      enlargedImageContainerDimensions: {
+                        width: '160%',
+                        height: '100%'
+                      },
+                      enlargedImagePosition: 'beside',
+                      lensStyle: { backgroundColor: 'rgba(15, 23, 42, 0.2)' },
+                      isHintEnabled: true,
+                      isActivatedOnTouch: true,
+                      isEnlargedImagePortalEnabled: isLargeScreen,
+                      isEnlargedImagePortalEnabledForTouch: false,
+                      enlargedImagePortalId: 'zoom-portal',
+                      hoverDelayInMs: 100,
+                      hoverOffDelayInMs: 50,
+                      fadeDurationInMs: 200,
+                      shouldUsePositiveSpaceLens: true,
+                      enlargedImageContainerClassName: 'rounded-[28px] border border-slate-200 bg-white shadow-xl zoom-magnify-container',
+                      enlargedImageClassName: 'rounded-[28px]',
+                      enlargedImageContainerStyle: isLargeScreen ? {
+                        zIndex: 9999,
+                        position: 'fixed',
+                        top: '50%',
+                        right: '2rem',
+                        transform: 'translateY(-50%)',
+                        width: '340px',
+                        height: '440px',
+                        borderRadius: '28px'
+                      } : {
+                        zIndex: 50,
+                        position: 'absolute',
+                        top: '0',
+                        right: '0',
+                        width: '100%',
+                        height: '100%',
+                        display: 'none'
+                      }
+                    }}
+                  />
+                </div>
                 <button
                   type="button"
-                  key={`${imgUrl}-${index}`}
-                  className={`h-14 w-14 sm:h-16 sm:w-16 shrink-0 overflow-hidden rounded-2xl border bg-white transition ${selectedImage === imgUrl ? 'border-orange-500 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-300'}`}
-                  onClick={() => {
-                    if (props.onActiveImgChange) {
-                      props.onActiveImgChange(imgUrl);
-                    } else {
-                      setInternalSelectedImage(imgUrl);
-                    }
-                  }}
+                  onClick={() => moveGalleryImage('prev')}
+                  className="absolute left-4 top-1/2 z-20 -translate-y-1/2 rounded-full border border-slate-200 bg-white/95 p-3 text-slate-700 shadow-lg transition hover:bg-white"
                 >
-                  <img src={imgUrl} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" onError={handleImageError} />
+                  <FiChevronLeft size={18} />
                 </button>
-              ))}
+                <button
+                  type="button"
+                  onClick={() => moveGalleryImage('next')}
+                  className="absolute right-4 top-1/2 z-20 -translate-y-1/2 rounded-full border border-slate-200 bg-white/95 p-3 text-slate-700 shadow-lg transition hover:bg-white"
+                >
+                  <FiChevronRight size={18} />
+                </button>
+                <div className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600 shadow-sm">
+                  {activeVariant.name || 'Standard'}
+                </div>
+              </div>
+            <div id="zoom-portal" className="pointer-events-none" />
+
+            <div className="mt-4 rounded-[28px] bg-white p-3 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => slideThumbnails('prev')}
+                  disabled={!canSlideThumbnailsPrev}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  <FiChevronLeft size={18} />
+                </button>
+                <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white px-2 py-3">
+                  <div className="inline-flex items-center gap-3">
+                    {visibleThumbnails.map((imgUrl, index) => (
+                      <button
+                        type="button"
+                        key={`${imgUrl}-${thumbnailStartIndex + index}`}
+                        className={`relative h-16 w-16 flex-shrink-0 rounded-3xl overflow-hidden border bg-white transition ${selectedImage === imgUrl ? 'border-orange-500 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-300'}`}
+                        onClick={() => {
+                          if (props.onActiveImgChange) {
+                            props.onActiveImgChange(imgUrl);
+                          } else {
+                            setInternalSelectedImage(imgUrl);
+                          }
+                        }}
+                      >
+                        <img src={imgUrl} alt={`Thumbnail ${thumbnailStartIndex + index + 1}`} className="h-full w-full object-cover" onError={handleImageError} />
+                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-1 text-[10px] text-white text-center">{thumbnailStartIndex + index + 1}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => slideThumbnails('next')}
+                  disabled={!canSlideThumbnailsNext}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                >
+                  <FiChevronRight size={18} />
+                </button>
+              </div>
             </div>
+          </div>
 
             {currentModelUrl && (
               <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
@@ -359,8 +532,8 @@ const ProductPage = (props) => {
             )}
           </section>
 
-          <aside className="space-y-5">
-            <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <aside className="space-y-5 lg:sticky lg:top-8">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
                   {brand}
@@ -381,6 +554,10 @@ const ProductPage = (props) => {
                 <span className="text-4xl font-semibold text-slate-900">₹{formatPrice(activePrice)}</span>
                 <span className="text-sm text-slate-500 line-through">₹{formatPrice(activeMrp)}</span>
               </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">Estimated delivery: <span className="font-semibold text-slate-900">{deliveryDate}</span></div>
+                <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">Location: <span className="font-semibold text-slate-900">{location}</span></div>
+              </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1">
@@ -392,8 +569,8 @@ const ProductPage = (props) => {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-center justify-between">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-900">Select colour</p>
                 <span className="text-sm text-slate-500">{activeVariant.name || 'Standard'}</span>
               </div>
@@ -404,10 +581,10 @@ const ProductPage = (props) => {
                     <button
                       key={`${color.name}-${index}`}
                       type="button"
-                      className={`flex items-center gap-3 rounded-2xl border px-3 py-2 text-left transition ${selectedColor === index ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                      className={`flex min-w-[160px] items-center gap-3 rounded-[28px] border px-3 py-3 text-left transition ${selectedColor === index ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
                       onClick={() => handleSelectColor(index)}
                     >
-                      <img src={swatchImage} alt={color.name || `Variant ${index + 1}`} className="h-12 w-12 rounded-xl object-cover" onError={handleImageError} />
+                      <img src={swatchImage} alt={color.name || `Variant ${index + 1}`} className="h-14 w-14 rounded-2xl object-cover" onError={handleImageError} />
                       <div>
                         <p className="text-sm font-semibold text-slate-900">{color.name}</p>
                         <p className="text-xs text-slate-500">₹{formatPrice(Number(color.price ?? price ?? 0))}</p>
@@ -418,19 +595,19 @@ const ProductPage = (props) => {
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-center justify-between">
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="mb-4 flex items-center justify-between gap-3">
                 <p className="text-sm font-semibold text-slate-900">Choose size</p>
                 <span className="text-sm text-slate-500">{getSizeLabel(selectedSize)}</span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-3">
                 {sizes.map((sizeEntry, index) => {
                   const sizeLabel = getSizeLabel(sizeEntry);
                   return (
                     <button
                       key={`${sizeLabel}-${index}`}
                       type="button"
-                      className={`rounded-full border px-3 py-2 text-sm font-medium transition ${selectedSize && getSizeLabel(selectedSize) === sizeLabel ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
+                      className={`rounded-full border px-4 py-3 text-sm font-semibold transition ${selectedSize && getSizeLabel(selectedSize) === sizeLabel ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
                       onClick={() => setSelectedSize(sizeEntry)}
                     >
                       {sizeLabel}
@@ -439,6 +616,54 @@ const ProductPage = (props) => {
                 })}
               </div>
             </div>
+
+            {customAttributes?.length > 0 && (
+              <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-sm font-semibold text-slate-900">Select Set</p>
+                  <span className="text-sm text-slate-500">{customAttributes.length} group{customAttributes.length > 1 ? 's' : ''}</span>
+                </div>
+                <div className="space-y-5">
+                  {customAttributes.map((attribute, attrIndex) => (
+                    <div key={`${attribute.title || 'set'}-${attrIndex}`} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{attribute.title}</p>
+                          <p className="text-xs text-slate-500">Choose one option below</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        {attribute.options.map((option, optionIndex) => {
+                          const isSelected = selectedCustomOptions[attrIndex] === optionIndex;
+                          return (
+                            <button
+                              key={`${attribute.title}-${option.label}-${optionIndex}`}
+                              type="button"
+                              className={`rounded-2xl border p-4 text-left transition ${isSelected ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                              onClick={() => handleSelectCustomOption(attrIndex, optionIndex)}
+                            >
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="text-sm font-semibold text-slate-900">{option.label || 'Option'}</p>
+                                {isSelected && <span className="text-xs font-semibold uppercase text-orange-600">Selected</span>}
+                              </div>
+                              <p className="mt-2 text-xs text-slate-500">Price: ₹{formatPrice(Number(option.priceModifier || 0))} · MRP: ₹{formatPrice(Number(option.mrpModifier || 0))}</p>
+                              <p className="mt-2 text-xs text-slate-500">Stock: {option.stock ?? 0}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                    Selected set price change: <span className="font-semibold text-slate-900">₹{formatPrice(customAttributePriceModifier)}</span>
+                    {customAttributeMrpModifier !== 0 && (
+                      <span> · MRP change: ₹{formatPrice(customAttributeMrpModifier)}</span>
+                    )}
+                    <div className="mt-2 text-xs text-slate-500">Available stock for selected options: {customSelectionStock}</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -487,16 +712,16 @@ const ProductPage = (props) => {
                   </select>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <button type="button" className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-600" onClick={() => handleAction('cart')}>
+                  <button type="button" className="rounded-3xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-orange-600" onClick={() => handleAction('cart')}>
                     Add to cart
                   </button>
-                  <button type="button" className="rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800" onClick={() => handleAction('buy')}>
+                  <button type="button" className="rounded-3xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-slate-800" onClick={() => handleAction('buy')}>
                     Buy now
                   </button>
                 </div>
                 <button
                   type="button"
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isWishlisted ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
+                  className={`flex items-center justify-center gap-2 rounded-3xl border px-4 py-3 text-sm font-semibold transition ${isWishlisted ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
                   onClick={() => {
                     setIsWishlisted((value) => !value);
                     props.onToggleWishlist?.({ product: normalized, color: activeVariant, size: selectedSize, quantity, image: selectedImage });

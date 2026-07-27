@@ -215,7 +215,12 @@ const ProductPage = (props) => {
   const [deliveryStatus, setDeliveryStatus] = useState('Free delivery by Sunday, 2 Aug');
   const [isWishlisted, setIsWishlisted] = useState(Boolean(props.isInWishlist));
   const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0);
-  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+  const [screenSize, setScreenSize] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024 ? 'lg' : window.innerWidth >= 768 ? 'md' : 'sm';
+    }
+    return 'sm';
+  });
 
   const selectedImage = props.activeImg || internalSelectedImage;
   const quantity = props.quantity ?? internalQuantity;
@@ -274,7 +279,14 @@ const ProductPage = (props) => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024);
+      const width = window.innerWidth;
+      if (width >= 1024) {
+        setScreenSize('lg');
+      } else if (width >= 768) {
+        setScreenSize('md');
+      } else {
+        setScreenSize('sm');
+      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -409,8 +421,8 @@ const ProductPage = (props) => {
                       lensStyle: { backgroundColor: 'rgba(15, 23, 42, 0.2)' },
                       isHintEnabled: true,
                       isActivatedOnTouch: true,
-                      isEnlargedImagePortalEnabled: isLargeScreen,
-                      isEnlargedImagePortalEnabledForTouch: false,
+                      isEnlargedImagePortalEnabled: true,
+                      isEnlargedImagePortalEnabledForTouch: screenSize === 'lg' ? true : false,
                       enlargedImagePortalId: 'zoom-portal',
                       hoverDelayInMs: 100,
                       hoverOffDelayInMs: 50,
@@ -418,7 +430,7 @@ const ProductPage = (props) => {
                       shouldUsePositiveSpaceLens: true,
                       enlargedImageContainerClassName: 'rounded-[28px] border border-slate-200 bg-white shadow-xl zoom-magnify-container',
                       enlargedImageClassName: 'rounded-[28px]',
-                      enlargedImageContainerStyle: isLargeScreen ? {
+                      enlargedImageContainerStyle: screenSize === 'lg' ? {
                         zIndex: 9999,
                         position: 'fixed',
                         top: '50%',
@@ -429,12 +441,14 @@ const ProductPage = (props) => {
                         borderRadius: '28px'
                       } : {
                         zIndex: 50,
-                        position: 'absolute',
-                        top: '0',
-                        right: '0',
+                        position: 'relative',
+                        top: 'auto',
+                        right: 'auto',
+                        transform: 'none',
                         width: '100%',
-                        height: '100%',
-                        display: 'none'
+                        height: 'auto',
+                        marginTop: '1rem',
+                        borderRadius: '28px'
                       }
                     }}
                   />
@@ -457,7 +471,7 @@ const ProductPage = (props) => {
                   {activeVariant.name || 'Standard'}
                 </div>
               </div>
-            <div id="zoom-portal" className="pointer-events-none" />
+            <div id="zoom-portal" className={screenSize === 'lg' ? 'pointer-events-none' : ''} />
 
             <div className="mt-4 rounded-[28px] bg-white p-3 shadow-sm">
               <div className="flex items-center justify-between gap-2">

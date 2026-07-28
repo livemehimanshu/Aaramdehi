@@ -1,6 +1,6 @@
 import './App.css'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
-import { HelmetProvider } from 'react-helmet-async'
+import { HelmetProvider, Helmet } from 'react-helmet-async'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { auth } from '../src/api/firebase.js'
 import { onAuthStateChanged } from 'firebase/auth'
@@ -209,21 +209,27 @@ function AppContent() {
 }
 
 function App() {
+  const jsonLdData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Aaramdehi",
+    "url": "https://www.aaramdehi.co.in",
+    "logo": "https://www.aaramdehi.co.in/logo.png",
+    "sameAs": [
+      "https://www.instagram.com/aaramdehi",
+      "https://www.facebook.com/aaramdehi"
+    ]
+  };
+
   return (
     <HelmetProvider>
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(jsonLdData)}
+        </script>
+      </Helmet>
       <Router>
         <AppContent />
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "Aaramdehi",
-          "url": "https://www.aaramdehi.co.in",
-          "logo": "https://www.aaramdehi.co.in/logo.png",
-          "sameAs": [
-            "https://www.instagram.com/aaramdehi",
-            "https://www.facebook.com/aaramdehi"
-          ]
-        })}</script>
       </Router>
     </HelmetProvider>
   )

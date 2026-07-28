@@ -321,14 +321,24 @@ const ProductListing = ({ forcedCategory }) => {
             <span className="text-gray-800">{selectedCategory}</span>
         </nav>
 
-        <div className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-gray-100">
-          {/* ✅ Dynamic Title: Selected category ke hisaab se change hoga */}
-          <h2 className="font-black text-blue-900 text-xl tracking-tight uppercase">
-            {searchParam ? `Search Results for "${searchParam}"` : 
-             (selectedCategory === 'All' ? 'Premium Collection' : selectedCategory)}
-          </h2>
-          
-          <select 
+        <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="font-black text-blue-900 text-xl tracking-tight uppercase">
+                {searchParam ? `Search Results for "${searchParam}"` : 
+                 (selectedCategory === 'All' ? 'Premium Collection' : selectedCategory)}
+              </h1>
+              <p className="mt-2 text-sm text-gray-600">
+                Explore premium furniture, bedding, and decor curated for comfort, style, and everyday living.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link to="/ar-studio" className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700 transition hover:bg-blue-100">Try AR Studio</Link>
+                <Link to="/compare" className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-gray-700 transition hover:bg-gray-50">Compare Products</Link>
+                <Link to="/blog" className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-gray-700 transition hover:bg-gray-50">Read Inspiration</Link>
+              </div>
+            </div>
+            
+            <select 
             onChange={(e) => {setSortBy(e.target.value); setPage(1);}}
             className="text-xs font-black bg-gray-50 border-none outline-none py-2 px-4 rounded-xl text-gray-600 cursor-pointer"
           >
@@ -338,15 +348,16 @@ const ProductListing = ({ forcedCategory }) => {
             <option value="highToLow">Price: High to Low</option>
           </select>
         </div>
+      </div>
 
-        {loading ? (
+      {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
           </div>
         ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-          {currentItems.map((item) => (
-            <div key={item._id || item.id} className="group bg-white rounded-[30px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-transparent hover:border-blue-100 flex flex-col h-full relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+            {currentItems.map((item) => (
+              <div key={item._id || item.id} className="group bg-white rounded-[30px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-transparent hover:border-blue-100 flex flex-col h-full relative">
               <div className="h-64 bg-[#f8f9fb] p-6 relative flex items-center justify-center overflow-hidden">
                 <Link 
                   to={`/product/${item._id || item.id}`} 
@@ -408,7 +419,7 @@ const ProductListing = ({ forcedCategory }) => {
               </div>
             </div>
           ))}
-        </div>
+          </div>
         )}
 
         <div className="flex justify-center py-10 border-b border-gray-100">

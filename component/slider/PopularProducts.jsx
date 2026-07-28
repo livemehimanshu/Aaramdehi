@@ -100,9 +100,17 @@ const PopularProducts = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900 mx-auto"></div>
-        <p className="text-gray-600 mt-4">Loading Popular Products...</p>
+      <div className="container mx-auto p-4 my-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="bg-white rounded-[30px] p-4 border border-gray-100 animate-pulse flex flex-col h-[400px]">
+              <div className="h-48 bg-slate-100 rounded-2xl mb-4"></div>
+              <div className="h-4 w-1/3 bg-slate-100 rounded mb-2"></div>
+              <div className="h-6 w-3/4 bg-slate-100 rounded mb-4"></div>
+              <div className="mt-auto h-8 w-1/2 bg-slate-100 rounded"></div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -122,7 +130,15 @@ const PopularProducts = () => {
                 to={`/product/${item._id}`}
                 onClick={() => handleProductView(item)}
                 className="w-full h-full flex items-center justify-center">
-                  <img src={item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/400x400?text=Aaramdehi'} className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" alt={item.name}/>
+                  <img
+                    src={item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/400x400?text=Aaramdehi'}
+                    width="400"
+                    height="400"
+                    loading="lazy"
+                    decoding="async"
+                    className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700"
+                    alt={item.name}
+                  />
               </Link>
               <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20">
                 {wishlist.some(w => String(w.id) === String(item._id || item.id)) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}

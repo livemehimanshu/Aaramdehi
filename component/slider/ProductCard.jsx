@@ -101,12 +101,16 @@ const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
         )}
       </button>
 
-      <div className="relative aspect-square mb-4 flex items-center justify-center p-2 bg-gray-50/10 rounded">
+      <div className="relative aspect-square mb-4 flex items-center justify-center p-2 bg-gray-50/10 rounded overflow-hidden">
         <img 
             src={product.thumbnail || (product.images && product.images[0]?.url) || PLACEHOLDER_IMAGE} 
+            width="400"
+            height="400"
+            loading="lazy"
+            decoding="async"
             onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
             alt={product.name} 
-            className="max-w-full max-h-full object-contain transform group-hover:scale-105 transition-all duration-500" />
+            className="w-full h-full object-contain transform group-hover:scale-105 transition-all duration-500" />
       </div>
 
       <div className="flex flex-col flex-grow text-left">

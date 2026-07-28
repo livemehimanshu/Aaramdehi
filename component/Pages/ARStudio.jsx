@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '@/api/axiosInstance';
 import { getProductByIdAPI } from '@/api/authAndAdminApi';
 import SEO from '../header/SEO';
@@ -624,10 +624,48 @@ const ARStudio = () => {
   return (
     <div className="flex flex-col min-h-screen w-screen bg-slate-950 text-white overflow-x-hidden select-none">
       <SEO
-        title="360 AR Studio"
-        description="Automatic AR room scanning and product placement for Aaramdehi."
-        keywords="automatic AR, live room scan, product placement, aaramdehi"
+        title="AR Furniture Placement Studio | Preview Beds, Pillows & Decor"
+        description="Use Aaramdehi AR Studio to scan your room and preview beds, pillows, and decor in real time before you buy."
+        keywords="AR furniture placement, room scan, preview decor, aaramdehi AR studio"
       />
+
+      <div className="relative z-20 mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="rounded-[28px] border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-xl">
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300">Aaramdehi AR Studio</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
+            Preview furniture in your room before you buy
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+            Scan your space, place beds and decor in real time, and explore curated collections with confidence.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link to="/products" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
+              Shop collection
+            </Link>
+            <Link to="/compare" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
+              Compare products
+            </Link>
+            <Link to="/blog" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
+              Read inspiration
+            </Link>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-xl">
+            <h2 className="text-lg font-semibold text-white">Scan your room</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300">Point the camera at your space and let AI guide the placement.</p>
+          </div>
+          <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-xl">
+            <h2 className="text-lg font-semibold text-white">Try premium pieces</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300">Preview beds, pillows, and decor with accurate scale and positioning.</p>
+          </div>
+          <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-xl">
+            <h2 className="text-lg font-semibold text-white">Shop with confidence</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-300">Move from inspiration to purchase with a smoother, more informed decision.</p>
+          </div>
+        </div>
+      </div>
 
       {/* Top Section: Camera & 3D Viewer Layer */}
       <div className="relative w-full flex-1 min-h-[50vh] bg-black overflow-hidden">

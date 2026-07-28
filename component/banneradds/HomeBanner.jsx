@@ -52,10 +52,26 @@ const HomeBanner = ({ section = 'hero' }) => {
         fetchBanners();
     }, [section]);
 
-    if (loading || banners.length === 0) return null;
+    if (loading) {
+        return (
+            <div className={`w-full ${section === 'hero' ? 'mb-10' : 'my-8'} px-4 container mx-auto`}>
+                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-slate-50 p-6 md:p-8 rounded-[28px] border border-gray-100 animate-pulse min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
+                    <div className="space-y-4">
+                        <div className="h-6 w-24 bg-slate-200 rounded-full"></div>
+                        <div className="h-10 w-3/4 bg-slate-200 rounded-xl"></div>
+                        <div className="h-16 w-full bg-slate-200 rounded-xl"></div>
+                        <div className="h-10 w-32 bg-slate-200 rounded-full"></div>
+                    </div>
+                    <div className="w-full rounded-[24px] bg-slate-200 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (banners.length === 0) return null;
 
     return (
-        <div className={`w-full ${section === 'hero' ? 'mb-10' : 'my-8'} px-4 container mx-auto`}>
+        <div className={`w-full ${section === 'hero' ? 'mb-10' : 'my-8'} px-4 container mx-auto min-h-[300px] sm:min-h-[360px] md:min-h-[420px]`}>
             <Swiper
                 modules={[Navigation, Autoplay, Pagination]}
                 navigation={true}
@@ -64,11 +80,12 @@ const HomeBanner = ({ section = 'hero' }) => {
                 loop={banners.length > 1}
                 className="rounded-2xl overflow-hidden shadow-lg border border-gray-100"
             >
-                {banners.map((banner) => {
+                {banners.map((banner, index) => {
                     const bannerUrl = normalizeBannerLink(banner.link);
                     const external = isExternalLink(bannerUrl);
                     const Wrapper = external ? 'a' : Link;
                     const wrapperProps = external ? { href: bannerUrl, target: '_blank', rel: 'noreferrer' } : { to: bannerUrl };
+                    const isFirst = index === 0 && section === 'hero';
                     return (
                         <SwiperSlide key={banner._id}>
                             <Wrapper {...wrapperProps} className="block">
@@ -102,6 +119,11 @@ const HomeBanner = ({ section = 'hero' }) => {
                                         <img
                                             src={banner.image || PLACEHOLDER}
                                             alt={banner.title}
+                                            width="1200"
+                                            height="420"
+                                            loading={isFirst ? "eager" : "lazy"}
+                                            fetchpriority={isFirst ? "high" : "auto"}
+                                            decoding="async"
                                             className="h-full w-full object-contain"
                                             onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }}
                                         />

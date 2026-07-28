@@ -27,12 +27,17 @@ const HeroSection = () => {
                 loop={true}
                 className="w-full h-full"
             >
-                {heroSlides.map((slide) => (
+                {heroSlides.map((slide, index) => (
                     <SwiperSlide key={slide.id}>
                         <div className="w-full h-full relative">
                             <img
                                 src={slide.image}
                                 alt="Banner"
+                                width="1200"
+                                height="450"
+                                loading={index === 0 ? "eager" : "lazy"}
+                                fetchpriority={index === 0 ? "high" : "auto"}
+                                decoding="async"
                                 className="w-full h-full object-cover"
                             />
                             {/* Subtle dark overlay to make navigation arrows more visible */}

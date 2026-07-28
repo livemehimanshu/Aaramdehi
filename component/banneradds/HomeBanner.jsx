@@ -16,31 +16,37 @@ const normalizeBannerLink = (link) => {
 
 const isExternalLink = (link) => /^(https?:\/\/|mailto:|tel:)/i.test(link);
 
+const DEFAULT_HERO = [
+  {
+    _id: 'default-hero-1',
+    title: 'Transform Your Home with Premium Comfort',
+    description: 'Explore curated beds, sofas, and home decor designed for luxury and everyday living.',
+    image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e6?auto=format&fit=crop&q=80&w=1200',
+    link: '/products',
+    category: 'hero'
+  }
+];
+
 /**
  * HomeBanner Component
  * @param {string} section - Kaunsa section dikhana hai (e.g. 'hero', 'promotional')
  */
 const HomeBanner = ({ section = 'hero' }) => {
-    const [banners, setBanners] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [banners, setBanners] = useState(section === 'hero' ? DEFAULT_HERO : []);
+    const [loading, setLoading] = useState(section === 'hero' ? false : true);
     const PLACEHOLDER = 'https://placehold.co/1200x400?text=Banner';
     const swiperStyles = ".swiper-button-next, .swiper-button-prev { color: #fff !important; } .swiper-pagination-bullet-active { background: #dc2626 !important; }";
 
     useEffect(() => {
         const fetchBanners = async () => {
-            console.log(`Fetching banners for section: ${section}`); // Debugging line
             try {
-                // Fetch all active banners first
                 const res = await getActiveBannersAPI();
-                if (res.success && Array.isArray(res.data)) {
-                    // Filter locally by the section prop provided
+                if (res && res.success && Array.isArray(res.data)) {
                     const filtered = res.data
                         .filter(b => b.category?.toLowerCase() === section.toLowerCase() && b.isActive !== false)
                         .sort((a, b) => (a.position || 0) - (b.position || 0));
-                    // console.log(`Filtered banners for section '${section}':`, filtered); // Debugging (can be uncommented if needed)
-                    setBanners(filtered);
-                    if (filtered.length === 0) {
-                        console.warn(`⚠️ No banners found for section: '${section}'. Check Admin Panel category names.`);
+                    if (filtered.length > 0) {
+                        setBanners(filtered);
                     }
                 }
             } catch (err) {

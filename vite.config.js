@@ -32,28 +32,21 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'vendor-react';
-            }
-            if (id.includes('@mui') || id.includes('@emotion')) {
-              return 'vendor-mui';
-            }
-            if (id.includes('@tiptap') || id.includes('quill')) {
-              return 'vendor-editor';
+            if (id.includes('firebase')) {
+              return 'vendor-firebase';
             }
             if (id.includes('chart.js') || id.includes('recharts') || id.includes('react-chartjs-2')) {
               return 'vendor-charts';
             }
-            if (id.includes('firebase')) {
-              return 'vendor-firebase';
+            if (id.includes('@tiptap') || id.includes('react-quill')) {
+              return 'vendor-editor';
             }
-            if (id.includes('jspdf') || id.includes('dompurify') || id.includes('fuse.js')) {
-              return 'vendor-utils';
+            if (id.includes('jspdf') || id.includes('jspdf-autotable')) {
+              return 'vendor-pdf';
             }
-            if (id.includes('lucide-react') || id.includes('react-icons')) {
-              return 'vendor-icons';
+            if (id.includes('@mui') || id.includes('@emotion')) {
+              return 'vendor-mui';
             }
-            return 'vendor';
           }
         },
       },

@@ -255,17 +255,7 @@ const Header = ({ hideNav = false }) => {
     };
   }, []);
 
-  // ✅ 3. Premature redirection ya UI flashes rokne ke liye loading check
-  if (loading) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-white z-[9999]">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-xs font-black uppercase tracking-widest text-gray-400">Restoring Session...</p>
-        </div>
-      </div>
-    );
-  }
+  // Session restoring background check (non-blocking for immediate FCP performance)
 
   return (
     <>

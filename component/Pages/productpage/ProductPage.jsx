@@ -1,4 +1,5 @@
 ﻿import React, { useEffect, useMemo, useState } from 'react';
+import DOMPurify from 'dompurify';
 import ReactImageMagnify from 'react-image-magnify';
 import {
   FiRotateCcw,
@@ -340,6 +341,33 @@ const ProductPage = (props) => {
     setThumbnailStartIndex(0);
   }, [galleryImages]);
 
+  const descriptionText = useMemo(() => {
+    const rawDescription = description || '';
+    const normalized = String(rawDescription)
+      .replace(/&nbsp;/g, ' ')
+      .trim();
+    return normalized || 'Crafted for long-lasting comfort and support with premium materials and thoughtful detailing.';
+  }, [description]);
+
+  const hasRichDescription = useMemo(() => /<[^>]+>/i.test(descriptionText), [descriptionText]);
+
+  const sanitizedDescriptionHtml = useMemo(() => {
+    if (!hasRichDescription) return '';
+    return DOMPurify.sanitize(descriptionText, { USE_PROFILES: { html: true } });
+  }, [descriptionText, hasRichDescription]);
+
+  const specEntries = useMemo(() => {
+    const sourceSpecs = specs && typeof specs === 'object' ? specs : {};
+    const ordered = [
+      ['Brand', sourceSpecs.Brand ?? sourceSpecs.brand ?? brand],
+      ['Size', sourceSpecs.Size ?? sourceSpecs.size ?? (sizes?.[0]?.label || sizes?.[0]?.name || 'Standard')],
+      ['Material', sourceSpecs.Material ?? sourceSpecs.material ?? 'Microfiber'],
+      ['Weave Type', sourceSpecs['Weave Type'] ?? sourceSpecs.weaveType ?? 'Low profile non-slip']
+    ];
+
+    return ordered.filter(([, value]) => value != null && String(value).trim());
+  }, [specs, brand, sizes]);
+
   const selectedCustomAttributeSelections = useMemo(() => {
     if (!Array.isArray(customAttributes)) return [];
     return customAttributes.map((attribute, attrIndex) => {
@@ -556,6 +584,37 @@ const ProductPage = (props) => {
                   <FiChevronRight size={18} />
                 </button>
               </div>
+            </div>
+
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Detailed description</p>
+                  <p className="mt-1 text-sm text-slate-500">Everything you need to know about this product</p>
+                </div>
+              </div>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+                {hasRichDescription ? (
+                  <div
+                    className="prose prose-sm max-w-none [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1"
+                    dangerouslySetInnerHTML={{ __html: sanitizedDescriptionHtml }}
+                  />
+                ) : (
+                  descriptionText.split(/\n+/).filter(Boolean).map((paragraph, index) => (
+                    <p key={`description-paragraph-${index}`}>{paragraph}</p>
+                  ))
+                )}
+              </div>
+              {specEntries.length > 0 && (
+                <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                  {specEntries.map(([label, value]) => (
+                    <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
+                      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

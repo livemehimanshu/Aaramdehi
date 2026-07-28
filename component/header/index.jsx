@@ -163,42 +163,40 @@ const Header = ({ hideNav = false }) => {
 
     let unsubscribe = () => {};
     
-    if (auth) {
-      // ✅ 1. Firebase Auth Persistence setup ('local' ensures session stays after refresh)
-      setPersistence(auth, browserLocalPersistence)
-        .catch((error) => console.error("Auth persistence error:", error.message));
+    // Defer Firebase Auth check to idle time to prevent initial render blocking
+    const authTimer = setTimeout(() => {
+      if (auth) {
+        setPersistence(auth, browserLocalPersistence)
+          .catch((error) => console.error("Auth persistence error:", error.message));
 
-      // ✅ 2. Auth state change ko listen karna (Official Firebase Listener)
-      const firebaseUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-        if (firebaseUser) {
-          const savedUserData = safeParseJSON(localStorage.getItem("userData"));
-          if (savedUserData) {
-            setUser(savedUserData);
+        const firebaseUnsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+          if (firebaseUser) {
+            const savedUserData = safeParseJSON(localStorage.getItem("userData"));
+            if (savedUserData) {
+              setUser(savedUserData);
+            } else {
+              setUser({
+                name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
+                email: firebaseUser.email,
+                avatar: firebaseUser.photoURL
+              });
+            }
           } else {
-            setUser({
-              name: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-              email: firebaseUser.email,
-              avatar: firebaseUser.photoURL
-            });
+            const currentToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
+            if (!currentToken) {
+              localStorage.removeItem("userData");
+              setUser(null);
+              setShowProfileMenu(false);
+            }
           }
-        } else {
-          const currentToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
-          if (!currentToken) {
-            localStorage.removeItem("userData");
-            setUser(null);
-            setShowProfileMenu(false);
-          }
-        }
-        setLoading(false);
-        clearTimeout(safetyTimer);
-      });
+          setLoading(false);
+        });
 
-      // Cleanup function assignment for later
-      unsubscribe = firebaseUnsubscribe;
-    } else {
-      setLoading(false);
-      clearTimeout(safetyTimer);
-    }
+        unsubscribe = firebaseUnsubscribe;
+      } else {
+        setLoading(false);
+      }
+    }, 1000);
 
     // Fetch categories for navigation
     const fetchNavCategories = async () => {
@@ -288,6 +286,7 @@ const Header = ({ hideNav = false }) => {
             <div className="md:hidden flex-shrink-0">
               <button 
                 onClick={() => setIsSidebarOpen(true)} 
+                aria-label="Open menu navigation"
                 className="p-1.5 text-gray-700 hover:text-blue-900 transition-colors"
               >
                 <IoMenuOutline size={26} />
@@ -296,7 +295,7 @@ const Header = ({ hideNav = false }) => {
 
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link to="/" className="flex items-center gap-2 group">
+              <Link to="/" aria-label="Aaramdehi Homepage" className="flex items-center gap-2 group">
                 {siteLogo ? (
                   <img 
                     src={siteLogo} 
@@ -332,6 +331,7 @@ const Header = ({ hideNav = false }) => {
                 <div className='hidden md:flex items-center gap-3'>
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    aria-label="User account profile menu"
                     className='flex items-center gap-2 hover:text-red-600 transition'
                   >
                     {user.avatar ? (
@@ -381,7 +381,7 @@ const Header = ({ hideNav = false }) => {
               {/* Mobile login/profile icon (visible on small screens) */}
               <div className="md:hidden">
                 {user ? (
-                  <button onClick={() => setIsSidebarOpen(true)} className='p-1'>
+                  <button onClick={() => setIsSidebarOpen(true)} aria-label="Open sidebar profile" className='p-1'>
                     {user.avatar ? (
                       <img src={user.avatar} onError={(e)=>{e.target.src = "https://placehold.co/32x32?text=👤"}} alt="Profile" className='w-6 h-6 rounded-full object-cover' />
                     ) : (
@@ -389,7 +389,7 @@ const Header = ({ hideNav = false }) => {
                     )}
                   </button>
                 ) : (
-                  <Link to="/login" className='p-1.5 inline-flex items-center'>
+                  <Link to="/login" aria-label="Login page" className='p-1.5 inline-flex items-center'>
                     <IoPersonOutline size={22} className='text-gray-700' />
                   </Link>
                 )}
@@ -399,7 +399,7 @@ const Header = ({ hideNav = false }) => {
               <div className="flex items-center gap-0 md:gap-1">
                 {/* Compare */}
                 <Tooltip title="Compare">
-                  <Link to="/compare" className='!p-1.5 md:!p-2 hidden md:flex items-center justify-center'>
+                  <Link to="/compare" aria-label="Compare products" className='!p-1.5 md:!p-2 hidden md:flex items-center justify-center'>
                     <StyledBadge badgeContent={compareCount} color="error" overlap="circular">
                       <IoIosGitCompare size={20} className='text-gray-700' />
                     </StyledBadge>
@@ -408,7 +408,7 @@ const Header = ({ hideNav = false }) => {
 
                 {/* Mobile Search Toggle */}
                 <div className="sm:hidden">
-                  <button onClick={() => setShowMobileSearch(!showMobileSearch)} className="p-1.5">
+                  <button onClick={() => setShowMobileSearch(!showMobileSearch)} aria-label="Toggle mobile search" className="p-1.5">
                     <IoSearchOutline size={22} className='text-gray-700' />
                   </button>
                 </div>
@@ -417,6 +417,7 @@ const Header = ({ hideNav = false }) => {
                 <Tooltip title="Wishlist">
                   <IconButton 
                     className='!p-1.5 md:!p-2' 
+                    aria-label="Open wishlist"
                     onClick={toggleWishlistDrawer} // Wishlist Drawer Open logic
                   >
                     <StyledBadge badgeContent={wishlistCount} color="error" overlap="circular">
@@ -429,6 +430,7 @@ const Header = ({ hideNav = false }) => {
                 <Tooltip title="Cart">
                   <IconButton 
                     className='!p-1.5 md:!p-2'
+                    aria-label="Open shopping cart"
                     onClick={toggleCartDrawer} // Drawer Open logic
                   >
                     <StyledBadge badgeContent={cartCount} color="error" overlap="circular">
@@ -436,6 +438,10 @@ const Header = ({ hideNav = false }) => {
                     </StyledBadge>
                   </IconButton>
                 </Tooltip>
+              </div>
+            </div>
+          </div>
+        </div>
               </div>
             </div>
           </div>

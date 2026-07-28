@@ -68,6 +68,8 @@ const RecentlyViewed = () => {
                     <img 
                       src={item.image} 
                       alt={item.name} 
+                      loading="lazy"
+                      decoding="async"
                       className="max-w-full max-h-full object-contain"
                     />
                   </div>

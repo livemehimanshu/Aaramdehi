@@ -32,6 +32,8 @@ const RoomSection = () => {
                         <div className="relative overflow-hidden rounded-full aspect-square shadow-sm group-hover:shadow-2xl transition-all duration-700 mb-6">
                         <img 
                             src={room.image || 'https://placehold.co/600x600'} 
+                            loading="lazy"
+                            decoding="async"
                             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                             alt={room.name} 
                         />

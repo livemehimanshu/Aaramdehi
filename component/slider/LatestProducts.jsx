@@ -202,6 +202,8 @@ const LatestProducts = () => {
           <img 
             src="https://images.unsplash.com/photo-1546868871-70c122467d8b?q=80&w=200" 
             alt="Smart Watch" 
+            loading="lazy"
+            decoding="async"
             className="w-20 md:w-32 object-contain"
           />
           <div>
@@ -214,8 +216,8 @@ const LatestProducts = () => {
         </div>
         
         <div className="hidden lg:flex gap-2">
-            <img src="https://images.unsplash.com/photo-1508685096489-7aac29625a6b?q=80&w=100" className="w-16 h-16 rounded-full border border-gray-700 p-1" alt="watch" />
-            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=100" className="w-16 h-16 rounded-full border border-gray-700 p-1" alt="watch" />
+            <img src="https://images.unsplash.com/photo-1508685096489-7aac29625a6b?q=80&w=100" loading="lazy" decoding="async" className="w-16 h-16 rounded-full border border-gray-700 p-1" alt="watch" />
+            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=100" loading="lazy" decoding="async" className="w-16 h-16 rounded-full border border-gray-700 p-1" alt="watch" />
         </div>
       </div>
 

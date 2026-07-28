@@ -71,6 +71,8 @@ const AaramdehiAdBanner = () => {
           <img
             src="/images/luxury-pillow.webp"
             alt="Pillow"
+            loading="lazy"
+            decoding="async"
             onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://placehold.co/400x400?text=Pillow'; }}
             className="w-full h-full object-contain transform hover:scale-105 transition-transform duration-300"
           />

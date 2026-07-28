@@ -2,15 +2,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { FiTruck, FiRotateCcw, FiShield, FiGift, FiHeadphones } from 'react-icons/fi';
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
-import { firestore } from '../../src/api/firebase.js';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-} from 'firebase/firestore';
+
 
 const NewsletterFooter = () => {
   const [email, setEmail] = useState('');
@@ -35,12 +27,16 @@ const NewsletterFooter = () => {
       return toast.error('Please accept the terms and privacy policy.');
     }
 
-    if (!firestore) {
-      return toast.error('Unable to connect to Firebase.');
-    }
-
     setLoading(true);
     try {
+      const { firestore } = await import('../../src/api/firebase.js');
+      const { collection, query, where, getDocs, addDoc, serverTimestamp } = await import('firebase/firestore');
+
+      if (!firestore) {
+        setLoading(false);
+        return toast.error('Unable to connect to Firebase.');
+      }
+
       const collectionRef = collection(firestore, 'newsletter_subscribers');
       const emailQuery = query(collectionRef, where('email', '==', normalizedEmail));
       const snapshot = await getDocs(emailQuery);
@@ -49,6 +45,7 @@ const NewsletterFooter = () => {
         toast('You are already subscribed to Aaramdehi updates!', { icon: '✅' });
         setEmail('');
         setAgreed(false);
+        setLoading(false);
         return;
       }
 

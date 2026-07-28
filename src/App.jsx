@@ -8,9 +8,10 @@ import { onAuthStateChanged } from 'firebase/auth'
 // Layouts
 import Header from '../component/header/index.jsx'
 import Footer from '../component/Footer/Footer.jsx'
-import AdminLayout from '../component/Admin/AdminLayout.jsx'
 import AdminRoute from '../component/auth/AdminRoute.jsx'
-import Sidebar from '../component/sidebar/Sidebar.jsx'
+
+const AdminLayout = lazy(() => import('../component/Admin/AdminLayout.jsx'))
+const Sidebar = lazy(() => import('../component/sidebar/Sidebar.jsx'))
 
 // Public Pages
 const Home = lazy(() => import('../component/Pages/Home/index.jsx'))
@@ -127,7 +128,9 @@ function AppContent() {
         <div className={isAccountPage ? "max-w-[1248px] mx-auto flex flex-col md:flex-row py-4 md:py-8 px-2 md:px-4 gap-0 md:gap-4" : ""}>
           {isAccountPage && (
             <div className="w-full md:w-80 flex-shrink-0 mb-4 md:mb-0">
-              <Sidebar user={user} handleLogout={handleLogout} isOpen={true} isStatic={true} />
+              <Suspense fallback={<div className="p-4 text-xs text-gray-400">Loading...</div>}>
+                <Sidebar user={user} handleLogout={handleLogout} isOpen={true} isStatic={true} />
+              </Suspense>
             </div>
           )}
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from '../../src/hooks/useCart'; // ✅ CartContext Hook import kiya
 import toast from 'react-hot-toast';
@@ -29,9 +29,9 @@ import { CiHeart } from "react-icons/ci";
 import { auth } from '../../src/api/firebase.js';
 import { onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "firebase/auth";
 import Tooltip from '@mui/material/Tooltip';
-import CartDrawer from '../CartDrawer/CartDrawer';
-import WishlistDrawer from '../WishlistDrawer/WishlistDrawer'; 
-import SidebarMenu from '../sidebar/Sidebar'; // ✅ Sidebar Menu import
+const CartDrawer = lazy(() => import('../CartDrawer/CartDrawer'));
+const WishlistDrawer = lazy(() => import('../WishlistDrawer/WishlistDrawer')); 
+const SidebarMenu = lazy(() => import('../sidebar/Sidebar')); // ✅ Sidebar Menu import
 import { getActiveCategoriesAPI } from '../../src/api/authAndAdminApi';
 
 // ===== HEADER COMPONENT =====
@@ -295,17 +295,31 @@ const Header = ({ hideNav = false }) => {
 
             {/* Logo */}
             <div className="flex-shrink-0">
-              <Link to="/" aria-label="Aaramdehi Homepage" className="flex items-center gap-2 group">
+              <Link to="/" aria-label="Aaramdehi Homepage" className="flex items-center gap-2 group/logo select-none">
                 {siteLogo ? (
-                  <img 
-                    src={siteLogo} 
-                    onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
-                    alt="Aaramdehi" 
-                    className="h-8 md:h-10 object-contain" />
+                  <div className="relative overflow-hidden rounded">
+                    <img 
+                      src={siteLogo} 
+                      onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
+                      alt="Aaramdehi" 
+                      className="h-8 md:h-10 object-contain transition-transform duration-300 group-hover/logo:scale-105" 
+                    />
+                    {/* Amazon-style shimmer highlight effect on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/logo:animate-[shimmer_1s_ease-in-out]" />
+                  </div>
                 ) : (
                   <div className="flex flex-col -space-y-0.5">
-                    <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter leading-none text-gray-800">Aaramdehi</h1>
-                    <p className="text-[7px] md:text-[8px] font-bold tracking-[2px] md:tracking-[3px] text-gray-400 uppercase">Comfort Redefined</p>
+                    <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter leading-none text-slate-800 transition-colors duration-300 group-hover/logo:text-[#1A365D]">
+                      Aaram<span className="text-red-600 transition-colors duration-300 group-hover/logo:text-red-500">dehi</span>
+                    </h1>
+                    <div className="flex items-center gap-0.5">
+                      <p className="text-[8px] md:text-[9px] font-extrabold tracking-wider text-gray-400 italic">
+                        Explore <span className="text-yellow-500 group-hover/logo:text-yellow-400 transition-colors duration-300">Luxe</span>
+                      </p>
+                      <span className="text-yellow-500 text-[10px] md:text-[11px] animate-pulse group-hover/logo:rotate-[360deg] group-hover/logo:scale-125 transition-all duration-700 inline-block origin-center">
+                        ✦
+                      </span>
+                    </div>
                   </div>
                 )}
               </Link>
@@ -442,11 +456,7 @@ const Header = ({ hideNav = false }) => {
             </div>
           </div>
         </div>
-              </div>
-            </div>
-          </div>
 
-        </div>
 
         {/* Mobile Search Bar (toggle) */}
         {showMobileSearch && (
@@ -461,24 +471,32 @@ const Header = ({ hideNav = false }) => {
       </header>
 
       {/* --- Cart Drawer Panel --- */}
-      <CartDrawer 
-        isOpen={isCartOpen} 
-        onClose={() => setIsCartOpen(false)} 
-      />
+      <Suspense fallback={null}>
+        {isCartOpen && (
+          <CartDrawer 
+            isOpen={isCartOpen} 
+            onClose={() => setIsCartOpen(false)} 
+          />
+        )}
 
-      {/* --- Wishlist Drawer Panel --- */}
-      <WishlistDrawer 
-        isOpen={isWishlistOpen} 
-        onClose={() => setIsWishlistOpen(false)} 
-      />
+        {/* --- Wishlist Drawer Panel --- */}
+        {isWishlistOpen && (
+          <WishlistDrawer 
+            isOpen={isWishlistOpen} 
+            onClose={() => setIsWishlistOpen(false)} 
+          />
+        )}
 
-      {/* --- Universal Mobile Sidebar (Slide from Left) --- */}
-      <SidebarMenu 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-        user={user} 
-        handleLogout={handleLogout} 
-      />
+        {/* --- Universal Mobile Sidebar (Slide from Left) --- */}
+        {isSidebarOpen && (
+          <SidebarMenu 
+            isOpen={isSidebarOpen} 
+            onClose={() => setIsSidebarOpen(false)} 
+            user={user} 
+            handleLogout={handleLogout} 
+          />
+        )}
+      </Suspense>
     </>
   )
 }

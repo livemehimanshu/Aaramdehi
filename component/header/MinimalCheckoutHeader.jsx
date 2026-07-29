@@ -4,6 +4,7 @@ import { IoSearchOutline, IoPersonOutline, IoEllipsisVerticalOutline, IoCartOutl
 import Badge from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
+import { getSettingsAPI } from '../../src/api/authAndAdminApi';
 
 const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
 
@@ -39,13 +40,8 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
 
     // Fetch logo
     const fetchLogo = async () => {
-      const envApiUrl = import.meta.env.VITE_API_URL;
-      const isProd = import.meta.env.PROD;
-      const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
-      const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
       try {
-        const res = await fetch(`${apiBase}/settings/public`);
-        const data = await res.json();
+        const data = await getSettingsAPI();
         if (data.success && data.data) {
           setSiteLogo(data.data.LOGO || data.data.logo || null);
         }
@@ -160,6 +156,7 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
                 <button 
                   onClick={() => setShowProfileMenu(!showProfileMenu)}
                   className="p-2 hover:bg-gray-50 rounded"
+                  aria-label="Profile Menu"
                 >
                   {userProfile?.email && userProfile.email !== 'Guest User' ? (
                     <div className="w-7 h-7 bg-red-600 text-white rounded-full flex items-center justify-center text-[10px] font-bold">
@@ -204,6 +201,7 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
                     setShowProfileMenu(false);
                   }}
                   className="p-2 hover:bg-gray-50 rounded transition-colors"
+                  aria-label="More Options"
                 >
                   <IoEllipsisVerticalOutline size={20} className="text-gray-700" />
                 </button>

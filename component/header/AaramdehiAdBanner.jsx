@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { getSettingsAPI } from '../../src/api/authAndAdminApi';
 
 const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
 
@@ -10,20 +11,11 @@ const AaramdehiAdBanner = () => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const envApiUrl = import.meta.env.VITE_API_URL;
-        const isProd = import.meta.env.PROD;
-        const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
-        const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
-        const response = await fetch(`${apiBase}/settings/public`, { signal: AbortSignal.timeout(10000) });
-        const contentType = response.headers.get("content-type");
-        if (response.ok && contentType && contentType.includes("application/json")) {
-            const result = await response.json();
-            // result.data is a key->value object from the public settings endpoint
-            if (result.success && result.data && result.data.LOGO) {
-              setSiteLogo(result.data.LOGO);
-            } else if (result.success && result.data && result.data.logo) {
-              setSiteLogo(result.data.logo);
-            }
+        const result = await getSettingsAPI();
+        if (result.success && result.data && result.data.LOGO) {
+          setSiteLogo(result.data.LOGO);
+        } else if (result.success && result.data && result.data.logo) {
+          setSiteLogo(result.data.logo);
         }
       } catch (error) {
         console.error("Error fetching logo for banner:", error);

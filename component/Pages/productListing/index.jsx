@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 import HomeBanner from '../../banneradds/HomeBanner'; // Import HomeBanner
 import SEO from '../../header/SEO'; // SEO Component Import Kiya
 import { getAllProductsAPI, getActiveCategoriesAPI } from '../../../src/api/authAndAdminApi';
+import { optimizeImage } from '../../../src/utils/imageOptimizer';
 // Yeh page sare products ko grid format mein show karta hai
 // Ismein filtering, sorting, pagination, wishlist, cart sab features hain
 
@@ -364,25 +365,30 @@ const ProductListing = ({ forcedCategory }) => {
                   onClick={() => handleProductView(item)}
                   className="w-full h-full flex items-center justify-center">
                   <img 
-                    src={item.thumbnail || item.image || PLACEHOLDER_IMAGE} 
+                    src={optimizeImage(item.thumbnail || item.image, 400) || PLACEHOLDER_IMAGE} 
                     onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
+                    width="400"
+                    height="400"
+                    loading="lazy"
+                    decoding="async"
                     className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
                     alt={item.name}
                   />
                 </Link>
                 
-                <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20">
+                <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20" aria-label="Toggle Wishlist">
                   {wishlist.some(w => String(w.id) === String(item._id || item.id)) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}
                 </button>
 
                 <div className="absolute bottom-[-60px] group-hover:bottom-4 left-0 right-0 flex justify-center gap-2 transition-all duration-500">
-                  <button className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90">
+                  <button className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90" aria-label="Quick View">
                     <AiOutlineEye size={20} />
                   </button>
                   {/* YAHAN CLICK EVENT ADD KIYA HAI */}
                   <button 
                     onClick={() => handleAddToCart(item)}
                     className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90"
+                    aria-label="Add to Cart"
                   >
                     <FiShoppingCart size={18} />
                   </button>

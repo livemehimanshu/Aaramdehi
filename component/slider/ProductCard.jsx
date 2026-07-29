@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { IoHeart } from 'react-icons/io5';
+import { optimizeImage } from '../../src/utils/imageOptimizer';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product";
 
@@ -93,6 +94,7 @@ const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
         type="button"
         onClick={handleToggleWishlist}
         className="absolute top-3 right-3 z-[100] p-2 rounded-full bg-white/90 shadow-md transition-all active:scale-75 hover:bg-gray-50 border border-gray-100"
+        aria-label="Toggle Wishlist"
       >
         {isInWishlist ? (
           <IoHeart size={20} className="text-red-500 scale-110" />
@@ -103,7 +105,7 @@ const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
 
       <div className="relative aspect-square mb-4 flex items-center justify-center p-2 bg-gray-50/10 rounded overflow-hidden">
         <img 
-            src={product.thumbnail || (product.images && product.images[0]?.url) || PLACEHOLDER_IMAGE} 
+            src={optimizeImage(product.thumbnail || (product.images && product.images[0]?.url), 400) || PLACEHOLDER_IMAGE} 
             width="400"
             height="400"
             loading="lazy"

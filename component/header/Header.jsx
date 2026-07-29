@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 
 const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
 import Search from '../search/index'; // ✅ Search component import kiya
+import { getSettingsAPI } from '../../src/api/authAndAdminApi';
 
 const Header = () => {
   const navigate = useNavigate();
@@ -28,12 +29,7 @@ const Header = () => {
 
   const fetchSettings = async () => {
     try {
-      const envApiUrl = import.meta.env.VITE_API_URL;
-      const isProd = import.meta.env.PROD;
-      const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
-      const apiBase = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi-backend.onrender.com' : '/api');
-      const response = await fetch(`${apiBase}/settings/public`);
-      const result = await response.json();
+      const result = await getSettingsAPI();
       if (result.success && result.data) setSiteLogo(result.data.LOGO || result.data.logo || null);
     } catch (e) { console.error(e); }
   };

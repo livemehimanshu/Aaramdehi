@@ -5,6 +5,7 @@ import { AiFillStar, AiOutlineHeart, AiFillHeart, AiOutlineEye } from 'react-ico
 import { FiShoppingCart } from 'react-icons/fi';
 import { BsLightningCharge } from 'react-icons/bs';
 import { addToRecentlyViewed } from '../../src/data/recentlyViewedUtils'; // Assuming this utility exists
+import { optimizeImage } from '../../src/utils/imageOptimizer';
 
 const PopularProducts = () => {
   const [products, setProducts] = useState([]);
@@ -131,7 +132,7 @@ const PopularProducts = () => {
                 onClick={() => handleProductView(item)}
                 className="w-full h-full flex items-center justify-center">
                   <img
-                    src={item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/400x400?text=Aaramdehi'}
+                    src={optimizeImage(item.thumbnail || (item.images && item.images[0]?.url) || item.image, 400) || 'https://placehold.co/400x400?text=Aaramdehi'}
                     width="400"
                     height="400"
                     loading="lazy"
@@ -140,16 +141,17 @@ const PopularProducts = () => {
                     alt={item.name}
                   />
               </Link>
-              <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20">
+              <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20" aria-label="Toggle Wishlist">
                 {wishlist.some(w => String(w.id) === String(item._id || item.id)) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}
               </button>
               <div className="absolute bottom-[-60px] group-hover:bottom-4 left-0 right-0 flex justify-center gap-2 transition-all duration-500">
-                <button className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90">
+                <button className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90" aria-label="Quick View">
                   <AiOutlineEye size={20} />
                 </button>
                 <button
                   onClick={(e) => handleAddToCart(e, item)}
                   className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90"
+                  aria-label="Add to Cart"
                 >
                   <FiShoppingCart size={18} />
                 </button>

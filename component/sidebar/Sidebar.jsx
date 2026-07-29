@@ -80,7 +80,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
             <div className="space-y-1">
               {[
                 { label: 'Home', path: '/', icon: IoHomeOutline },
-                { label: 'Shop', path: '/productListing', icon: IoStorefrontOutline },
+                { label: 'Shop', path: '/product', icon: IoStorefrontOutline },
                 { label: 'Categories', path: '/categories', icon: IoGridOutline },
                 { label: 'About Us', path: '/about-us', icon: IoInformationCircleOutline },
                 { label: 'Contact', path: '/contact-us', icon: IoCallOutline }

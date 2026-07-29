@@ -180,6 +180,9 @@ function AppContent() {
                 <Route path="/ar-studio" element={<ARStudio />} />
                 <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
                 <Route path="/compare" element={<ComparePage />} />
+                <Route path="/categories" element={<PageWrapper title="Categories" />} />
+                <Route path="/about-us" element={<PageWrapper title="About Us" />} />
+                <Route path="/contact-us" element={<PageWrapper title="Contact Us" />} />
                 <Route path="/login" element={<AuthPage />} /> 
                 <Route path="/register" element={<AuthPage />} />
                 <Route path="/signup" element={<AuthPage />} />

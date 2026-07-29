@@ -541,6 +541,18 @@ const EditProduct = () => {
                     </div>
 
                     <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase text-slate-500">Description</label>
+                        <textarea 
+                            name="description" 
+                            value={productData.description} 
+                            onChange={handleChange} 
+                            rows="5"
+                            className="w-full bg-gray-950 border border-gray-800 p-3 rounded-lg focus:border-emerald-600 outline-none text-white resize-y"
+                            placeholder="Enter product description..."
+                        ></textarea>
+                    </div>
+
+                    <div className="space-y-1">
                         <label className="text-[10px] font-black uppercase text-slate-500">Main Images (Upload new images and reorder as needed)</label>
                         <div className="border-2 border-dashed border-gray-800 bg-gray-950 rounded-xl p-6 flex flex-col items-center justify-center hover:bg-gray-800/50 transition-colors cursor-pointer relative">
                             <IoCloudUploadOutline size={40} className="text-gray-600 mb-2" />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllProductsAPI } from '../../src/api/authAndAdminApi';
 import { AiFillStar, AiOutlineHeart, AiFillHeart, AiOutlineEye } from 'react-icons/ai';
+import { FiShoppingCart } from 'react-icons/fi';
 import { BsLightningCharge } from 'react-icons/bs';
 import { addToRecentlyViewed } from '../../src/data/recentlyViewedUtils'; // Assuming this utility exists
 import { optimizeImage, getResponsiveImageAttributes } from '../../src/utils/imageOptimizer';

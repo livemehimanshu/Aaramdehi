@@ -129,7 +129,7 @@ const HomeBanner = ({ section = 'hero' }) => {
                                             width="1200"
                                             height="420"
                                             loading={isFirst ? "eager" : "lazy"}
-                                            fetchpriority={isFirst ? "high" : "auto"}
+                                            fetchPriority={isFirst ? "high" : "auto"}
                                             decoding="async"
                                             className="h-full w-full object-contain"
                                             onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }}

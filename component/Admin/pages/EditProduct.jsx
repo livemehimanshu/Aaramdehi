@@ -39,6 +39,10 @@ const EditProduct = () => {
     const [customAttributes, setCustomAttributes] = useState([]);
     const [customAttributeInput, setCustomAttributeInput] = useState({ title: '', options: [{ label: '', priceModifier: '', mrpModifier: '', stock: '' }] });
 
+    // ✅ Product Information State
+    const [productInformation, setProductInformation] = useState([]);
+    const [infoInput, setInfoInput] = useState({ sectionTitle: '', details: [{ key: '', value: '' }] });
+
     // ✅ Pre-Indexing Helpers
     const STOPWORDS = ["is", "the", "a", "an", "and", "for", "ke", "liye", "mujhe", "chahiye", "ko", "par", "ek", "hai", "mein", "this", "that", "with"];
 
@@ -101,6 +105,10 @@ const EditProduct = () => {
                             previews: Array.isArray(color.images) ? color.images.map(img => img.url || img) : [],
                             existingImages: Array.isArray(color.images) ? color.images : []
                         })));
+                    }
+
+                    if (Array.isArray(p.productInformation)) {
+                        setProductInformation(p.productInformation);
                     }
                 }
             } catch (error) {
@@ -384,6 +392,49 @@ const EditProduct = () => {
         setCustomAttributes(prev => prev.filter((_, idx) => idx !== attrIndex));
     };
 
+    // ✅ Product Information Handlers
+    const addInfoDetailRow = () => {
+        setInfoInput(prev => ({
+            ...prev,
+            details: [...prev.details, { key: '', value: '' }]
+        }));
+    };
+
+    const handleInfoSectionTitleChange = (e) => {
+        setInfoInput(prev => ({ ...prev, sectionTitle: e.target.value }));
+    };
+
+    const handleInfoDetailChange = (index, field, value) => {
+        setInfoInput(prev => ({
+            ...prev,
+            details: prev.details.map((detail, idx) => idx === index ? { ...detail, [field]: value } : detail)
+        }));
+    };
+
+    const removeInfoDetailRow = (index) => {
+        setInfoInput(prev => ({
+            ...prev,
+            details: prev.details.filter((_, idx) => idx !== index)
+        }));
+    };
+
+    const addInfoSection = () => {
+        if (!infoInput.sectionTitle.trim()) {
+            return alert('Section title is required.');
+        }
+        const validDetails = infoInput.details.filter(d => d.key.trim() && d.value.trim());
+        if (validDetails.length === 0) {
+            return alert('At least one valid detail (key and value) is required.');
+        }
+
+        setProductInformation([...productInformation, { sectionTitle: infoInput.sectionTitle.trim(), details: validDetails }]);
+        setInfoInput({ sectionTitle: '', details: [{ key: '', value: '' }] });
+    };
+
+    const removeInfoSection = (index) => {
+        setProductInformation(productInformation.filter((_, i) => i !== index));
+    };
+
     const convertToWebP = (file) => {
         return new Promise((resolve, reject) => {
             const img = new Image();
@@ -474,6 +525,11 @@ const EditProduct = () => {
 
         if (customAttributes.length > 0) {
             formData.append('customAttributes', JSON.stringify(customAttributes));
+        }
+
+        // ✅ Append Product Information
+        if (productInformation.length > 0) {
+            formData.append('productInformation', JSON.stringify(productInformation));
         }
 
         try {
@@ -766,6 +822,64 @@ const EditProduct = () => {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    {/* PRODUCT INFORMATION SECTION */}
+                    <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">Product Information (Amazon-style)</h3>
+                                <p className="text-[11px] text-gray-500">Add grouped key-value specifications for the product.</p>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-gray-900 border border-gray-800 p-4 rounded-xl space-y-4">
+                            <input type="text" placeholder="Section Title (e.g. Item details)" value={infoInput.sectionTitle} onChange={handleInfoSectionTitleChange} className="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-sm text-white" />
+                            
+                            <div className="space-y-2">
+                                <p className="text-[10px] uppercase text-gray-500 font-bold ml-1">Key-Value Pairs</p>
+                                {infoInput.details.map((detail, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <input type="text" placeholder="Key (e.g. Material)" value={detail.key} onChange={(e) => handleInfoDetailChange(idx, 'key', e.target.value)} className="flex-1 p-2 bg-gray-950 border border-gray-800 rounded-lg outline-none focus:border-emerald-500 text-xs text-white" />
+                                        <input type="text" placeholder="Value (e.g. 100% Cotton)" value={detail.value} onChange={(e) => handleInfoDetailChange(idx, 'value', e.target.value)} className="flex-1 p-2 bg-gray-950 border border-gray-800 rounded-lg outline-none focus:border-emerald-500 text-xs text-white" />
+                                        <button type="button" onClick={() => removeInfoDetailRow(idx)} disabled={infoInput.details.length === 1} className="p-2 text-rose-500 hover:text-rose-400 disabled:opacity-50">
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button type="button" onClick={addInfoDetailRow} className="text-[10px] uppercase tracking-wider text-emerald-400 hover:text-emerald-300 font-bold flex items-center gap-1 mt-2">
+                                    <Plus size={12} /> Add Row
+                                </button>
+                            </div>
+
+                            <button type="button" onClick={addInfoSection} className="w-full py-2.5 bg-gray-800 text-white rounded-xl font-bold text-xs flex items-center justify-center gap-2 hover:bg-gray-700 transition-colors">
+                                <Plus size={16} /> Add Information Section
+                            </button>
+                        </div>
+
+                        {/* Added Sections List */}
+                        {productInformation.length > 0 && (
+                            <div className="space-y-3 pt-2">
+                                {productInformation.map((section, idx) => (
+                                    <div key={idx} className="p-3 bg-gray-900 border border-gray-800 rounded-xl">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h4 className="text-sm font-bold text-white">{section.sectionTitle}</h4>
+                                            <button type="button" onClick={() => removeInfoSection(idx)} className="text-rose-400 hover:text-rose-200">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
+                                        <div className="bg-gray-950 rounded-lg p-2 space-y-1">
+                                            {section.details.map((detail, dIdx) => (
+                                                <div key={dIdx} className="flex text-xs">
+                                                    <span className="w-1/3 text-gray-500 font-medium">{detail.key}</span>
+                                                    <span className="w-2/3 text-gray-300">{detail.value}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-5">

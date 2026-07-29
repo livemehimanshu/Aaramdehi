@@ -200,7 +200,7 @@ export const createProduct = async (req, res) => {
             tags, mrp, sellingPrice, discountPercent, stock, sku, 
             specifications, seoTitle, seoDescription, seoKeywords, model3dUrl, modelUrl,
             subtitle, deliveryDate, location, specs, features,
-            sizes, colors 
+            sizes, colors, productInformation
         } = req.body;
         
         const userId = req.userId || req.user?._id || req.user?.id;
@@ -378,6 +378,17 @@ export const createProduct = async (req, res) => {
             }
         }
 
+        let parsedProductInformation = [];
+        if (productInformation) {
+            try {
+                parsedProductInformation = typeof productInformation === 'string'
+                    ? JSON.parse(productInformation)
+                    : productInformation;
+            } catch (e) {
+                parsedProductInformation = [];
+            }
+        }
+
         const productData = {
             name,
             title: name,
@@ -402,6 +413,7 @@ export const createProduct = async (req, res) => {
             sizes: Array.isArray(parsedSizes) ? parsedSizes : [],
             colors: parsedColors,
             customAttributes: Array.isArray(parsedCustomAttributes) ? parsedCustomAttributes : [],
+            productInformation: Array.isArray(parsedProductInformation) ? parsedProductInformation : [],
 
             specifications: parsedSpecs,
             specs: parsedSpecs,

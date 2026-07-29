@@ -88,7 +88,8 @@ const normalizeProductPayload = (found) => {
     rating: source.ratings?.average || 5,
     reviews: [],
     category: source.category || '',
-    tags: source.tags || []
+    tags: source.tags || [],
+    productInformation: Array.isArray(source.productInformation) ? source.productInformation : []
   };
 };
 
@@ -112,6 +113,7 @@ const ProductDetailsPage = () => {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false); 
   const [isAdminUser, setIsAdminUser] = useState(false);
+  const [openAccordion, setOpenAccordion] = useState(0); // For Product Information
   
   // ✅ Setup React Hook Form for Reviews
   const { register, handleSubmit, setValue, watch, formState: { errors: reviewErrors }, reset: resetReview } = useForm({
@@ -574,6 +576,36 @@ const ProductDetailsPage = () => {
             mainProduct={productData} 
             mainProductPrice={finalPrice} 
         />
+
+        {/* Amazon-style Product Information Accordion */}
+        {productData.productInformation && productData.productInformation.length > 0 && (
+          <div className="mt-20 border-t pt-16">
+            <h2 className="text-3xl font-black tracking-tighter uppercase mb-8">Product Information</h2>
+            <div className="border border-gray-200 rounded-3xl overflow-hidden bg-white shadow-sm">
+              {productData.productInformation.map((section, idx) => (
+                <div key={idx} className="border-b border-gray-200 last:border-b-0">
+                  <button 
+                    onClick={() => setOpenAccordion(openAccordion === idx ? null : idx)}
+                    className="w-full px-6 py-5 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <span className="font-bold text-[#1A365D] uppercase tracking-widest text-sm">{section.sectionTitle}</span>
+                    {openAccordion === idx ? <FiMinus className="text-gray-500" /> : <FiPlus className="text-gray-500" />}
+                  </button>
+                  {openAccordion === idx && (
+                    <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                      {section.details.map((detail, dIdx) => (
+                        <div key={dIdx} className="flex flex-col sm:flex-row text-sm border-b border-gray-100 pb-2 last:border-b-0 last:pb-0 md:last:border-b md:last:pb-2">
+                          <span className="font-semibold text-gray-700 sm:w-1/3 min-w-[140px] bg-gray-50 p-2 rounded-l-md">{detail.key}</span>
+                          <span className="text-gray-600 sm:w-2/3 p-2">{detail.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* --- REVIEWS SECTION --- */}
         <div className="mt-20 border-t pt-16">

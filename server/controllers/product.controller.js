@@ -1,5 +1,6 @@
 import { uploadImageCloudinary, deleteImageCloudinary, extractCloudinaryPublicIdFromUrl, buildCloudinaryFolderPath } from "../utils/uploadImageCloudinary.js";
 import { findAll, findById, create, updateById, deleteById, findByQuery, db } from "../config/db.js";
+import { MultiversalEngine } from "../utils/MultiversalEngine.js";
 
 const COLLECTION = 'products';
 
@@ -465,30 +466,32 @@ export const getAllProducts = async (req, res) => {
                 ? Object.keys(rawProducts).map(key => ({ _id: key, ...rawProducts[key] })) 
                 : []);
 
+        if (search && search !== "" && search !== "undefined") {
+            // ✅ Initialize the custom MultiversalEngine with the raw products catalog
+            const searchEngine = new MultiversalEngine(products);
+            
+            // ✅ Run the advanced search (TF-IDF, Levenshtein, Hinglish, Phonetic)
+            products = searchEngine.search(search);
+            
+            // The search engine returns results sorted by score, so we map them to keep their scores
+        }
+
         products = products.map((prod) => {
             const normalizedProduct = normalizeProductForResponse(prod);
             return {
                 ...normalizedProduct,
                 category: typeof prod.category === 'object' ? prod.category.name || prod.category.label || '' : prod.category || '',
                 sizes: Array.isArray(prod.sizes) ? prod.sizes : [],
-                colors: Array.isArray(prod.colors) ? prod.colors : []
+                colors: Array.isArray(prod.colors) ? prod.colors : [],
+                searchScore: prod.searchScore // preserve search score if it exists
             };
         });
 
-        if (search && search !== "" && search !== "undefined") {
-            const searchLower = String(search).toLowerCase();
-            products = products.filter(prod => 
-                String(prod.name || "").toLowerCase().includes(searchLower) || 
-                String(prod.brand || "").toLowerCase().includes(searchLower) ||
-                String(prod.category || "").toLowerCase().includes(searchLower) ||
-                (prod.colors && Array.isArray(prod.colors) && prod.colors.some(c => String(c.name || c).toLowerCase().includes(searchLower))) ||
-                (prod.sizes && Array.isArray(prod.sizes) && prod.sizes.some(s => String(s.label || s).toLowerCase().includes(searchLower)))
-            );
-        }
-
         const totalProducts = products.length;
 
-        if (sort) {
+        if (sort && (!search || search === "" || search === "undefined")) {
+            // Only sort by other fields if we aren't doing a search
+            // If doing a search, we want to keep the relevance score ordering from MultiversalEngine
             const sortField = sort.replace('-', '');
             const isDesc = sort.startsWith('-');
             products.sort((a, b) => {

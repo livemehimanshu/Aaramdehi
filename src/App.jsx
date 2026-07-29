@@ -19,6 +19,9 @@ const ProductListing = lazy(() => import('../component/Pages/productListing/inde
 const ProductDetailsPage = lazy(() => import('../component/Pages/productpage/ProductDetailsPage.jsx'))
 const RoomProductsPage = lazy(() => import('../component/Pages/productListing/RoomProductsPage.jsx'))
 const ComparePage = lazy(() => import('../component/Pages/ComparePage/index.jsx'))
+const CategoriesPage = lazy(() => import('../component/Pages/CategoriesPage.jsx'))
+const AboutUs = lazy(() => import('../component/Pages/AboutUs.jsx'))
+const ContactUs = lazy(() => import('../component/Pages/ContactUs.jsx'))
 const BlogList = lazy(() => import('../component/Pages/blog/blog.jsx').then((mod) => ({ default: mod.BlogList })))
 const BlogDetail = lazy(() => import('../component/Pages/blog/blog.jsx').then((mod) => ({ default: mod.BlogDetail })))
 
@@ -180,9 +183,9 @@ function AppContent() {
                 <Route path="/ar-studio" element={<ARStudio />} />
                 <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
                 <Route path="/compare" element={<ComparePage />} />
-                <Route path="/categories" element={<PageWrapper title="Categories" />} />
-                <Route path="/about-us" element={<PageWrapper title="About Us" />} />
-                <Route path="/contact-us" element={<PageWrapper title="Contact Us" />} />
+                <Route path="/categories" element={<CategoriesPage />} />
+                <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/contact-us" element={<ContactUs />} />
                 <Route path="/login" element={<AuthPage />} /> 
                 <Route path="/register" element={<AuthPage />} />
                 <Route path="/signup" element={<AuthPage />} />

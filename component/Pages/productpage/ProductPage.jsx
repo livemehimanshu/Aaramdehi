@@ -11,7 +11,8 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiCheckCircle,
-  FiPackage
+  FiPackage,
+  FiChevronDown
 } from 'react-icons/fi';
 import '@/styles/zoom-magnify.css';
 
@@ -236,6 +237,10 @@ const ProductPage = (props) => {
   const [deliveryStatus, setDeliveryStatus] = useState('Free delivery by Sunday, 2 Aug');
   const [isWishlisted, setIsWishlisted] = useState(Boolean(props.isInWishlist));
   const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0);
+
+  // State for Description Toggle Accordion
+  const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
+
   const [screenSize, setScreenSize] = useState(() => {
     if (typeof window !== 'undefined') {
       return window.innerWidth >= 1024 ? 'lg' : window.innerWidth >= 768 ? 'md' : 'sm';
@@ -343,10 +348,10 @@ const ProductPage = (props) => {
 
   const descriptionText = useMemo(() => {
     const rawDescription = description || '';
-    const normalized = String(rawDescription)
+    const normalizedText = String(rawDescription)
       .replace(/&nbsp;/g, ' ')
       .trim();
-    return normalized || 'Crafted for long-lasting comfort and support with premium materials and thoughtful detailing.';
+    return normalizedText || 'Crafted for long-lasting comfort and support with premium materials and thoughtful detailing.';
   }, [description]);
 
   const hasRichDescription = useMemo(() => /<[^>]+>/i.test(descriptionText), [descriptionText]);
@@ -458,15 +463,22 @@ const ProductPage = (props) => {
   return (
     <div className="min-h-full bg-slate-100 px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-[1480px] rounded-[32px] border border-slate-200 bg-white shadow-[0_32px_80px_-38px_rgba(15,23,42,0.24)]">
+        {/* Grid Container */}
         <div className="grid grid-cols-1 gap-6 p-4 sm:p-6 md:grid-cols-[1.02fr_0.98fr] md:gap-8 lg:p-8">
+
+          {/* LEFT COLUMN: Visuals & Gallery */}
           <section className="space-y-6">
             <div className="rounded-[26px] border border-slate-200 bg-slate-50 p-5 sm:p-6">
-              <div className="relative mx-auto flex w-full max-w-[95%] justify-center overflow-hidden rounded-[22px] bg-white p-3 md:max-w-[80%] lg:max-w-[80%] xl:max-w-[80%] md:cursor-zoom-in" onMouseEnter={() => {
-                // Track zoom interaction when user hovers over product image
-                if (props.trackInteraction) {
-                  props.trackInteraction('zoom_open', 4);
-                }
-              }}>
+
+              {/* Main Image with Zoom */}
+              <div
+                className="relative mx-auto flex w-full max-w-[95%] justify-center overflow-hidden rounded-[22px] bg-white p-3 md:max-w-[80%] lg:max-w-[80%] xl:max-w-[80%] md:cursor-zoom-in"
+                onMouseEnter={() => {
+                  if (props.trackInteraction) {
+                    props.trackInteraction('zoom_open', 4);
+                  }
+                }}
+              >
                 <div className="flex h-full w-full min-h-[320px] items-center justify-center rounded-[20px] bg-slate-100 p-4 shadow-inner sm:min-h-[360px]">
                   <ReactImageMagnify
                     {...{
@@ -489,7 +501,7 @@ const ProductPage = (props) => {
                       isHintEnabled: true,
                       isActivatedOnTouch: true,
                       isEnlargedImagePortalEnabled: true,
-                      isEnlargedImagePortalEnabledForTouch: screenSize === 'lg' ? true : false,
+                      isEnlargedImagePortalEnabledForTouch: screenSize === 'lg',
                       enlargedImagePortalId: 'zoom-portal',
                       hoverDelayInMs: 100,
                       hoverOffDelayInMs: 50,
@@ -520,6 +532,8 @@ const ProductPage = (props) => {
                     }}
                   />
                 </div>
+
+                {/* Image Navigation Controls */}
                 <button
                   type="button"
                   onClick={() => moveGalleryImage('prev')}
@@ -538,86 +552,58 @@ const ProductPage = (props) => {
                   {activeVariant.name || 'Standard'}
                 </div>
               </div>
-            <div id="zoom-portal" className={screenSize === 'lg' ? 'pointer-events-none' : ''} />
 
-            <div className="mt-4 rounded-[28px] bg-white p-3 shadow-sm">
-              <div className="flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => slideThumbnails('prev')}
-                  disabled={!canSlideThumbnailsPrev}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                >
-                  <FiChevronLeft size={18} />
-                </button>
-                <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white px-2 py-3">
-                  <div className="inline-flex items-center gap-3">
-                    {visibleThumbnails.map((imgUrl, index) => (
-                      <button
-                        type="button"
-                        key={`${imgUrl}-${thumbnailStartIndex + index}`}
-                        className={`relative h-16 w-16 flex-shrink-0 rounded-3xl overflow-hidden border bg-white transition ${selectedImage === imgUrl ? 'border-orange-500 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-300'}`}
-                        onClick={() => {
-                          // Track image click for behavioral analytics
-                          if (props.trackInteraction) {
-                            props.trackInteraction('image_click', 2);
-                          }
-                          if (props.onActiveImgChange) {
-                            props.onActiveImgChange(imgUrl);
-                          } else {
-                            setInternalSelectedImage(imgUrl);
-                          }
-                        }}
-                      >
-                        <img src={imgUrl} alt={`Thumbnail ${thumbnailStartIndex + index + 1}`} className="h-full w-full object-cover" onError={handleImageError} />
-                        <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-1 text-[10px] text-white text-center">{thumbnailStartIndex + index + 1}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => slideThumbnails('next')}
-                  disabled={!canSlideThumbnailsNext}
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                >
-                  <FiChevronRight size={18} />
-                </button>
-              </div>
-            </div>
+              <div id="zoom-portal" className={screenSize === 'lg' ? 'pointer-events-none' : ''} />
 
-            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Detailed description</p>
-                  <p className="mt-1 text-sm text-slate-500">Everything you need to know about this product</p>
-                </div>
-              </div>
-              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
-                {hasRichDescription ? (
-                  <div
-                    className="prose prose-sm max-w-none [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1"
-                    dangerouslySetInnerHTML={{ __html: sanitizedDescriptionHtml }}
-                  />
-                ) : (
-                  descriptionText.split(/\n+/).filter(Boolean).map((paragraph, index) => (
-                    <p key={`description-paragraph-${index}`}>{paragraph}</p>
-                  ))
-                )}
-              </div>
-              {specEntries.length > 0 && (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {specEntries.map(([label, value]) => (
-                    <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
-                      <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+              {/* Thumbnail Strip */}
+              <div className="mt-4 rounded-[28px] bg-white p-3 shadow-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => slideThumbnails('prev')}
+                    disabled={!canSlideThumbnailsPrev}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    <FiChevronLeft size={18} />
+                  </button>
+                  <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white px-2 py-3">
+                    <div className="inline-flex items-center gap-3">
+                      {visibleThumbnails.map((imgUrl, index) => (
+                        <button
+                          type="button"
+                          key={`${imgUrl}-${thumbnailStartIndex + index}`}
+                          className={`relative h-16 w-16 flex-shrink-0 rounded-3xl overflow-hidden border bg-white transition ${selectedImage === imgUrl ? 'border-orange-500 ring-2 ring-orange-200' : 'border-slate-200 hover:border-slate-300'}`}
+                          onClick={() => {
+                            if (props.trackInteraction) {
+                              props.trackInteraction('image_click', 2);
+                            }
+                            if (props.onActiveImgChange) {
+                              props.onActiveImgChange(imgUrl);
+                            } else {
+                              setInternalSelectedImage(imgUrl);
+                            }
+                          }}
+                        >
+                          <img src={imgUrl} alt={`Thumbnail ${thumbnailStartIndex + index + 1}`} className="h-full w-full object-cover" onError={handleImageError} />
+                          <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent p-1 text-[10px] text-white text-center">{thumbnailStartIndex + index + 1}</span>
+                        </button>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => slideThumbnails('next')}
+                    disabled={!canSlideThumbnailsNext}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border bg-white text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                  >
+                    <FiChevronRight size={18} />
+                  </button>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
 
+            </div>
+
+            {/* 3D Model Viewer Container */}
             {currentModelUrl && (
               <div className="rounded-[24px] border border-slate-200 bg-slate-50 p-4 sm:p-5">
                 <div className="mb-4 flex items-center justify-between">
@@ -641,14 +627,14 @@ const ProductPage = (props) => {
                     className="h-[220px] w-full rounded-[16px] bg-slate-100 sm:h-[240px] md:h-[280px] lg:h-[320px]"
                   />
                 </div>
-                <span className="mt-4 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  Available
-                </span>
               </div>
             )}
           </section>
 
+          {/* RIGHT COLUMN: Details, Pricing, Description, Options, Actions */}
           <aside className="space-y-5 lg:sticky lg:top-8">
+
+            {/* 1. Header & Price Block */}
             <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
@@ -660,9 +646,11 @@ const ProductPage = (props) => {
                 </div>
               </div>
 
-              <h1 className="relative z-10 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px] break-words">{titleLabel}</h1>
+              {/* Title & Subtitle */}
+              <h1 className="relative z-10 mt-3 text-2xl font-semibold tracking-tight text-slate-900 sm:text-[28px] break-words">{titleLabel}</h1>
               <p className="relative z-10 mt-2 text-sm leading-6 text-slate-600">{subtitle}</p>
 
+              {/* Price Details */}
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <span className="rounded-full bg-red-50 px-3 py-1 text-sm font-semibold text-red-600">
                   {activeDiscount > 0 ? `-${activeDiscount}% off` : 'Best price'}
@@ -670,9 +658,14 @@ const ProductPage = (props) => {
                 <span className="text-4xl font-semibold text-slate-900">₹{formatPrice(activePrice)}</span>
                 <span className="text-sm text-slate-500 line-through">₹{formatPrice(activeMrp)}</span>
               </div>
+
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">Estimated delivery: <span className="font-semibold text-slate-900">{deliveryDate}</span></div>
-                <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">Location: <span className="font-semibold text-slate-900">{location}</span></div>
+                <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
+                  Estimated delivery: <span className="font-semibold text-slate-900">{deliveryDate}</span>
+                </div>
+                <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-600">
+                  Location: <span className="font-semibold text-slate-900">{location}</span>
+                </div>
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
@@ -685,54 +678,108 @@ const ProductPage = (props) => {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-900">Select colour</p>
-                <span className="text-sm text-slate-500">{activeVariant.name || 'Standard'}</span>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {colors.map((color, index) => {
-                  const swatchImage = color.swatchImg || color.images?.[0] || color.img || color.image || PLACEHOLDER_IMAGE;
-                  return (
-                    <button
-                      key={`${color.name}-${index}`}
-                      type="button"
-                      className={`flex min-w-[160px] items-center gap-3 rounded-[28px] border px-3 py-3 text-left transition ${selectedColor === index ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
-                      onClick={() => handleSelectColor(index)}
-                    >
-                      <img src={swatchImage} alt={color.name || `Variant ${index + 1}`} className="h-14 w-14 rounded-2xl object-cover" onError={handleImageError} />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900">{color.name}</p>
-                        <p className="text-xs text-slate-500">₹{formatPrice(Number(color.price ?? price ?? 0))}</p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* 2. Detailed Description (UPDATED WITH TOGGLE ACCORDION) */}
+            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 transition-all duration-300">
+              <button
+                type="button"
+                onClick={() => setIsDescriptionOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between gap-3 text-left focus:outline-none"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">Detailed description</p>
+                  <p className="mt-1 text-sm text-slate-500">Everything you need to know about this product</p>
+                </div>
+                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">
+                  <FiChevronDown
+                    className={`h-5 w-5 transform transition-transform duration-300 ${isDescriptionOpen ? 'rotate-180' : 'rotate-0'
+                      }`}
+                  />
+                </div>
+              </button>
+
+              {isDescriptionOpen && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="space-y-3 text-sm leading-7 text-slate-700">
+                    {hasRichDescription ? (
+                      <div
+                        className="prose prose-sm max-w-none [&_p]:mb-3 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1"
+                        dangerouslySetInnerHTML={{ __html: sanitizedDescriptionHtml }}
+                      />
+                    ) : (
+                      descriptionText.split(/\n+/).filter(Boolean).map((paragraph, index) => (
+                        <p key={`description-paragraph-${index}`}>{paragraph}</p>
+                      ))
+                    )}
+                  </div>
+                  {specEntries.length > 0 && (
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      {specEntries.map(([label, value]) => (
+                        <div key={label} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">{label}</p>
+                          <p className="mt-2 text-sm font-semibold text-slate-900">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-900">Choose size</p>
-                <span className="text-sm text-slate-500">{getSizeLabel(selectedSize)}</span>
+            {/* 3. Color Selection */}
+            {colors.length > 0 && (
+              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-900">Select colour</p>
+                  <span className="text-sm text-slate-500">{activeVariant.name || 'Standard'}</span>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {colors.map((color, index) => {
+                    const swatchImage = color.swatchImg || color.images?.[0] || color.img || color.image || PLACEHOLDER_IMAGE;
+                    return (
+                      <button
+                        key={`${color.name}-${index}`}
+                        type="button"
+                        className={`flex min-w-[160px] items-center gap-3 rounded-[28px] border px-3 py-3 text-left transition ${selectedColor === index ? 'border-orange-500 bg-orange-50 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'}`}
+                        onClick={() => handleSelectColor(index)}
+                      >
+                        <img src={swatchImage} alt={color.name || `Variant ${index + 1}`} className="h-14 w-14 rounded-2xl object-cover" onError={handleImageError} />
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">{color.name}</p>
+                          <p className="text-xs text-slate-500">₹{formatPrice(Number(color.price ?? activePrice ?? 0))}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-3">
-                {sizes.map((sizeEntry, index) => {
-                  const sizeLabel = getSizeLabel(sizeEntry);
-                  return (
-                    <button
-                      key={`${sizeLabel}-${index}`}
-                      type="button"
-                      className={`rounded-full border px-4 py-3 text-sm font-semibold transition ${selectedSize && getSizeLabel(selectedSize) === sizeLabel ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
-                      onClick={() => setSelectedSize(sizeEntry)}
-                    >
-                      {sizeLabel}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            )}
 
+            {/* 4. Size Selection */}
+            {sizes.length > 0 && (
+              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-slate-900">Choose size</p>
+                  <span className="text-sm text-slate-500">{getSizeLabel(selectedSize)}</span>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {sizes.map((sizeEntry, index) => {
+                    const sizeLabel = getSizeLabel(sizeEntry);
+                    return (
+                      <button
+                        key={`${sizeLabel}-${index}`}
+                        type="button"
+                        className={`rounded-full border px-4 py-3 text-sm font-semibold transition ${selectedSize && getSizeLabel(selectedSize) === sizeLabel ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'}`}
+                        onClick={() => setSelectedSize(sizeEntry)}
+                      >
+                        {sizeLabel}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 5. Custom Attribute Groups */}
             {customAttributes?.length > 0 && (
               <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <div className="mb-4 flex items-center justify-between">
@@ -781,6 +828,7 @@ const ProductPage = (props) => {
               </div>
             )}
 
+            {/* 6. Pincode Check & Purchase Actions */}
             <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <FiMapPin className="text-orange-500" />
@@ -848,12 +896,14 @@ const ProductPage = (props) => {
               </div>
             </div>
 
+            {/* Sidebar Promo Area */}
             {props.sidebarPromo && (
               <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 {props.sidebarPromo}
               </div>
             )}
 
+            {/* Product Highlights */}
             <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
               <p className="text-sm font-semibold text-slate-900">Why shoppers love this</p>
               <div className="mt-4 space-y-3">
@@ -865,6 +915,7 @@ const ProductPage = (props) => {
                 ))}
               </div>
             </div>
+
           </aside>
         </div>
       </div>

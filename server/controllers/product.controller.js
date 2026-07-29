@@ -195,14 +195,14 @@ export const createProduct = async (req, res) => {
             return res.status(400).json({ success: false, message: "Request body is empty. Check your FormData and Multer configuration." });
         }
 
-        const { 
-            name, brand, description, shortDescription, category, subCategory, 
-            tags, mrp, sellingPrice, discountPercent, stock, sku, 
+        const {
+            name, brand, description, shortDescription, category, subCategory,
+            tags, mrp, sellingPrice, discountPercent, stock, sku,
             specifications, seoTitle, seoDescription, seoKeywords, model3dUrl, modelUrl,
             subtitle, deliveryDate, location, specs, features,
             sizes, colors, productInformation
         } = req.body;
-        
+
         const userId = req.userId || req.user?._id || req.user?.id;
 
         // Validation
@@ -294,7 +294,7 @@ export const createProduct = async (req, res) => {
             if (Array.isArray(rawColors)) {
                 for (let i = 0; i < rawColors.length; i++) {
                     let colorObj = typeof rawColors[i] === 'string' ? { name: rawColors[i] } : { ...rawColors[i] };
-                    
+
                     // Frontend 'color_images_0', 'color_images_0[]' dono support karein
                     const variantFiles = getVariantFiles(allUploadedFiles, i);
                     let variantImages = [];
@@ -402,7 +402,7 @@ export const createProduct = async (req, res) => {
             sellingPrice: sellingPriceNum,
             discountPercent: Number(discountPercent) || Math.round(((mrpNum - sellingPriceNum) / mrpNum) * 100),
             stock: Number(stock),
-            sku: sku || `SKU-${Date.now()}-${slug.slice(0,5)}`,
+            sku: sku || `SKU-${Date.now()}-${slug.slice(0, 5)}`,
             images,
             thumbnail: images.length > 0 ? images[0].url : "",
             subtitle: subtitle || category || 'Premium comfort',
@@ -458,7 +458,7 @@ export const createProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
     try {
         const { category, subCategory, page, limit, search, sort = "-createdAt" } = req.query;
-        
+
         const p = Number(page) || 1;
         const l = Number(limit) || 10;
         const skip = (p - 1) * l;
@@ -472,19 +472,19 @@ export const getAllProducts = async (req, res) => {
             rawProducts = await findAll(COLLECTION) || [];
         }
 
-        let products = Array.isArray(rawProducts) 
-            ? rawProducts 
-            : (rawProducts && typeof rawProducts === 'object' 
-                ? Object.keys(rawProducts).map(key => ({ _id: key, ...rawProducts[key] })) 
+        let products = Array.isArray(rawProducts)
+            ? rawProducts
+            : (rawProducts && typeof rawProducts === 'object'
+                ? Object.keys(rawProducts).map(key => ({ _id: key, ...rawProducts[key] }))
                 : []);
 
         if (search && search !== "" && search !== "undefined") {
             // ✅ Initialize the custom MultiversalEngine with the raw products catalog
             const searchEngine = new MultiversalEngine(products);
-            
+
             // ✅ Run the advanced search (TF-IDF, Levenshtein, Hinglish, Phonetic)
             products = searchEngine.search(search);
-            
+
             // The search engine returns results sorted by score, so we map them to keep their scores
         }
 
@@ -602,6 +602,7 @@ export const analyzeRoom = async (req, res) => {
 };
 
 // ✅ 5. UPDATE PRODUCT
+// ✅ UPDATED: UPDATE PRODUCT CONTROLLER
 export const updateProduct = async (req, res) => {
     try {
         const { id } = req.params;
@@ -613,13 +614,15 @@ export const updateProduct = async (req, res) => {
         if (!req.body || Object.keys(req.body).length === 0) {
             return res.status(400).json({ success: false, message: "Update payload missing." });
         }
-        
-        const { 
+
+        const {
             name, brand, description, shortDescription, category, subCategory, isActive,
-            tags, mrp, sellingPrice, discountPercent, stock, sku, 
+            tags, mrp, sellingPrice, discountPercent, stock, sku,
             specifications, seoTitle, seoDescription, seoKeywords,
-            sizes, colors 
+            sizes, colors, productInformation
         } = req.body;
+
+        const allUploadedFiles = Array.isArray(req.files) ? req.files : [];
 
         let updateData = {
             name, brand, description, shortDescription, category, subCategory,
@@ -641,11 +644,65 @@ export const updateProduct = async (req, res) => {
             }
         }
 
-        if (colors !== undefined) {
+        // ✅ HANDLE COLOR VARIANTS WITH NEW FILE UPLOADS
+        const rawColorsInput = colors || req.body.colorVariants || req.body.variants;
+        if (rawColorsInput !== undefined) {
+            let parsedColors = [];
             try {
-                updateData.colors = typeof colors === 'string' ? JSON.parse(colors) : colors;
+                parsedColors = typeof rawColorsInput === 'string' ? JSON.parse(rawColorsInput) : rawColorsInput;
             } catch (e) {
-                updateData.colors = [];
+                parsedColors = [];
+            }
+
+            if (Array.isArray(parsedColors)) {
+                const finalColors = [];
+
+                for (let i = 0; i < parsedColors.length; i++) {
+                    let colorObj = typeof parsedColors[i] === 'string' ? { name: parsedColors[i] } : { ...parsedColors[i] };
+
+                    // Existing images preserved from frontend
+                    let existingVariantImages = Array.isArray(colorObj.images)
+                        ? normalizeImageValue(colorObj.images)
+                        : [];
+
+                    // Filter new files for current color index (e.g. color_images_0 or color_images_0[])
+                    const variantFiles = allUploadedFiles.filter(
+                        (f) => f.fieldname === `color_images_${i}` || f.fieldname === `color_images_${i}[]`
+                    );
+
+                    let newUploadedVariantImages = [];
+                    if (variantFiles.length > 0) {
+                        for (const file of variantFiles) {
+                            const fileContent = file.buffer || file.path;
+                            if (fileContent) {
+                                const productFolder = buildCloudinaryFolderPath('Aaramdehi_Uploads/products', name || existingProduct?.name || 'product');
+                                const uploadResult = await uploadImageCloudinary(fileContent, `${productFolder}/variants`);
+                                if (uploadResult && uploadResult.success) {
+                                    newUploadedVariantImages.push({
+                                        url: uploadResult.url,
+                                        public_id: uploadResult.public_id
+                                    });
+                                }
+                            }
+                        }
+                    }
+
+                    // Merge Existing & Newly Uploaded Images
+                    const allVariantImages = [...existingVariantImages, ...newUploadedVariantImages];
+
+                    finalColors.push({
+                        ...colorObj,
+                        name: colorObj.name || `Variant ${i + 1}`,
+                        label: colorObj.label || colorObj.name || `Variant ${i + 1}`,
+                        images: allVariantImages,
+                        img: allVariantImages.length > 0 ? allVariantImages[0].url : '',
+                        swatchImg: colorObj.swatchImg || (allVariantImages.length > 0 ? allVariantImages[0].url : ''),
+                        price: Number(colorObj.price || updateData.sellingPrice || existingProduct.sellingPrice || 0),
+                        mrp: Number(colorObj.mrp || updateData.mrp || existingProduct.mrp || 0)
+                    });
+                }
+
+                updateData.colors = finalColors;
             }
         }
 
@@ -659,13 +716,23 @@ export const updateProduct = async (req, res) => {
             }
         }
 
+        if (productInformation !== undefined) {
+            try {
+                updateData.productInformation = typeof productInformation === 'string'
+                    ? JSON.parse(productInformation)
+                    : productInformation;
+            } catch (e) {
+                updateData.productInformation = [];
+            }
+        }
+
         updateData = Object.fromEntries(Object.entries(updateData).filter(([_, v]) => v !== undefined && !Number.isNaN(v)));
 
         if (tags) updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
 
         const searchKeywordsRaw = req.body.seoKeywords || req.body.searchKeywords;
         if (searchKeywordsRaw) {
-            updateData.seoKeywords = (typeof searchKeywordsRaw === 'string' && searchKeywordsRaw.trim()) 
+            updateData.seoKeywords = (typeof searchKeywordsRaw === 'string' && searchKeywordsRaw.trim())
                 ? searchKeywordsRaw.replace(/\[|\]|"/g, '').split(',').map(k => k.trim()).filter(Boolean)
                 : searchKeywordsRaw;
         }
@@ -678,7 +745,6 @@ export const updateProduct = async (req, res) => {
             }
         }
 
-        const allUploadedFiles = Array.isArray(req.files) ? req.files : [];
         let finalImages = [];
         const hasExistingImages = req.body.existingImages !== undefined;
         const imageOrderRaw = req.body.imageOrder;
@@ -702,7 +768,7 @@ export const updateProduct = async (req, res) => {
             }
         }
 
-        const uploadedImages = allUploadedFiles.filter(f => f.fieldname === 'images');
+        const uploadedImages = allUploadedFiles.filter(f => f.fieldname === 'images' || f.fieldname === 'images[]');
         const uploadedModelFiles = allUploadedFiles.filter(f => f.fieldname === 'model3d');
 
         if (imageOrder.length > 0) {
@@ -732,7 +798,6 @@ export const updateProduct = async (req, res) => {
                 }
             }
 
-            // Append any remaining existing or new images if order was incomplete
             while (existingQueue.length > 0) {
                 orderedImages.push(existingQueue.shift());
             }
@@ -803,19 +868,6 @@ export const updateProduct = async (req, res) => {
 
         const updatedProduct = await updateById(COLLECTION, id, updateData);
 
-        // Update Search Index
-        try {
-            const indexResults = await findByQuery('product_indexes', 'productId', id);
-            if (indexResults.length > 0) {
-                const indexId = indexResults[0]._id;
-                await updateById('product_indexes', indexId, {
-                    name: updateData.name || updatedProduct.name,
-                    searchKeywords: updateData.seoKeywords || updatedProduct.seoKeywords || [updatedProduct.brand, updatedProduct.category],
-                    indexedAt: new Date().toISOString()
-                });
-            }
-        } catch (indexErr) { console.warn('⚠️ Search index update failed:', indexErr.message); }
-
         return res.json({ success: true, message: "Updated successfully", data: updatedProduct });
     } catch (error) {
         console.error(`❌ Error updating product [${req.params.id}]:`, error);
@@ -839,7 +891,7 @@ export const addProductReview = async (req, res) => {
         if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
         const reviews = Array.isArray(product.reviews) ? product.reviews : [];
-        
+
         const alreadyReviewed = reviews.find(r => String(r.userId) === String(userId));
         if (alreadyReviewed) {
             return res.status(400).json({ success: false, message: "Product already reviewed by you" });
@@ -885,7 +937,7 @@ export const deleteProductReview = async (req, res) => {
         if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
         let reviews = Array.isArray(product.reviews) ? product.reviews : [];
-        
+
         const initialCount = reviews.length;
         reviews = reviews.filter(
             (r) => String(r.id) !== String(reviewId) && String(r.userId) !== String(reviewId)
@@ -896,8 +948,8 @@ export const deleteProductReview = async (req, res) => {
         }
 
         const ratingsCount = reviews.length;
-        const avgRating = ratingsCount > 0 
-            ? reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount 
+        const avgRating = ratingsCount > 0
+            ? reviews.reduce((acc, item) => (item.rating || 0) + acc, 0) / ratingsCount
             : 5;
 
         await updateById(COLLECTION, id, {
@@ -919,7 +971,7 @@ export const toggleProductStatus = async (req, res) => {
     try {
         const { id } = req.params;
         const product = await findById(COLLECTION, id);
-        
+
         if (!product) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
@@ -929,10 +981,10 @@ export const toggleProductStatus = async (req, res) => {
 
         await updateById(COLLECTION, id, { isActive: newStatus });
 
-        return res.json({ 
-            success: true, 
+        return res.json({
+            success: true,
             message: `Product is now ${newStatus ? 'Active' : 'Inactive'}`,
-            isActive: newStatus 
+            isActive: newStatus
         });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -976,10 +1028,10 @@ export const getDashboardStats = async (req, res) => {
         const recentProducts = allProducts
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 5);
-        
+
         return res.json({
             success: true,
-            data: { 
+            data: {
                 totalProducts,
                 totalStock,
                 lowStockProducts,

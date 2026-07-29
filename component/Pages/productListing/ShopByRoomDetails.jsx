@@ -24,7 +24,7 @@ const ShopByRoomDetails = () => {
     if (loading) return (
         <div className="min-h-screen flex flex-col items-center justify-center">
             <Loader2 className="animate-spin text-blue-900 mb-4" size={40} />
-            <p className="text-xs font-black uppercase tracking-widest text-gray-400">Setting up the room...</p>
+            <p className="text-xs font-black uppercase tracking-widest text-gray-500">Setting up the room...</p>
         </div>
     );
 

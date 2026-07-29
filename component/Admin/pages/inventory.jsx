@@ -43,7 +43,7 @@ export default function Inventory() { // Match with PascalCase naming convention
         <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-lg overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left min-w-[700px]">
-              <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+              <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
                 <tr>
                   <th className="p-4">Product Name</th>
                   <th className="p-4">SKU/ID</th>
@@ -77,7 +77,7 @@ export default function Inventory() { // Match with PascalCase naming convention
                     </td>
                     <td className="p-4">
                       <div className="flex justify-center gap-3">
-                        <Edit size={16} onClick={() => navigate(`/admin/edit-product/${item._id}`)} className="text-gray-400 hover:text-white cursor-pointer" />
+                        <Edit size={16} onClick={() => navigate(`/admin/edit-product/${item._id}`)} className="text-gray-500 hover:text-white cursor-pointer" />
                       </div>
                     </td>
                   </tr>

@@ -74,7 +74,7 @@ const CompareDrawer = ({ isOpen, onClose }) => {
             className="p-2 hover:bg-gray-100 rounded-full transition-all active:scale-90"
             aria-label="Close Drawer"
           >
-            <IoCloseOutline size={28} className="text-gray-400" />
+            <IoCloseOutline size={28} className="text-gray-500" />
           </button>
         </div>
 
@@ -131,7 +131,7 @@ const CompareDrawer = ({ isOpen, onClose }) => {
                  <MdCompareArrows size={48} className="text-blue-200" />
               </div>
               <h3 className="text-lg font-black text-gray-800 uppercase tracking-tighter">Your list is empty</h3>
-              <p className="text-[11px] text-gray-400 mt-2 leading-relaxed max-w-[220px] font-medium">
+              <p className="text-[11px] text-gray-500 mt-2 leading-relaxed max-w-[220px] font-medium">
                 Add at least two products to compare their features and prices.
               </p>
               <button 
@@ -148,7 +148,7 @@ const CompareDrawer = ({ isOpen, onClose }) => {
         {compareItems.length > 0 && (
           <div className="p-5 bg-white border-t border-gray-100 shadow-[0_-15px_30px_rgba(0,0,0,0.05)] shrink-0">
             <div className="flex justify-between items-center mb-5 px-1">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[2px]">Selected Items</span>
+                <span className="text-[10px] font-black text-gray-500 uppercase tracking-[2px]">Selected Items</span>
                 <span className="text-xl font-black text-blue-900">{compareItems.length}</span>
             </div>
 

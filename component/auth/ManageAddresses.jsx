@@ -66,7 +66,7 @@ const ManageAddresses = () => {
                             className="bg-blue-900 text-white px-10 py-4 font-black text-[10px] tracking-widest rounded-xl shadow-lg hover:bg-black transition-all active:scale-95"
                             onClick={handleSave}
                         >SAVE</button>
-						<button onClick={() => setShowForm(false)} className="text-gray-400 font-black text-[10px] tracking-widest hover:text-rose-600 transition-colors">CANCEL</button>
+						<button onClick={() => setShowForm(false)} className="text-gray-500 font-black text-[10px] tracking-widest hover:text-rose-600 transition-colors">CANCEL</button>
 					</div>
 				</div>
 			)}
@@ -80,7 +80,7 @@ const ManageAddresses = () => {
 								<span className="font-black text-gray-800 uppercase tracking-tight">{addr.name}</span>
 								<span className="font-bold text-blue-900 text-sm">{addr.mobile}</span>
 							</div>
-							<p className="text-xs font-bold text-gray-400 mt-3 max-w-lg leading-relaxed uppercase tracking-wider">{addr.detail}</p>
+							<p className="text-xs font-bold text-gray-500 mt-3 max-w-lg leading-relaxed uppercase tracking-wider">{addr.detail}</p>
 						</div>
 						<button className="text-gray-300 font-bold text-xl hover:text-blue-900 transition-colors px-2">⋮</button>
 					</div>

@@ -313,7 +313,7 @@ const Header = ({ hideNav = false }) => {
                       Aaram<span className="text-red-600 transition-colors duration-300 group-hover/logo:text-red-500">dehi</span>
                     </h1>
                     <div className="flex items-center gap-0.5">
-                      <p className="text-[8px] md:text-[9px] font-extrabold tracking-wider text-gray-400 italic">
+                      <p className="text-[8px] md:text-[9px] font-extrabold tracking-wider text-gray-500 italic">
                         Explore <span className="text-yellow-500 group-hover/logo:text-yellow-400 transition-colors duration-300">Luxe</span>
                       </p>
                       <span className="text-yellow-500 text-[10px] md:text-[11px] animate-pulse group-hover/logo:rotate-[360deg] group-hover/logo:scale-125 transition-all duration-700 inline-block origin-center">

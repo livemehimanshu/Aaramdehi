@@ -68,7 +68,7 @@ const Orders = () => {
                     </div>
                 ) : orders.length === 0 ? (
                     <div className="bg-white p-12 rounded-3xl border-2 border-dashed border-gray-100 text-center">
-                        <p className="text-gray-400 mb-6 font-medium">You haven't placed any orders yet.</p>
+                        <p className="text-gray-500 mb-6 font-medium">You haven't placed any orders yet.</p>
                         <Link to="/" className="inline-block bg-gray-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-600 transition">
                             Start Shopping
                         </Link>
@@ -87,7 +87,7 @@ const Orders = () => {
                                             />
                                         </div>
                                         <div>
-                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Order {order.orderNumber}</p>
+                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Order {order.orderNumber}</p>
                                             <h3 className="font-bold text-gray-800">
                                                 {order.orderItems.length} {order.orderItems.length === 1 ? 'Item' : 'Items'}
                                             </h3>
@@ -97,7 +97,7 @@ const Orders = () => {
                                     
                                     <div className="text-right flex items-center gap-6">
                                         <div className="hidden sm:block">
-                                            <p className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Status</p>
+                                            <p className="text-xs font-bold text-gray-500 uppercase tracking-tighter">Status</p>
                                             <span className="text-[11px] font-black uppercase px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full">{order.orderStatus}</span>
                                         </div>
                                         <div className="font-black text-gray-900 text-lg">₹{order.totalAmount}</div>

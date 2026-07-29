@@ -33,7 +33,7 @@ const Categorypanel = ({ isOpen, setIsopencatpanel, categories = [] }) => {
           </Link>
         </ListItem>
 
-        <div className="px-4 py-2 bg-gray-50 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+        <div className="px-4 py-2 bg-gray-50 text-[10px] font-black text-gray-500 uppercase tracking-widest">
           Product Categories
         </div>
 
@@ -51,7 +51,7 @@ const Categorypanel = ({ isOpen, setIsopencatpanel, categories = [] }) => {
                 <span className={`text-[14px] font-bold ${openSubMenu === index ? 'text-[#ff5252]' : 'text-gray-800'}`}>
                   {catName}
                 </span>
-                <div className={openSubMenu === index ? 'text-[#ff5252]' : 'text-gray-400'}>
+                <div className={openSubMenu === index ? 'text-[#ff5252]' : 'text-gray-500'}>
                   {openSubMenu === index ? <FiMinus size={18} /> : <FiPlus size={18} />}
                 </div>
               </div>
@@ -85,7 +85,7 @@ const Categorypanel = ({ isOpen, setIsopencatpanel, categories = [] }) => {
             </div>
           </div>
         )}) : (
-          <div className="p-10 text-center text-gray-400 text-xs italic">
+          <div className="p-10 text-center text-gray-500 text-xs italic">
             No categories found
           </div>
         )}

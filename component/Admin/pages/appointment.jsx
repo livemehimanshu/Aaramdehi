@@ -48,7 +48,7 @@ export default function AppointmentsPage() {
           <p className="text-slate-500 text-xs mt-1">Manage consultation and service bookings</p>
         </div>
         <div className="relative">
-          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+          <Search className="absolute left-3 top-2.5 text-gray-500" size={18} />
           <input 
             type="text" 
             placeholder="Search customer..." 
@@ -79,7 +79,7 @@ export default function AppointmentsPage() {
                     {apt.name}
                     <p className="text-[10px] text-slate-500 font-normal">{apt.email} | {apt.phone}</p>
                   </td>
-                  <td className="p-5 text-gray-400 text-sm">{apt.subject}</td>
+                  <td className="p-5 text-gray-500 text-sm">{apt.subject}</td>
                   <td className="p-5 text-slate-300 text-sm">{new Date(apt.date).toLocaleDateString()} at {apt.time}</td>
                   <td className="p-5 text-center">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${

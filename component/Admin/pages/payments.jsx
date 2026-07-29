@@ -36,7 +36,7 @@ export default function Payments() { // Match with PascalCase naming convention
       case 'Paid': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
       case 'Pending': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
       case 'Failed': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-      default: return 'bg-gray-800 text-gray-400';
+      default: return 'bg-gray-800 text-gray-500';
     }
   };
 
@@ -52,7 +52,7 @@ export default function Payments() { // Match with PascalCase naming convention
   if (loading) return (
     <div className="flex flex-col justify-center items-center h-screen bg-gray-950 gap-4">
       <Loader2 className="animate-spin text-emerald-500" size={40} />
-      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Fetching Transactions...</p>
+      <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Fetching Transactions...</p>
     </div>
   );
 
@@ -106,7 +106,7 @@ export default function Payments() { // Match with PascalCase naming convention
         {/* Table Wrapper for Horizontal Scrolling */}
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[600px]">
-            <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+            <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4">Txn Reference</th>
                 <th className="p-4">Order ID</th>
@@ -120,10 +120,10 @@ export default function Payments() { // Match with PascalCase naming convention
               {filteredPayments.map((pay) => (
                 <tr key={pay._id} className="hover:bg-gray-800/30 transition-all text-sm group">
                   <td className="p-4 font-mono text-[11px] md:text-xs text-blue-400 font-bold uppercase">{pay._id.slice(-10)}</td>
-                  <td className="p-4 text-gray-400 font-medium">{pay.orderId || pay.orderNumber}</td>
+                  <td className="p-4 text-gray-500 font-medium">{pay.orderId || pay.orderNumber}</td>
                   <td className="p-4 flex items-center gap-2 text-white">
                     <div className="p-1.5 bg-gray-800 rounded-lg">
-                      <CreditCard size={14} className="text-gray-400" />
+                      <CreditCard size={14} className="text-gray-500" />
                     </div>
                     <span className="font-bold uppercase text-[11px]">{pay.paymentMethod || 'N/A'}</span>
                   </td>

@@ -237,7 +237,7 @@ const Rooms = () => {
                   <div className="flex justify-between items-center px-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Featured Products ({formData.products.length})</label>
                     <div className="relative">
-                       <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                       <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs" />
                        <input 
                         type="text" 
                         placeholder="Search products..." 

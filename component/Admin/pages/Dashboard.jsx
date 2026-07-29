@@ -103,7 +103,7 @@ const Dashboard = () => {
       <div className="bg-gray-900 p-6 md:p-10 rounded-3xl md:rounded-[40px] border border-gray-800 shadow-2xl flex flex-col md:flex-row justify-between items-center text-center md:text-left gap-6">
         <div>
           <h2 className="text-2xl md:text-4xl font-black text-white tracking-tighter">Good Morning, Admin 👋</h2>
-          <p className="text-gray-400 mt-2 text-sm md:text-lg font-medium">Tracking Aaramdehi's performance and inventory.</p>
+          <p className="text-gray-500 mt-2 text-sm md:text-lg font-medium">Tracking Aaramdehi's performance and inventory.</p>
         </div>
         <button 
           onClick={() => navigate('/admin/add-product')} 
@@ -167,10 +167,10 @@ const Dashboard = () => {
             </ResponsiveContainer>
           </div>
           <div className="flex gap-6 mt-6">
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div> Desktop
             </div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
               <div className="w-3 h-3 rounded-full bg-emerald-500"></div> Mobile
             </div>
           </div>

@@ -200,7 +200,7 @@ const ProductSeoEditor = () => {
                             <div className="space-y-6">
                                 {/* Google Preview Card */}
                                 <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-                                    <p className="text-[10px] font-black uppercase text-gray-400 mb-3 tracking-widest">Google Search Preview</p>
+                                    <p className="text-[10px] font-black uppercase text-gray-500 mb-3 tracking-widest">Google Search Preview</p>
                                     <div className="max-w-[600px]">
                                         <div className="text-[14px] text-[#202124] mb-1 flex items-center gap-1">
                                             <span>https://aaramdehi.com</span>

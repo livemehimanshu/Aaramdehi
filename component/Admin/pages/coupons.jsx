@@ -152,7 +152,7 @@ export default function CouponsPage() {
       <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[500px]">
-            <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+            <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4">Coupon Info</th>
                 <th className="p-4">Usage</th>
@@ -186,7 +186,7 @@ export default function CouponsPage() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-2 text-gray-400 text-xs">
+                    <div className="flex items-center gap-2 text-gray-500 text-xs">
                       <Calendar size={14} className="text-gray-500" />
                       {c.expiryDate ? new Date(c.expiryDate).toLocaleDateString() : 'No Expiry'}
                     </div>

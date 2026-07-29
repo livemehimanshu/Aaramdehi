@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllProductsAPI } from '../../src/api/authAndAdminApi';
 import { AiFillStar, AiOutlineHeart, AiFillHeart, AiOutlineEye } from 'react-icons/ai';
-import { FiShoppingCart } from 'react-icons/fi';
 import { BsLightningCharge } from 'react-icons/bs';
 import { addToRecentlyViewed } from '../../src/data/recentlyViewedUtils'; // Assuming this utility exists
-import { optimizeImage } from '../../src/utils/imageOptimizer';
+import { optimizeImage, getResponsiveImageAttributes } from '../../src/utils/imageOptimizer';
 
 const PopularProducts = () => {
   const [products, setProducts] = useState([]);
@@ -132,13 +131,14 @@ const PopularProducts = () => {
                 onClick={() => handleProductView(item)}
                 className="w-full h-full flex items-center justify-center">
                   <img
-                    src={optimizeImage(item.thumbnail || (item.images && item.images[0]?.url) || item.image, 400) || 'https://placehold.co/400x400?text=Aaramdehi'}
+                    {...getResponsiveImageAttributes(item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/400x400?text=Aaramdehi', [300, 500, 800], "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw", true)}
                     width="400"
                     height="400"
                     loading="lazy"
                     decoding="async"
+                    onError={(e) => { e.target.srcset = ''; }}
                     className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700"
-                    alt={item.name}
+                    alt={`${item.name || 'Product'} thumbnail`}
                   />
               </Link>
               <button onClick={(e) => toggleWishlist(e, item)} className="absolute top-5 right-5 z-20" aria-label="Toggle Wishlist">
@@ -171,7 +171,7 @@ const PopularProducts = () => {
               <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{(item.sellingPrice || item.price || item.newPrice || 0).toLocaleString()}</span>
-                  <span className="text-[11px] text-gray-400 line-through font-bold">₹{(item.mrp || item.oldPrice || 0).toLocaleString()}</span>
+                  <span className="text-[11px] text-gray-500 line-through font-bold">₹{(item.mrp || item.oldPrice || 0).toLocaleString()}</span>
                 </div>
                 <div className="bg-blue-50 text-blue-900 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all transform group-hover:rotate-12">
                   <BsLightningCharge size={20} />

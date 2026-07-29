@@ -55,7 +55,7 @@ const RoomSection = () => {
                         <h3 className="text-lg font-serif text-gray-800 group-hover:text-[#1a365d] transition-colors duration-300 tracking-tight">
                             {room.name}
                         </h3>
-                        <p className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mt-1 group-hover:text-blue-600 transition-colors">Explore Collection</p>
+                        <p className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mt-1 group-hover:text-blue-600 transition-colors">Explore Collection</p>
                     </Link>
                 ))}
             </div>

@@ -110,7 +110,7 @@ const AccountSettings = () => {
                         value={data.first} 
                         onChange={handleChange}
                         disabled={!isEdit.personal} 
-                        className={`border-2 p-4 w-full sm:w-64 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.personal ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-400 border-transparent'}`} 
+                        className={`border-2 p-4 w-full sm:w-64 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.personal ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-500 border-transparent'}`} 
                     />
                     <input 
                         type="text" 
@@ -118,11 +118,11 @@ const AccountSettings = () => {
                         value={data.last} 
                         onChange={handleChange}
                         disabled={!isEdit.personal} 
-                        className={`border-2 p-4 w-full sm:w-64 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.personal ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-400 border-transparent'}`} 
+                        className={`border-2 p-4 w-full sm:w-64 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.personal ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-500 border-transparent'}`} 
                     />
                 </div>
                 
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Your Gender</p>
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Your Gender</p>
                 <div className="flex gap-6">
                     {['Male', 'Female'].map(g => (
                         <label key={g} className="flex items-center gap-2 text-sm font-bold text-gray-700 cursor-pointer group">
@@ -152,7 +152,7 @@ const AccountSettings = () => {
                     value={data.email} 
                     onChange={handleChange}
                     disabled={!isEdit.email} 
-                    className={`border-2 p-4 w-full sm:w-80 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.email ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-400 border-transparent'}`} 
+                    className={`border-2 p-4 w-full sm:w-80 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.email ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-500 border-transparent'}`} 
                 />
             </div>
 
@@ -168,16 +168,16 @@ const AccountSettings = () => {
                     value={data.mobile} 
                     onChange={handleChange}
                     disabled={!isEdit.mobile} 
-                    className={`border-2 p-4 w-full sm:w-80 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.mobile ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-400 border-transparent'}`} 
+                    className={`border-2 p-4 w-full sm:w-80 rounded-xl font-bold text-sm outline-none transition-all ${isEdit.mobile ? 'border-blue-900 bg-white' : 'bg-gray-50 text-gray-500 border-transparent'}`} 
                 />
             </div>
 
             {/* FAQ Section */}
             <div className="mt-10 border-t border-gray-50 pt-10">
-                <h4 className="font-black text-gray-400 mb-6 uppercase text-[10px] tracking-[0.2em]">Account Actions & FAQs</h4>
+                <h4 className="font-black text-gray-500 mb-6 uppercase text-[10px] tracking-[0.2em]">Account Actions & FAQs</h4>
                 <div className="mb-8">
                     <p className="text-sm font-black text-gray-800 mb-2 uppercase tracking-tight">What happens when I update my info?</p>
-                    <p className="text-xs font-bold text-gray-400 leading-relaxed uppercase tracking-widest">
+                    <p className="text-xs font-bold text-gray-500 leading-relaxed uppercase tracking-widest">
                         Your login email id (or mobile number) changes, likewise. You'll receive all your account related communication on your updated email address (or mobile number).
                     </p>
                 </div>

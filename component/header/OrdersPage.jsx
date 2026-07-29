@@ -67,7 +67,7 @@ const OrdersPage = () => {
 
             <div className="container mx-auto px-4 max-w-5xl">
                 {/* Breadcrumbs */}
-                <nav className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-6">
+                <nav className="flex items-center gap-2 text-[10px] font-black text-gray-500 uppercase tracking-widest mb-6">
                     <Link to="/" className="hover:text-blue-600 transition">Home</Link>
                     <IoChevronForwardOutline size={10} />
                     <span className="text-gray-800">My Orders</span>
@@ -126,15 +126,15 @@ const OrdersPage = () => {
                                 <div className="bg-gray-50/50 px-6 py-4 flex flex-wrap items-center justify-between border-b border-gray-100 gap-4">
                                     <div className="flex gap-8">
                                         <div>
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Order Placed</p>
+                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Order Placed</p>
                                             <p className="text-xs font-bold text-gray-700">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Amount</p>
+                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Total Amount</p>
                                             <p className="text-xs font-black text-blue-900">₹{order.totalAmount?.toLocaleString()}</p>
                                         </div>
                                         <div className="hidden sm:block">
-                                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Order ID</p>
+                                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Order ID</p>
                                             <p className="text-xs font-medium text-gray-500">#{String(order._id || order.id).slice(-8).toUpperCase()}</p>
                                         </div>
                                     </div>

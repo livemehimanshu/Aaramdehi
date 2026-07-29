@@ -22,7 +22,7 @@ export default function SEOOptimizer({ initialData, onSave }) {
 
       {/* Meta Title */}
       <div className="mb-6">
-        <label className="block text-xs md:text-sm font-medium mb-2 text-gray-400">Meta Title (50-60 chars)</label>
+        <label className="block text-xs md:text-sm font-medium mb-2 text-gray-500">Meta Title (50-60 chars)</label>
         <input 
           maxLength={70}
           value={seo.title}
@@ -37,7 +37,7 @@ export default function SEOOptimizer({ initialData, onSave }) {
 
       {/* Meta Description */}
       <div className="mb-6">
-        <label className="block text-xs md:text-sm font-medium mb-2 text-gray-400">Meta Description (150-160 chars)</label>
+        <label className="block text-xs md:text-sm font-medium mb-2 text-gray-500">Meta Description (150-160 chars)</label>
         <textarea 
           maxLength={200}
           value={seo.description}
@@ -52,7 +52,7 @@ export default function SEOOptimizer({ initialData, onSave }) {
 
       {/* Keywords */}
       <div className="mb-8">
-        <label className="block text-xs md:text-sm font-medium mb-2 text-gray-400">Focus Keywords (Comma separated)</label>
+        <label className="block text-xs md:text-sm font-medium mb-2 text-gray-500">Focus Keywords (Comma separated)</label>
         <input 
           value={seo.keywords}
           onChange={(e) => setSeo({...seo, keywords: e.target.value})}

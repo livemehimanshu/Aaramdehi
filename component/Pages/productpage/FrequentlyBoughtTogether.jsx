@@ -110,7 +110,7 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
     };
 
     if (loading) return (
-        <div className="mt-20 p-10 text-center bg-gray-50 rounded-[30px] border border-dashed border-gray-200 text-gray-400 font-bold animate-pulse uppercase tracking-widest">
+        <div className="mt-20 p-10 text-center bg-gray-50 rounded-[30px] border border-dashed border-gray-200 text-gray-500 font-bold animate-pulse uppercase tracking-widest">
             Finding perfect matches for you...
         </div>
     );
@@ -147,7 +147,7 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
                 </div>
                 <div className="w-full lg:pl-10 lg:border-l border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-8">
                     <div className="text-center md:text-left">
-                        <p className="text-[10px] md:text-xs font-black text-gray-400 tracking-widest mb-1 uppercase">Total Bundle Price</p>
+                        <p className="text-[10px] md:text-xs font-black text-gray-500 tracking-widest mb-1 uppercase">Total Bundle Price</p>
                         <p className="text-3xl md:text-5xl font-black text-blue-900">₹{bundleTotal.toLocaleString()}</p>
                     </div>
                     <button onClick={handleAddBundle} className="w-full sm:w-auto bg-blue-900 text-white px-10 py-5 rounded-2xl font-black text-[10px] md:text-xs tracking-widest uppercase shadow-xl hover:shadow-blue-200 transition-all active:scale-95">

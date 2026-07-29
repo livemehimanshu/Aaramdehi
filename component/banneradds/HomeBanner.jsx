@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay, Pagination } from 'swiper/modules';
 import { getActiveBannersAPI } from '../../src/api/authAndAdminApi';
-import { optimizeImage } from '../../src/utils/imageOptimizer';
+import { optimizeImage, getResponsiveImageAttributes } from '../../src/utils/imageOptimizer';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -124,7 +124,7 @@ const HomeBanner = ({ section = 'hero' }) => {
 
                                     <div className="relative overflow-hidden rounded-[24px] bg-slate-100 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]">
                                         <img
-                                            src={optimizeImage(banner.image, 1200) || PLACEHOLDER}
+                                            {...getResponsiveImageAttributes(banner.image || PLACEHOLDER, [500, 800, 1200], "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 1200px")}
                                             alt={banner.title}
                                             width="1200"
                                             height="420"
@@ -132,7 +132,7 @@ const HomeBanner = ({ section = 'hero' }) => {
                                             fetchPriority={isFirst ? "high" : "auto"}
                                             decoding="async"
                                             className="h-full w-full object-contain"
-                                            onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }}
+                                            onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; e.target.srcset = ''; }}
                                         />
                                     </div>
                                 </div>

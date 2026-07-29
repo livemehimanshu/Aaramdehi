@@ -12,7 +12,7 @@ export default function PaymentsPage() {
       case 'Paid': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
       case 'Pending': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
       case 'Failed': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
-      default: return 'bg-gray-800 text-gray-400';
+      default: return 'bg-gray-800 text-gray-500';
     }
   };
 
@@ -27,7 +27,7 @@ export default function PaymentsPage() {
         {/* Table Wrapper for Horizontal Scrolling */}
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[600px]">
-            <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+            <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4">Transaction ID</th>
                 <th className="p-4">Order ID</th>

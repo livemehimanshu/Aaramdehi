@@ -125,7 +125,7 @@ const OrderSuccess = () => {
                         
                         {/* Order ID Section */}
                         <div className="mb-6 pb-6 border-b border-gray-100">
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-[3px]">Order ID</p>
+                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px]">Order ID</p>
                             <p className="text-2xl font-black text-gray-900 mt-1 tracking-tighter">{displayOrderId}</p>
                         </div>
 
@@ -156,7 +156,7 @@ const OrderSuccess = () => {
 
                         {/* Payment Method Badge */}
                         <div className="mb-6 pb-6 border-b border-gray-100">
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-[3px] mb-2">Payment Method</p>
+                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px] mb-2">Payment Method</p>
                             <div className="inline-block bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider">
                                 {displayMethod === 'COD' ? 'Cash On Delivery' : 
                                  displayMethod === 'UPI' ? 'UPI / NetBanking' : 'Credit / Debit Card'}
@@ -165,7 +165,7 @@ const OrderSuccess = () => {
 
                         {/* Delivery Address Layout */}
                         <div className="mb-2">
-                            <p className="text-[10px] text-gray-400 font-black uppercase tracking-[3px] mb-2">Delivery Address</p>
+                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px] mb-2">Delivery Address</p>
                             <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
                                 <p className="font-black text-gray-900 text-sm">{displayAddress.name || 'Customer'}</p>
                                 <p className="text-xs text-gray-500 mt-1 leading-relaxed">{displayAddress.address || displayAddress.street || 'Address pending...'}</p>

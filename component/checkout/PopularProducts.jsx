@@ -150,7 +150,7 @@ const PopularProducts = () => {
               <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
                 <div className="flex flex-col">
                   <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{(item.sellingPrice || item.price).toLocaleString()}</span>
-                  <span className="text-[11px] text-gray-400 line-through font-bold">₹{(item.mrp || item.oldPrice).toLocaleString()}</span>
+                  <span className="text-[11px] text-gray-500 line-through font-bold">₹{(item.mrp || item.oldPrice).toLocaleString()}</span>
                 </div>
                 <div className="bg-blue-50 text-blue-900 p-2 rounded-xl opacity-0 group-hover:opacity-100 transition-all transform group-hover:rotate-12">
                   <BsLightningCharge size={20} />

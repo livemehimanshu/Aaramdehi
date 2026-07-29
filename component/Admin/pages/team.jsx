@@ -29,7 +29,7 @@ export default function TeamPage() {
       <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[600px]">
-            <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+            <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4 md:p-5 font-semibold">Member Name</th>
                 <th className="p-4 md:p-5 font-semibold">Role & Access</th>
@@ -58,7 +58,7 @@ export default function TeamPage() {
                       {member.role}
                     </span>
                   </td>
-                  <td className="p-4 md:p-5 text-gray-400">
+                  <td className="p-4 md:p-5 text-gray-500">
                     <div className="flex items-center gap-2">
                       <Mail size={14} />
                       {member.email}
@@ -66,7 +66,7 @@ export default function TeamPage() {
                   </td>
                   <td className="p-4 md:p-5">
                     <div className="flex justify-center gap-2">
-                      <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-all">
+                      <button className="p-2 text-gray-500 hover:text-white hover:bg-gray-800 rounded-lg transition-all">
                         <Edit2 size={16} />
                       </button>
                       <button className="p-2 text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all">

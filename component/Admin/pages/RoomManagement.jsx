@@ -91,7 +91,7 @@ const RoomManagement = () => {
                                     </span>
                                     <button 
                                         onClick={() => navigate(`/admin/edit-room/${room._id}`)}
-                                        className="text-[10px] font-black uppercase text-gray-400 hover:text-emerald-500 transition-colors"
+                                        className="text-[10px] font-black uppercase text-gray-500 hover:text-emerald-500 transition-colors"
                                     >
                                         Edit Details
                                     </button>

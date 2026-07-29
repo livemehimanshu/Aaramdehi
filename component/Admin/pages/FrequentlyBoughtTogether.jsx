@@ -114,7 +114,7 @@ const FrequentlyBoughtTogether = ({ mainProduct }) => {
                                     disabled={item._id === mainProduct._id}
                                     className="w-4 h-4 rounded accent-blue-600"
                                 />
-                                <span className={`text-sm ${selectedIds.includes(item._id) ? 'text-gray-800 font-bold' : 'text-gray-400 font-medium'}`}>
+                                <span className={`text-sm ${selectedIds.includes(item._id) ? 'text-gray-800 font-bold' : 'text-gray-500 font-medium'}`}>
                                     {item._id === mainProduct._id ? <span className="text-[10px] bg-gray-100 px-2 py-0.5 rounded mr-2 uppercase">This Item</span> : ''}
                                     {item.name}
                                 </span>
@@ -125,7 +125,7 @@ const FrequentlyBoughtTogether = ({ mainProduct }) => {
                     
                     <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
                         <div>
-                            <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Total Bundle Price</p>
+                            <p className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Total Bundle Price</p>
                             <p className="text-2xl font-black text-gray-900">₹{calculateTotal().toLocaleString()}</p>
                         </div>
                         <button 

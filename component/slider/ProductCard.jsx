@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FiHeart, FiShoppingCart } from 'react-icons/fi';
 import { IoHeart } from 'react-icons/io5';
-import { optimizeImage } from '../../src/utils/imageOptimizer';
+import { optimizeImage, getResponsiveImageAttributes } from '../../src/utils/imageOptimizer';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product";
 
@@ -105,18 +105,18 @@ const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
 
       <div className="relative aspect-square mb-4 flex items-center justify-center p-2 bg-gray-50/10 rounded overflow-hidden">
         <img 
-            src={optimizeImage(product.thumbnail || (product.images && product.images[0]?.url), 400) || PLACEHOLDER_IMAGE} 
+            {...getResponsiveImageAttributes(product.thumbnail || (product.images && product.images[0]?.url) || PLACEHOLDER_IMAGE, [300, 500, 800], "(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw", true)}
             width="400"
             height="400"
             loading="lazy"
             decoding="async"
-            onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
-            alt={product.name} 
+            onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; e.target.srcset = ''; }}
+            alt={`${product.name || 'Product'} thumbnail`} 
             className="w-full h-full object-contain transform group-hover:scale-105 transition-all duration-500" />
       </div>
 
       <div className="flex flex-col flex-grow text-left">
-        <h4 className="text-[10px] text-gray-400 font-black uppercase mb-1 tracking-widest">{product.brand || "Aaramdehi"}</h4>
+        <span className="block text-[10px] text-gray-500 font-black uppercase mb-1 tracking-widest">{product.brand || "Aaramdehi"}</span>
         <h3 className="text-[13px] text-gray-900 font-bold leading-tight mb-2 line-clamp-2 group-hover:text-blue-600">
           {product.name}
         </h3>

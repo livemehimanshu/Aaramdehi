@@ -91,7 +91,7 @@ const Wishlist = () => {
                                             <span className="bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded-sm font-bold flex items-center gap-1">
                                                 4.2 ★
                                             </span>
-                                            <span className="text-gray-400 text-xs font-semibold">(1,245)</span>
+                                            <span className="text-gray-500 text-xs font-semibold">(1,245)</span>
                                             <img src="https://static-assets-web.flixcart.com/fk-p-linchpin-web/fk-cp-zion/img/fa_62673a.png" 
                                                  alt="assured" className="h-4 ml-2" />
                                         </div>
@@ -101,7 +101,7 @@ const Wishlist = () => {
                                             <span className="text-xl font-bold text-gray-900">
                                                 ₹{(item.price || item.newPrice || 0).toLocaleString()}
                                             </span>
-                                            <span className="text-gray-400 line-through text-sm">
+                                            <span className="text-gray-500 line-through text-sm">
                                                 ₹{(item.oldPrice || (item.price + 500)).toLocaleString()}
                                             </span>
                                             <span className="text-green-600 text-sm font-bold">
@@ -113,7 +113,7 @@ const Wishlist = () => {
                                     {/* Action Buttons */}
                                     <button 
                                         onClick={() => removeFromWishlist(item.id)}
-                                        className="text-gray-400 hover:text-red-500 transition-colors p-2"
+                                        className="text-gray-500 hover:text-red-500 transition-colors p-2"
                                         title="Remove from Wishlist"
                                     >
                                         <IoTrashOutline size={22} />

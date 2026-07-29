@@ -43,7 +43,7 @@ export default function RefundsPage() {
       case 'Requested': return 'bg-orange-500/10 text-orange-400 border border-orange-500/20';
       case 'Processing': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
       case 'Refunded': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-      default: return 'bg-gray-800 text-gray-400';
+      default: return 'bg-gray-800 text-gray-500';
     }
   };
 
@@ -75,7 +75,7 @@ export default function RefundsPage() {
         {/* Table Wrapper for Horizontal Scrolling */}
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[700px]">
-            <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+            <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4">Refund ID</th>
                 <th className="p-4">Order ID</th>
@@ -92,7 +92,7 @@ export default function RefundsPage() {
                 <tr key={ref._id || ref.id} className="hover:bg-gray-800/30 transition-all text-sm">
                   <td className="p-4 font-mono text-[11px] md:text-sm text-blue-400 font-medium uppercase">{(ref._id || ref.id).slice(-8)}</td>
                   <td className="p-4 font-bold text-white">{ref.orderId}</td>
-                  <td className="p-4 text-gray-400">{ref.customerName || ref.userId?.name || 'Guest'}</td>
+                  <td className="p-4 text-gray-500">{ref.customerName || ref.userId?.name || 'Guest'}</td>
                   <td className="p-4 font-semibold text-gray-300">₹{ref.amount.toLocaleString('en-IN')}</td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase flex items-center gap-1.5 w-max ${getStatusStyle(ref.status)}`}>

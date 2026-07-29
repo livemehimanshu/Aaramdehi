@@ -142,7 +142,7 @@ export default function NewsletterPage() {
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white">Newsletter Subscribers</h1>
-          <p className="text-sm text-gray-400 mt-2">
+          <p className="text-sm text-gray-500 mt-2">
             Manage and export your Firestore newsletter subscribers collection.
           </p>
         </div>
@@ -164,10 +164,10 @@ export default function NewsletterPage() {
       </div>
 
       <div className="flex flex-col lg:flex-row items-start lg:items-center gap-4 mb-6">
-        <span className="text-sm text-gray-400">Total subscribers: <strong className="text-white">{subscribers.length}</strong></span>
+        <span className="text-sm text-gray-500">Total subscribers: <strong className="text-white">{subscribers.length}</strong></span>
         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-start lg:items-center">
           <div className="w-full max-w-md relative">
-            <Search className="absolute left-4 top-3 text-gray-400" size={18} />
+            <Search className="absolute left-4 top-3 text-gray-500" size={18} />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -194,11 +194,11 @@ export default function NewsletterPage() {
         <table className="min-w-full text-left">
           <thead className="bg-gray-950/90">
             <tr>
-              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-400">Email Address</th>
-              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-400">Subscribed</th>
-              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-400">Status</th>
-              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-400">Source</th>
-              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-400">Action</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-500">Email Address</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-500">Subscribed</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-500">Status</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-500">Source</th>
+              <th className="px-6 py-4 text-xs uppercase tracking-widest text-gray-500">Action</th>
             </tr>
           </thead>
           <tbody>

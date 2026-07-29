@@ -33,7 +33,7 @@ const FileManager = () => {
             <SwiperSlide key={i}>
               <div className="bg-white dark:bg-[#161B28] p-4 md:p-5 rounded-[20px] border border-gray-100 dark:border-white/5 flex items-center justify-between shadow-sm">
                 <div>
-                  <p className="text-[10px] md:text-[11px] text-gray-400 font-bold uppercase tracking-wider">{stat.label}</p>
+                  <p className="text-[10px] md:text-[11px] text-gray-500 font-bold uppercase tracking-wider">{stat.label}</p>
                   <h4 className="text-md md:text-lg font-bold mt-1 tracking-tight">{stat.size}</h4>
                 </div>
                 <div className={`text-xs md:text-sm font-black ${stat.color}`}>{stat.usage}</div>
@@ -57,7 +57,7 @@ const FileManager = () => {
                     <item.icon size={20} />
                   </div>
                   <p className="text-[11px] font-bold truncate text-gray-700 dark:text-gray-200">{item.name}</p>
-                  <p className="text-[9px] text-gray-400 mt-1 uppercase font-bold">{item.files}</p>
+                  <p className="text-[9px] text-gray-500 mt-1 uppercase font-bold">{item.files}</p>
                 </div>
               ))}
             </div>
@@ -81,7 +81,7 @@ const FileManager = () => {
                  </svg>
                  <div className="absolute inset-0 flex flex-col items-center justify-center">
                     <span className="text-2xl md:text-4xl font-black">78%</span>
-                    <span className="text-[9px] text-gray-400 uppercase font-bold">Used of 100GB</span>
+                    <span className="text-[9px] text-gray-500 uppercase font-bold">Used of 100GB</span>
                  </div>
               </div>
               <button className="w-full py-3 md:py-4 bg-emerald-400 text-[#0F1219] rounded-[16px] font-black text-xs md:text-sm transition-transform active:scale-95">

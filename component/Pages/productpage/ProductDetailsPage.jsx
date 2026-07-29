@@ -478,7 +478,7 @@ const ProductDetailsPage = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest text-gray-400 animate-pulse">Loading Product Details...</div>;
+    return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest text-gray-500 animate-pulse">Loading Product Details...</div>;
   }
 
   if (!productData) {
@@ -584,7 +584,7 @@ const ProductDetailsPage = () => {
                 <span className="text-5xl font-black text-blue-900">4.8</span>
                 <div>
                    <div className="flex text-amber-400 text-lg"><AiFillStar/><AiFillStar/><AiFillStar/><AiFillStar/><AiFillStar/></div>
-                   <p className="text-[10px] font-bold text-gray-400 uppercase mt-1 tracking-widest">{reviews.length} Verified Reviews</p>
+                   <p className="text-[10px] font-bold text-gray-500 uppercase mt-1 tracking-widest">{reviews.length} Verified Reviews</p>
                 </div>
               </div>
               <button onClick={() => setShowReviewForm(!showReviewForm)} className="w-full py-4 rounded-xl font-black uppercase text-[10px] tracking-widest border-2 border-blue-900 text-blue-900 hover:bg-blue-900 hover:text-white transition-all">
@@ -700,7 +700,7 @@ const ProductDetailsPage = () => {
               </div>
               <button 
                 onClick={() => setIsCouponModalOpen(false)} 
-                className="p-2 bg-gray-50 rounded-full text-gray-400 hover:text-gray-700 transition-colors"
+                className="p-2 bg-gray-50 rounded-full text-gray-500 hover:text-gray-700 transition-colors"
               >
                 <FiX size={18} />
               </button>
@@ -735,7 +735,7 @@ const ProductDetailsPage = () => {
 
               {/* Quick Available Offers / Examples */}
               <div className="pt-4">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Available Offers For You</p>
+                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Available Offers For You</p>
                 <div className="space-y-2">
                   <div 
                     onClick={() => handleApplyCoupon("SAVE10")} 

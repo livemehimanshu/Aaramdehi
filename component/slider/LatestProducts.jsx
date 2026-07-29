@@ -208,7 +208,7 @@ const LatestProducts = () => {
           />
           <div>
             <h2 className="text-3xl md:text-5xl font-black tracking-tighter italic">WATCH</h2>
-            <p className="text-[10px] md:text-sm text-gray-400 mt-2 max-w-[200px]">
+            <p className="text-[10px] md:text-sm text-gray-500 mt-2 max-w-[200px]">
               M6 Smart Band 2.3 - Fitness Band <br />
               Men's and Women's Health Tracking, Red Strap
             </p>
@@ -265,7 +265,7 @@ const LatestProducts = () => {
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white w-full max-w-5xl rounded-sm shadow-2xl relative flex flex-col md:flex-row overflow-hidden max-h-[90vh] animate-in fade-in zoom-in duration-300">
             
-            <button onClick={() => setIsModalOpen(false)} className="absolute right-4 top-4 text-2xl text-gray-400 hover:text-red-500 z-50 bg-gray-100 rounded-full p-1"><IoClose /></button>
+            <button onClick={() => setIsModalOpen(false)} className="absolute right-4 top-4 text-2xl text-gray-500 hover:text-red-500 z-50 bg-gray-100 rounded-full p-1"><IoClose /></button>
 
             <div className="md:w-1/2 p-10 bg-[#f9f9f9] flex items-center justify-center border-r">
               <img src={selectedProduct.thumbnail || (selectedProduct.images && selectedProduct.images[0]?.url) || selectedProduct.image || "https://placehold.co/400x400?text=Product"} alt={selectedProduct.name} className="max-h-[350px] object-contain transition-transform duration-500 hover:scale-110" />
@@ -278,7 +278,7 @@ const LatestProducts = () => {
                 <div className="flex">
                     {[...Array(5)].map((_, i) => (i < Math.floor(selectedProduct.rating || 4) ? <IoStar key={i} /> : <IoStarOutline key={i} />))}
                 </div>
-                <span className="text-gray-400 text-[10px] font-black uppercase mt-1 tracking-widest">(Latest Release)</span>
+                <span className="text-gray-500 text-[10px] font-black uppercase mt-1 tracking-widest">(Latest Release)</span>
               </div>
 
               <div className="flex items-center gap-4 mb-6">
@@ -291,9 +291,9 @@ const LatestProducts = () => {
               {/* Functional Quantity */}
               <div className="flex gap-4 mb-8">
                 <div className="flex items-center border border-gray-200 h-14 bg-white">
-                  <button onClick={handleDecrement} className="px-5 h-full hover:bg-gray-50 font-black border-r text-gray-400">－</button>
+                  <button onClick={handleDecrement} className="px-5 h-full hover:bg-gray-50 font-black border-r text-gray-500">－</button>
                   <span className="w-12 text-center font-black">{quantity}</span>
-                  <button onClick={handleIncrement} className="px-5 h-full hover:bg-gray-50 font-black border-l text-gray-400">＋</button>
+                  <button onClick={handleIncrement} className="px-5 h-full hover:bg-gray-50 font-black border-l text-gray-500">＋</button>
                 </div>
                 
                 <button 
@@ -307,7 +307,7 @@ const LatestProducts = () => {
                 <button 
                   onClick={handleToggleWishlist}
                   className={`flex items-center gap-2 text-[10px] font-black uppercase transition-all tracking-widest ${
-                    isInWishlist ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                    isInWishlist ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                   }`}
                 >
                   {isInWishlist ? <IoHeart size={16}/> : <IoHeartOutline size={16}/>}
@@ -316,7 +316,7 @@ const LatestProducts = () => {
                 <button 
                   onClick={handleToggleCompare}
                   className={`flex items-center gap-2 text-[10px] font-black uppercase transition-all tracking-widest ${
-                    isInCompare ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'
+                    isInCompare ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'
                   }`}
                 >
                   <IoSyncOutline size={16}/> 

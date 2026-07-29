@@ -105,7 +105,7 @@ const MyOrders = () => {
         return (
             <div className="flex flex-col justify-center items-center h-96 bg-white rounded-[30px] shadow-sm border border-gray-100">
                 <Loader2 className="animate-spin text-blue-900" size={40} />
-                <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-gray-400">Fetching your orders...</p>
+                <p className="mt-4 text-xs font-black uppercase tracking-[0.2em] text-gray-500">Fetching your orders...</p>
             </div>
         );
     }
@@ -134,7 +134,7 @@ const MyOrders = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                 <div>
                     <h2 className="text-2xl md:text-3xl font-black text-blue-900 uppercase tracking-tight">Your Order History</h2>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Track and manage your recent purchases</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Track and manage your recent purchases</p>
                 </div>
                 
                 <div className="relative group w-full md:w-80">
@@ -155,7 +155,7 @@ const MyOrders = () => {
                         <Package size={32} className="text-gray-300" />
                     </div>
                     <p className="text-lg font-black text-gray-800 uppercase tracking-tighter">No orders found</p>
-                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-2">Looks like you haven't placed any orders yet.</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-2">Looks like you haven't placed any orders yet.</p>
                     <Link to="/products" className="mt-8 inline-block bg-blue-900 text-white px-10 py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-black transition-all">
                         Start Shopping
                     </Link>
@@ -166,7 +166,7 @@ const MyOrders = () => {
                     <div className="hidden lg:block overflow-hidden">
                         <table className="min-w-full">
                             <thead>
-                                <tr className="text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">
+                                <tr className="text-left text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] border-b border-gray-100">
                                     <th className="pb-6 px-4">Order Details</th>
                                     <th className="pb-6 px-4">Items</th>
                                     <th className="pb-6 px-4 text-center">Amount</th>
@@ -179,11 +179,11 @@ const MyOrders = () => {
                                     <tr key={order._id} className="hover:bg-gray-50/50 transition-colors group">
                                         <td className="py-6 px-4">
                                             <p className="text-sm font-black text-blue-900 uppercase">#{order.orderNumber}</p>
-                                            <p className="text-[10px] font-bold text-gray-400 mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                            <p className="text-[10px] font-bold text-gray-500 mt-1">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                                         </td>
                                         <td className="py-6 px-4">
                                             {order.orderItems.map(item => (
-                                                <p key={item.productId} className="text-xs font-bold text-gray-700 truncate max-w-[240px] mb-1 last:mb-0">{item.name} <span className="text-gray-400 ml-1">×{item.quantity}</span></p>
+                                                <p key={item.productId} className="text-xs font-bold text-gray-700 truncate max-w-[240px] mb-1 last:mb-0">{item.name} <span className="text-gray-500 ml-1">×{item.quantity}</span></p>
                                             ))}
                                         </td>
                                         <td className="py-6 px-4 text-center text-sm font-black text-gray-900">₹{order.totalAmount.toLocaleString()}</td>
@@ -211,21 +211,21 @@ const MyOrders = () => {
                                         {getStatusIcon(order.orderStatus)} {order.orderStatus}
                                     </span>
                                 </div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                 <div className="space-y-4 py-4 border-y border-gray-50">
                                     {order.orderItems.map(item => (
                                         <div key={item.productId} className="flex items-center gap-4">
                                             <img src={item.image || 'https://placehold.co/100x100?text=Item'} alt={item.name} className="w-12 h-12 object-contain bg-gray-50 rounded-xl border border-gray-100" />
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-[11px] font-bold text-gray-800 truncate">{item.name}</p>
-                                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">Qty: {item.quantity}</p>
+                                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">Qty: {item.quantity}</p>
                                             </div>
                                             <p className="text-xs font-black text-gray-900">₹{(item.price * item.quantity).toLocaleString()}</p>
                                         </div>
                                     ))}
                                 </div>
                                 <div className="flex justify-between items-center pt-4 mb-4">
-                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Paid Amount</p>
+                                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Paid Amount</p>
                                     <p className="text-xl font-black text-blue-900 tracking-tighter">₹{order.totalAmount.toLocaleString()}</p>
                                 </div>
                                 <Link to={`/order-details/${order._id || order.id}`} className="block w-full text-center py-3 bg-gray-50 rounded-xl font-black text-[10px] text-blue-900 uppercase tracking-[0.2em] hover:bg-blue-900 hover:text-white transition-all">View Details</Link>

@@ -112,7 +112,7 @@ const ProductRow = ({ title, products = [], categoryPath = '/category/all' }) =>
 
                                         {/* Product Info */}
                                         <div className="p-4">
-                                            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">
+                                            <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest mb-1">
                                                 {product.brand || "Aaramdehi"}
                                             </p>
                                             <h3 className="text-sm font-bold text-gray-800 truncate mb-2 group-hover:text-red-500 transition-colors">
@@ -125,7 +125,7 @@ const ProductRow = ({ title, products = [], categoryPath = '/category/all' }) =>
                                                     ₹{product.price}
                                                 </span>
                                                 {product.oldPrice && (
-                                                    <span className="text-xs text-gray-400 line-through font-bold">
+                                                    <span className="text-xs text-gray-500 line-through font-bold">
                                                         ₹{product.oldPrice}
                                                     </span>
                                                 )}
@@ -142,7 +142,7 @@ const ProductRow = ({ title, products = [], categoryPath = '/category/all' }) =>
                                 );
                             })
                         ) : (
-                            <div className="w-full h-48 flex items-center justify-center text-gray-400 font-bold uppercase">
+                            <div className="w-full h-48 flex items-center justify-center text-gray-500 font-bold uppercase">
                                 No Products Available
                             </div>
                         )}

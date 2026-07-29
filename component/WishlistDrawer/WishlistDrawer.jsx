@@ -46,7 +46,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                       <h3 className="text-[13px] font-semibold text-gray-700 leading-tight">{item.name}</h3>
                       <button
                         onClick={() => removeFromWishlist(item._id || item.id)}
-                        className="text-gray-400 hover:text-red-500 transition"
+                        className="text-gray-500 hover:text-red-500 transition"
                         title="Remove from wishlist"
                       >
                         <IoTrashOutline size={18} />
@@ -71,7 +71,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
               </div>
             ))
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            <div className="h-full flex flex-col items-center justify-center text-gray-500">
               <p className="mt-2">Your wishlist is empty</p>
               <p className="text-[12px] text-gray-300 mt-1">Add items to save for later</p>
             </div>

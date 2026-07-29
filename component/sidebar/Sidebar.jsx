@@ -99,7 +99,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
 
           {/* Section Group: Account Settings */}
           <div>
-            <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Account Settings</p>
+            <p className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Account Settings</p>
             <div className="space-y-1">
               {[
                 { label: 'Profile Information', path: '/account/profile', icon: IoPersonOutline },
@@ -107,7 +107,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
                 { label: 'PAN Card Information', path: '/account/pan', icon: IoCardOutline }
               ].map((item, idx) => (
                 <Link key={idx} to={item.path} onClick={onClose} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                  <item.icon size={20} className="text-gray-400" />
+                  <item.icon size={20} className="text-gray-500" />
                   <span className="text-[11px] font-bold text-gray-600">{item.label}</span>
                 </Link>
               ))}
@@ -116,7 +116,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
 
           {/* Section Group: Payments */}
           <div>
-            <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">Payments</p>
+            <p className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Payments</p>
             <div className="space-y-1">
               {[
                 { label: 'Gift Cards', path: '/payments/giftcards', icon: IoWalletOutline, badge: '₹0' },
@@ -125,7 +125,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
               ].map((item, idx) => (
                 <Link key={idx} to={item.path} onClick={onClose} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors">
                   <div className="flex items-center gap-4">
-                    <item.icon size={20} className="text-gray-400" />
+                    <item.icon size={20} className="text-gray-500" />
                     <span className="text-[11px] font-bold text-gray-600">{item.label}</span>
                   </div>
                   {item.badge && <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">{item.badge}</span>}
@@ -136,7 +136,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
 
           {/* Section Group: My Stuff */}
           <div>
-            <p className="px-3 text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4">My Stuff</p>
+            <p className="px-3 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">My Stuff</p>
             <div className="space-y-1">
               {[
                 { label: 'My Coupons', path: '/coupons', icon: IoTicketOutline },
@@ -144,7 +144,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
                 { label: 'My Wishlist', path: '/wishlist', icon: CiHeart }
               ].map((item, idx) => (
                 <Link key={idx} to={item.path} onClick={onClose} className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                  <item.icon size={20} className="text-gray-400" />
+                  <item.icon size={20} className="text-gray-500" />
                   <span className="text-[11px] font-bold text-gray-600">{item.label}</span>
                 </Link>
               ))}

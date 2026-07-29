@@ -29,7 +29,7 @@ const MyCoupons = () => {
                     <button 
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${activeTab === tab ? 'bg-blue-900 text-white shadow-lg' : 'text-gray-400 hover:text-blue-900'}`}
+                        className={`px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${activeTab === tab ? 'bg-blue-900 text-white shadow-lg' : 'text-gray-500 hover:text-blue-900'}`}
                     >
                         {tab}
                     </button>
@@ -39,7 +39,7 @@ const MyCoupons = () => {
             {loading ? <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-900" /></div> : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {filtered.length === 0 ? (
-                        <p className="text-gray-400 italic text-sm text-center col-span-2">No {activeTab} coupons found.</p>
+                        <p className="text-gray-500 italic text-sm text-center col-span-2">No {activeTab} coupons found.</p>
                     ) : filtered.map(coupon => (
                         <div key={coupon._id} className={`p-6 rounded-[25px] border-2 border-dashed relative overflow-hidden ${activeTab === 'available' ? 'border-emerald-100 bg-emerald-50/30' : 'border-gray-100 bg-gray-50 grayscale opacity-60'}`}>
                             <div className="flex items-center gap-4">
@@ -48,7 +48,7 @@ const MyCoupons = () => {
                                 </div>
                                 <div>
                                     <p className="text-lg font-black text-gray-900 tracking-tighter">{coupon.code}</p>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{coupon.description}</p>
+                                    <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{coupon.description}</p>
                                 </div>
                             </div>
                             {activeTab === 'available' && <button onClick={() => {navigator.clipboard.writeText(coupon.code); toast.success("Code Copied!")}} className="mt-4 w-full py-2 bg-white border border-emerald-200 text-emerald-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-500 hover:text-white transition-all">Copy Code</button>}

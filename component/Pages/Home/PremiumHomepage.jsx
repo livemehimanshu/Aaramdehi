@@ -91,7 +91,7 @@ export default function PremiumHomepage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
             <div>
-              <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold block mb-1">Top Rated</span>
+              <span className="text-[10px] uppercase tracking-widest text-gray-500 font-bold block mb-1">Top Rated</span>
               <h2 className="text-2xl md:text-3xl font-serif tracking-wide text-[#1A365D]">Best Sellers in Home Decor</h2>
             </div>
             <a href="#all" className="text-xs font-semibold text-[#1A365D] tracking-wider uppercase border-b-2 border-[#1A365D] pb-1 hover:text-blue-800 hover:border-blue-800 transition-all">
@@ -122,7 +122,7 @@ export default function PremiumHomepage() {
       </section>
 
       <section className="bg-[#FAF9F6] py-16 text-center max-w-5xl mx-auto px-4" id="about">
-        <h3 className="text-xs uppercase tracking-widest font-bold text-gray-400 mb-2">Our Commitment</h3>
+        <h3 className="text-xs uppercase tracking-widest font-bold text-gray-500 mb-2">Our Commitment</h3>
         <h2 className="text-2xl md:text-3xl font-serif tracking-wide mb-10 text-gray-800">Why Choose Aaramdehi?</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-4">

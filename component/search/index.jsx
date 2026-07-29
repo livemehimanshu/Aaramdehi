@@ -186,7 +186,7 @@ const Search = () => {
           {!query && history.length > 0 && (
             <div className="p-2">
               <div className="flex justify-between items-center px-3 py-2">
-                <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Recent</span>
+                <span className="text-[10px] font-black uppercase text-gray-500 tracking-widest">Recent</span>
                 <button type="button" onClick={clearHistory} className="text-[10px] font-bold text-rose-500 hover:underline">Clear</button>
               </div>
               {history.map((item, idx) => (
@@ -198,7 +198,7 @@ const Search = () => {
                     triggerSearchPage(item);
                   }}
                 >
-                  <IoTimeOutline className="text-gray-400 group-hover:text-blue-600" />
+                  <IoTimeOutline className="text-gray-500 group-hover:text-blue-600" />
                   <span className="text-sm font-medium text-gray-600 group-hover:text-blue-600">{item}</span>
                 </div>
               ))}
@@ -208,7 +208,7 @@ const Search = () => {
           {/* ✅ केस 2: सर्च रिजल्ट्स (सिर्फ तभी जब query टाइप की गई हो) */}
           {query && suggestions.length > 0 && (
             <>
-          <div className="p-3 bg-gray-50 text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b">
+          <div className="p-3 bg-gray-50 text-[10px] font-bold text-gray-500 uppercase tracking-widest border-b">
             Results for "{query}" <span className="float-right font-normal lowercase">{latency}</span>
           </div>
           
@@ -234,7 +234,7 @@ const Search = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-gray-800 group-hover:text-blue-900">{item.title || item.name || "Unnamed Product"}</p>
-                  <p className="text-[11px] text-gray-400">{item.category} • <span className="text-blue-900 font-bold">₹{item.sellingPrice}</span></p>
+                  <p className="text-[11px] text-gray-500">{item.category} • <span className="text-blue-900 font-bold">₹{item.sellingPrice}</span></p>
                 </div>
                 <FaSearch className="text-gray-200 group-hover:text-blue-900" size={14} />
               </div>
@@ -248,7 +248,7 @@ const Search = () => {
       {/* No Results found */}
       {showDropdown && query && suggestions.length === 0 && !loading && (
           <div className="absolute top-[110%] left-0 w-full bg-white p-6 rounded-[15px] shadow-2xl text-center border border-gray-100 z-[999]">
-              <p className="text-sm text-gray-400 italic">No items found matching "{query}"</p>
+              <p className="text-sm text-gray-500 italic">No items found matching "{query}"</p>
           </div>
       )}
     </div>

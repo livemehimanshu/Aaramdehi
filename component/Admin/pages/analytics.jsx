@@ -45,7 +45,7 @@ const AnalyticsPage = () => {
   if (loading) return (
     <div className="flex flex-col justify-center items-center h-screen bg-gray-950 gap-4">
       <Loader2 className="animate-spin text-emerald-500" size={40} />
-      <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Processing Store Data...</p>
+      <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Processing Store Data...</p>
     </div>
   );
 
@@ -66,7 +66,7 @@ const AnalyticsPage = () => {
     <div className="p-4 md:p-8 bg-gray-950 min-h-screen text-gray-200 space-y-6 md:space-y-8">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl md:text-3xl font-bold text-white">Analytics Overview</h1>
-        <button onClick={fetchAnalytics} className="p-2 hover:bg-gray-800 rounded-lg transition-all text-gray-400" title="Refresh Analytics">
+        <button onClick={fetchAnalytics} className="p-2 hover:bg-gray-800 rounded-lg transition-all text-gray-500" title="Refresh Analytics">
           <RefreshCw size={20} />
         </button>
       </div>

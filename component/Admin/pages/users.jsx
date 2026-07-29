@@ -68,7 +68,7 @@ export default function UsersPage() {
       <div className="bg-gray-900 rounded-2xl border border-gray-800 shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[600px]">
-            <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+            <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Email</th>
@@ -80,7 +80,7 @@ export default function UsersPage() {
             <tbody className="divide-y divide-gray-800">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-400">
+                  <td colSpan="5" className="p-8 text-center text-gray-500">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" /> Loading customers...
                     </div>
@@ -88,7 +88,7 @@ export default function UsersPage() {
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="p-8 text-center text-gray-400">No customers found.</td>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">No customers found.</td>
                 </tr>
               ) : (
                 filteredUsers.map((user) => {
@@ -99,7 +99,7 @@ export default function UsersPage() {
                         <div>{user.name}</div>
                         <div className="mt-1 text-[11px] uppercase tracking-wider text-gray-500">{user.role || 'USER'}</div>
                       </td>
-                      <td className="p-4 text-gray-400 flex items-center gap-2 text-xs md:text-sm">
+                      <td className="p-4 text-gray-500 flex items-center gap-2 text-xs md:text-sm">
                         <Mail size={14} className="shrink-0" /> {user.email}
                       </td>
                       <td className="p-4 font-semibold">{user.orders}</td>

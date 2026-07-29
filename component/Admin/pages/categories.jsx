@@ -295,7 +295,7 @@ const Categories = () => {
                                     <td className="p-5">
                                         <div className="flex flex-wrap gap-1">
                                             {Array.isArray(cat.subCategories) && cat.subCategories.map((sub, i) => (
-                                                <span key={i} className="bg-gray-800 text-gray-400 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter">{sub}</span>
+                                                <span key={i} className="bg-gray-800 text-gray-500 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-tighter">{sub}</span>
                                             ))}
                                         </div>
                                     </td>

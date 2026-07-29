@@ -204,7 +204,7 @@ const MainGrid = ({ apiEndpoint = null }) => {
 
                                         {/* Product Info */}
                                         <div className="p-3">
-                                            <p className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mb-1 truncate">
+                                            <p className="text-[8px] font-bold text-gray-500 uppercase tracking-widest mb-1 truncate">
                                                 {product.brand || "Aaramdehi"}
                                             </p>
                                             <h3 className="text-xs font-bold text-gray-800 line-clamp-2 mb-2 group-hover:text-red-500 transition-colors h-8">
@@ -217,7 +217,7 @@ const MainGrid = ({ apiEndpoint = null }) => {
                                                     ₹{product.price}
                                                 </span>
                                                 {product.oldPrice && (
-                                                    <span className="text-[10px] text-gray-400 line-through font-bold">
+                                                    <span className="text-[10px] text-gray-500 line-through font-bold">
                                                         ₹{product.oldPrice}
                                                     </span>
                                                 )}
@@ -248,7 +248,7 @@ const MainGrid = ({ apiEndpoint = null }) => {
                             })
                         ) : (
                             <div className="col-span-full text-center py-12">
-                                <p className="text-gray-400 font-bold uppercase tracking-widest">
+                                <p className="text-gray-500 font-bold uppercase tracking-widest">
                                     No Products Available
                                 </p>
                             </div>

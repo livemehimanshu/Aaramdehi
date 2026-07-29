@@ -57,7 +57,7 @@ const Navbar = ({ categories = [] }) => {
                       {cat.subCategories?.length > 0 && (
                         <div className="absolute top-full left-1/2 -translate-x-1/2 pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                           <div className="bg-white shadow-2xl border border-gray-100 rounded-xl p-4 min-w-[180px]">
-                            <div className="text-[10px] font-black uppercase text-gray-400 mb-2 border-b pb-1">{cat.name}</div>
+                            <div className="text-[10px] font-black uppercase text-gray-500 mb-2 border-b pb-1">{cat.name}</div>
                             <ul className="flex flex-col gap-1">
                               {cat.subCategories.map((sub, sIdx) => (
                                 <li key={sIdx}>

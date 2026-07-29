@@ -189,7 +189,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                 {/* Close Button */}
                 <button 
                     onClick={onClose} 
-                    className="absolute right-4 top-4 text-2xl text-gray-400 hover:text-red-500 z-50 bg-gray-100 rounded-full p-1 transition-all shadow-sm"
+                    className="absolute right-4 top-4 text-2xl text-gray-500 hover:text-red-500 z-50 bg-gray-100 rounded-full p-1 transition-all shadow-sm"
                 >
                     <IoClose />
                 </button>
@@ -216,17 +216,17 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                                 i < Math.floor(product.rating || 4) ? <IoStar key={i} /> : <IoStarOutline key={i} />
                             ))}
                         </div>
-                        <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest mt-1">
+                        <span className="text-gray-500 text-[10px] font-black uppercase tracking-widest mt-1">
                             (1 Customer Review)
                         </span>
                     </div>
 
                     {/* Stock & Brand Info */}
                     <div className="space-y-1 mb-6">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                             Brand: <span className="text-gray-900 ml-2 font-black">{product.brand || "Aaramdehi"}</span>
                         </p>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">
                             Status: <span className="text-green-600 ml-2 font-black">Available (85 Items)</span>
                         </p>
                     </div>
@@ -248,7 +248,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                         <div className="flex items-center border border-gray-200 h-14 rounded-sm bg-white">
                             <button 
                                 onClick={() => quantity > 1 && setQuantity(quantity - 1)}
-                                className="px-5 h-full hover:bg-gray-50 font-black transition-all text-gray-400 border-r"
+                                className="px-5 h-full hover:bg-gray-50 font-black transition-all text-gray-500 border-r"
                             >
                                 －
                             </button>
@@ -257,7 +257,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                             </span>
                             <button 
                                 onClick={() => setQuantity(quantity + 1)}
-                                className="px-5 h-full hover:bg-gray-50 font-black transition-all text-gray-400 border-l"
+                                className="px-5 h-full hover:bg-gray-50 font-black transition-all text-gray-500 border-l"
                             >
                                 ＋
                             </button>
@@ -276,7 +276,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                         <button 
                             onClick={handleToggleWishlist}
                             className={`flex items-center gap-2 text-[10px] font-black uppercase transition-all tracking-widest ${
-                                isInWishlist ? 'text-red-500' : 'text-gray-400 hover:text-red-500'
+                                isInWishlist ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                             }`}
                         >
                             {isInWishlist ? <IoHeart size={18}/> : <IoHeartOutline size={18}/>}
@@ -286,7 +286,7 @@ const QuickViewModal = ({ product, isOpen, onClose }) => {
                         <button 
                             onClick={handleToggleCompare}
                             className={`flex items-center gap-2 text-[10px] font-black uppercase transition-all tracking-widest ${
-                                isInCompare ? 'text-blue-600' : 'text-gray-400 hover:text-blue-600'
+                                isInCompare ? 'text-blue-600' : 'text-gray-500 hover:text-blue-600'
                             }`}
                         >
                             <IoSyncOutline size={18}/> 

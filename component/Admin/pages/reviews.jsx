@@ -28,7 +28,7 @@ export default function ReviewsPage() {
         {/* Table Wrapper for Horizontal Scrolling */}
         <div className="overflow-x-auto">
           <table className="w-full text-left min-w-[600px]">
-            <thead className="bg-gray-800/50 text-gray-400 text-[10px] md:text-xs uppercase tracking-wider">
+            <thead className="bg-gray-800/50 text-gray-500 text-[10px] md:text-xs uppercase tracking-wider">
               <tr>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Rating</th>
@@ -46,7 +46,7 @@ export default function ReviewsPage() {
                       <Star key={i} size={12} fill={i < rev.rating ? "currentColor" : "none"} />
                     ))}
                   </td>
-                  <td className="p-4 text-gray-400 italic text-xs md:text-sm">"{rev.comment}"</td>
+                  <td className="p-4 text-gray-500 italic text-xs md:text-sm">"{rev.comment}"</td>
                   <td className="p-4">
                     <span className={`px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-tight flex w-max ${
                       rev.isApproved ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'

@@ -52,7 +52,7 @@ const Home = () => {
       <section className="py-12 md:py-20 bg-white border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
           <div className="mb-12 text-center">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 block mb-2">Top Collections</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500 block mb-2">Top Collections</span>
             <h2 className="text-3xl md:text-4xl font-serif text-[#1A365D] tracking-tight">Best Sellers in Home Decor</h2>
           </div>
           <PopularProducts />
@@ -76,7 +76,7 @@ const Home = () => {
       <section className="py-12 md:py-20 bg-white border-t-2 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4">
           <div className="mb-10 md:mb-16 text-center">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-400 block mb-2">New Arrivals</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-gray-500 block mb-2">New Arrivals</span>
             <h2 className="text-3xl md:text-4xl font-serif text-[#1A365D] tracking-tight">Latest Additions</h2>
           </div>
           <LatestProducts />

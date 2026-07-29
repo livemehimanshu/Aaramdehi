@@ -113,12 +113,12 @@ const ProductPage = () => {
 
           <div className="mt-4 flex items-baseline gap-3">
             <span className="text-3xl font-black text-blue-900">₹{finalPrice.toLocaleString()}</span>
-            {appliedDiscount > 0 && <span className="text-gray-400 line-through text-lg">₹{selectedSize?.price?.toLocaleString()}</span>}
+            {appliedDiscount > 0 && <span className="text-gray-500 line-through text-lg">₹{selectedSize?.price?.toLocaleString()}</span>}
           </div>
 
           {/* ✅ COUPON INPUT SECTION */}
           <div className="mt-6 pt-6 border-t border-gray-100">
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Apply Coupon</p>
+            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Apply Coupon</p>
             <div className="flex gap-2">
               <input 
                 type="text" value={couponInput}

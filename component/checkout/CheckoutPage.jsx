@@ -311,7 +311,7 @@ const CheckoutPage = () => {
                                     <p className="text-xs text-gray-600 mt-1">
                                         Add <span className="font-bold text-gray-800">Premium Memory Foam Pillow</span> for just 
                                         <span className="text-red-600 font-black ml-1 text-sm">₹499</span> 
-                                        <span className="text-gray-400 line-through ml-1 text-[10px]">₹699</span>
+                                        <span className="text-gray-500 line-through ml-1 text-[10px]">₹699</span>
                                     </p>
                                 </div>
                                 <button 
@@ -353,7 +353,7 @@ const CheckoutPage = () => {
                                             </div>
                                             <div className="flex flex-col gap-2">
                                                 <button onClick={() => handleToggleWishlist(item)} className="p-2 hover:bg-gray-50 rounded transition-colors">
-                                                    {isInWishlist ? <IoHeart size={18} className="text-red-500" /> : <IoHeartOutline size={18} className="text-gray-400" />}
+                                                    {isInWishlist ? <IoHeart size={18} className="text-red-500" /> : <IoHeartOutline size={18} className="text-gray-500" />}
                                                 </button>
                                                 <button onClick={() => handleRemoveItem(id)} className="text-red-500 text-xs font-bold hover:text-red-600">Remove</button>
                                             </div>
@@ -412,7 +412,7 @@ const CheckoutPage = () => {
                                 <div className="flex justify-between text-sm text-gray-600">
                                     <span>Delivery Charge</span>
                                     <span className="flex flex-col items-end">
-                                        {prices.mrp - prices.discount >= 2000 && <span className="text-[10px] line-through text-gray-400">₹50</span>}
+                                        {prices.mrp - prices.discount >= 2000 && <span className="text-[10px] line-through text-gray-500">₹50</span>}
                                         {prices.deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : `₹${prices.deliveryFee}`}
                                     </span>
                                 </div>

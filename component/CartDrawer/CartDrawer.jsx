@@ -55,7 +55,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   <div>
                     <div className="flex justify-between items-start gap-2">
                       <h3 className="text-[13px] font-semibold text-gray-700 leading-tight">{item.name}</h3>
-                      <button onClick={() => removeFromCart(item._id || item.id)} className="text-gray-400 hover:text-red-500">
+                      <button onClick={() => removeFromCart(item._id || item.id)} className="text-gray-500 hover:text-red-500">
                         <IoTrashOutline size={18} />
                       </button>
                     </div>
@@ -74,7 +74,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
               </div>
             ))
           ) : (
-            <div className="h-full flex flex-col items-center justify-center text-gray-400">
+            <div className="h-full flex flex-col items-center justify-center text-gray-500">
               <p className="mt-2">Your cart is empty</p>
             </div>
           )}

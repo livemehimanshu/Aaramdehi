@@ -69,7 +69,7 @@ const RoomProductsPage = () => {
     if (loading) return (
         <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#1a365d]"></div>
-            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Curating your space...</p>
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Curating your space...</p>
         </div>
     );
 
@@ -77,7 +77,7 @@ const RoomProductsPage = () => {
         <div className="bg-[#FAF9F6] min-h-screen pb-20">
             {/* Breadcrumbs */}
             <div className="max-w-7xl mx-auto px-4 py-6">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-gray-500">
                     <Link to="/" className="hover:text-blue-900 transition-colors">Home</Link>
                     <FiChevronRight />
                     <span className="text-blue-900">Shop by Room</span>

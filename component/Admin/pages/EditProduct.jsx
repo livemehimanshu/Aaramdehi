@@ -495,7 +495,7 @@ const EditProduct = () => {
         <div className="p-6 bg-gray-950 min-h-screen text-gray-200">
             <div className="max-w-4xl mx-auto bg-gray-900 rounded-xl shadow-2xl border border-gray-800 overflow-hidden">
                 <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-900">
-                    <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-400 hover:text-white transition">
+                    <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-500 hover:text-white transition">
                         <IoArrowBackOutline /> Back
                     </button>
                     <h2 className="text-xl font-black uppercase tracking-tighter text-white">Edit Product</h2>
@@ -620,7 +620,7 @@ const EditProduct = () => {
                         <div className="flex items-center justify-between gap-3">
                             <div>
                                 <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">Color Variants</h3>
-                                <p className="text-[11px] text-gray-400">Add / edit color variants and upload multiple images per variant.</p>
+                                <p className="text-[11px] text-gray-500">Add / edit color variants and upload multiple images per variant.</p>
                             </div>
                             <span className="text-[10px] uppercase tracking-[0.3em] text-emerald-400">CRUD ready</span>
                         </div>
@@ -628,10 +628,10 @@ const EditProduct = () => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <input value={colorInput.name} onChange={(e) => setColorInput(prev => ({ ...prev, name: e.target.value }))} placeholder="Variant name" className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white" />
                             <input value={colorInput.price} onChange={(e) => setColorInput(prev => ({ ...prev, price: e.target.value }))} type="number" placeholder="Variant price" className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400" />
-                            <input value={colorInput.mrp} onChange={(e) => setColorInput(prev => ({ ...prev, mrp: e.target.value }))} type="number" placeholder="Variant MRP" className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400" />
+                            <input value={colorInput.mrp} onChange={(e) => setColorInput(prev => ({ ...prev, mrp: e.target.value }))} type="number" placeholder="Variant MRP" className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-500" />
                         </div>
 
-                        <label className="p-3 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-emerald-500 text-xs text-gray-400 flex items-center justify-center gap-2">
+                        <label className="p-3 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-emerald-500 text-xs text-gray-500 flex items-center justify-center gap-2">
                             Upload variant images (multiple)
                             <input type="file" accept="image/*" multiple className="hidden" onChange={handleColorFilesChange} />
                         </label>
@@ -662,7 +662,7 @@ const EditProduct = () => {
                                             className={`rounded-2xl border p-3 text-left transition ${selectedVariantIndex === idx ? 'border-emerald-500 bg-emerald-950/70 shadow-sm' : 'border-gray-800 bg-gray-900 hover:border-emerald-500'}`}
                                         >
                                             <p className="text-sm font-semibold text-white truncate">{variant.name || `Variant ${idx + 1}`}</p>
-                                            <p className="text-[11px] text-gray-400">₹{variant.price} · ₹{variant.mrp}</p>
+                                            <p className="text-[11px] text-gray-500">₹{variant.price} · ₹{variant.mrp}</p>
                                             <p className="mt-2 text-[10px] uppercase tracking-[0.28em] text-slate-500">Click to preview</p>
                                         </button>
                                     ))}
@@ -672,9 +672,9 @@ const EditProduct = () => {
                                     <div className="flex items-center justify-between gap-3 mb-3">
                                         <div>
                                             <p className="text-sm font-bold text-white">Selected variant</p>
-                                            <p className="text-[11px] text-gray-400">{colorVariants[selectedVariantIndex]?.name || `Variant ${selectedVariantIndex + 1}`}</p>
+                                            <p className="text-[11px] text-gray-500">{colorVariants[selectedVariantIndex]?.name || `Variant ${selectedVariantIndex + 1}`}</p>
                                         </div>
-                                        <div className="text-right text-[11px] text-gray-400">
+                                        <div className="text-right text-[11px] text-gray-500">
                                             <p>Images: {((colorVariants[selectedVariantIndex]?.existingImages?.length || 0) + (colorVariants[selectedVariantIndex]?.previews?.length || 0))}</p>
                                             <p>Price: ₹{colorVariants[selectedVariantIndex]?.price} · MRP: ₹{colorVariants[selectedVariantIndex]?.mrp}</p>
                                         </div>
@@ -705,7 +705,7 @@ const EditProduct = () => {
                                             </div>
                                         ))}
                                         {((colorVariants[selectedVariantIndex]?.existingImages?.length || 0) + (colorVariants[selectedVariantIndex]?.previews?.length || 0)) === 0 && (
-                                            <p className="text-xs text-gray-400">No images uploaded yet for this variant.</p>
+                                            <p className="text-xs text-gray-500">No images uploaded yet for this variant.</p>
                                         )}
                                     </div>
                                 </div>
@@ -718,7 +718,7 @@ const EditProduct = () => {
                                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
                                         <div>
                                             <p className="text-sm font-bold text-white">{variant.name || `Variant ${idx + 1}`}</p>
-                                            <p className="text-[11px] text-gray-400">Price: ₹{variant.price} · MRP: ₹{variant.mrp}</p>
+                                            <p className="text-[11px] text-gray-500">Price: ₹{variant.price} · MRP: ₹{variant.mrp}</p>
                                         </div>
                                         <button type="button" onClick={() => removeColorVariant(idx)} className="text-rose-400 hover:text-rose-200 text-xs uppercase tracking-[0.24em]">Remove</button>
                                     </div>
@@ -726,7 +726,7 @@ const EditProduct = () => {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                         <input value={variant.name} onChange={(e) => handleVariantFieldChange(idx, 'name', e.target.value)} placeholder="Variant name" className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white" />
                                         <input value={variant.price} onChange={(e) => handleVariantFieldChange(idx, 'price', e.target.value)} type="number" placeholder="Price" className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400" />
-                                        <input value={variant.mrp} onChange={(e) => handleVariantFieldChange(idx, 'mrp', e.target.value)} type="number" placeholder="MRP" className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400" />
+                                        <input value={variant.mrp} onChange={(e) => handleVariantFieldChange(idx, 'mrp', e.target.value)} type="number" placeholder="MRP" className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-500" />
                                     </div>
 
                                     {(variant.previews?.length > 0 || variant.existingImages?.length > 0) && (
@@ -747,7 +747,7 @@ const EditProduct = () => {
                                                 ))}
                                             </div>
                                             {variant.existingImages?.length > 0 && (
-                                                <p className="text-[10px] text-gray-400">Click the trash icon to remove an existing variant image from this color.</p>
+                                                <p className="text-[10px] text-gray-500">Click the trash icon to remove an existing variant image from this color.</p>
                                             )}
                                         </div>
                                     )}
@@ -760,7 +760,7 @@ const EditProduct = () => {
                         <div className="flex items-center justify-between gap-3">
                             <div>
                                 <h3 className="text-xs font-black uppercase tracking-widest text-gray-500">Custom Attributes / Set Count</h3>
-                                <p className="text-[11px] text-gray-400">Add dynamic attributes with modifiers and stock per option.</p>
+                                <p className="text-[11px] text-gray-500">Add dynamic attributes with modifiers and stock per option.</p>
                             </div>
                             <span className="text-[10px] uppercase tracking-[0.3em] text-emerald-400">Flexible</span>
                         </div>
@@ -798,7 +798,7 @@ const EditProduct = () => {
                                         onChange={(e) => handleCustomAttributeOptionInputChange(optIdx, 'mrpModifier', e.target.value)}
                                         type="number"
                                         placeholder="MRP modifier"
-                                        className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400"
+                                        className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-500"
                                     />
                                     <input
                                         value={option.stock}
@@ -821,7 +821,7 @@ const EditProduct = () => {
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
                                             <div>
                                                 <p className="text-sm font-bold text-white">{attribute.title}</p>
-                                                <p className="text-[11px] text-gray-400">{attribute.options.length} option(s)</p>
+                                                <p className="text-[11px] text-gray-500">{attribute.options.length} option(s)</p>
                                             </div>
                                             <button type="button" onClick={() => removeCustomAttribute(attrIdx)} className="text-rose-400 hover:text-rose-200 text-xs uppercase tracking-[0.24em]">Remove</button>
                                         </div>
@@ -846,7 +846,7 @@ const EditProduct = () => {
                                                         onChange={(e) => handleCustomAttributeOptionChange(attrIdx, optionIndex, 'mrpModifier', e.target.value)}
                                                         type="number"
                                                         placeholder="MRP modifier"
-                                                        className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400"
+                                                        className="p-3 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-500"
                                                     />
                                                     <div className="flex items-center gap-2">
                                                         <input

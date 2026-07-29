@@ -61,7 +61,7 @@ const NotFound = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-5 py-4 pl-12 text-sm text-gray-800 focus:outline-none bg-white placeholder-gray-400"
             />
-            <FiSearch className="absolute left-4 text-gray-400 text-lg" />
+            <FiSearch className="absolute left-4 text-gray-500 text-lg" />
             <button
               type="submit"
               className="bg-[#1A365D] text-white px-6 py-4 text-xs font-bold uppercase tracking-wider hover:bg-[#2a4365] transition-colors flex items-center gap-2"
@@ -89,7 +89,7 @@ const NotFound = () => {
 
         {/* Popular Categories */}
         <div className="pt-8 border-t border-gray-200/80">
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400 mb-6">Popular Categories</h2>
+          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-6">Popular Categories</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
             {categories.map((cat, idx) => (
               <Link

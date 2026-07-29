@@ -129,7 +129,7 @@ const EditBanner = () => {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-400">Loading Banner Details...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500">Loading Banner Details...</div>;
 
     return (
         <div className="p-4 md:p-8 bg-gray-950 min-h-screen text-gray-200">

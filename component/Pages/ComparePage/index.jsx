@@ -146,7 +146,7 @@ const ComparePage = () => {
                     <div className="text-2xl font-black text-gray-900">
                       ₹{(item.price || item.newPrice || 0).toLocaleString()}
                     </div>
-                    <div className="text-sm text-gray-400 line-through">
+                    <div className="text-sm text-gray-500 line-through">
                       ₹{(item.oldPrice || 0).toLocaleString()}
                     </div>
                     <div className="text-green-600 font-bold text-sm mt-1">

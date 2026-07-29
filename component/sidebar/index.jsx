@@ -55,7 +55,7 @@ const Sidebar = ({ categories, selectedCategory, onCategoryChange, onPriceChange
                 </div>
               ))
             ) : (
-              <p className="text-[10px] ml-8 text-gray-400 italic">No categories found</p>
+              <p className="text-[10px] ml-8 text-gray-500 italic">No categories found</p>
             )}
           </div>
         </div>
@@ -75,7 +75,7 @@ const Sidebar = ({ categories, selectedCategory, onCategoryChange, onPriceChange
           />
           <div className="flex items-center justify-between gap-2 mt-2">
             <div className="border p-1 text-xs w-full text-center rounded-sm">Min</div>
-            <span className="text-gray-400 text-xs">to</span>
+            <span className="text-gray-500 text-xs">to</span>
             <div className="border p-1 text-xs w-full text-center font-bold rounded-sm">₹{priceRange[1]}+</div>
           </div>
         </div>
@@ -114,7 +114,7 @@ const Sidebar = ({ categories, selectedCategory, onCategoryChange, onPriceChange
     
       {filterSections.map((section, index) => (
         <Accordion key={index} disableGutters elevation={0} square className="border-b before:hidden">
-          <AccordionSummary expandIcon={<FiChevronDown className="text-gray-400" />}>
+          <AccordionSummary expandIcon={<FiChevronDown className="text-gray-500" />}>
             <span className="text-[12px] font-bold text-gray-800 uppercase">{section.title}</span>
           </AccordionSummary>
           <AccordionDetails className="pt-0">

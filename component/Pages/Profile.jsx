@@ -148,20 +148,20 @@ const Profile = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                                        <IoMailOutline className="text-gray-400" size={20} />
+                                        <IoMailOutline className="text-gray-500" size={20} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Email Address</p>
+                                        <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Email Address</p>
                                         <p className="text-sm font-medium text-gray-700">{user.email}</p>
                                     </div>
                                 </div>
 
                                 <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                                     <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                                        <IoCallOutline className="text-gray-400" size={20} />
+                                        <IoCallOutline className="text-gray-500" size={20} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-[10px] uppercase tracking-wider text-gray-400 font-bold">Mobile Number</p>
+                                        <p className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Mobile Number</p>
                                         {isEditing ? (
                                             <input 
                                                 type="text"

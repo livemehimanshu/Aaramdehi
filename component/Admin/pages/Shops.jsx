@@ -378,7 +378,7 @@ export default function ShopsPage() {
         return (
             <div className="flex flex-col justify-center items-center h-screen bg-gray-950 gap-4">
                 <Loader2 className="animate-spin text-emerald-500" size={40} />
-                <p className="text-gray-400 font-bold uppercase tracking-widest text-xs">Syncing Shops...</p>
+                <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Syncing Shops...</p>
             </div>
         );
     }
@@ -457,15 +457,15 @@ export default function ShopsPage() {
                         <h3 className="text-lg font-bold text-white group-hover:text-emerald-400 transition-colors">{shop.name}</h3>
                         
                         <div className="mt-4 space-y-2">
-                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <User size={14} className="text-gray-600" />
                                 <span>{shop.owner}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <Phone size={14} className="text-gray-600" />
                                 <span>{shop.mobile || shop.phone}</span>
                             </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-400">
+                            <div className="flex items-center gap-2 text-sm text-gray-500">
                                 <MapPin size={14} className="text-gray-600" />
                                 <span className="truncate">{shop.address}</span>
                             </div>
@@ -527,11 +527,11 @@ export default function ShopsPage() {
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-gray-800">
-                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-400">Image</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-400">Product Name</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-400">Size</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-400">Price</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-400">Category</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-500">Image</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-500">Product Name</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-500">Size</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-500">Price</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold uppercase text-gray-500">Category</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -548,7 +548,7 @@ export default function ShopsPage() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-sm font-bold text-white">{product.name}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-400">
+                                            <td className="px-6 py-4 text-sm text-gray-500">
                                                 {product.sizes && product.sizes.length > 0 
                                                     ? product.sizes.map(s => typeof s === 'string' ? s : s.size).join(', ')
                                                     : 'N/A'
@@ -557,7 +557,7 @@ export default function ShopsPage() {
                                             <td className="px-6 py-4 text-sm font-bold text-emerald-400">
                                                 ₹{Number(product.sellingPrice || product.mrp || 0).toLocaleString('en-IN')}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-400">
+                                            <td className="px-6 py-4 text-sm text-gray-500">
                                                 {product.category || 'Uncategorized'}
                                             </td>
                                         </tr>
@@ -585,13 +585,13 @@ export default function ShopsPage() {
                                 onClick={() => setShowAddModal(false)}
                                 className="p-2 hover:bg-gray-800 rounded-lg transition-all"
                             >
-                                <X size={24} className="text-gray-400" />
+                                <X size={24} className="text-gray-500" />
                             </button>
                         </div>
 
                         <form onSubmit={handleAddShop} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Shop Name *</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Shop Name *</label>
                                 <input 
                                     type="text"
                                     name="name"
@@ -604,7 +604,7 @@ export default function ShopsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Owner Name *</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Owner Name *</label>
                                 <input 
                                     type="text"
                                     name="owner"
@@ -617,7 +617,7 @@ export default function ShopsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Phone</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Phone</label>
                                 <input 
                                     type="text"
                                     name="phone"
@@ -629,7 +629,7 @@ export default function ShopsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Address</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Address</label>
                                 <input 
                                     type="text"
                                     name="address"
@@ -642,7 +642,7 @@ export default function ShopsPage() {
 
                             <div className="grid grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">City</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">City</label>
                                     <input 
                                         type="text"
                                         name="city"
@@ -653,7 +653,7 @@ export default function ShopsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">State</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">State</label>
                                     <input 
                                         type="text"
                                         name="state"
@@ -664,7 +664,7 @@ export default function ShopsPage() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Pincode</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Pincode</label>
                                     <input 
                                         type="text"
                                         name="pincode"
@@ -703,29 +703,29 @@ export default function ShopsPage() {
                     <div className="bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl w-full max-w-md">
                         <div className="p-6 border-b border-gray-800 flex justify-between items-center">
                             <h2 className="text-2xl font-black text-white">Edit Shop Details</h2>
-                            <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-gray-800 rounded-lg transition-all"><X size={24} className="text-gray-400" /></button>
+                            <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-gray-800 rounded-lg transition-all"><X size={24} className="text-gray-500" /></button>
                         </div>
                         <form onSubmit={handleUpdateShop} className="p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Shop Name</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Shop Name</label>
                                 <input type="text" name="name" value={formData.name} onChange={handleInputChange} required className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-emerald-500 outline-none" />
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Owner Name</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Owner Name</label>
                                 <input type="text" name="owner" value={formData.owner} onChange={handleInputChange} required className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-emerald-500 outline-none" />
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Phone</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Phone</label>
                                     <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-emerald-500 outline-none text-sm" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Pincode</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Pincode</label>
                                     <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-emerald-500 outline-none text-sm" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Address</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Address</label>
                                 <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-emerald-500 outline-none" />
                             </div>
                             <div className="flex gap-3 pt-4">
@@ -747,7 +747,7 @@ export default function ShopsPage() {
                                 onClick={() => setShowPaymentModal(false)}
                                 className="p-2 hover:bg-gray-800 rounded-lg transition-all"
                             >
-                                <X size={24} className="text-gray-400" />
+                                <X size={24} className="text-gray-500" />
                             </button>
                         </div>
 
@@ -755,12 +755,12 @@ export default function ShopsPage() {
                             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
                                 <p className="text-xs text-blue-400 uppercase font-bold mb-1">Shop</p>
                                 <p className="text-lg font-bold text-white">{selectedShop.name}</p>
-                                <p className="text-sm text-gray-400">Owner: {selectedShop.owner}</p>
+                                <p className="text-sm text-gray-500">Owner: {selectedShop.owner}</p>
                                 <p className="text-sm font-bold mt-2">Current Balance: <span className={selectedShop.outstandingBalance > 0 ? 'text-rose-400' : 'text-emerald-400'}>₹{Number(selectedShop.outstandingBalance || 0).toLocaleString('en-IN')}</span></p>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Amount *</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Amount *</label>
                                 <input 
                                     type="number"
                                     step="0.01"
@@ -773,7 +773,7 @@ export default function ShopsPage() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Type *</label>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Type *</label>
                                 <select 
                                     value={paymentData.type}
                                     onChange={(e) => setPaymentData(prev => ({ ...prev, type: e.target.value }))}
@@ -819,7 +819,7 @@ export default function ShopsPage() {
                                 }}
                                 className="p-2 hover:bg-gray-800 rounded-lg transition-all"
                             >
-                                <X size={24} className="text-gray-400" />
+                                <X size={24} className="text-gray-500" />
                             </button>
                         </div>
 
@@ -828,7 +828,7 @@ export default function ShopsPage() {
                             <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
                                 <p className="text-xs text-blue-400 uppercase font-bold mb-1">Shop</p>
                                 <p className="text-lg font-bold text-white">{selectedShop.name}</p>
-                                <p className="text-sm text-gray-400">Owner: {selectedShop.owner}</p>
+                                <p className="text-sm text-gray-500">Owner: {selectedShop.owner}</p>
                             </div>
 
                             {/* Add Product Form */}
@@ -836,7 +836,7 @@ export default function ShopsPage() {
                                 <p className="text-xs font-bold text-gray-300 uppercase">Add Products to Order</p>
                                 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Product *</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product *</label>
                                     <select 
                                         name="productId"
                                         value={orderData.productId}
@@ -853,7 +853,7 @@ export default function ShopsPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Quantity *</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Quantity *</label>
                                     <input 
                                         type="number"
                                         name="quantity"
@@ -866,7 +866,7 @@ export default function ShopsPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Price (₹) *</label>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Price (₹) *</label>
                                     <input 
                                         type="number"
                                         name="price"
@@ -902,7 +902,7 @@ export default function ShopsPage() {
                                             <div key={index} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex items-start justify-between">
                                                 <div className="flex-1">
                                                     <p className="font-bold text-white text-sm">{product.name}</p>
-                                                    <p className="text-xs text-gray-400 mt-1">
+                                                    <p className="text-xs text-gray-500 mt-1">
                                                         Qty: <span className="font-bold">{product.quantity}</span> × ₹{Number(product.price).toLocaleString('en-IN')} = <span className="text-emerald-400 font-bold">₹{Number(product.totalPrice).toLocaleString('en-IN')}</span>
                                                     </p>
                                                 </div>
@@ -961,7 +961,7 @@ export default function ShopsPage() {
                         <div className="sticky top-0 bg-gray-900 p-6 border-b border-gray-800 flex justify-between items-center">
                             <div>
                                 <h2 className="text-2xl font-black text-white">Order History</h2>
-                                <p className="text-sm text-gray-400 mt-1">{selectedShop.name}</p>
+                                <p className="text-sm text-gray-500 mt-1">{selectedShop.name}</p>
                             </div>
                             <div className="flex gap-2">
                                 <button 
@@ -970,7 +970,7 @@ export default function ShopsPage() {
                                 >
                                     <DownloadCloud size={16} /> Export Statement
                                 </button>
-                                <button onClick={() => setShowOrderHistoryModal(false)} className="p-2 hover:bg-gray-800 rounded-lg transition-all"><X size={24} className="text-gray-400" /></button>
+                                <button onClick={() => setShowOrderHistoryModal(false)} className="p-2 hover:bg-gray-800 rounded-lg transition-all"><X size={24} className="text-gray-500" /></button>
                             </div>
                         </div>
 
@@ -986,7 +986,7 @@ export default function ShopsPage() {
                                             <div className="flex justify-between items-start mb-3">
                                                 <div>
                                                     <p className="font-bold text-white">Order #{order.orderNumber || order._id?.slice(-6)}</p>
-                                                    <p className="text-xs text-gray-400 mt-1">
+                                                    <p className="text-xs text-gray-500 mt-1">
                                                         {new Date(order.createdAt).toLocaleDateString('en-IN', { 
                                                             year: 'numeric', 
                                                             month: 'short', 
@@ -1024,7 +1024,7 @@ export default function ShopsPage() {
 
                                             {/* Order Total */}
                                             <div className="flex justify-between items-center pt-3 border-t border-gray-700">
-                                                <p className="text-gray-400 text-sm">Total Amount:</p>
+                                                <p className="text-gray-500 text-sm">Total Amount:</p>
                                                 <p className="font-black text-emerald-400 text-lg">₹{Number(order.totalAmount || 0).toLocaleString('en-IN')}</p>
                                             </div>
                                         </div>
@@ -1033,7 +1033,7 @@ export default function ShopsPage() {
                             ) : (
                                 <div className="py-12 text-center">
                                     <AlertCircle size={48} className="mx-auto text-gray-600 mb-3" />
-                                    <p className="text-gray-400 font-bold">No orders found for this shop</p>
+                                    <p className="text-gray-500 font-bold">No orders found for this shop</p>
                                 </div>
                             )}
                         </div>

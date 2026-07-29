@@ -101,7 +101,7 @@ const Orders = () => {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-400">Loading Orders from Database...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-500">Loading Orders from Database...</div>;
 
     if (error) return (
         <div className="p-8 text-center text-rose-500 flex flex-col items-center gap-2">
@@ -153,13 +153,13 @@ const Orders = () => {
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                         <tr className="bg-gray-800/50 border-b border-gray-800">
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Order Details</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Customer</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Items</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount & Payment</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Update Status</th>
-                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Order Details</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Customer</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Items</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Amount & Payment</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Status</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Update Status</th>
+                            <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-500 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800/50">
@@ -177,7 +177,7 @@ const Orders = () => {
                                         {(order.orderItems || []).slice(0, 2).map((item, idx) => (
                                             <div key={idx} className="rounded-2xl border border-gray-800/60 bg-gray-950/5 p-2">
                                                 <p className="text-[11px] font-black text-white line-clamp-1">{item.name}</p>
-                                                {formatItemVariant(item) && <p className="text-[10px] text-gray-400 uppercase tracking-[0.18em]">{formatItemVariant(item)}</p>}
+                                                {formatItemVariant(item) && <p className="text-[10px] text-gray-500 uppercase tracking-[0.18em]">{formatItemVariant(item)}</p>}
                                                 <p className="text-[10px] text-gray-500">Qty {item.quantity} · ₹{((item.price || 0) * item.quantity).toLocaleString()}</p>
                                             </div>
                                         ))}

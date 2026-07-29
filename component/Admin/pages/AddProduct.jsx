@@ -265,7 +265,7 @@ const AddProduct = () => {
         <h1 className="text-2xl font-black text-white flex items-center gap-3 uppercase tracking-tight">
           <Box className="text-emerald-500" /> Add New Product
         </h1>
-        <button onClick={() => navigate(-1)} className="p-2 bg-gray-900 rounded-lg hover:bg-gray-800 transition-all text-gray-400">
+        <button onClick={() => navigate(-1)} className="p-2 bg-gray-900 rounded-lg hover:bg-gray-800 transition-all text-gray-500">
             <ArrowLeft size={20} />
         </button>
       </div>
@@ -315,7 +315,7 @@ const AddProduct = () => {
 
             <div className="mt-6">
               <label className="block text-[10px] font-black uppercase text-gray-500 mb-3 tracking-widest">3D Model File</label>
-              <label className="group cursor-pointer border-2 border-dashed border-gray-800 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 text-sm text-gray-400 hover:border-emerald-500 transition-all">
+              <label className="group cursor-pointer border-2 border-dashed border-gray-800 rounded-2xl p-5 flex flex-col items-center justify-center gap-3 text-sm text-gray-500 hover:border-emerald-500 transition-all">
                 <div className="flex items-center gap-2">
                   <Upload size={18} className="text-emerald-500" />
                   <span>{model3dFile ? model3dFile.name : 'Upload .glb / .gltf file'}</span>
@@ -353,7 +353,7 @@ const AddProduct = () => {
                 </select>
             </div>
             <input type="number" placeholder="Selling Price (₹) *" value={formData.sellingPrice} onChange={(e) => setFormData({...formData, sellingPrice: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-emerald-400 font-black" />
-            <input type="number" placeholder="MRP (₹) *" value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-gray-400 font-bold" />
+            <input type="number" placeholder="MRP (₹) *" value={formData.mrp} onChange={(e) => setFormData({...formData, mrp: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-gray-500 font-bold" />
             <div className="grid grid-cols-2 gap-3">
                 <input type="number" placeholder="Stock *" value={formData.stock} onChange={(e) => setFormData({...formData, stock: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-white font-bold w-full" />
                 <input type="text" placeholder="SKU Code" value={formData.sku} onChange={(e) => setFormData({...formData, sku: e.target.value})} className="p-3.5 bg-gray-950 border border-gray-800 rounded-xl outline-none focus:border-blue-500 text-blue-400 font-mono text-xs uppercase" />
@@ -362,7 +362,7 @@ const AddProduct = () => {
 
           {/* SIZES SECTION */}
           <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-3">
-            <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2">
+            <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
               <Ruler size={14} className="text-emerald-500" /> Available Sizes
             </label>
             <div className="flex gap-2">
@@ -384,18 +384,18 @@ const AddProduct = () => {
 
           {/* COLOR VARIANTS (MULTI-IMAGE UP TO 10) */}
           <div className="bg-gray-950 p-5 rounded-xl border border-gray-800 space-y-4">
-            <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center gap-2">
+            <label className="text-[10px] font-black uppercase text-gray-500 tracking-widest flex items-center gap-2">
               <Palette size={14} className="text-emerald-500" /> Color Variants (Add as many images as needed)
             </label>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <input type="text" placeholder="Color Name (e.g. Royal Blue)" value={colorInput.name} onChange={(e) => setColorInput({...colorInput, name: e.target.value})} className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-white" />
               <input type="number" placeholder="Variant Price (₹)" value={colorInput.price} onChange={(e) => setColorInput({...colorInput, price: e.target.value})} className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-emerald-500 text-xs text-emerald-400" />
-              <input type="number" placeholder="Variant MRP (₹)" value={colorInput.mrp} onChange={(e) => setColorInput({...colorInput, mrp: e.target.value})} className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-400" />
+              <input type="number" placeholder="Variant MRP (₹)" value={colorInput.mrp} onChange={(e) => setColorInput({...colorInput, mrp: e.target.value})} className="p-3 bg-gray-900 border border-gray-800 rounded-xl outline-none focus:border-rose-500 text-xs text-gray-500" />
             </div>
 
             {/* Multiple Upload Field */}
-            <label className="p-3 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-emerald-500 flex items-center justify-center gap-2 text-xs text-gray-400 w-full">
+            <label className="p-3 bg-gray-900 border border-gray-800 rounded-xl cursor-pointer hover:border-emerald-500 flex items-center justify-center gap-2 text-xs text-gray-500 w-full">
               <Upload size={14} className="text-emerald-500" />
               <span>Select variant images (multiple files at once)</span>
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleColorImagesChange} />

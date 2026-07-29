@@ -57,7 +57,7 @@ export const BlogList = () => {
             <div className="bg-white py-16 border-b border-gray-100">
                 <div className="container mx-auto px-4 text-center">
                     <h1 className="text-4xl md:text-5xl font-black text-gray-800 uppercase tracking-tighter">Aaramdehi Journal</h1>
-                    <p className="text-gray-400 mt-4 text-sm tracking-[2px] uppercase font-bold">Comfort Redefined & Shared</p>
+                    <p className="text-gray-500 mt-4 text-sm tracking-[2px] uppercase font-bold">Comfort Redefined & Shared</p>
                 </div>
             </div>
 
@@ -71,7 +71,7 @@ export const BlogList = () => {
                             className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 focus:border-red-500 outline-none transition shadow-sm"
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <IoIosSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-2xl" />
+                        <IoIosSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-2xl" />
                     </div>
                     <div className="flex gap-3 overflow-x-auto pb-2 w-full md:w-auto">
                         {['All', 'Styling', 'Health', 'Maintenance'].map(cat => (
@@ -97,7 +97,7 @@ export const BlogList = () => {
                                 </div>
                             </div>
                             <div className="p-8">
-                                <p className="text-gray-400 text-[11px] font-bold mb-2 uppercase">{blog.date} | BY {blog.author}</p>
+                                <p className="text-gray-500 text-[11px] font-bold mb-2 uppercase">{blog.date} | BY {blog.author}</p>
                                 <h2 className="text-xl font-bold text-gray-800 mb-4 group-hover:text-red-600 transition">{blog.title}</h2>
                                 <p className="text-gray-500 text-sm leading-relaxed mb-6 line-clamp-3">{blog.excerpt}</p>
                                 <Link to={`/blog/${blog.slug}`} className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-800 border-b-2 border-red-600 pb-1 hover:text-red-600 transition">
@@ -130,7 +130,7 @@ export const BlogDetail = () => {
             <header className="max-w-4xl mx-auto px-4 pt-16 pb-12 text-center">
                 <span className="text-red-600 text-xs font-black uppercase tracking-[3px]">{blog.category}</span>
                 <h1 className="text-3xl md:text-6xl font-bold text-gray-900 mt-6 mb-8 leading-tight">{blog.title}</h1>
-                <div className="flex items-center justify-center gap-6 text-gray-400 text-xs font-bold uppercase border-y border-gray-100 py-4">
+                <div className="flex items-center justify-center gap-6 text-gray-500 text-xs font-bold uppercase border-y border-gray-100 py-4">
                     <span>{blog.date}</span>
                     <span>•</span>
                     <span>Written by {blog.author}</span>

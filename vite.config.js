@@ -28,13 +28,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true, // Naye build se pehle purane cache ko clear karne ke liye
+    sourcemap: false,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('firebase')) {
-              return 'vendor-firebase';
-            }
+            if (id.includes('firebase')) return 'vendor-firebase';
+            if (id.includes('swiper')) return 'vendor-swiper';
+            if (id.includes('lucide-react')) return 'vendor-icons';
             if (id.includes('chart.js') || id.includes('recharts') || id.includes('react-chartjs-2')) {
               return 'vendor-charts';
             }

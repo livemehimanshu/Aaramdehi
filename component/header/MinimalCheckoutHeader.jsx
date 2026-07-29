@@ -100,7 +100,7 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
             {/* Center: Search Bar (Hidden on small screens) */}
             <div className="hidden sm:flex flex-1 max-w-md mx-4">
               <div className="w-full relative">
-                <IoSearchOutline className="absolute left-3 top-3 text-gray-400" size={18} />
+                <IoSearchOutline className="absolute left-3 top-3 text-gray-500" size={18} />
                 <input
                   type="text"
                   placeholder="Search for Products, Brands and More"
@@ -266,7 +266,7 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
                         ? 'text-blue-600'
                         : step.completed
                         ? 'text-green-600'
-                        : 'text-gray-400'
+                        : 'text-gray-500'
                     }`}
                   >
                     {step.label}
@@ -292,7 +292,7 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
       {/* Mobile Search Bar (shown only on small screens) */}
       <div className="sm:hidden bg-gray-50 border-b border-gray-100 p-3">
         <div className="relative">
-          <IoSearchOutline className="absolute left-3 top-3 text-gray-400" size={16} />
+          <IoSearchOutline className="absolute left-3 top-3 text-gray-500" size={16} />
           <input
             type="text"
             placeholder="Search Products"

@@ -39,7 +39,7 @@ const OrderDetailsPage = () => {
     if (loading) return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
             <Loader2 className="animate-spin text-blue-900 mb-4" size={40} />
-            <p className="text-xs font-black uppercase tracking-widest text-gray-400">Loading order info...</p>
+            <p className="text-xs font-black uppercase tracking-widest text-gray-500">Loading order info...</p>
         </div>
     );
 
@@ -56,7 +56,7 @@ const OrderDetailsPage = () => {
         <div className="bg-[#f8fafc] min-h-screen py-12 md:py-20 mt-16">
             <SEO title={`Order #${order.orderNumber}`} />
             <div className="container mx-auto px-4 max-w-5xl">
-                <Link to="/orders" className="inline-flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-widest hover:text-blue-900 mb-8 transition-colors">
+                <Link to="/orders" className="inline-flex items-center gap-2 text-xs font-black text-gray-500 uppercase tracking-widest hover:text-blue-900 mb-8 transition-colors">
                     <ArrowLeft size={14} /> Back to My Orders
                 </Link>
 
@@ -68,7 +68,7 @@ const OrderDetailsPage = () => {
                             <div className="flex justify-between items-start mb-10">
                                 <div>
                                     <h1 className="text-2xl font-black text-blue-900 uppercase">Order #{order.orderNumber}</h1>
-                                    <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                    <p className="text-xs font-bold text-gray-500 mt-1 uppercase tracking-widest">{new Date(order.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                 </div>
                                 <span className="bg-blue-900 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest">{order.orderStatus}</span>
                             </div>
@@ -89,7 +89,7 @@ const OrderDetailsPage = () => {
                                                     {formatOrderItemVariant(item)}
                                                 </p>
                                             )}
-                                            <p className="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Qty: {item.quantity} × ₹{item.price.toLocaleString()}</p>
+                                            <p className="text-xs font-bold text-gray-500 mt-1 uppercase tracking-widest">Qty: {item.quantity} × ₹{item.price.toLocaleString()}</p>
                                         </div>
                                         <p className="text-sm font-black text-blue-900">₹{(item.price * item.quantity).toLocaleString()}</p>
                                     </div>

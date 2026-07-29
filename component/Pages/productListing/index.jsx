@@ -12,7 +12,7 @@ import toast from 'react-hot-toast';
 import HomeBanner from '../../banneradds/HomeBanner'; // Import HomeBanner
 import SEO from '../../header/SEO'; // SEO Component Import Kiya
 import { getAllProductsAPI, getActiveCategoriesAPI } from '../../../src/api/authAndAdminApi';
-import { optimizeImage } from '../../../src/utils/imageOptimizer';
+import { optimizeImage, getResponsiveImageAttributes } from '../../../src/utils/imageOptimizer';
 // Yeh page sare products ko grid format mein show karta hai
 // Ismein filtering, sorting, pagination, wishlist, cart sab features hain
 
@@ -316,7 +316,7 @@ const ProductListing = ({ forcedCategory }) => {
         <AaramdehiAdBanner />
 
         {/* ✅ Breadcrumbs */}
-        <nav className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">
+        <nav className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">
             <Link to="/" className="hover:text-blue-600 transition">Home</Link>
             <AiOutlineRight size={10} />
             <span className="text-gray-800">{selectedCategory}</span>
@@ -365,14 +365,14 @@ const ProductListing = ({ forcedCategory }) => {
                   onClick={() => handleProductView(item)}
                   className="w-full h-full flex items-center justify-center">
                   <img 
-                    src={optimizeImage(item.thumbnail || item.image, 400) || PLACEHOLDER_IMAGE} 
-                    onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; }}
+                    {...getResponsiveImageAttributes(item.thumbnail || item.image || PLACEHOLDER_IMAGE, [300, 500, 800], "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw", true)}
+                    onError={(e) => { e.target.src = PLACEHOLDER_IMAGE; e.target.srcset = ''; }}
                     width="400"
                     height="400"
                     loading="lazy"
                     decoding="async"
                     className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" 
-                    alt={item.name}
+                    alt={`${item.name || 'Product'} thumbnail`}
                   />
                 </Link>
                 
@@ -414,7 +414,7 @@ const ProductListing = ({ forcedCategory }) => {
                 <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
                   <div className="flex flex-col">
                     <span className="text-2xl font-black text-gray-900 tracking-tighter">₹{(item.sellingPrice || item.price || item.newPrice || 0).toLocaleString()}</span>
-                    <span className="text-[11px] text-gray-400 line-through font-bold">₹{(item.mrp || item.oldPrice || 0).toLocaleString()}</span>
+                    <span className="text-[11px] text-gray-500 line-through font-bold">₹{(item.mrp || item.oldPrice || 0).toLocaleString()}</span>
                     {/* ✅ Bank Offer Text */}
                     <span className="text-[9px] font-bold text-emerald-600 mt-1 uppercase">Extra ₹50 Off on UPI</span>
                   </div>

@@ -32,9 +32,6 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react/') || id.includes('react-dom/') || id.includes('react-router')) {
-              return 'vendor-react';
-            }
             if (id.includes('firebase')) {
               return 'vendor-firebase';
             }
@@ -50,10 +47,6 @@ export default defineConfig({
             if (id.includes('@mui') || id.includes('@emotion')) {
               return 'vendor-mui';
             }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
-            }
-            return 'vendor-others';
           }
         },
       },

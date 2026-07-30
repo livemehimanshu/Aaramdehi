@@ -25,13 +25,12 @@ import { URL } from 'node:url';
 import securityHeaders from './middleware/securityHeaders.js';
 import { findAll } from './config/db.js';
 
-// ... (Baaki saare imports wahi rakhein)
 import authRouter from './routes/auth.route.js';
 import userRouter from './routes/user.route.js';
 import productRouter from './routes/product.route.js';
 import seoRouter from './routes/seo.route.js';
 import bannerRouter from './routes/banner.route.js';
-import categoryRouter from './routes/category.route.js'; // Ensure we use the correct route file
+import categoryRouter from './routes/category.route.js';
 import couponRouter from './routes/coupon.route.js';
 import appointmentRouter from './routes/appointment.route.js';
 import analyticsRouter from './routes/analytics.route.js';
@@ -100,8 +99,10 @@ apiRouter.use("/orders", orderRouter);
 apiRouter.use("/coupons", couponRouter);
 apiRouter.use("/shops", shopsRouter);
 apiRouter.use("/appointments", appointmentRouter);
-apiRouter.use("/analytics", analyticsRouter);
-apiRouter.use("/analytics", behavioralTrackingRouter); // Behavioral tracking under /api/analytics/
+
+// ✅ FIX: Dono analytics routers ko array me pass kiya hai taaki Express pehle analyticsRouter aur phir behavioralTrackingRouter me endpoints dhoondhe
+apiRouter.use("/analytics", [analyticsRouter, behavioralTrackingRouter]);
+
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/refunds", refundRouter);
 apiRouter.use("/settings", settingsRouter);
@@ -120,7 +121,6 @@ apiRouter.post("/admin/sync-ai-search", async (req, res) => {
 });
 
 // ✅ Lightweight health route for Render uptime checks
-//    No DB call, no auth, bas fast response. Render ya koi external monitor is endpoint ko ping karega.
 app.get('/health', (req, res) => {
     return res.status(200).json({
         success: true,
@@ -159,13 +159,14 @@ app.use((err, req, res, next) => {
             message: 'Invalid JSON payload. Please send valid JSON in the request body.',
         });
     }
-    res.status(err.statusCode || 500).json({ 
-        success: false, 
+    res.status(err.statusCode || 500).json({
+        success: false,
         message: err.message || "Internal Server Error",
         // Development mein error detail dikhane ke liye (Optional)
-        error: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+        error: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 });
+
 const PORT = process.env.PORT || 8000;
 
 // Keep-alive interval configuration
@@ -201,12 +202,7 @@ const makeRequest = (url) => {
 
 const runPeriodicLightTasks = async () => {
     try {
-        // Example template: clean up expired carts/sessions, remove stale uploads, rotate logs, etc.
-        // NOTE: Ye task DB intensive nahi hona chahiye; yahan light background jobs add karein.
         console.log('🧹 Running periodic light maintenance tasks');
-        // await cleanupExpiredCarts();
-        // await cleanupExpiredSessions();
-        // await rotateDailyLogs();
     } catch (error) {
         console.error('⚠️ Periodic task failed:', error);
     }
@@ -230,12 +226,10 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔁 Keep-alive ping target: ${keepAliveUrl}`);
     console.log(`⏱️ Keep-alive interval: ${keepAliveIntervalMinutes} minute(s)`);
 
-    // Self-ping loop starts after server boot.
-    // Render ke free tier mein 15 minute inactivity timeout hota hai,
-    // isliye 10-12 minute ka interval use karein.
     setInterval(async () => {
         await pingHealthEndpoint();
         await runPeriodicLightTasks();
     }, keepAliveIntervalMs);
 });
+
 export default app;

@@ -8,7 +8,6 @@ dns.setDefaultResultOrder('ipv4first');
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// ✅ Robust Env Loading: Pehle server folder dekho, fir root folder
 dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
@@ -23,7 +22,6 @@ import http from 'node:http';
 import https from 'node:https';
 import { URL } from 'node:url';
 import securityHeaders from './middleware/securityHeaders.js';
-import { findAll } from './config/db.js';
 
 import authRouter from './routes/auth.route.js';
 import userRouter from './routes/user.route.js';
@@ -46,10 +44,8 @@ import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
 
 const app = express();
 
-// ✅ Trust Proxy: Vite/Vercel proxy ke peeche rate-limiting sahi chalne ke liye
 app.set('trust proxy', 1);
 
-// --- CORS & Options (SAHI TARIKA) ---
 const allowedCorsOrigins = [
     'https://www.aaramdehi.co.in',
     'https://aaramdehi.co.in',
@@ -74,7 +70,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// --- Middlewares ---
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -83,16 +78,13 @@ app.use(morgan('dev'));
 app.use(securityHeaders);
 app.use(helmet({ crossOriginResourcePolicy: false }));
 
-// --- Routes ---
 const apiRouter = express.Router();
 
-// ✅ Public Routes (Pehle rakhein taaki auth middleware inhe block na kare)
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/products", productRouter);
 apiRouter.use("/banners", bannerRouter);
 apiRouter.use("/categories", categoryRouter);
 
-// ✅ Protected/User Routes
 apiRouter.use("/user", userRouter);
 apiRouter.use("/seo", seoRouter);
 apiRouter.use("/orders", orderRouter);
@@ -100,8 +92,10 @@ apiRouter.use("/coupons", couponRouter);
 apiRouter.use("/shops", shopsRouter);
 apiRouter.use("/appointments", appointmentRouter);
 
-// ✅ FIX: Dono analytics routers ko array me pass kiya hai taaki Express pehle analyticsRouter aur phir behavioralTrackingRouter me endpoints dhoondhe
-apiRouter.use("/analytics", [analyticsRouter, behavioralTrackingRouter]);
+// ✅ FIX: behavioralTrackingRouter ko PEHLE mount karein, fir analyticsRouter ko
+// Taaki `/all-interactions` route behavioralTrackingRouter me pehle match ho sake
+apiRouter.use("/analytics", behavioralTrackingRouter);
+apiRouter.use("/analytics", analyticsRouter);
 
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/refunds", refundRouter);
@@ -111,16 +105,9 @@ apiRouter.use('/newsletter', newsletterRouter);
 apiRouter.use("/team", teamRouter);
 
 app.use("/api", apiRouter);
-app.use("/products", productRouter); // Allow legacy direct product access
-app.use("/settings", settingsRouter); // Allow legacy direct settings access
+app.use("/products", productRouter);
+app.use("/settings", settingsRouter);
 
-// Sync route
-apiRouter.post("/admin/sync-ai-search", async (req, res) => {
-    // ... logic wahi rakhein
-    res.json({ success: true, message: "Synced" });
-});
-
-// ✅ Lightweight health route for Render uptime checks
 app.get('/health', (req, res) => {
     return res.status(200).json({
         success: true,
@@ -130,23 +117,17 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Simple ping route for internal or external validation
 app.get('/ping', (req, res) => {
     return res.status(200).json({ success: true, message: 'pong' });
 });
 
-// Root route, optional but useful for quick manual check
 app.get("/", (req, res) => res.json({ message: "Server is Active" }));
 
-/**
- * ✅ Final Catch-all for 404s (Express compatible syntax)
- */
 app.use((req, res) => {
     res.status(404).json({ success: false, message: "Route not found" });
 });
 
 app.use((err, req, res, next) => {
-    // ✅ Full error logging taaki 500 error ka exact line pata chale
     console.error("❌ [Backend Error]:", {
         message: err.message,
         stack: err.stack,
@@ -162,19 +143,16 @@ app.use((err, req, res, next) => {
     res.status(err.statusCode || 500).json({
         success: false,
         message: err.message || "Internal Server Error",
-        // Development mein error detail dikhane ke liye (Optional)
         error: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
 });
 
 const PORT = process.env.PORT || 8000;
 
-// Keep-alive interval configuration
 const keepAliveIntervalMinutes = Number(process.env.KEEP_ALIVE_INTERVAL_MINUTES ?? 11);
 const keepAliveUrl = process.env.KEEP_ALIVE_URL || `http://127.0.0.1:${PORT}/health`;
 const keepAliveIntervalMs = Math.max(1, keepAliveIntervalMinutes) * 60 * 1000;
 
-// Internal HTTP client for self-ping. Simple aur lightweight.
 const makeRequest = (url) => {
     return new Promise((resolve, reject) => {
         try {

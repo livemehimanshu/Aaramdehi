@@ -232,6 +232,7 @@ const ProductPage = (props) => {
   const [selectedCustomOptions, setSelectedCustomOptions] = useState({});
   const [selectedSize, setSelectedSize] = useState(sizes[0] || null);
   const [internalSelectedImage, setInternalSelectedImage] = useState(PLACEHOLDER_IMAGE);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [internalQuantity, setInternalQuantity] = useState(props.quantity || 1);
   const [pincodeInput, setPincodeInput] = useState('250001');
   const [deliveryStatus, setDeliveryStatus] = useState('Free delivery by Sunday, 2 Aug');
@@ -478,8 +479,9 @@ const ProductPage = (props) => {
                     props.trackInteraction('zoom_open', 4);
                   }
                 }}
+                onClick={() => setIsLightboxOpen(true)}
               >
-                <div className="flex h-full w-full min-h-[320px] items-center justify-center rounded-[20px] bg-slate-100 p-4 shadow-inner sm:min-h-[360px]">
+                <div className="flex h-full w-full min-h-[420px] items-center justify-center rounded-[20px] bg-slate-100 p-4 shadow-inner sm:min-h-[520px] md:min-h-[560px]">
                   <ReactImageMagnify
                     {...{
                       smallImage: {
@@ -531,19 +533,34 @@ const ProductPage = (props) => {
                       }
                     }}
                   />
++                <div
+                    className="absolute inset-0 z-10 cursor-zoom-in lg:hidden"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsLightboxOpen(true);
+                    }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      setIsLightboxOpen(true);
+                    }}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation();
+                      setIsLightboxOpen(true);
+                    }}
+                  />
                 </div>
 
                 {/* Image Navigation Controls */}
                 <button
                   type="button"
-                  onClick={() => moveGalleryImage('prev')}
+                  onClick={(e) => { e.stopPropagation(); moveGalleryImage('prev'); }}
                   className="absolute left-4 top-1/2 z-20 -translate-y-1/2 rounded-full border border-slate-200 bg-white/95 p-3 text-slate-700 shadow-lg transition hover:bg-white"
                 >
                   <FiChevronLeft size={18} />
                 </button>
                 <button
                   type="button"
-                  onClick={() => moveGalleryImage('next')}
+                  onClick={(e) => { e.stopPropagation(); moveGalleryImage('next'); }}
                   className="absolute right-4 top-1/2 z-20 -translate-y-1/2 rounded-full border border-slate-200 bg-white/95 p-3 text-slate-700 shadow-lg transition hover:bg-white"
                 >
                   <FiChevronRight size={18} />
@@ -630,6 +647,15 @@ const ProductPage = (props) => {
               </div>
             )}
           </section>
+
+          {/* Lightbox Modal */}
+          {isLightboxOpen && (
+            <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/80 p-4" onClick={() => setIsLightboxOpen(false)}>
+              <div className="max-w-[95%] max-h-[95%]">
+                <img src={selectedImage || PLACEHOLDER_IMAGE} alt={titleLabel} className="w-full h-auto max-h-[90vh] object-contain rounded-lg shadow-2xl" />
+              </div>
+            </div>
+          )}
 
           {/* RIGHT COLUMN: Details, Pricing, Description, Options, Actions */}
           <aside className="space-y-5 lg:sticky lg:top-8">

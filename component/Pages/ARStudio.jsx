@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '@/api/axiosInstance';
 import { getProductByIdAPI } from '@/api/authAndAdminApi';
+import { useCart } from '@/context/CartContext';
 import SEO from '../header/SEO';
 
 // CDN Scripts for TensorFlow.js and COCO-SSD (Object Detection)
@@ -12,6 +13,7 @@ const MODEL_VIEWER_SCRIPT = 'https://unpkg.com/@google/model-viewer/dist/model-v
 const ARStudio = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { addToCart: addToCartContext, setIsCartOpen } = useCart();
   const videoRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const detectionAnimationRef = useRef(null);
@@ -31,6 +33,8 @@ const ARStudio = () => {
   const [cameraError, setCameraError] = useState('');
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [loadingSelectedProduct, setLoadingSelectedProduct] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isModelViewerReady, setIsModelViewerReady] = useState(false);
 
   const [scanStep, setScanStep] = useState('instruction');
   const [scanProgress, setScanProgress] = useState(0);
@@ -102,7 +106,6 @@ const ARStudio = () => {
       return;
     }
 
-    // Add safeguards before adding to cart/placing
     const target = getProductTarget(product);
     if (target === 'bed' && !isBedPresent) {
       showToast('Place Bedding on Bed Only: Point camera at a bed', 'warning');
@@ -111,9 +114,21 @@ const ARStudio = () => {
       return;
     }
 
+    const normalizedProduct = {
+      ...product,
+      id: product._id || product.id || product.slug || product.name,
+      _id: product._id || product.id || product.slug || product.name,
+      quantity: 1,
+      price: product.sellingPrice || product.price || product.mrp || 0,
+      sellingPrice: product.sellingPrice || product.price || product.mrp || 0,
+    };
+
+    addToCartContext(normalizedProduct);
     setCartAdded(true);
-    showToast(`${product.name || 'Item'} added to cart`, 'success');
+    setIsCartOpen(true);
+    showToast(`${normalizedProduct.name || 'Item'} added to cart`, 'success');
     playSoundEffect('success');
+    triggerHaptic([20, 30, 20]);
   };
 
   const captureScreenshot = () => {
@@ -294,6 +309,55 @@ const ARStudio = () => {
     script.onerror = () => reject(new Error(`Failed to load ${src}`));
     document.body.appendChild(script);
   });
+
+  useEffect(() => {
+    const initModelViewer = async () => {
+      try {
+        await loadScript(MODEL_VIEWER_SCRIPT);
+        if (window.customElements?.get('model-viewer')) {
+          setIsModelViewerReady(true);
+          return;
+        }
+        if (window.customElements?.whenDefined) {
+          await window.customElements.whenDefined('model-viewer');
+          setIsModelViewerReady(true);
+          return;
+        }
+        setTimeout(() => {
+          if (window.customElements?.get('model-viewer')) {
+            setIsModelViewerReady(true);
+          }
+        }, 300);
+      } catch (error) {
+        console.warn('Failed to load model-viewer script:', error);
+        setAiStatus('AR viewer could not load. Please refresh or use a supported browser.');
+      }
+    };
+
+    initModelViewer();
+  }, []);
+
+  useEffect(() => {
+    const initModelViewer = async () => {
+      try {
+        await loadScript(MODEL_VIEWER_SCRIPT);
+        if (window.customElements && window.customElements.get('model-viewer')) {
+          setIsModelViewerReady(true);
+        } else {
+          // Wait a short time in case the script defines the component after load
+          window.setTimeout(() => {
+            if (window.customElements && window.customElements.get('model-viewer')) {
+              setIsModelViewerReady(true);
+            }
+          }, 200);
+        }
+      } catch (error) {
+        console.warn('Failed to load model-viewer script:', error);
+        setAiStatus('AR viewer could not load. Please refresh or try a supported device.');
+      }
+    };
+    initModelViewer();
+  }, []);
 
   const stopMediaStream = () => {
     if (mediaStreamRef.current) {
@@ -588,6 +652,10 @@ const ARStudio = () => {
   const currentProduct = selectedProduct || dbProducts.find((item) => (item.model3dUrl || item.modelUrl) === currentModel);
   const computedModelScale = Number(modelScaleFactor.replace('%', '')) / 100 || 1;
 
+  useEffect(() => {
+    setCartAdded(false);
+  }, [currentModel, selectedProduct?.id, selectedProduct?._id, selectedProduct?.name]);
+
   // 3. Trigger live status checks and warning triggers based on target
   useEffect(() => {
     const product = currentProduct;
@@ -681,13 +749,13 @@ const ARStudio = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 pointer-events-none" />
 
         {/* <model-viewer> Integration */}
-        {!isFaceDetected && currentModel && (
+        {!isFaceDetected && currentModel && isModelViewerReady && (
           <div className="absolute inset-0 w-full h-full pointer-events-auto">
             <model-viewer
               ref={modelViewerRef}
               src={currentModel}
               ar
-              ar-modes="webxr scene-viewer"
+              ar-modes="webxr scene-viewer quick-look"
               camera-controls
               auto-rotate
               auto-rotate-delay="1000"
@@ -698,8 +766,11 @@ const ARStudio = () => {
               camera-target="auto auto auto"
               ar-placement={placementMode}
               scale={getProductScale(currentProduct)}
-              ar-scale={isPillow ? 'fixed' : computedModelScale}
+              ar-scale={isPillow ? 'fixed' : 'auto'}
+              reveal="auto"
+              interaction-policy="always"
               exposure="1.2"
+              loading="eager"
               style={{ width: '100%', height: '100%' }}
             >
               {canPlace && (
@@ -713,6 +784,105 @@ const ARStudio = () => {
             </model-viewer>
           </div>
         )}
+
+        {!isFaceDetected && currentModel && !isModelViewerReady && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 px-4 text-center">
+            <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-6 text-sm font-semibold text-slate-100 shadow-2xl">
+              Loading AR viewer… please wait.
+            </div>
+          </div>
+        )}
+
+        {!isFaceDetected && currentModel && isModelViewerReady && !window.customElements?.get('model-viewer') && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 px-4 text-center">
+            <div className="rounded-3xl border border-white/10 bg-rose-900/90 p-6 text-sm font-semibold text-rose-200 shadow-2xl">
+              AR viewer failed to initialize. Try refreshing the page or using a WebXR-compatible browser.
+            </div>
+          </div>
+        )}
+
+        {/* AR Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div className="fixed inset-0 z-[1200] bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setIsSidebarOpen(false)} />
+        )}
+
+        <aside className={`fixed right-0 top-0 z-[1201] h-full w-[90%] max-w-[360px] bg-slate-950/95 shadow-2xl backdrop-blur-xl transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:translate-x-0 md:w-[320px] md:border-l md:border-white/10 md:bg-slate-950/90`}>
+          <div className="flex h-full flex-col border-l border-white/10 bg-slate-950/95 px-5 py-5 md:px-6">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-300">AR Controls</p>
+                <h2 className="mt-1 text-lg font-black text-white">Preview options</h2>
+              </div>
+              <button type="button" onClick={() => setIsSidebarOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10">
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 overflow-y-auto pr-1 pb-8">
+              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Current Item</p>
+                <p className="mt-2 text-sm font-semibold text-white truncate">{currentProduct?.name || selectedProduct?.name || 'Auto-suggested AR Item'}</p>
+                <p className="mt-1 text-xs text-slate-400">{placementMode === 'wall' ? 'Wall placement' : 'Floor placement'}</p>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Live status</p>
+                <p className="mt-2 text-sm font-semibold text-white">{statusMessage}</p>
+                <div className="mt-3 grid gap-2">
+                  <button type="button" onClick={startSurfaceScanning} className="rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-slate-950 transition hover:bg-emerald-400">
+                    Scan Space
+                  </button>
+                  <button type="button" onClick={voiceAssistantActive ? stopVoiceAssistant : startVoiceAssistant} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10">
+                    {voiceAssistantActive ? 'Stop Voice Assist' : 'Voice Assist'}
+                  </button>
+                  <button type="button" onClick={captureScreenshot} className="rounded-2xl bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10">
+                    Capture Screenshot
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Lighting</p>
+                <div className="mt-3 grid gap-2">
+                  {ambientThemeOrder.map((theme) => (
+                    <button
+                      key={theme}
+                      type="button"
+                      onClick={() => setAmbientThemeDebounced(theme)}
+                      className={`rounded-2xl px-3 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                    >
+                      {ambientThemeLabels[theme]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Product library</p>
+                <div className="mt-3 space-y-2">
+                  {dbProducts.length ? dbProducts.slice(0, 8).map((product) => (
+                    <button
+                      key={product._id || product.id || product.name}
+                      type="button"
+                      onClick={() => {
+                        setSelectedProduct(product);
+                        setCurrentModel(product.model3dUrl || product.modelUrl);
+                        setPlacementMode(product.placementType === 'wall' ? 'wall' : 'floor');
+                        setIsSidebarOpen(false);
+                      }}
+                      className={`w-full rounded-2xl border px-3 py-2 text-left text-xs transition ${currentProduct?.id === product.id || currentProduct?.name === product.name ? 'border-emerald-400 bg-emerald-500/10 text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                    >
+                      <div className="font-semibold">{product.name || product.productName || 'Untitled'}</div>
+                      <div className="text-[10px] text-slate-500">{product.placementType || product.category || 'Floor'}</div>
+                    </button>
+                  )) : (
+                    <p className="text-xs text-slate-500">Loading AR products…</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
 
         {/* 2. Conditional Warning UI Alert Overlay (Bedding placed on invalid surface warning) */}
         {showBeddingWarning && !isFaceDetected && (
@@ -748,20 +918,29 @@ const ARStudio = () => {
             ← Back
           </button>
 
-          {voiceBadge && (
-            <div className={`inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-slate-950/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200 shadow-xl backdrop-blur-md transition-opacity duration-500 ${voiceBadgeVisible ? 'opacity-100' : 'opacity-0'}`}>
-              <span className={`inline-flex h-2 w-2 rounded-full ${voiceAssistantActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
-              {voiceBadge}
-            </div>
-          )}
-
-          <button
-            type="button"
-            onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
-            className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
-          >
-            🔄
-          </button>
+          <div className="flex items-center gap-2">
+            {voiceBadge && (
+              <div className={`inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-slate-950/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200 shadow-xl backdrop-blur-md transition-opacity duration-500 ${voiceBadgeVisible ? 'opacity-100' : 'opacity-0'}`}>
+                <span className={`inline-flex h-2 w-2 rounded-full ${voiceAssistantActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                {voiceBadge}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
+              aria-label="Open AR controls"
+            >
+              ⚙️
+            </button>
+            <button
+              type="button"
+              onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
+              className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
+            >
+              🔄
+            </button>
+          </div>
         </div>
 
         {/* Toast Notification Container */}

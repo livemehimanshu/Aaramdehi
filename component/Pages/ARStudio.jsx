@@ -690,7 +690,7 @@ const ARStudio = () => {
   );
 
   return (
-    <div className="flex flex-col min-h-screen w-screen bg-slate-950 text-white overflow-x-hidden select-none">
+    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.16),_transparent_36%),linear-gradient(135deg,_#020617_0%,_#0f172a_45%,_#111827_100%)] text-white select-none">
       <SEO
         title="AR Furniture Placement Studio | Preview Beds, Pillows & Decor"
         description="Use Aaramdehi AR Studio to scan your room and preview beds, pillows, and decor in real time before you buy."
@@ -736,7 +736,7 @@ const ARStudio = () => {
       </div>
 
       {/* Top Section: Camera & 3D Viewer Layer */}
-      <div className="relative w-full flex-1 min-h-[50vh] bg-black overflow-hidden">
+      <div className="relative mx-4 mt-2 flex-1 min-h-[58vh] overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_25px_70px_rgba(2,6,23,0.45)] sm:mx-6 sm:min-h-[66vh] lg:mx-8 lg:min-h-[72vh]">
         {/* Live Video Frame */}
         <video
           ref={videoRef}
@@ -954,11 +954,11 @@ const ARStudio = () => {
       </div>
 
       {/* Bottom Section: Dedicated Action Drawer (Strictly Under the Camera) */}
-      <div className="w-full bg-slate-950 border-t border-white/10 p-4 sm:p-5">
-        <div className="mx-auto max-w-5xl flex flex-col gap-3.5">
+      <div className="w-full border-t border-white/10 bg-slate-950/90 p-4 backdrop-blur-xl sm:p-5">
+        <div className="mx-auto flex max-w-5xl flex-col gap-3.5">
           
           {/* Product Header Card */}
-          <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-3 rounded-[24px] border border-white/10 bg-white/10 p-3 shadow-lg shadow-black/20 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-bold">{statusMessage}</div>
               <div className="mt-0.5 flex flex-wrap items-center gap-2 text-base font-black text-white">
@@ -971,7 +971,7 @@ const ARStudio = () => {
               type="button"
               onClick={addToCart}
               disabled={cartAdded}
-              className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] transition active:scale-95 ${cartAdded ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'}`}
+              className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] transition active:scale-95 ${cartAdded ? 'cursor-not-allowed bg-slate-800 text-slate-400' : 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400'}`}
             >
               {cartAdded ? 'Added 🛒' : 'Add to Cart 🛒'}
             </button>

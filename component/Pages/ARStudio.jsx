@@ -112,17 +112,6 @@ const ARStudio = () => {
     return 'floor';
   };
 
-  const getProductScale = (product) => {
-    if (!product) return '1 1 1';
-    const category = String(product.category || '').toLowerCase();
-    const name = String(product.name || '').toLowerCase();
-    
-    if (category.includes('pillow') || name.includes('pillow')) {
-      return '0.38 0.1 0.25';
-    }
-    return '1 1 1';
-  };
-
   const getProductModelUrl = (product) => {
     if (!product) return '';
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -457,7 +446,6 @@ const ARStudio = () => {
     return { rawScale, fitStatus };
   };
 
-  // REAL SURFACE SCANNING - Real Pixel Contrast & Resolution Analysis (No Fake Math)
   const startSurfaceScanning = () => {
     playSoundEffect('click');
     triggerHaptic(60);

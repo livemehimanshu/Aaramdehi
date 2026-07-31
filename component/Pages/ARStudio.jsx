@@ -742,11 +742,6 @@ const ARStudio = () => {
       ? 'Loading selected product for 360 AR...'
       : aiStatus;
 
-  const isPillow = currentProduct && (
-    String(currentProduct.category || '').toLowerCase().includes('pillow') ||
-    String(currentProduct.name || '').toLowerCase().includes('pillow')
-  );
-
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-black">
       <SEO
@@ -852,7 +847,7 @@ const ARStudio = () => {
               </div>
             )}
 
-            {/* 3D Model Viewer Layer - Native WebXR Integration */}
+            {/* 3D Model Viewer Layer - Fixed AR Anchoring Update */}
             {!isFaceDetected && currentModel && isModelViewerReady && (
               <div className="absolute inset-0 w-full h-full z-20 pointer-events-auto">
                 <model-viewer
@@ -861,7 +856,7 @@ const ARStudio = () => {
                   ios-src={selectedProduct?.usdzUrl || selectedProduct?.usdz || ''} 
                   ar
                   ar-modes="webxr scene-viewer quick-look"
-                  ar-scale={isPillow ? 'fixed' : 'auto'}
+                  ar-scale="fixed"
                   ar-placement={placementMode}
                   camera-controls
                   touch-action="pan-y"
@@ -876,7 +871,7 @@ const ARStudio = () => {
                   {canPlace && (
                     <button
                       slot="ar-button"
-                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 rounded-full bg-emerald-400 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-slate-950 shadow-2xl transition hover:bg-emerald-300 active:scale-95"
+                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 rounded-full bg-emerald-400 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-slate-950 shadow-2xl transition hover:bg-emerald-300 active:scale-95 flex items-center gap-2"
                     >
                       ✨ View 3D In Room (AR)
                     </button>

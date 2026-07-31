@@ -20,6 +20,7 @@ const SEO = ({ title, description, keywords, ogImage, ogUrl }) => {
       <title>{fullTitle}</title>
       <meta name='description' content={description || defaultDescription} />
       <meta name='keywords' content={keywords || "furniture, luxury bedding, home decor, Aaramdehi"} />
+      <meta name='robots' content='index,follow,max-snippet:-1,max-image-preview:large' />
       <link rel="canonical" href={ogUrl || (typeof window !== 'undefined' ? window.location.href : 'https://www.aaramdehi.co.in')} />
 
       {/* Open Graph / Facebook */}

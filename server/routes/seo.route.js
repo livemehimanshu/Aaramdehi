@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { findAll } from '../config/db.js';
+import { buildSitemapXml } from '../utils/sitemap.js';
 import {
     getGlobalSeo,
     updateGlobalSeo,
@@ -25,41 +26,9 @@ seoRouter.get('/all', getAllSeo);
 seoRouter.get('/sitemap.xml', async (req, res) => {
     try {
         const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
-
         const products = await findAll('products');
         const categories = await findAll('categories');
-
-        let xml = `<?xml version="1.0" encoding="UTF-8"?>`;
-        xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-
-        const staticPages = ['', '/products', '/about', '/contact', '/login'];
-        staticPages.forEach(page => {
-            xml += `
-            <url>
-                <loc>${apiBase}${page}</loc>
-                <changefreq>daily</changefreq>
-                <priority>0.8</priority>
-            </url>`;
-        });
-
-        products.forEach(product => {
-            xml += `
-            <url>
-                <loc>${apiBase}/product/${product._id || product.id}</loc>
-                <lastmod>${new Date(product.updatedAt || product.createdAt).toISOString()}</lastmod>
-                <priority>0.9</priority>
-            </url>`;
-        });
-
-        categories.forEach(cat => {
-            xml += `
-            <url>
-                <loc>${apiBase}/category/${cat.slug || (cat.name || '').toLowerCase()}</loc>
-                <priority>0.7</priority>
-            </url>`;
-        });
-
-        xml += `</urlset>`;
+        const xml = buildSitemapXml({ baseUrl: apiBase, products, categories });
 
         res.header('Content-Type', 'application/xml');
         res.send(xml);

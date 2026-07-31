@@ -184,7 +184,9 @@ function AppContent() {
                 <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
                 <Route path="/compare" element={<ComparePage />} />
                 <Route path="/categories" element={<CategoriesPage />} />
+                <Route path="/about" element={<AboutUs />} />
                 <Route path="/about-us" element={<AboutUs />} />
+                <Route path="/contact" element={<ContactUs />} />
                 <Route path="/contact-us" element={<ContactUs />} />
                 <Route path="/login" element={<AuthPage />} /> 
                 <Route path="/register" element={<AuthPage />} />

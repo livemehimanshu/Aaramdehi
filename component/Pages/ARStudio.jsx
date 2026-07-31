@@ -656,9 +656,7 @@ const ARStudio = () => {
       } catch (error) {
         console.error('Selected product load failed:', error);
         setAiStatus('Selected product could not be loaded.');
-      } finally {
-        setLoadingSelectedProduct(false);
-      }
+      } font-medium
     };
 
     loadSelectedProduct();
@@ -802,7 +800,7 @@ const ARStudio = () => {
               </div>
             )}
 
-            {/* DIRECT FIXED 3D MODEL VIEWER LAYER */}
+            {/* DIRECT FIXED 3D MODEL VIEWER OVERLAY LAYER */}
             <div className="absolute inset-0 w-full h-full z-20 pointer-events-auto">
               {currentModel ? (
                 <model-viewer

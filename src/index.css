@@ -2,8 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Modern Classic theme variables */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;600;700;800&display=swap');
+
+:root{
+  --mc-bg: #f7f7f9;
+  --mc-surface: #ffffff;
+  --mc-accent: #1f4ed8; /* classic blue */
+  --mc-warm: #d97706; /* amber for accents */
+  --mc-muted: #6b7280;
+  --mc-radius-lg: 18px;
+  --mc-radius-md: 12px;
+  --mc-shadow: 0 6px 28px rgba(16,24,40,0.08);
+}
+
 html, body, #root { height: 100%; }
-body { font-family: 'Montserrat', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif; }
+body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif; background: var(--mc-bg); color: #0f172a; }
+
+/* Headings use a classic serif for a modern-classic feel */
+h1, h2, h3, h4, .mc-serif { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; }
+
+/* Reusable utility for modern-classic cards */
+.mc-card { background: var(--mc-surface); border-radius: var(--mc-radius-lg); box-shadow: var(--mc-shadow); }
+
 
 /* Custom keyframes and utilities for animations and responsiveness */
 @keyframes shimmer {

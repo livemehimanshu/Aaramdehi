@@ -122,11 +122,11 @@ const PopularProducts = () => {
 
   return (
     <div className="container mx-auto p-4 my-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Best Sellers in Home Decor</h2>
+      <h2 className="text-2xl mc-serif font-semibold text-gray-800 mb-6 text-center">Best Sellers in Home Decor</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((item) => (
-          <div key={item._id} className="group bg-white rounded-[30px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-transparent hover:border-blue-100 flex flex-col h-full relative">
-            <div className="h-64 bg-[#f8f9fb] p-6 relative flex items-center justify-center overflow-hidden">
+          <div key={item._id} className="group mc-card overflow-hidden transition-all duration-500 border border-transparent hover:border-blue-50 flex flex-col h-full relative">
+            <div className="h-64 bg-gradient-to-br from-white to-[#fbfbfd] p-6 relative flex items-center justify-center overflow-hidden">
               <Link
                 to={`/product/${item._id}`}
                 onClick={() => handleProductView(item)}
@@ -158,14 +158,14 @@ const PopularProducts = () => {
                 </button>
               </div>
             </div>
-            <div className="p-6 flex flex-col flex-grow">
-              <p className="text-[9px] text-blue-900 font-black uppercase tracking-[2px] mb-2">
+              <div className="p-6 flex flex-col flex-grow">
+              <p className="text-[10px] text-gray-500 uppercase tracking-[1px] mb-2 font-medium">
                 {typeof item.category === 'object' ? item.category?.name : (item.category || "Aaramdehi Luxe")}
               </p>
               <Link
                 to={`/product/${item._id}`}
                 onClick={() => handleProductView(item)}>
-                <h3 className="text-sm font-bold text-gray-800 line-clamp-2 h-10 group-hover:text-blue-900 transition-colors leading-tight">
+                <h3 className="text-sm mc-serif font-medium text-gray-800 line-clamp-2 h-10 group-hover:text-gray-900 transition-colors leading-tight">
                   {item.name}
                 </h3>
               </Link>

@@ -44,6 +44,7 @@ import shopsRouter from './routes/shops.route.js';
 import roomRouter from './routes/room.route.js';
 import newsletterRouter from './routes/newsletter.route.js';
 import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
+import { findAll } from './config/db.js';
 
 const app = express();
 
@@ -121,6 +122,40 @@ app.get('/health', (req, res) => {
 
 app.get('/ping', (req, res) => {
     return res.status(200).json({ success: true, message: 'pong' });
+});
+
+// Serve dynamic sitemap at site root so Search Console sees all product/category URLs
+app.get('/sitemap.xml', async (req, res) => {
+    try {
+        const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
+
+        const products = await findAll('products');
+        const categories = await findAll('categories');
+
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>`;
+        xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+
+        const staticPages = ['', '/products', '/about', '/contact', '/login'];
+        staticPages.forEach(page => {
+            xml += `\n            <url>\n                <loc>${apiBase}${page}</loc>\n                <changefreq>daily</changefreq>\n                <priority>0.8</priority>\n            </url>`;
+        });
+
+        products.forEach(product => {
+            xml += `\n            <url>\n                <loc>${apiBase}/product/${product._id || product.id}</loc>\n                <lastmod>${new Date(product.updatedAt || product.createdAt).toISOString()}</lastmod>\n                <priority>0.9</priority>\n            </url>`;
+        });
+
+        categories.forEach(cat => {
+            xml += `\n            <url>\n                <loc>${apiBase}/category/${cat.slug || (cat.name || '').toLowerCase()}</loc>\n                <priority>0.7</priority>\n            </url>`;
+        });
+
+        xml += `\n</urlset>`;
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (error) {
+        console.error('Sitemap generation error:', error);
+        res.status(500).send('Error generating sitemap');
+    }
 });
 
 app.get("/", (req, res) => res.json({ message: "Server is Active" }));

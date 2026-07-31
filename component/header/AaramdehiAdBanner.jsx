@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getSettingsAPI } from '../../src/api/authAndAdminApi';
+import { getSettingsAPI, getProductByIdAPI } from '../../src/api/authAndAdminApi';
 
 const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
 
 const AaramdehiAdBanner = () => {
   const [siteLogo, setSiteLogo] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [bannerImage, setBannerImage] = useState('/images/luxury-pillow.webp');
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -16,6 +17,34 @@ const AaramdehiAdBanner = () => {
           setSiteLogo(result.data.LOGO);
         } else if (result.success && result.data && result.data.logo) {
           setSiteLogo(result.data.logo);
+        }
+
+        // Check for a featured product id or explicit banner image in public settings
+        if (result.success && result.data) {
+          const data = result.data;
+          // Common keys: FEATURED_PRODUCT_ID, BANNER_FEATURED_PRODUCT_ID, BANNER_IMAGE
+          const featuredId = data.FEATURED_PRODUCT_ID || data.BANNER_FEATURED_PRODUCT_ID || data.FEATURED_PRODUCT || null;
+          const bannerImgSetting = data.BANNER_IMAGE || data.HERO_BANNER_IMAGE || null;
+
+          if (featuredId) {
+            try {
+              const prodRes = await getProductByIdAPI(featuredId);
+              if (prodRes && prodRes.success && prodRes.product) {
+                const p = prodRes.product;
+                const img = p.thumbnail || (p.images && p.images[0]?.url) || p.image;
+                if (img) setBannerImage(img);
+              } else if (prodRes && prodRes.success && prodRes.data) {
+                // Some product APIs return data under `data` key
+                const p = prodRes.data;
+                const img = p.thumbnail || (p.images && p.images[0]?.url) || p.image;
+                if (img) setBannerImage(img);
+              }
+            } catch (err) {
+              console.warn('Failed to fetch featured product for banner:', err.message || err);
+            }
+          } else if (bannerImgSetting) {
+            setBannerImage(bannerImgSetting);
+          }
         }
       } catch (error) {
         console.error("Error fetching logo for banner:", error);
@@ -61,7 +90,7 @@ const AaramdehiAdBanner = () => {
         <div className="relative w-40 h-24 sm:w-48 sm:h-28 flex items-center justify-center">
           <span className="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider scale-90">Ad</span>
           <img
-            src="/images/luxury-pillow.webp"
+            src={bannerImage || '/images/luxury-pillow.webp'}
             alt="Pillow"
             loading="lazy"
             decoding="async"

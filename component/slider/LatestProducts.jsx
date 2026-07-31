@@ -195,31 +195,6 @@ const LatestProducts = () => {
 
   return (
     <div className="container mx-auto px-4 py-10 font-sans relative">
-      
-      {/* --- WATCH BANNER --- */}
-      <div className="w-full bg-black rounded-xl overflow-hidden mb-10 flex items-center justify-between p-6 md:p-10 text-white relative">
-        <div className="flex items-center gap-6">
-          <img 
-            src="https://images.unsplash.com/photo-1546868871-70c122467d8b?q=80&w=200" 
-            alt="Smart Watch" 
-            loading="lazy"
-            decoding="async"
-            className="w-20 md:w-32 object-contain"
-          />
-          <div>
-            <h2 className="text-3xl md:text-5xl font-black tracking-tighter italic">WATCH</h2>
-            <p className="text-[10px] md:text-sm text-gray-500 mt-2 max-w-[200px]">
-              M6 Smart Band 2.3 - Fitness Band <br />
-              Men's and Women's Health Tracking, Red Strap
-            </p>
-          </div>
-        </div>
-        
-        <div className="hidden lg:flex gap-2">
-            <img src="https://images.unsplash.com/photo-1508685096489-7aac29625a6b?q=80&w=100" loading="lazy" decoding="async" className="w-16 h-16 rounded-full border border-gray-700 p-1" alt="watch" />
-            <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=100" loading="lazy" decoding="async" className="w-16 h-16 rounded-full border border-gray-700 p-1" alt="watch" />
-        </div>
-      </div>
 
       {/* --- HEADER WITH NAVIGATION --- */}
       <div className="flex items-center justify-between mb-6">

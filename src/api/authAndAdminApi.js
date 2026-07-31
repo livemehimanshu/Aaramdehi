@@ -569,3 +569,34 @@ export async function deleteRoomAPI(id) {
     throw e;
   }
 }
+
+/* ==========================================================================
+   ADMIN SETTINGS API
+   ========================================================================== */
+export async function adminGetAllSettingsAPI() {
+  try {
+    const res = await api.get('/settings');
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}
+
+export async function updateSettingAPI(key, value) {
+  try {
+    const upperKey = String(key).toUpperCase();
+    const res = await api.put(`/settings/${upperKey}`, { value });
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}
+
+export async function createSettingAPI(payload) {
+  try {
+    const res = await api.post('/settings/create', payload);
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}

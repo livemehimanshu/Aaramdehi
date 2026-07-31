@@ -8,6 +8,19 @@ const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product";
 const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
   const [isAdded, setIsAdded] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const NEW_DAYS = Number(import.meta.env.VITE_NEW_DAYS || 7);
+
+  const isProductNew = (createdAt, days = NEW_DAYS) => {
+    if (!createdAt) return false;
+    // Accept ISO string, number (ms) or Firestore-like { seconds }
+    let ts;
+    if (typeof createdAt === 'string' || typeof createdAt === 'number') ts = new Date(createdAt);
+    else if (createdAt.seconds) ts = new Date(createdAt.seconds * 1000);
+    else if (createdAt.toDate) ts = createdAt.toDate();
+    else return false;
+    const diff = Date.now() - ts.getTime();
+    return diff >= 0 && diff <= days * 24 * 60 * 60 * 1000;
+  };
 
   // --- 1. WISHLIST SYNC LOGIC ---
   const syncWishlist = useCallback(() => {
@@ -86,9 +99,15 @@ const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
 
   return (
     <div 
-      className="group bg-white rounded-sm p-4 relative transition-all duration-300 border border-transparent hover:border-gray-100 hover:shadow-xl h-full flex flex-col overflow-hidden cursor-pointer"
+      className="group mc-card rounded-[18px] p-5 relative transition-all duration-300 border border-transparent hover:border-gray-100 hover:shadow-2xl h-full flex flex-col overflow-hidden cursor-pointer"
       onClick={() => onOpenModal && onOpenModal(product)} 
     >
+      {/* JUST IN badge */}
+      {isProductNew(product.createdAt) && (
+        <div className="absolute left-3 top-3 z-40 px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r from-yellow-500 to-orange-500 shadow-lg">
+          JUST IN
+        </div>
+      )}
       {/* WISHLIST BUTTON - Z-Index aur Event Handling yahan fix hai */}
       <button 
         type="button"
@@ -116,8 +135,8 @@ const ProductCard = ({ product, onOpenModal, onOpenARStudio }) => {
       </div>
 
       <div className="flex flex-col flex-grow text-left">
-        <span className="block text-[10px] text-gray-500 font-black uppercase mb-1 tracking-widest">{product.brand || "Aaramdehi"}</span>
-        <h3 className="text-[13px] text-gray-900 font-bold leading-tight mb-2 line-clamp-2 group-hover:text-blue-600">
+        <span className="block text-[10px] text-gray-500 font-medium mb-1 tracking-wide">{product.brand || "Aaramdehi"}</span>
+        <h3 title={product.name} className="text-sm mc-serif font-medium text-gray-900 leading-snug mb-2 line-clamp-2 group-hover:text-blue-600">
           {product.name}
         </h3>
         <div className="mt-auto">

@@ -18,6 +18,19 @@ import { optimizeImage, getResponsiveImageAttributes } from '../../../src/utils/
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/400x400?text=Product+Not+Found";
 
+const NEW_DAYS = Number(import.meta.env.VITE_NEW_DAYS || 7);
+
+const isProductNew = (createdAt, days = NEW_DAYS) => {
+  if (!createdAt) return false;
+  let ts;
+  if (typeof createdAt === 'string' || typeof createdAt === 'number') ts = new Date(createdAt);
+  else if (createdAt.seconds) ts = new Date(createdAt.seconds * 1000);
+  else if (createdAt.toDate) ts = createdAt.toDate();
+  else return false;
+  const diff = Date.now() - ts.getTime();
+  return diff >= 0 && diff <= days * 24 * 60 * 60 * 1000;
+};
+
 const ProductListing = ({ forcedCategory }) => {
   // --- STATE MANAGEMENT ---
   const [products, setProducts] = useState([]); // Database products
@@ -358,8 +371,13 @@ const ProductListing = ({ forcedCategory }) => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
             {currentItems.map((item) => (
-              <div key={item._id || item.id} className="group bg-white rounded-[30px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-transparent hover:border-blue-100 flex flex-col h-full relative">
-              <div className="h-64 bg-[#f8f9fb] p-6 relative flex items-center justify-center overflow-hidden">
+              <div key={item._id || item.id} className="group mc-card rounded-[18px] overflow-hidden transition-all duration-500 border border-transparent hover:border-blue-50 flex flex-col h-full relative">
+              <div className="h-64 bg-gradient-to-br from-white to-[#fbfbfd] p-6 relative flex items-center justify-center overflow-hidden">
+                {isProductNew(item.createdAt) && (
+                  <div className="absolute left-3 top-3 z-40 px-3 py-1 rounded-full text-xs font-bold text-white bg-gradient-to-r from-yellow-500 to-orange-500 shadow-lg">
+                    JUST IN
+                  </div>
+                )}
                 <Link 
                   to={`/product/${item._id || item.id}`} 
                   onClick={() => handleProductView(item)}
@@ -396,7 +414,7 @@ const ProductListing = ({ forcedCategory }) => {
               </div>
 
               <div className="p-6 flex flex-col flex-grow">
-                <p className="text-[9px] text-blue-900 font-black uppercase tracking-[2px] mb-2">
+                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-[1px] mb-2">
                   {/* Display populated category name or string fallback */}
                   {typeof item.category === 'object' 
                     ? item.category?.name 
@@ -406,7 +424,7 @@ const ProductListing = ({ forcedCategory }) => {
                 <Link 
                   to={`/product/${item._id || item.id}`}
                   onClick={() => handleProductView(item)}>
-                  <h3 className="text-sm font-bold text-gray-800 line-clamp-2 h-10 group-hover:text-blue-900 transition-colors leading-tight">
+                  <h3 title={item.name} className="text-sm mc-serif font-medium text-gray-800 line-clamp-2 group-hover:text-gray-900 transition-colors leading-snug">
                     {item.name}
                   </h3>
                 </Link>

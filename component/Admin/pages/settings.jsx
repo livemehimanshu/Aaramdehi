@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Settings, Save, Lock, Store, User } from 'lucide-react';
+import { getAllProductsAPI, adminGetAllSettingsAPI, updateSettingAPI, createSettingAPI, createBannerAPI } from '../../../src/api/authAndAdminApi';
+import imageCompression from 'browser-image-compression';
 
 export default function SettingsPage() {
   const [storeInfo, setStoreInfo] = useState({
@@ -59,6 +61,197 @@ export default function SettingsPage() {
               <User size={18} /> Update Password
             </button>
           </div>
+        </div>
+      </div>
+      
+      {/* Featured Banner Setting */}
+      <div className="mt-8 bg-gray-900 p-6 md:p-8 rounded-2xl border border-gray-800 shadow-xl max-w-3xl">
+        <h2 className="text-lg font-bold mb-4 text-white">Featured Banner (Admin)</h2>
+        <p className="text-sm text-slate-400 mb-4">Select a product to use as the featured banner image on the public site. This will set the public setting <strong>FEATURED_PRODUCT_ID</strong>.</p>
+        <FeaturedBannerEditor />
+      </div>
+    </div>
+  );
+}
+
+function FeaturedBannerEditor() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState('');
+  const [message, setMessage] = useState(null);
+  const [uploadPreview, setUploadPreview] = useState(null);
+  const [uploadFile, setUploadFile] = useState(null);
+  const [uploadProcessing, setUploadProcessing] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const prodRes = await getAllProductsAPI({ limit: 100 });
+        const prods = prodRes && prodRes.success ? (prodRes.data || prodRes.products || prodRes) : (prodRes || []);
+        setProducts(Array.isArray(prods) ? prods : []);
+
+        const settingsRes = await adminGetAllSettingsAPI();
+        if (settingsRes && settingsRes.success && Array.isArray(settingsRes.data)) {
+          const found = settingsRes.data.find(s => s.key === 'FEATURED_PRODUCT_ID');
+          if (found) setSelected(String(found.value));
+        }
+      } catch (err) {
+        console.error('FeaturedBannerEditor load error', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const handleSave = async () => {
+    setMessage(null);
+    if (!selected) {
+      setMessage({ type: 'error', text: 'Please select a product.' });
+      return;
+    }
+    setLoading(true);
+    try {
+      // Fetch existing settings to decide whether to update or create
+      const settingsRes = await adminGetAllSettingsAPI();
+      if (settingsRes && settingsRes.success && Array.isArray(settingsRes.data)) {
+        const found = settingsRes.data.find(s => s.key === 'FEATURED_PRODUCT_ID');
+        if (found) {
+          const up = await updateSettingAPI('FEATURED_PRODUCT_ID', selected);
+          if (up && up.success) setMessage({ type: 'success', text: 'Featured product updated.' });
+          else setMessage({ type: 'error', text: up.message || 'Failed to update setting.' });
+        } else {
+          const payload = { key: 'FEATURED_PRODUCT_ID', value: selected, category: 'general', isPublic: true };
+          const cr = await createSettingAPI(payload);
+          if (cr && cr.success) setMessage({ type: 'success', text: 'Featured product created.' });
+          else setMessage({ type: 'error', text: cr.message || 'Failed to create setting.' });
+        }
+      } else {
+        // If settings endpoint failed, fallback to attempt update then create
+        const up = await updateSettingAPI('FEATURED_PRODUCT_ID', selected);
+        if (up && up.success) setMessage({ type: 'success', text: 'Featured product updated.' });
+        else {
+          const payload = { key: 'FEATURED_PRODUCT_ID', value: selected, category: 'general', isPublic: true };
+          const cr = await createSettingAPI(payload);
+          if (cr && cr.success) setMessage({ type: 'success', text: 'Featured product created.' });
+          else setMessage({ type: 'error', text: cr.message || up.message || 'Failed to save setting.' });
+        }
+      }
+    } catch (err) {
+      console.error('Save featured product error', err);
+      setMessage({ type: 'error', text: err.message || 'Save failed' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const convertToWebP = (file) => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext('2d').drawImage(img, 0, 0);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name.split('.')[0] + '.webp', { type: 'image/webp' }));
+        }, 'image/webp', 0.8);
+      };
+    });
+  };
+
+  const handleBannerFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadProcessing(true);
+    try {
+      const compressed = await imageCompression(file, { maxSizeMB: 1, maxWidthOrHeight: 1920 });
+      const webp = await convertToWebP(compressed);
+      setUploadPreview(URL.createObjectURL(webp));
+      setUploadFile(webp);
+    } catch (err) {
+      console.error('Banner processing failed', err);
+      setMessage({ type: 'error', text: 'Image processing failed' });
+    } finally {
+      setUploadProcessing(false);
+    }
+  };
+
+  const handleUploadBanner = async () => {
+    if (!uploadFile) return setMessage({ type: 'error', text: 'Select an image first' });
+    setUploadProcessing(true);
+    setMessage(null);
+    try {
+      const data = new FormData();
+      data.append('title', 'Featured Banner (Admin)');
+      data.append('description', 'Uploaded from admin settings');
+      data.append('category', 'hero');
+      data.append('position', 0);
+      data.append('image', uploadFile);
+
+      const res = await createBannerAPI(data);
+      if (res && res.success && res.data && res.data.image) {
+        // Save the image URL into BANNER_IMAGE setting so frontend can use it
+        const setRes = await updateSettingAPI('BANNER_IMAGE', res.data.image);
+        if (setRes && setRes.success) {
+          setMessage({ type: 'success', text: 'Banner uploaded and setting updated.' });
+          setUploadPreview(null);
+          setUploadFile(null);
+        } else {
+          setMessage({ type: 'error', text: setRes.message || 'Banner created but failed to update setting.' });
+        }
+      } else {
+        setMessage({ type: 'error', text: res?.message || 'Failed to create banner' });
+      }
+    } catch (err) {
+      console.error('Upload banner error', err);
+      setMessage({ type: 'error', text: err.message || 'Upload failed' });
+    } finally {
+      setUploadProcessing(false);
+    }
+  };
+
+  return (
+    <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <select value={selected} onChange={(e) => setSelected(e.target.value)} className="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-white">
+          <option value="">-- Select product --</option>
+          {products.map((p) => (
+            <option key={p._id || p.id} value={p._id || p.id}>{p.name}</option>
+          ))}
+        </select>
+        <div className="flex items-center gap-2">
+          <button onClick={handleSave} className="bg-emerald-600 px-4 py-2 rounded-xl text-white font-semibold hover:bg-emerald-700" disabled={loading}>
+            <Save size={16} /> Save
+          </button>
+          {loading && <div className="text-sm text-slate-400">Saving...</div>}
+        </div>
+      </div>
+      {message && (
+        <div className={`mt-4 p-3 rounded ${message.type === 'success' ? 'bg-emerald-700 text-white' : 'bg-rose-700 text-white'}`}>{message.text}</div>
+      )}
+      
+      <div className="mt-6 border-t border-gray-800 pt-4">
+        <h4 className="text-sm font-semibold mb-2">Or upload a custom banner image</h4>
+        <div className={`relative border-2 border-dashed rounded-2xl transition-all ${
+          uploadPreview ? 'border-blue-500/50 bg-blue-500/5' : 'border-gray-800 hover:border-gray-700 bg-gray-950'
+        }`}> 
+          <input type="file" accept="image/*" onChange={handleBannerFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+          {uploadPreview ? (
+            <div className="p-4 relative">
+              <img src={uploadPreview} alt="preview" className="w-full h-48 object-cover rounded-xl" />
+            </div>
+          ) : (
+            <div className="py-8 flex flex-col items-center justify-center gap-2 text-slate-400">
+              <div className="text-sm">Click to select an image (recommended 1920x600)</div>
+            </div>
+          )}
+        </div>
+        <div className="flex gap-3 mt-3">
+          <button onClick={handleUploadBanner} disabled={uploadProcessing} className="bg-blue-600 px-4 py-2 rounded-xl text-white font-semibold">{uploadProcessing ? 'Uploading...' : 'Upload & Use'}</button>
+          <button onClick={() => { setUploadPreview(null); setUploadFile(null); setMessage(null); }} className="px-4 py-2 rounded-xl border border-gray-800 text-slate-300">Clear</button>
         </div>
       </div>
     </div>

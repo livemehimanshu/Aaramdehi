@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiPlus, FiEdit, FiTrash2, FiToggleLeft, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import api from '../../src/api/axiosInstance';
 
 const BehavioralAdsAdmin = () => {
   const [rules, setRules] = useState([]);
@@ -27,10 +28,8 @@ const BehavioralAdsAdmin = () => {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/analytics/admin/retargeting-rules', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const response = await api.get('/analytics/admin/retargeting-rules');
+      const data = response.data;
       if (data.success) {
         setRules(data.rules);
       }
@@ -58,21 +57,13 @@ const BehavioralAdsAdmin = () => {
     }
 
     try {
-      const method = editingRuleId ? 'PUT' : 'POST';
+      const method = editingRuleId ? 'put' : 'post';
       const url = editingRuleId
-        ? `/api/analytics/admin/retargeting-rules/${editingRuleId}`
-        : '/api/analytics/admin/retargeting-rules';
+        ? `/analytics/admin/retargeting-rules/${editingRuleId}`
+        : '/analytics/admin/retargeting-rules';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
+      const response = await api[method](url, formData);
+      const data = response.data;
 
       if (data.success) {
         toast.success(editingRuleId ? 'Rule updated successfully' : 'Rule created successfully');
@@ -115,12 +106,8 @@ const BehavioralAdsAdmin = () => {
     if (!window.confirm('Are you sure you want to delete this rule?')) return;
 
     try {
-      const response = await fetch(`/api/analytics/admin/retargeting-rules/${ruleId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      const data = await response.json();
+      const response = await api.delete(`/analytics/admin/retargeting-rules/${ruleId}`);
+      const data = response.data;
 
       if (data.success) {
         toast.success('Rule deleted successfully');
@@ -139,16 +126,10 @@ const BehavioralAdsAdmin = () => {
    */
   const handleToggleActive = async (rule) => {
     try {
-      const response = await fetch(`/api/analytics/admin/retargeting-rules/${rule.ruleId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ isActive: !rule.isActive })
+      const response = await api.put(`/analytics/admin/retargeting-rules/${rule.ruleId}`, {
+        isActive: !rule.isActive
       });
-
-      const data = await response.json();
+      const data = response.data;
 
       if (data.success) {
         toast.success(`Rule ${!rule.isActive ? 'activated' : 'deactivated'}`);

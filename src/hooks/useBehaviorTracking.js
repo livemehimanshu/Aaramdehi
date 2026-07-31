@@ -12,6 +12,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
+import api from '../api/axiosInstance';
 
 const INTERACTION_POINTS = {
   'image_click': 2,
@@ -54,26 +55,13 @@ const useBehaviorTracking = (productId, userId) => {
           return;
         }
 
-        // Create new session
-        const headers = {
-          'Content-Type': 'application/json'
-        };
-
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
-
-        const response = await fetch('/api/analytics/create-session', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            userId: currentUserId,
-            targetProductId: productId,
-            selectedColorVariant: null
-          })
+        const response = await api.post('/analytics/create-session', {
+          userId: currentUserId,
+          targetProductId: productId,
+          selectedColorVariant: null
         });
 
-        const data = await response.json();
+        const data = response.data;
         
         if (data.success) {
           setSessionId(data.sessionId);
@@ -112,28 +100,16 @@ const useBehaviorTracking = (productId, userId) => {
       sessionStorage.setItem('behavior_guest_id', currentUserId);
 
       for (const interaction of interactions) {
-        const headers = {
-          'Content-Type': 'application/json'
-        };
-
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
-        }
-
-        const response = await fetch('/api/analytics/track-behavior', {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            sessionId,
-            userId: currentUserId,
-            intendScore,
-            targetProductId: productId,
-            selectedColorVariant: localStorage.getItem(`variant_${productId}`),
-            interaction
-          })
+        const response = await api.post('/analytics/track-behavior', {
+          sessionId,
+          userId: currentUserId,
+          intendScore,
+          targetProductId: productId,
+          selectedColorVariant: localStorage.getItem(`variant_${productId}`),
+          interaction
         });
 
-        const data = await response.json();
+        const data = response.data;
 
         if (data.success) {
           // Update score
@@ -269,22 +245,9 @@ const useBehaviorTracking = (productId, userId) => {
    */
   const markAsConverted = useCallback(async () => {
     try {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
-      await fetch('/api/analytics/update-session-status', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          sessionId,
-          status: 'converted'
-        })
+      await api.post('/analytics/update-session-status', {
+        sessionId,
+        status: 'converted'
       });
 
       sessionStorage.setItem(`behavior_status_${productId}`, 'converted');
@@ -298,22 +261,9 @@ const useBehaviorTracking = (productId, userId) => {
    */
   const markAsAbandoned = useCallback(async () => {
     try {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
-      await fetch('/api/analytics/update-session-status', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          sessionId,
-          status: 'abandoned'
-        })
+      await api.post('/analytics/update-session-status', {
+        sessionId,
+        status: 'abandoned'
       });
 
       sessionStorage.setItem(`behavior_status_${productId}`, 'abandoned');

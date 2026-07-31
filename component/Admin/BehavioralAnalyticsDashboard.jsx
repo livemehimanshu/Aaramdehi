@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiRefreshCw, FiTrendingUp, FiUsers, FiShoppingCart, FiLogOut } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import api from '../../src/api/axiosInstance';
 
 const BehavioralAnalyticsDashboard = () => {
   const [sessions, setSessions] = useState([]);
@@ -15,10 +16,8 @@ const BehavioralAnalyticsDashboard = () => {
    */
   const fetchHighIntentSessions = async () => {
     try {
-      const response = await fetch('/api/analytics/high-intent-sessions?limit=50', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const response = await api.get('/analytics/high-intent-sessions?limit=50');
+      const data = response.data;
       if (data.success) {
         setSessions(data.sessions);
       }
@@ -33,10 +32,8 @@ const BehavioralAnalyticsDashboard = () => {
    */
   const fetchMetrics = async () => {
     try {
-      const response = await fetch('/api/analytics/conversion-metrics', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const response = await api.get('/analytics/conversion-metrics');
+      const data = response.data;
       if (data.success) {
         setMetrics(data.metrics);
       }

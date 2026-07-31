@@ -656,7 +656,9 @@ const ARStudio = () => {
       } catch (error) {
         console.error('Selected product load failed:', error);
         setAiStatus('Selected product could not be loaded.');
-      } font-medium
+      } finally {
+        setLoadingSelectedProduct(false);
+      }
     };
 
     loadSelectedProduct();
@@ -767,7 +769,7 @@ const ARStudio = () => {
         {/* Vertical Stack: Camera Top, Slider Bottom */}
         <div className="flex flex-col gap-4 sm:gap-6">
           
-          {/* 1. AR Viewport */}
+          {/* 1. AR Viewport (CLEAN CAMERA WITH AUTOMATIC 3D MODEL LOAD) */}
           <div className="relative overflow-hidden rounded-2xl sm:rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.6)] w-full flex flex-col justify-between min-h-[420px] sm:min-h-[520px]">
             
             {/* Live Camera Stream */}
@@ -779,28 +781,8 @@ const ARStudio = () => {
               className="absolute inset-0 h-full w-full object-cover z-0"
             />
             <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300 z-10`} />
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/90 pointer-events-none z-10" />
 
-            {/* Target Line Box */}
-            {scanStep !== 'completed' && (
-              <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
-                <div className="relative w-56 h-56 sm:w-64 sm:h-64 border-2 border-dashed border-emerald-400/80 rounded-3xl flex items-center justify-center animate-pulse">
-                  <div className="w-4 h-4 rounded-full bg-emerald-400 shadow-[0_0_20px_#10b981] animate-ping" />
-                  <div className="absolute w-2 h-2 rounded-full bg-white" />
-
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-emerald-400 rounded-tl-xl" />
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-emerald-400 rounded-tr-xl" />
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-emerald-400 rounded-bl-xl" />
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-emerald-400 rounded-br-xl" />
-
-                  <span className="absolute -bottom-10 text-[10px] font-bold uppercase tracking-widest text-emerald-300 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30">
-                    Point Surface & Scan
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* DIRECT FIXED 3D MODEL VIEWER OVERLAY LAYER */}
+            {/* DIRECT AUTOMATIC 3D MODEL RENDER OVER CAMERA */}
             <div className="absolute inset-0 w-full h-full z-20 pointer-events-auto">
               {currentModel ? (
                 <model-viewer
@@ -817,50 +799,17 @@ const ARStudio = () => {
                   shadow-intensity="1.5"
                   exposure="1.0"
                   style={{ width: '100%', height: '100%', display: 'block', backgroundColor: 'transparent' }}
-                >
-                  <button
-                    slot="ar-button"
-                    className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 rounded-full bg-emerald-400 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-slate-950 shadow-2xl transition hover:bg-emerald-300 active:scale-95 flex items-center gap-2"
-                  >
-                    ✨ View 3D In Room (AR)
-                  </button>
-                </model-viewer>
+                />
               ) : (
-                <div className="flex h-full w-full items-center justify-center">
+                <div className="flex h-full w-full items-center justify-center pointer-events-none">
                   <div className="relative flex flex-col items-center justify-center text-center p-6 bg-slate-950/60 rounded-3xl border border-white/10 backdrop-blur-md">
                     <FiBox className="text-3xl sm:text-4xl text-emerald-400/70 animate-bounce mb-2" />
                     <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300">
-                      Select a product to view model
+                      Select a product to auto-render model
                     </p>
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Top Bar Controls Inside Camera */}
-            <div className="z-30 flex flex-wrap items-center justify-between gap-2 p-3 sm:p-5">
-              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-md">
-                <span className={`h-2 w-2 rounded-full ${isFaceDetected ? 'bg-rose-500 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
-                <span className="text-[11px] sm:text-xs font-medium text-slate-200">{statusMessage}</span>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
-                  className="rounded-xl border border-white/10 bg-slate-950/60 p-2 sm:p-2.5 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/15 active:scale-95"
-                  title="Switch Camera"
-                >
-                  <FiRefreshCw />
-                </button>
-                <button
-                  type="button"
-                  onClick={startSurfaceScanning}
-                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/10 px-3 py-2 sm:px-4 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
-                >
-                  <FiCamera /> {scanStep === 'scanning' ? `${scanProgress}%` : 'Scan Space'}
-                </button>
-              </div>
             </div>
 
             {/* Face Safety Warning Banner */}
@@ -877,34 +826,13 @@ const ARStudio = () => {
 
             {/* Bed Warning Overlay */}
             {showBeddingWarning && !isFaceDetected && (
-              <div className="absolute inset-x-4 bottom-20 sm:bottom-24 z-40 flex justify-center pointer-events-none">
+              <div className="absolute inset-x-4 bottom-6 z-40 flex justify-center pointer-events-none">
                 <div className="max-w-md w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4 text-center backdrop-blur-xl pointer-events-auto shadow-2xl">
                   <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">Place Bedding on Bed Only</div>
                   <p className="mt-1 text-[11px] sm:text-xs text-amber-200/90">Please point your camera towards a bed or couch to position this product correctly.</p>
                 </div>
               </div>
             )}
-
-            {/* Bottom Product Action Bar Overlay */}
-            <div className="z-30 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-              <div>
-                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Selected Product</span>
-                <h3 className="text-base sm:text-lg font-bold text-white truncate max-w-xs">{currentProduct?.name || selectedProduct?.name || "Select an AR Item"}</h3>
-                <p className="text-[11px] sm:text-xs text-slate-400">
-                  {currentProduct ? `₹${Number(currentProduct.sellingPrice || currentProduct.price || 0).toLocaleString()} • ${placementMode.toUpperCase()} placement` : 'Select item from library to inspect.'}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <button 
-                  onClick={addToCart}
-                  disabled={cartAdded}
-                  className={`w-full sm:w-auto rounded-xl sm:rounded-2xl px-5 py-2.5 sm:px-6 sm:py-3 text-xs font-black uppercase tracking-wider transition active:scale-95 shadow-lg ${cartAdded ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-emerald-500/20 hover:brightness-110'}`}
-                >
-                  {cartAdded ? 'Added to Cart 🛒' : 'Place & Add To Cart 🛒'}
-                </button>
-              </div>
-            </div>
 
           </div>
 
@@ -1017,7 +945,7 @@ const ARStudio = () => {
 
         </div>
 
-        {/* Action Button Matrix */}
+        {/* Action Button Matrix Below Camera */}
         <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-3.5 sm:p-4 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
@@ -1025,6 +953,14 @@ const ARStudio = () => {
               className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
             >
               <FiCamera /> {scanStep === 'scanning' ? `${scanProgress}%` : 'Scan Surface'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
+            >
+              <FiRefreshCw /> Flip Camera
             </button>
 
             <button

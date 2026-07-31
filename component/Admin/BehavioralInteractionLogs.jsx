@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiRefreshCw, FiSearch, FiFilter, FiDownload, FiUser, FiShoppingBag, FiZap, FiClock } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import api from '../../src/api/axiosInstance';
 
 const BehavioralInteractionLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -18,10 +19,8 @@ const BehavioralInteractionLogs = () => {
   const fetchInteractionLogs = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/analytics/all-interactions', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await response.json();
+      const response = await api.get('/analytics/all-interactions');
+      const data = response.data;
       
       if (data.success) {
         // Flatten all interactions from all sessions

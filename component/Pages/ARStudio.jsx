@@ -15,13 +15,10 @@ import {
   FiArrowLeft,
   FiX,
   FiCheck,
-  FiAlertTriangle,
   FiChevronLeft,
   FiChevronRight
 } from 'react-icons/fi';
 
-const TFJS_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js';
-const COCO_SSD_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
 const MODEL_VIEWER_SCRIPT = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
 
 const ARStudio = () => {
@@ -30,17 +27,12 @@ const ARStudio = () => {
   const { addToCart: addToCartContext, setIsCartOpen } = useCart();
   const videoRef = useRef(null);
   const mediaStreamRef = useRef(null);
-  const detectionAnimationRef = useRef(null);
-  const cocoSsdModelRef = useRef(null);
   const modelViewerRef = useRef(null);
   const sliderRef = useRef(null);
 
   const [facingMode, setFacingMode] = useState('environment');
-  const [isFaceDetected, setIsFaceDetected] = useState(false);
-  const [isBedPresent, setIsBedPresent] = useState(false);
   const [canPlace, setCanPlace] = useState(true);
-  const [showBeddingWarning, setShowBeddingWarning] = useState(false);
-  const [aiStatus, setAiStatus] = useState('AI Scanning Room Live...');
+  const [aiStatus, setAiStatus] = useState('AR Studio Ready...');
   const [dbProducts, setDbProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [currentModel, setCurrentModel] = useState(null);
@@ -83,33 +75,6 @@ const ARStudio = () => {
     }
   };
 
-  const getProductTarget = (product) => {
-    if (!product) return 'floor';
-    if (product.target) return product.target;
-    
-    const category = String(product.category || '').toLowerCase();
-    const name = String(product.name || '').toLowerCase();
-    
-    if (
-      category.includes('pillow') || 
-      category.includes('bedding') || 
-      category.includes('bedsheet') || 
-      name.includes('pillow') || 
-      name.includes('bedsheet')
-    ) {
-      return 'bed';
-    }
-    if (
-      product.placementType === 'wall' || 
-      category.includes('decor') || 
-      category.includes('painting') || 
-      category.includes('art')
-    ) {
-      return 'wall';
-    }
-    return 'floor';
-  };
-
   const getProductModelUrl = (product) => {
     if (!product) return '';
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -148,14 +113,6 @@ const ARStudio = () => {
     
     if (!product) {
       showToast('No AR product available to add.', 'warning');
-      return;
-    }
-
-    const target = getProductTarget(product);
-    if (target === 'bed' && !isBedPresent) {
-      showToast('Place Bedding on Bed Only: Point camera at a bed', 'warning');
-      triggerHaptic([80, 50, 80]);
-      playSoundEffect('click');
       return;
     }
 
@@ -393,16 +350,6 @@ const ARStudio = () => {
     }
   };
 
-  const stopObjectDetection = () => {
-    if (detectionAnimationRef.current) {
-      cancelAnimationFrame(detectionAnimationRef.current);
-      detectionAnimationRef.current = null;
-    }
-    cocoSsdModelRef.current = null;
-    setIsFaceDetected(false);
-    setIsBedPresent(false);
-  };
-
   const triggerHaptic = (duration = 50) => {
     if (navigator.vibrate) {
       navigator.vibrate(duration);
@@ -505,7 +452,6 @@ const ARStudio = () => {
           setSurfaceDetected(true);
           setScanStep('completed');
           setCanPlace(true);
-          setShowBeddingWarning(false);
 
           setAiStatus(`Surface Locked: ${calculatedLength}ft × ${calculatedWidth}ft — Ready for placement`);
           showToast(`Surface Grid Aligned!`, 'success');
@@ -543,7 +489,7 @@ const ARStudio = () => {
           selectProduct(arItems[0]);
         }
         setAiStatus(arItems.length
-          ? 'AI Ready. Scanning camera feed for surfaces...'
+          ? 'AR Ready. Point camera at surface...'
           : 'No AR-enabled products found in the catalog yet.');
       } catch (error) {
         console.error('Failed to load AR products:', error);
@@ -557,10 +503,7 @@ const ARStudio = () => {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const initCameraAndObjectDetection = async () => {
-      stopObjectDetection();
+    const initCamera = async () => {
       stopMediaStream();
       setCameraError('');
 
@@ -584,52 +527,18 @@ const ARStudio = () => {
           videoRef.current.srcObject = stream;
         }
 
-        setAiStatus('Loading AI Object Detector...');
-        
         await loadScript(MODEL_VIEWER_SCRIPT);
-        await loadScript(TFJS_SCRIPT);
-        await loadScript(COCO_SSD_SCRIPT);
-
-        if (window.cocoSsd && videoRef.current) {
-          cocoSsdModelRef.current = await window.cocoSsd.load();
-          setAiStatus('AI Ready. Scanning room...');
-
-          const detectObjects = async () => {
-            if (!isMounted || !videoRef.current || videoRef.current.readyState < 2) {
-              detectionAnimationRef.current = requestAnimationFrame(detectObjects);
-              return;
-            }
-            try {
-              if (cocoSsdModelRef.current) {
-                const predictions = await cocoSsdModelRef.current.detect(videoRef.current);
-                
-                const bedPresent = predictions.some(
-                  (p) => p.class === 'bed' || p.class === 'couch'
-                );
-                setIsBedPresent(bedPresent);
-
-                const personPresent = predictions.some((p) => p.class === 'person');
-                setIsFaceDetected(personPresent);
-              }
-            } catch (error) {
-              console.warn('COCO-SSD frame detection failed:', error);
-            }
-            detectionAnimationRef.current = requestAnimationFrame(detectObjects);
-          };
-          detectionAnimationRef.current = requestAnimationFrame(detectObjects);
-        }
+        setAiStatus('Camera active. Ready for 3D placement.');
       } catch (error) {
-        console.error('Camera or COCO-SSD model load failed:', error);
-        setCameraError('Unable to access camera or AI model load failed.');
+        console.error('Camera load failed:', error);
+        setCameraError('Unable to access camera.');
         setAiStatus('Camera permission denied or device unsupported.');
       }
     };
 
-    initCameraAndObjectDetection();
+    initCamera();
 
     return () => {
-      isMounted = false;
-      stopObjectDetection();
       stopMediaStream();
     };
   }, [facingMode]);
@@ -675,32 +584,9 @@ const ARStudio = () => {
     setCartAdded(false);
   }, [currentModel, selectedProduct?.id, selectedProduct?._id, selectedProduct?.name]);
 
-  useEffect(() => {
-    const product = currentProduct;
-    if (!product) return;
-
-    const target = getProductTarget(product);
-    if (target === 'bed') {
-      if (!isBedPresent) {
-        setAiStatus("⚠️ Point camera at a bed to place this bedding.");
-        setCanPlace(false);
-        setShowBeddingWarning(true);
-      } else {
-        setAiStatus("✅ Surface ready for placement.");
-        setCanPlace(true);
-        setShowBeddingWarning(false);
-      }
-    } else {
-      setCanPlace(true);
-      setShowBeddingWarning(false);
-    }
-  }, [isBedPresent, currentProduct]);
-
-  const statusMessage = isFaceDetected
-    ? '⚠️ AI Paused: Human Face Detected'
-    : loadingSelectedProduct
-      ? 'Loading selected product for 360 AR...'
-      : aiStatus;
+  const statusMessage = loadingSelectedProduct
+    ? 'Loading selected product for 360 AR...'
+    : aiStatus;
 
   return (
     <div className="min-h-screen bg-[#07090e] text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-black">
@@ -823,28 +709,6 @@ const ARStudio = () => {
                 </div>
               )}
             </div>
-
-            {/* Face Safety Warning Banner */}
-            {isFaceDetected && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/80 backdrop-blur-md">
-                <div className="max-w-md rounded-2xl sm:rounded-[28px] border border-rose-500/30 bg-rose-500/10 p-5 sm:p-6 text-center backdrop-blur-xl shadow-2xl">
-                  <FiAlertTriangle className="mx-auto text-2xl sm:text-3xl text-rose-400 mb-2" />
-                  <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-rose-300">Face Detected</div>
-                  <div className="mt-1 sm:mt-2 text-lg sm:text-xl font-black text-white">AR Paused For Safety</div>
-                  <p className="mt-1 sm:mt-2 text-[11px] sm:text-xs leading-relaxed text-rose-200/80">Please move face out of view to resume product placement.</p>
-                </div>
-              </div>
-            )}
-
-            {/* Bed Warning Overlay */}
-            {showBeddingWarning && !isFaceDetected && (
-              <div className="absolute inset-x-4 bottom-6 z-40 flex justify-center pointer-events-none">
-                <div className="max-w-md w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4 text-center backdrop-blur-xl pointer-events-auto shadow-2xl">
-                  <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">Place Bedding on Bed Only</div>
-                  <p className="mt-1 text-[11px] sm:text-xs text-amber-200/90">Please point your camera towards a bed or couch to position this product correctly.</p>
-                </div>
-              </div>
-            )}
 
           </div>
 

@@ -20,7 +20,6 @@ import {
   FiChevronRight
 } from 'react-icons/fi';
 
-// CDN Scripts for TensorFlow.js, COCO-SSD, and Google model-viewer
 const TFJS_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js';
 const COCO_SSD_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
 const MODEL_VIEWER_SCRIPT = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
@@ -72,7 +71,6 @@ const ARStudio = () => {
   const voiceBadgeTimerRef = useRef({ hide: null, clear: null });
   const recognitionRef = useRef(null);
 
-  // Slider Navigation
   const slideLeft = () => {
     if (sliderRef.current) {
       sliderRef.current.scrollBy({ left: -280, behavior: 'smooth' });
@@ -541,6 +539,9 @@ const ARStudio = () => {
           : [];
 
         setDbProducts(arItems);
+        if (arItems.length > 0 && !selectedProduct) {
+          selectProduct(arItems[0]);
+        }
         setAiStatus(arItems.length
           ? 'AI Ready. Scanning camera feed for surfaces...'
           : 'No AR-enabled products found in the catalog yet.');
@@ -663,52 +664,6 @@ const ARStudio = () => {
     loadSelectedProduct();
   }, [searchParams]);
 
-  const selectedProductHasModel = Boolean(selectedProduct && getProductModelUrl(selectedProduct));
-  const urlProductId = searchParams.get('productId');
-
-  useEffect(() => {
-    if (dbProducts.length === 0 || cameraError || selectedProduct) {
-      if (urlProductId && selectedProduct) {
-        setAiStatus(`Viewing Selected Product: ${selectedProduct.name || selectedProduct.productName || 'Product'}`);
-      }
-      return;
-    }
-
-    const autoScanner = setInterval(() => {
-      const randomScan = Math.random();
-
-      if (randomScan < 0.55) {
-        const bedsheetProduct = dbProducts.find((product) =>
-          product.placementType === 'floor' ||
-          product.placementType === 'bed' ||
-          String(product.category || '').toLowerCase().includes('bed') ||
-          String(product.category || '').toLowerCase().includes('bedding')
-        );
-
-        if (bedsheetProduct) {
-          setAiStatus(`Detected floor/bed surface → Auto suggesting: ${bedsheetProduct.name || bedsheetProduct.productName || 'Product'}`);
-          setCurrentModel(getProductModelUrl(bedsheetProduct));
-          setPlacementMode('floor');
-        }
-      } else {
-        const paintingProduct = dbProducts.find((product) =>
-          product.placementType === 'wall' ||
-          String(product.category || '').toLowerCase().includes('decor') ||
-          String(product.category || '').toLowerCase().includes('painting') ||
-          String(product.category || '').toLowerCase().includes('art')
-        );
-
-        if (paintingProduct) {
-          setAiStatus(`Detected wall surface → Auto suggesting: ${paintingProduct.name || paintingProduct.productName || 'Product'}`);
-          setCurrentModel(getProductModelUrl(paintingProduct));
-          setPlacementMode('wall');
-        }
-      }
-    }, 4000);
-
-    return () => clearInterval(autoScanner);
-  }, [dbProducts, cameraError, selectedProduct, urlProductId, selectedProductHasModel]);
-
   const currentProduct = selectedProduct || dbProducts.find((item) => getProductModelUrl(item) === currentModel) || null;
 
   useEffect(() => {
@@ -823,10 +778,10 @@ const ARStudio = () => {
               autoPlay
               playsInline
               muted
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover z-0"
             />
-            <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300`} />
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/90 pointer-events-none" />
+            <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300 z-10`} />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/90 pointer-events-none z-10" />
 
             {/* Target Line Box */}
             {scanStep !== 'completed' && (
@@ -847,13 +802,13 @@ const ARStudio = () => {
               </div>
             )}
 
-            {/* 3D Model Viewer Layer - Fixed AR Anchoring Update */}
-            {!isFaceDetected && currentModel && isModelViewerReady && (
-              <div className="absolute inset-0 w-full h-full z-20 pointer-events-auto">
+            {/* DIRECT FIXED 3D MODEL VIEWER LAYER */}
+            <div className="absolute inset-0 w-full h-full z-20 pointer-events-auto">
+              {currentModel ? (
                 <model-viewer
                   ref={modelViewerRef}
                   src={currentModel}
-                  ios-src={selectedProduct?.usdzUrl || selectedProduct?.usdz || ''} 
+                  ios-src={selectedProduct?.usdzUrl || selectedProduct?.usdz || ''}
                   ar
                   ar-modes="webxr scene-viewer quick-look"
                   ar-scale="fixed"
@@ -861,36 +816,28 @@ const ARStudio = () => {
                   camera-controls
                   touch-action="pan-y"
                   auto-rotate
-                  shadow-intensity="1"
-                  environment-image="neutral"
-                  exposure="1.2"
-                  loading="eager"
-                  interaction-policy="always"
-                  style={{ width: '100%', height: '100%', backgroundColor: 'transparent' }}
+                  shadow-intensity="1.5"
+                  exposure="1.0"
+                  style={{ width: '100%', height: '100%', display: 'block', backgroundColor: 'transparent' }}
                 >
-                  {canPlace && (
-                    <button
-                      slot="ar-button"
-                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40 rounded-full bg-emerald-400 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-slate-950 shadow-2xl transition hover:bg-emerald-300 active:scale-95 flex items-center gap-2"
-                    >
-                      ✨ View 3D In Room (AR)
-                    </button>
-                  )}
+                  <button
+                    slot="ar-button"
+                    className="absolute bottom-16 left-1/2 -translate-x-1/2 z-40 rounded-full bg-emerald-400 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-slate-950 shadow-2xl transition hover:bg-emerald-300 active:scale-95 flex items-center gap-2"
+                  >
+                    ✨ View 3D In Room (AR)
+                  </button>
                 </model-viewer>
-              </div>
-            )}
-
-            {/* Target 3D Placeholder */}
-            {!currentModel && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                <div className="relative flex flex-col items-center justify-center text-center p-6">
-                  <div className="h-32 w-32 sm:h-44 sm:w-44 rounded-full border border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-center animate-pulse">
-                    <FiBox className="text-3xl sm:text-4xl text-emerald-400/70" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <div className="relative flex flex-col items-center justify-center text-center p-6 bg-slate-950/60 rounded-3xl border border-white/10 backdrop-blur-md">
+                    <FiBox className="text-3xl sm:text-4xl text-emerald-400/70 animate-bounce mb-2" />
+                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300">
+                      Select a product to view model
+                    </p>
                   </div>
-                  <p className="mt-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Point Camera To Surface</p>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Top Bar Controls Inside Camera */}
             <div className="z-30 flex flex-wrap items-center justify-between gap-2 p-3 sm:p-5">
@@ -970,7 +917,7 @@ const ARStudio = () => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-3 sm:mb-4">
                 <div>
-                  <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">DOSA BOX</span>
+                  <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">LIBRARY</span>
                   <h3 className="text-base sm:text-lg font-bold text-white">Aaramdehi AR Product Library</h3>
                 </div>
 
@@ -997,10 +944,6 @@ const ARStudio = () => {
                 </div>
               </div>
 
-              <p className="text-[11px] sm:text-xs text-slate-400 mb-3 sm:mb-4">
-                Browse through products using the slider and test live room placement before adding items to your cart.
-              </p>
-
               {/* Horizontal Slider */}
               <div 
                 ref={sliderRef}
@@ -1011,7 +954,7 @@ const ARStudio = () => {
                   <p className="text-xs text-slate-500 py-4">Loading catalog...</p>
                 ) : dbProducts.length ? (
                   dbProducts.map((item) => {
-                    const isSelected = currentProduct?.id === item.id || currentProduct?.name === item.name;
+                    const isSelected = currentProduct?.id === item.id || currentProduct?.name === item.name || currentProduct?._id === item._id;
                     const productImage = item.thumbnail || (item.images && item.images[0]?.url) || item.image || '';
 
                     return (
@@ -1021,7 +964,7 @@ const ARStudio = () => {
                         className={`snap-start flex-shrink-0 w-[240px] sm:w-[260px] flex items-center justify-between rounded-2xl border p-3 transition-all cursor-pointer ${isSelected ? 'border-emerald-500 bg-emerald-500/15 shadow-lg shadow-emerald-500/10' : 'border-white/10 bg-slate-950/60 hover:border-emerald-500/40 hover:bg-white/5'}`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 text-slate-400 group-hover:text-emerald-300 flex-shrink-0 overflow-hidden border border-white/5">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 text-slate-400 flex-shrink-0 overflow-hidden border border-white/5">
                             {productImage ? (
                               <img src={productImage} alt={item.name} className="h-full w-full object-cover" />
                             ) : (
@@ -1057,9 +1000,6 @@ const ARStudio = () => {
                       <FiCheck /> {calculatedArea.fitStatus}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 mb-3">
-                    Dimensions scanned dynamically from surface pixel contrast.
-                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2.5 text-center">

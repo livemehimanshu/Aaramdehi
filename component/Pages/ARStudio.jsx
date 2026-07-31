@@ -341,11 +341,11 @@ const ARStudio = () => {
   };
 
   const ambientFilterClass = {
-    neutral: 'bg-slate-950/10',
-    sunset: 'bg-orange-400/10',
+    neutral: 'bg-[#07090e]/10',
+    sunset: 'bg-orange-500/10',
     neon: 'bg-fuchsia-500/10',
-    cozy: 'bg-amber-400/10',
-  }[ambientTheme] || 'bg-slate-950/10';
+    cozy: 'bg-amber-500/10',
+  }[ambientTheme] || 'bg-[#07090e]/10';
 
   const loadScript = (src) => new Promise((resolve, reject) => {
     if (document.querySelector(`script[src="${src}"]`)) {
@@ -570,8 +570,13 @@ const ARStudio = () => {
         }
 
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode },
+          video: { facingMode: { exact: facingMode } },
           audio: false,
+        }).catch(async () => {
+          return await navigator.mediaDevices.getUserMedia({
+            video: { facingMode },
+            audio: false,
+          });
         });
 
         mediaStreamRef.current = stream;
@@ -769,10 +774,10 @@ const ARStudio = () => {
         {/* Vertical Stack: Camera Top, Slider Bottom */}
         <div className="flex flex-col gap-4 sm:gap-6">
           
-          {/* 1. AR Viewport (CLEAN CAMERA WITH AUTOMATIC 3D MODEL LOAD) */}
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.6)] w-full flex flex-col justify-between min-h-[420px] sm:min-h-[520px]">
+          {/* AR Viewport Frame */}
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.6)] w-full h-[60vh] sm:h-[68vh] flex items-center justify-center">
             
-            {/* Live Camera Stream */}
+            {/* Live Camera Stream (Base Layer z-0) */}
             <video
               ref={videoRef}
               autoPlay
@@ -780,10 +785,12 @@ const ARStudio = () => {
               muted
               className="absolute inset-0 h-full w-full object-cover z-0"
             />
+            
+            {/* Ambient Lighting Overlay */}
             <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300 z-10`} />
 
-            {/* DIRECT AUTOMATIC 3D MODEL RENDER OVER CAMERA */}
-            <div className="absolute inset-0 w-full h-full z-20 pointer-events-auto">
+            {/* Direct 3D Model Rendering Layer (Overlay Layer z-30) */}
+            <div className="absolute inset-0 w-full h-full z-30 flex items-center justify-center pointer-events-auto">
               {currentModel ? (
                 <model-viewer
                   ref={modelViewerRef}
@@ -791,30 +798,35 @@ const ARStudio = () => {
                   ios-src={selectedProduct?.usdzUrl || selectedProduct?.usdz || ''}
                   ar
                   ar-modes="webxr scene-viewer quick-look"
-                  ar-scale="fixed"
+                  ar-scale="auto"
                   ar-placement={placementMode}
                   camera-controls
                   touch-action="pan-y"
                   auto-rotate
+                  rotation-per-second="30deg"
                   shadow-intensity="1.5"
                   exposure="1.0"
-                  style={{ width: '100%', height: '100%', display: 'block', backgroundColor: 'transparent' }}
+                  interaction-prompt="none"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    backgroundColor: 'transparent',
+                    '--poster-color': 'transparent'
+                  }}
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center pointer-events-none">
-                  <div className="relative flex flex-col items-center justify-center text-center p-6 bg-slate-950/60 rounded-3xl border border-white/10 backdrop-blur-md">
-                    <FiBox className="text-3xl sm:text-4xl text-emerald-400/70 animate-bounce mb-2" />
-                    <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300">
-                      Select a product to auto-render model
-                    </p>
-                  </div>
+                <div className="relative z-30 flex flex-col items-center justify-center text-center p-6 bg-slate-950/70 rounded-2xl border border-white/10 backdrop-blur-md">
+                  <FiBox className="text-3xl sm:text-4xl text-emerald-400 animate-pulse mb-2" />
+                  <p className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.18em] text-slate-200">
+                    Select a product below to render 3D model
+                  </p>
                 </div>
               )}
             </div>
 
             {/* Face Safety Warning Banner */}
             {isFaceDetected && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/70 backdrop-blur-md">
+              <div className="absolute inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/80 backdrop-blur-md">
                 <div className="max-w-md rounded-2xl sm:rounded-[28px] border border-rose-500/30 bg-rose-500/10 p-5 sm:p-6 text-center backdrop-blur-xl shadow-2xl">
                   <FiAlertTriangle className="mx-auto text-2xl sm:text-3xl text-rose-400 mb-2" />
                   <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-rose-300">Face Detected</div>
@@ -836,7 +848,7 @@ const ARStudio = () => {
 
           </div>
 
-          {/* 2. Responsive Slider Carousel Container */}
+          {/* Responsive Slider Carousel Container */}
           <div className="rounded-2xl sm:rounded-[32px] border border-white/10 bg-slate-900/40 p-4 sm:p-6 backdrop-blur-xl w-full flex flex-col lg:flex-row justify-between gap-5 sm:gap-6">
             
             {/* Left Box: AR Product Slider */}
@@ -945,7 +957,7 @@ const ARStudio = () => {
 
         </div>
 
-        {/* Action Button Matrix Below Camera */}
+        {/* Action Controls Matrix Below Camera Frame */}
         <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-3.5 sm:p-4 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button

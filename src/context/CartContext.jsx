@@ -1,8 +1,8 @@
-import React, { createContext, useEffect, useState, useContext } from 'react'
+import React, { createContext, useEffect, useState, useContext } from 'react';
 
-export const CartContext = createContext(null)
+export const CartContext = createContext(null);
 
-// ✅ Custom Hook banayein taaki components use kar sakein
+// ✅ Custom Hook
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) throw new Error("useCart must be used within CartProvider");
@@ -11,25 +11,28 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('cart')) || [] } catch { return [] }
-  })
+    try { return JSON.parse(localStorage.getItem('cart')) || []; } catch { return []; }
+  });
+
   const [wishlist, setWishlist] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('wishlist')) || [] } catch { return [] }
-  })
-  const [isCartOpen, setIsCartOpen] = useState(false); // ✅ Sidebar state add ki
+    try { return JSON.parse(localStorage.getItem('wishlist')) || []; } catch { return []; }
+  });
+
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  // Sync state to LocalStorage
+  useEffect(() => {
+    try { localStorage.setItem('cart', JSON.stringify(cart)); } catch {}
+  }, [cart]);
 
   useEffect(() => {
-    try { localStorage.setItem('cart', JSON.stringify(cart)) } catch {}
-  }, [cart])
+    try { localStorage.setItem('wishlist', JSON.stringify(wishlist)); } catch {}
+  }, [wishlist]);
 
-  useEffect(() => {
-    try { localStorage.setItem('wishlist', JSON.stringify(wishlist)) } catch {}
-  }, [wishlist])
-
-  // ✅ External storage/events ko listen karne ke liye sync logic
+  // Sync state with external tabs/events
   useEffect(() => {
     const syncCart = () => {
-      try { setCart(JSON.parse(localStorage.getItem('cart')) || []) } catch {}
+      try { setCart(JSON.parse(localStorage.getItem('cart')) || []); } catch {}
     };
     window.addEventListener('cartUpdated', syncCart);
     window.addEventListener('storage', syncCart);
@@ -39,34 +42,89 @@ export const CartProvider = ({ children }) => {
     };
   }, []);
 
+  // ✅ 1. ADD TO CART (Fixes ID mismatch & ensures standard product structure)
   const addToCart = (product) => {
+    const targetId = String(product._id || product.id || Date.now());
+
+    const normalizedProduct = {
+      ...product,
+      id: targetId,
+      _id: targetId,
+      name: product.name || product.title || 'Product',
+      price: Number(product.sellingPrice || product.price || product.mrp || 0),
+      sellingPrice: Number(product.sellingPrice || product.price || product.mrp || 0),
+      quantity: product.quantity || 1,
+      image: product.image || product.thumbnail || (product.images && product.images[0]?.url) || ''
+    };
+
     setCart(prev => {
-      const idx = prev.findIndex(p => p.id === product.id)
+      const idx = prev.findIndex(p => String(p._id || p.id) === targetId);
       if (idx !== -1) {
-        const copy = [...prev]
-        copy[idx] = { ...copy[idx], quantity: (copy[idx].quantity || 1) + (product.quantity || 1) }
-        return copy
+        const copy = [...prev];
+        copy[idx] = { 
+          ...copy[idx], 
+          quantity: (copy[idx].quantity || 1) + (normalizedProduct.quantity || 1) 
+        };
+        return copy;
       }
-      return [...prev, { ...product, quantity: product.quantity || 1 }]
-    })
-  }
+      return [...prev, normalizedProduct];
+    });
+  };
+
+  // ✅ 2. UPDATE QUANTITY (Fixes string/number ID comparison)
   const updateQty = (id, delta) => {
+    const targetId = String(id);
     setCart(prev => prev.map(item => 
-      (item._id || item.id) === id ? { ...item, quantity: Math.max(1, (item.quantity || 1) + delta) } : item
-    ))
-  }
-  const removeFromCart = (id) => setCart(prev => prev.filter(p => p.id !== id))
+      String(item._id || item.id) === targetId 
+        ? { ...item, quantity: Math.max(1, (item.quantity || 1) + delta) } 
+        : item
+    ));
+  };
 
-  const addToWishlist = (product) => setWishlist(prev => prev.find(p => p.id === product.id) ? prev : [...prev, product])
-  const removeFromWishlist = (id) => setWishlist(prev => prev.filter(p => p.id !== id))
-  const isInWishlist = (id) => wishlist.some(p => p.id === id)
+  // ✅ 3. REMOVE FROM CART (Fixes ID mismatch bug)
+  const removeFromCart = (id) => {
+    const targetId = String(id);
+    setCart(prev => prev.filter(p => String(p._id || p.id) !== targetId));
+  };
 
-  const cartCount = cart.reduce((s, p) => s + (p.quantity || 1), 0)
-  const wishlistCount = wishlist.length
+  // ✅ 4. WISHLIST FUNCTIONS
+  const addToWishlist = (product) => {
+    const targetId = String(product._id || product.id);
+    setWishlist(prev => prev.find(p => String(p._id || p.id) === targetId) ? prev : [...prev, product]);
+  };
+
+  const removeFromWishlist = (id) => {
+    const targetId = String(id);
+    setWishlist(prev => prev.filter(p => String(p._id || p.id) !== targetId));
+  };
+
+  const isInWishlist = (id) => {
+    const targetId = String(id);
+    return wishlist.some(p => String(p._id || p.id) === targetId);
+  };
+
+  // Counts calculation
+  const cartCount = cart.reduce((s, p) => s + (p.quantity || 1), 0);
+  const wishlistCount = wishlist.length;
 
   return (
-    <CartContext.Provider value={{ cart, wishlist, addToCart, removeFromCart, updateQty, addToWishlist, removeFromWishlist, isInWishlist, cartCount, wishlistCount, isCartOpen, setIsCartOpen }}>
+    <CartContext.Provider 
+      value={{ 
+        cart, 
+        wishlist, 
+        addToCart, 
+        removeFromCart, 
+        updateQty, 
+        addToWishlist, 
+        removeFromWishlist, 
+        isInWishlist, 
+        cartCount, 
+        wishlistCount, 
+        isCartOpen, 
+        setIsCartOpen 
+      }}
+    >
       {children}
     </CartContext.Provider>
-  )
-}
+  );
+};

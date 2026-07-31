@@ -99,37 +99,42 @@ const ARStudio = () => {
     return '1 1 1';
   };
 
-  const addToCart = () => {
-    const product = selectedProduct || currentProduct;
-    if (!product) {
-      showToast('No AR product available to add.', 'warning');
-      return;
-    }
+ const addToCart = () => {
+  const product = selectedProduct || dbProducts.find((item) => (item.model3dUrl || item.modelUrl) === currentModel) || currentProduct;
+  
+  if (!product) {
+    showToast('No AR product available to add.', 'warning');
+    return;
+  }
 
-    const target = getProductTarget(product);
-    if (target === 'bed' && !isBedPresent) {
-      showToast('Place Bedding on Bed Only: Point camera at a bed', 'warning');
-      triggerHaptic([80, 50, 80]);
-      playSoundEffect('click');
-      return;
-    }
+  const target = getProductTarget(product);
+  if (target === 'bed' && !isBedPresent) {
+    showToast('Place Bedding on Bed Only: Point camera at a bed', 'warning');
+    triggerHaptic([80, 50, 80]);
+    playSoundEffect('click');
+    return;
+  }
 
-    const normalizedProduct = {
-      ...product,
-      id: product._id || product.id || product.slug || product.name,
-      _id: product._id || product.id || product.slug || product.name,
-      quantity: 1,
-      price: product.sellingPrice || product.price || product.mrp || 0,
-      sellingPrice: product.sellingPrice || product.price || product.mrp || 0,
-    };
+  const productId = String(product._id || product.id || Date.now());
 
-    addToCartContext(normalizedProduct);
-    setCartAdded(true);
-    setIsCartOpen(true);
-    showToast(`${normalizedProduct.name || 'Item'} added to cart`, 'success');
-    playSoundEffect('success');
-    triggerHaptic([20, 30, 20]);
+  const normalizedProduct = {
+    ...product,
+    id: productId,
+    _id: productId,
+    name: product.name || product.title || 'AR Product',
+    quantity: 1,
+    price: Number(product.sellingPrice || product.price || product.mrp || 0),
+    sellingPrice: Number(product.sellingPrice || product.price || product.mrp || 0),
+    image: product.thumbnail || (product.images && product.images[0]?.url) || product.image || ''
   };
+
+  addToCartContext(normalizedProduct);
+  setCartAdded(true);
+  setIsCartOpen(true);
+  showToast(`${normalizedProduct.name} added to cart`, 'success');
+  playSoundEffect('success');
+  triggerHaptic([20, 30, 20]);
+};
 
   const captureScreenshot = () => {
     const video = videoRef.current;

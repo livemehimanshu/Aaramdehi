@@ -4,8 +4,21 @@ import api from '@/api/axiosInstance';
 import { getProductByIdAPI } from '@/api/authAndAdminApi';
 import { useCart } from '@/context/CartContext';
 import SEO from '../header/SEO';
+import { 
+  FiCamera, 
+  FiShoppingCart, 
+  FiBox, 
+  FiMic, 
+  FiMaximize, 
+  FiSliders, 
+  FiRefreshCw, 
+  FiArrowLeft,
+  FiX,
+  FiCheck,
+  FiAlertTriangle
+} from 'react-icons/fi';
 
-// CDN Scripts for TensorFlow.js and COCO-SSD (Object Detection)
+// CDN Scripts for TensorFlow.js, COCO-SSD, and Google model-viewer
 const TFJS_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.8.0/dist/tf.min.js';
 const COCO_SSD_SCRIPT = 'https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js';
 const MODEL_VIEWER_SCRIPT = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
@@ -21,10 +34,10 @@ const ARStudio = () => {
   const modelViewerRef = useRef(null);
 
   const [facingMode, setFacingMode] = useState('environment');
-  const [isFaceDetected, setIsFaceDetected] = useState(false); // Map to COCO-SSD "person" for safety block
-  const [isBedPresent, setIsBedPresent] = useState(false); // Track bed presence
-  const [canPlace, setCanPlace] = useState(true); // Control active placement state
-  const [showBeddingWarning, setShowBeddingWarning] = useState(false); // Bedding specific conditional alert
+  const [isFaceDetected, setIsFaceDetected] = useState(false);
+  const [isBedPresent, setIsBedPresent] = useState(false);
+  const [canPlace, setCanPlace] = useState(true);
+  const [showBeddingWarning, setShowBeddingWarning] = useState(false);
   const [aiStatus, setAiStatus] = useState('AI Scanning Room Live...');
   const [dbProducts, setDbProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -56,15 +69,14 @@ const ARStudio = () => {
   const voiceBadgeTimerRef = useRef({ hide: null, clear: null });
   const recognitionRef = useRef(null);
 
-  // 1. Dynamic Product Target Mapper (Category Database Mapping)
+  // 1. Dynamic Product Target Mapper
   const getProductTarget = (product) => {
     if (!product) return 'floor';
-    if (product.target) return product.target; // direct DB mapping support
+    if (product.target) return product.target;
     
     const category = String(product.category || '').toLowerCase();
     const name = String(product.name || '').toLowerCase();
     
-    // Pillow, Bedding or Bedsheet targets 'bed'
     if (
       category.includes('pillow') || 
       category.includes('bedding') || 
@@ -74,7 +86,6 @@ const ARStudio = () => {
     ) {
       return 'bed';
     }
-    // Decor/Paintings target 'wall'
     if (
       product.placementType === 'wall' || 
       category.includes('decor') || 
@@ -86,55 +97,83 @@ const ARStudio = () => {
     return 'floor';
   };
 
-  // 2. Fixed AR Placement Scale Logic (approx 15x10 inch for pillow)
+  // 2. Fixed AR Placement Scale Logic
   const getProductScale = (product) => {
     if (!product) return '1 1 1';
     const category = String(product.category || '').toLowerCase();
     const name = String(product.name || '').toLowerCase();
     
-    // Pillow target scale: 15x10 inches -> approx 0.38m (length) x 0.1m (height) x 0.25m (depth)
     if (category.includes('pillow') || name.includes('pillow')) {
       return '0.38 0.1 0.25';
     }
     return '1 1 1';
   };
 
- const addToCart = () => {
-  const product = selectedProduct || dbProducts.find((item) => (item.model3dUrl || item.modelUrl) === currentModel) || currentProduct;
-  
-  if (!product) {
-    showToast('No AR product available to add.', 'warning');
-    return;
-  }
-
-  const target = getProductTarget(product);
-  if (target === 'bed' && !isBedPresent) {
-    showToast('Place Bedding on Bed Only: Point camera at a bed', 'warning');
-    triggerHaptic([80, 50, 80]);
-    playSoundEffect('click');
-    return;
-  }
-
-  const productId = String(product._id || product.id || Date.now());
-
-  const normalizedProduct = {
-    ...product,
-    id: productId,
-    _id: productId,
-    name: product.name || product.title || 'AR Product',
-    quantity: 1,
-    price: Number(product.sellingPrice || product.price || product.mrp || 0),
-    sellingPrice: Number(product.sellingPrice || product.price || product.mrp || 0),
-    image: product.thumbnail || (product.images && product.images[0]?.url) || product.image || ''
+  const getProductModelUrl = (product) => {
+    if (!product) return '';
+    return (
+      product.model3dUrl ||
+      product.modelUrl ||
+      product.model ||
+      product.glb ||
+      product.gltf ||
+      product.threeDModel ||
+      ''
+    );
   };
 
-  addToCartContext(normalizedProduct);
-  setCartAdded(true);
-  setIsCartOpen(true);
-  showToast(`${normalizedProduct.name} added to cart`, 'success');
-  playSoundEffect('success');
-  triggerHaptic([20, 30, 20]);
-};
+  const selectProduct = (product) => {
+    setSelectedProduct(product);
+    const modelUrl = getProductModelUrl(product);
+
+    if (modelUrl) {
+      setCurrentModel(modelUrl);
+      setAiStatus(`Viewing Selected Product: ${product?.name || product?.productName || 'Product'}`);
+    } else {
+      setCurrentModel(null);
+      setAiStatus(`Selected product has no AR model available: ${product?.name || product?.productName || 'Product'}`);
+    }
+
+    setPlacementMode(product?.placementType === 'wall' ? 'wall' : 'floor');
+    setIsSidebarOpen(false);
+  };
+
+  const addToCart = () => {
+    const product = selectedProduct || dbProducts.find((item) => getProductModelUrl(item) === currentModel) || currentProduct || null;
+    
+    if (!product) {
+      showToast('No AR product available to add.', 'warning');
+      return;
+    }
+
+    const target = getProductTarget(product);
+    if (target === 'bed' && !isBedPresent) {
+      showToast('Place Bedding on Bed Only: Point camera at a bed', 'warning');
+      triggerHaptic([80, 50, 80]);
+      playSoundEffect('click');
+      return;
+    }
+
+    const productId = String(product._id || product.id || Date.now());
+
+    const normalizedProduct = {
+      ...product,
+      id: productId,
+      _id: productId,
+      name: product.name || product.title || 'AR Product',
+      quantity: 1,
+      price: Number(product.sellingPrice || product.price || product.mrp || 0),
+      sellingPrice: Number(product.sellingPrice || product.price || product.mrp || 0),
+      image: product.thumbnail || (product.images && product.images[0]?.url) || product.image || ''
+    };
+
+    addToCartContext(normalizedProduct);
+    setCartAdded(true);
+    setIsCartOpen(true);
+    showToast(`${normalizedProduct.name} added to cart`, 'success');
+    playSoundEffect('success');
+    triggerHaptic([20, 30, 20]);
+  };
 
   const captureScreenshot = () => {
     const video = videoRef.current;
@@ -342,28 +381,6 @@ const ARStudio = () => {
     initModelViewer();
   }, []);
 
-  useEffect(() => {
-    const initModelViewer = async () => {
-      try {
-        await loadScript(MODEL_VIEWER_SCRIPT);
-        if (window.customElements && window.customElements.get('model-viewer')) {
-          setIsModelViewerReady(true);
-        } else {
-          // Wait a short time in case the script defines the component after load
-          window.setTimeout(() => {
-            if (window.customElements && window.customElements.get('model-viewer')) {
-              setIsModelViewerReady(true);
-            }
-          }, 200);
-        }
-      } catch (error) {
-        console.warn('Failed to load model-viewer script:', error);
-        setAiStatus('AR viewer could not load. Please refresh or try a supported device.');
-      }
-    };
-    initModelViewer();
-  }, []);
-
   const stopMediaStream = () => {
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -476,6 +493,7 @@ const ARStudio = () => {
   useEffect(() => {
     const loadAaramdehiProducts = async () => {
       try {
+        setLoadingProducts(true);
         const response = await api.get('/products', { params: { limit: 200 } });
         const payload = response.data?.data ?? response.data ?? [];
         const arItems = Array.isArray(payload)
@@ -489,6 +507,8 @@ const ARStudio = () => {
       } catch (error) {
         console.error('Failed to load AR products:', error);
         setAiStatus('Failed to load AR product catalog.');
+      } finally {
+        setLoadingProducts(false);
       }
     };
 
@@ -521,7 +541,6 @@ const ARStudio = () => {
 
         setAiStatus('Loading AI Object Detector...');
         
-        // Dynamically load model-viewer, TensorFlow.js and COCO-SSD
         await loadScript(MODEL_VIEWER_SCRIPT);
         await loadScript(TFJS_SCRIPT);
         await loadScript(COCO_SSD_SCRIPT);
@@ -539,13 +558,11 @@ const ARStudio = () => {
               if (cocoSsdModelRef.current) {
                 const predictions = await cocoSsdModelRef.current.detect(videoRef.current);
                 
-                // 1. Bed or Couch Detection logic
                 const bedPresent = predictions.some(
                   (p) => p.class === 'bed' || p.class === 'couch'
                 );
                 setIsBedPresent(bedPresent);
 
-                // 2. Safety block logic (using person detection as safety check)
                 const personPresent = predictions.some((p) => p.class === 'person');
                 setIsFaceDetected(personPresent);
               }
@@ -585,14 +602,13 @@ const ARStudio = () => {
         const res = await getProductByIdAPI(productId);
 
         if (res?.success && res.data) {
-          setSelectedProduct(res.data);
-          const modelUrl = res.data.model3dUrl || res.data.modelUrl;
+          selectProduct(res.data);
+          const modelUrl = getProductModelUrl(res.data);
           if (modelUrl) {
-            setCurrentModel(modelUrl);
             setAiStatus(`Selected product loaded for 360 AR: ${res.data.name}`);
             setPlacementMode(res.data.placementType === 'wall' ? 'wall' : 'floor');
           } else {
-            setAiStatus('Selected product has no 3D model. AI will still auto-suggest other AR items.');
+            setAiStatus('Selected product has no 3D model available for AR.');
           }
         } else {
           setAiStatus(res?.message || 'Selected product could not be loaded.');
@@ -608,11 +624,11 @@ const ARStudio = () => {
     loadSelectedProduct();
   }, [searchParams]);
 
-  const selectedProductHasModel = selectedProduct && (selectedProduct.model3dUrl || selectedProduct.modelUrl);
+  const selectedProductHasModel = Boolean(selectedProduct && getProductModelUrl(selectedProduct));
   const urlProductId = searchParams.get('productId');
 
   useEffect(() => {
-    if (dbProducts.length === 0 || cameraError || (selectedProduct && selectedProductHasModel) || (urlProductId && selectedProduct)) {
+    if (dbProducts.length === 0 || cameraError || selectedProduct) {
       if (urlProductId && selectedProduct) {
         setAiStatus(`Viewing Selected Product: ${selectedProduct.name || selectedProduct.productName || 'Product'}`);
       }
@@ -632,7 +648,7 @@ const ARStudio = () => {
 
         if (bedsheetProduct) {
           setAiStatus(`Detected floor/bed surface → Auto suggesting: ${bedsheetProduct.name || bedsheetProduct.productName || 'Product'}`);
-          setCurrentModel(bedsheetProduct.model3dUrl || bedsheetProduct.modelUrl);
+          setCurrentModel(getProductModelUrl(bedsheetProduct));
           setPlacementMode('floor');
         }
       } else {
@@ -645,7 +661,7 @@ const ARStudio = () => {
 
         if (paintingProduct) {
           setAiStatus(`Detected wall surface → Auto suggesting: ${paintingProduct.name || paintingProduct.productName || 'Product'}`);
-          setCurrentModel(paintingProduct.model3dUrl || paintingProduct.modelUrl);
+          setCurrentModel(getProductModelUrl(paintingProduct));
           setPlacementMode('wall');
         }
       }
@@ -654,14 +670,12 @@ const ARStudio = () => {
     return () => clearInterval(autoScanner);
   }, [dbProducts, cameraError, selectedProduct, urlProductId, selectedProductHasModel]);
 
-  const currentProduct = selectedProduct || dbProducts.find((item) => (item.model3dUrl || item.modelUrl) === currentModel);
-  const computedModelScale = Number(modelScaleFactor.replace('%', '')) / 100 || 1;
+  const currentProduct = selectedProduct || dbProducts.find((item) => getProductModelUrl(item) === currentModel) || null;
 
   useEffect(() => {
     setCartAdded(false);
   }, [currentModel, selectedProduct?.id, selectedProduct?._id, selectedProduct?.name]);
 
-  // 3. Trigger live status checks and warning triggers based on target
   useEffect(() => {
     const product = currentProduct;
     if (!product) return;
@@ -695,376 +709,377 @@ const ARStudio = () => {
   );
 
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-x-hidden bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.16),_transparent_36%),linear-gradient(135deg,_#020617_0%,_#0f172a_45%,_#111827_100%)] text-white select-none">
+    <div className="min-h-screen bg-[#07090e] text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-black">
       <SEO
         title="AR Furniture Placement Studio | Preview Beds, Pillows & Decor"
         description="Use Aaramdehi AR Studio to scan your room and preview beds, pillows, and decor in real time before you buy."
         keywords="AR furniture placement, room scan, preview decor, aaramdehi AR studio"
       />
 
-      <div className="relative z-20 mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 pt-6 sm:px-6 lg:px-8">
-        <div className="rounded-[28px] border border-white/15 bg-white/10 p-5 shadow-2xl backdrop-blur-xl">
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300">Aaramdehi AR Studio</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
-            Preview furniture in your room before you buy
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
-            Scan your space, place beds and decor in real time, and explore curated collections with confidence.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-3">
-            <Link to="/products" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
-              Shop collection
-            </Link>
-            <Link to="/compare" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
-              Compare products
-            </Link>
-            <Link to="/blog" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20">
-              Read inspiration
-            </Link>
-          </div>
-        </div>
-
-        <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-xl">
-            <h2 className="text-lg font-semibold text-white">Scan your room</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300">Point the camera at your space and let AI guide the placement.</p>
-          </div>
-          <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-xl">
-            <h2 className="text-lg font-semibold text-white">Try premium pieces</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300">Preview beds, pillows, and decor with accurate scale and positioning.</p>
-          </div>
-          <div className="rounded-[24px] border border-white/10 bg-black/20 p-4 backdrop-blur-xl">
-            <h2 className="text-lg font-semibold text-white">Shop with confidence</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-300">Move from inspiration to purchase with a smoother, more informed decision.</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Top Section: Camera & 3D Viewer Layer */}
-      <div className="relative mx-4 mt-2 flex-1 min-h-[58vh] overflow-hidden rounded-[32px] border border-white/10 bg-black shadow-[0_25px_70px_rgba(2,6,23,0.45)] sm:mx-6 sm:min-h-[66vh] lg:mx-8 lg:min-h-[72vh]">
-        {/* Live Video Frame */}
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300`} />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/40 pointer-events-none" />
-
-        {/* <model-viewer> Integration */}
-        {!isFaceDetected && currentModel && isModelViewerReady && (
-          <div className="absolute inset-0 w-full h-full pointer-events-auto">
-            <model-viewer
-              ref={modelViewerRef}
-              src={currentModel}
-              ar
-              ar-modes="webxr scene-viewer quick-look"
-              camera-controls
-              auto-rotate
-              auto-rotate-delay="1000"
-              field-of-view="auto"
-              camera-orbit="0deg 75deg auto"
-              min-camera-orbit="auto auto auto"
-              max-camera-orbit="auto auto auto"
-              camera-target="auto auto auto"
-              ar-placement={placementMode}
-              scale={getProductScale(currentProduct)}
-              ar-scale={isPillow ? 'fixed' : 'auto'}
-              reveal="auto"
-              interaction-policy="always"
-              exposure="1.2"
-              loading="eager"
-              style={{ width: '100%', height: '100%' }}
+      {/* 1. Header Bar */}
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07090e]/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate(-1)} 
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+              aria-label="Back"
             >
-              {canPlace && (
-                <button
-                  slot="ar-button"
-                  className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-white shadow-2xl hover:bg-emerald-400 active:scale-95 transition"
+              <FiArrowLeft className="text-base" />
+            </button>
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 font-black text-slate-950 shadow-md shadow-emerald-500/20">
+              A
+            </div>
+            <div>
+              <h1 className="text-sm font-black tracking-wider uppercase text-white leading-tight">AARAMDEHI</h1>
+              <p className="text-[9px] font-bold tracking-[0.2em] text-emerald-400 uppercase">AR Studio Experience</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsSidebarOpen(true)} 
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+            >
+              <FiSliders className="text-sm" />
+              <span className="hidden sm:inline">Controls</span>
+            </button>
+            <button 
+              onClick={addToCart}
+              className="group relative flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-300 transition hover:bg-emerald-500 hover:text-slate-950 active:scale-95"
+            >
+              <FiShoppingCart className="text-sm" />
+              <span>Cart</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Workspace Layout */}
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+        
+        {/* Banner Section */}
+        <div className="rounded-[28px] border border-white/10 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-slate-950/80 p-6 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-emerald-400">Live 3D Placement</span>
+            <h2 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">Preview items directly in your room</h2>
+            <p className="mt-2 text-xs leading-relaxed text-slate-400 max-w-xl">
+              Scan surface dimensions, position bedding or decor in real time, and scale correctly before making a purchase decision.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            <Link to="/products" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10">
+              Browse Collection
+            </Link>
+            <Link to="/compare" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10">
+              Compare
+            </Link>
+          </div>
+        </div>
+
+        {/* Studio Canvas Matrix */}
+        <div className="grid gap-6 lg:grid-cols-12">
+          
+          {/* AR Viewport */}
+          <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.6)] lg:col-span-8 flex flex-col justify-between min-h-[520px]">
+            
+            {/* Live Camera Stream */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300`} />
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/90 pointer-events-none" />
+
+            {/* 3D Model Viewer Layer */}
+            {!isFaceDetected && currentModel && isModelViewerReady && (
+              <div className="absolute inset-0 w-full h-full pointer-events-auto">
+                <model-viewer
+                  ref={modelViewerRef}
+                  src={currentModel}
+                  ar
+                  ar-modes="webxr scene-viewer quick-look"
+                  camera-controls
+                  auto-rotate
+                  auto-rotate-delay="1000"
+                  field-of-view="auto"
+                  camera-orbit="0deg 75deg auto"
+                  min-camera-orbit="auto auto auto"
+                  max-camera-orbit="auto auto auto"
+                  camera-target="auto auto auto"
+                  ar-placement={placementMode}
+                  scale={getProductScale(currentProduct)}
+                  ar-scale={isPillow ? 'fixed' : 'auto'}
+                  reveal="auto"
+                  interaction-policy="always"
+                  exposure="1.2"
+                  loading="eager"
+                  style={{ width: '100%', height: '100%' }}
                 >
-                  ✨ Tap to Place AI Suggestion
-                </button>
-              )}
-            </model-viewer>
-          </div>
-        )}
-
-        {!isFaceDetected && currentModel && !isModelViewerReady && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 px-4 text-center">
-            <div className="rounded-3xl border border-white/10 bg-slate-900/90 p-6 text-sm font-semibold text-slate-100 shadow-2xl">
-              Loading AR viewer… please wait.
-            </div>
-          </div>
-        )}
-
-        {!isFaceDetected && currentModel && isModelViewerReady && !window.customElements?.get('model-viewer') && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 px-4 text-center">
-            <div className="rounded-3xl border border-white/10 bg-rose-900/90 p-6 text-sm font-semibold text-rose-200 shadow-2xl">
-              AR viewer failed to initialize. Try refreshing the page or using a WebXR-compatible browser.
-            </div>
-          </div>
-        )}
-
-        {/* AR Sidebar Overlay */}
-        {isSidebarOpen && (
-          <div className="fixed inset-0 z-[1200] bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setIsSidebarOpen(false)} />
-        )}
-
-        <aside className={`fixed right-0 top-0 z-[1201] h-full w-[90%] max-w-[360px] bg-slate-950/95 shadow-2xl backdrop-blur-xl transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : 'translate-x-full'} md:relative md:translate-x-0 md:w-[320px] md:border-l md:border-white/10 md:bg-slate-950/90`}>
-          <div className="flex h-full flex-col border-l border-white/10 bg-slate-950/95 px-5 py-5 md:px-6">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-300">AR Controls</p>
-                <h2 className="mt-1 text-lg font-black text-white">Preview options</h2>
-              </div>
-              <button type="button" onClick={() => setIsSidebarOpen(false)} className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10">
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4 overflow-y-auto pr-1 pb-8">
-              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Current Item</p>
-                <p className="mt-2 text-sm font-semibold text-white truncate">{currentProduct?.name || selectedProduct?.name || 'Auto-suggested AR Item'}</p>
-                <p className="mt-1 text-xs text-slate-400">{placementMode === 'wall' ? 'Wall placement' : 'Floor placement'}</p>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Live status</p>
-                <p className="mt-2 text-sm font-semibold text-white">{statusMessage}</p>
-                <div className="mt-3 grid gap-2">
-                  <button type="button" onClick={startSurfaceScanning} className="rounded-2xl bg-emerald-500 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-slate-950 transition hover:bg-emerald-400">
-                    Scan Space
-                  </button>
-                  <button type="button" onClick={voiceAssistantActive ? stopVoiceAssistant : startVoiceAssistant} className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10">
-                    {voiceAssistantActive ? 'Stop Voice Assist' : 'Voice Assist'}
-                  </button>
-                  <button type="button" onClick={captureScreenshot} className="rounded-2xl bg-white/5 px-3 py-2 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10">
-                    Capture Screenshot
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Lighting</p>
-                <div className="mt-3 grid gap-2">
-                  {ambientThemeOrder.map((theme) => (
+                  {canPlace && (
                     <button
-                      key={theme}
-                      type="button"
-                      onClick={() => setAmbientThemeDebounced(theme)}
-                      className={`rounded-2xl px-3 py-2 text-xs font-black uppercase tracking-[0.12em] transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                      slot="ar-button"
+                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-950 shadow-2xl hover:bg-emerald-400 active:scale-95 transition"
                     >
-                      {ambientThemeLabels[theme]}
+                      ✨ Tap to Place Selected Product
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-white/10 bg-slate-900/70 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Product library</p>
-                <div className="mt-3 space-y-2">
-                  {dbProducts.length ? dbProducts.slice(0, 8).map((product) => (
-                    <button
-                      key={product._id || product.id || product.name}
-                      type="button"
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setCurrentModel(product.model3dUrl || product.modelUrl);
-                        setPlacementMode(product.placementType === 'wall' ? 'wall' : 'floor');
-                        setIsSidebarOpen(false);
-                      }}
-                      className={`w-full rounded-2xl border px-3 py-2 text-left text-xs transition ${currentProduct?.id === product.id || currentProduct?.name === product.name ? 'border-emerald-400 bg-emerald-500/10 text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
-                    >
-                      <div className="font-semibold">{product.name || product.productName || 'Untitled'}</div>
-                      <div className="text-[10px] text-slate-500">{product.placementType || product.category || 'Floor'}</div>
-                    </button>
-                  )) : (
-                    <p className="text-xs text-slate-500">Loading AR products…</p>
                   )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* 2. Conditional Warning UI Alert Overlay (Bedding placed on invalid surface warning) */}
-        {showBeddingWarning && !isFaceDetected && (
-          <div className="absolute inset-x-4 bottom-24 z-40 flex justify-center pointer-events-none">
-            <div className="max-w-md w-full rounded-[24px] border border-amber-500/30 bg-amber-500/10 p-5 text-center backdrop-blur-xl pointer-events-auto shadow-2xl">
-              <div className="text-sm font-semibold uppercase tracking-[0.24em] text-amber-300">Place Bedding on Bed Only</div>
-              <div className="mt-2.5 text-xs leading-relaxed text-amber-200">
-                Hamare AI ne detect kiya hai ki aap pillow ko floor/wall par rakhne ki koshish kar rahe hain. 
-                Kripya apne camera ko bed ki taraf point karein taaki sahi placement ho sake.
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Human Face Detection Safety Block */}
-        {isFaceDetected && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center px-6 bg-black/60 backdrop-blur-sm">
-            <div className="max-w-md rounded-[28px] border border-rose-400/20 bg-rose-500/10 p-6 text-center backdrop-blur-xl">
-              <div className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-300">Face detected</div>
-              <div className="mt-3 text-2xl font-black text-white">AR paused for safety</div>
-              <div className="mt-2 text-sm leading-6 text-rose-200">Please move face out of view to resume placement.</div>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Top Nav Actions */}
-        <div className="absolute inset-x-4 top-4 z-40 flex items-center justify-between pointer-events-none">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-slate-950/90 px-4 py-2 text-sm font-semibold text-white shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
-          >
-            ← Back
-          </button>
-
-          <div className="flex items-center gap-2">
-            {voiceBadge && (
-              <div className={`inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-slate-950/90 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200 shadow-xl backdrop-blur-md transition-opacity duration-500 ${voiceBadgeVisible ? 'opacity-100' : 'opacity-0'}`}>
-                <span className={`inline-flex h-2 w-2 rounded-full ${voiceAssistantActive ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
-                {voiceBadge}
+                </model-viewer>
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => setIsSidebarOpen(true)}
-              className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
-              aria-label="Open AR controls"
-            >
-              ⚙️
-            </button>
-            <button
-              type="button"
-              onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
-              className="pointer-events-auto inline-flex items-center justify-center h-9 w-9 rounded-full border border-white/15 bg-slate-950/90 text-sm shadow-xl backdrop-blur-md transition hover:bg-slate-900 active:scale-95"
-            >
-              🔄
-            </button>
+
+            {/* Target 3D Placeholder when model is idle or loading */}
+            {!currentModel && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="relative flex flex-col items-center justify-center text-center p-6">
+                  <div className="h-44 w-44 rounded-full border border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-center animate-pulse">
+                    <FiBox className="text-4xl text-emerald-400/70" />
+                  </div>
+                  <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Point Camera To Surface</p>
+                </div>
+              </div>
+            )}
+
+            {/* Top Bar Controls Inside Camera */}
+            <div className="z-20 flex items-center justify-between p-5">
+              <div className="flex items-center gap-2.5 rounded-full border border-white/10 bg-slate-950/70 px-4 py-2 backdrop-blur-md">
+                <span className={`h-2 w-2 rounded-full ${isFaceDetected ? 'bg-rose-500 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
+                <span className="text-xs font-medium text-slate-200">{statusMessage}</span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
+                  className="rounded-xl border border-white/10 bg-slate-950/60 p-2.5 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/15 active:scale-95"
+                  title="Switch Camera"
+                >
+                  <FiRefreshCw />
+                </button>
+                <button
+                  type="button"
+                  onClick={startSurfaceScanning}
+                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+                >
+                  <FiCamera /> {scanStep === 'scanning' ? `${scanProgress}%` : 'Scan Space'}
+                </button>
+              </div>
+            </div>
+
+            {/* Face Safety Warning Banner Overlay */}
+            {isFaceDetected && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center px-6 bg-slate-950/70 backdrop-blur-md">
+                <div className="max-w-md rounded-[28px] border border-rose-500/30 bg-rose-500/10 p-6 text-center backdrop-blur-xl shadow-2xl">
+                  <FiAlertTriangle className="mx-auto text-3xl text-rose-400 mb-2" />
+                  <div className="text-xs font-bold uppercase tracking-[0.2em] text-rose-300">Face Detected</div>
+                  <div className="mt-2 text-xl font-black text-white">AR Paused For Safety</div>
+                  <p className="mt-2 text-xs leading-relaxed text-rose-200/80">Please move face out of view to resume product placement.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Bed Warning Overlay */}
+            {showBeddingWarning && !isFaceDetected && (
+              <div className="absolute inset-x-4 bottom-24 z-40 flex justify-center pointer-events-none">
+                <div className="max-w-md w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-center backdrop-blur-xl pointer-events-auto shadow-2xl">
+                  <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">Place Bedding on Bed Only</div>
+                  <p className="mt-1 text-xs text-amber-200/90">Please point your camera towards a bed or couch to position this product correctly.</p>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Product Action Bar Overlay */}
+            <div className="z-20 p-6 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Selected Product</span>
+                <h3 className="text-lg font-bold text-white truncate max-w-xs">{currentProduct?.name || selectedProduct?.name || "Select an AR Item"}</h3>
+                <p className="text-xs text-slate-400">
+                  {currentProduct ? `₹${Number(currentProduct.sellingPrice || currentProduct.price || 0).toLocaleString()} • ${placementMode.toUpperCase()} placement` : 'Select item from library to inspect.'}
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <button 
+                  onClick={addToCart}
+                  disabled={cartAdded}
+                  className={`rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-wider transition active:scale-95 shadow-lg ${cartAdded ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-emerald-500/20 hover:brightness-110'}`}
+                >
+                  {cartAdded ? 'Added to Cart 🛒' : 'Place & Add To Cart 🛒'}
+                </button>
+              </div>
+            </div>
+
           </div>
+
+          {/* Catalog Library & Live Context Side Drawer */}
+          <div className="rounded-[32px] border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl lg:col-span-4 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-300">AR Product Library</h2>
+                <span className="text-xs text-emerald-400 font-semibold">{dbProducts.length} Items</span>
+              </div>
+
+              {/* Product Card List */}
+              <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1 scrollbar-thin">
+                {loadingProducts ? (
+                  <p className="text-xs text-slate-500">Loading catalog...</p>
+                ) : dbProducts.length ? (
+                  dbProducts.map((item) => (
+                    <div
+                      key={item._id || item.id || item.name}
+                      onClick={() => selectProduct(item)}
+                      className={`group flex items-center justify-between rounded-2xl border p-3 transition-all cursor-pointer ${currentProduct?.id === item.id || currentProduct?.name === item.name ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/5 bg-white/5 hover:border-emerald-500/30 hover:bg-white/10'}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-800 text-slate-400 group-hover:text-emerald-300">
+                          <FiBox className="text-lg" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-white line-clamp-1">{item.name || item.productName}</h4>
+                          <p className="text-[10px] text-slate-400">{item.category || item.placementType || 'Floor'} • ₹{item.sellingPrice || item.price || 0}</p>
+                        </div>
+                      </div>
+                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[9px] font-bold text-emerald-300">3D AR</span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-500">No AR products available.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Room Scale Info */}
+            {showDimensions && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+                <div className="flex items-center justify-between text-xs text-slate-400">
+                  <span>Room Scale Matrix</span>
+                  <span className="text-emerald-400 font-bold flex items-center gap-1">
+                    <FiCheck /> {calculatedArea.fitStatus}
+                  </span>
+                </div>
+                <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+                  <div className="rounded-xl bg-white/5 p-2">
+                    <span className="block text-[9px] text-slate-500 uppercase font-bold">Length</span>
+                    <span className="text-xs font-black text-white">{calculatedArea.length} ft</span>
+                  </div>
+                  <div className="rounded-xl bg-white/5 p-2">
+                    <span className="block text-[9px] text-slate-500 uppercase font-bold">Width</span>
+                    <span className="text-xs font-black text-white">{calculatedArea.width} ft</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+          </div>
+
         </div>
 
-        {/* Toast Notification Container */}
-        {toastMessage && (
-          <div className="absolute top-16 left-1/2 z-50 -translate-x-1/2 transform pointer-events-none">
-            <div className={`rounded-xl px-4 py-2 text-xs font-bold shadow-2xl backdrop-blur-md border ${toastType === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' : toastType === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-200' : 'bg-slate-900/90 border-white/10 text-slate-200'}`}>
-              {toastMessage}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Section: Dedicated Action Drawer (Strictly Under the Camera) */}
-      <div className="w-full border-t border-white/10 bg-slate-950/90 p-4 backdrop-blur-xl sm:p-5">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3.5">
-          
-          {/* Product Header Card */}
-          <div className="flex flex-col gap-3 rounded-[24px] border border-white/10 bg-white/10 p-3 shadow-lg shadow-black/20 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-[0.25em] text-slate-400 font-bold">{statusMessage}</div>
-              <div className="mt-0.5 flex flex-wrap items-center gap-2 text-base font-black text-white">
-                <span className="truncate">{currentProduct?.name || selectedProduct?.name || 'Auto-suggested AR Item'}</span>
-                <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-emerald-200">{placementMode}</span>
-              </div>
-              <div className="mt-0.5 text-xs text-slate-300">{currentProduct ? `₹${Number(currentProduct.sellingPrice || currentProduct.price || 0).toLocaleString()}` : 'Scan space to setup configuration.'}</div>
-            </div>
+        {/* Action Button Matrix */}
+        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4 backdrop-blur-xl flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-2">
             <button
-              type="button"
-              onClick={addToCart}
-              disabled={cartAdded}
-              className={`inline-flex items-center justify-center rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-[0.16em] transition active:scale-95 ${cartAdded ? 'cursor-not-allowed bg-slate-800 text-slate-400' : 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400'}`}
-            >
-              {cartAdded ? 'Added 🛒' : 'Add to Cart 🛒'}
-            </button>
-          </div>
-
-          {/* Action Grid Matrix */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <button
-              type="button"
               onClick={startSurfaceScanning}
-              className="inline-flex min-h-[40px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
+              className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
             >
-              🔍 {scanStep === 'scanning' ? `Scanning ${scanProgress}%` : 'Scan Space'}
+              <FiCamera /> {scanStep === 'scanning' ? `Scanning ${scanProgress}%` : 'Scan Surface'}
             </button>
+
             <button
-              type="button"
               onClick={voiceAssistantActive ? stopVoiceAssistant : startVoiceAssistant}
-              className={`inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${voiceAssistantActive ? 'bg-sky-500/20 border-sky-500/40 text-sky-200 animate-pulse' : 'bg-white/5 border-white/5 text-white hover:bg-white/10'}`}
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition active:scale-95 ${voiceAssistantActive ? 'bg-sky-500/20 border-sky-500/40 text-sky-200 animate-pulse' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
             >
-              🎙️ {voiceAssistantActive ? 'Stop Voice' : 'Voice Assist'}
+              <FiMic /> {voiceAssistantActive ? 'Listening...' : 'Voice Assist'}
             </button>
+
             <button
-              type="button"
               onClick={() => setShowDimensions((prev) => !prev)}
-              className={`inline-flex min-h-[40px] items-center justify-center rounded-2xl border px-3 text-xs font-bold uppercase tracking-[0.12em] shadow-sm transition active:scale-95 ${showDimensions ? 'bg-white/10 border-white/10 text-white' : 'bg-transparent border-white/5 text-slate-400 hover:text-white'}`}
+              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition active:scale-95 ${showDimensions ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
             >
-              📐 Dimensions
+              <FiMaximize /> Dimensions
             </button>
+
             <button
-              type="button"
               onClick={captureScreenshot}
-              className="inline-flex min-h-[40px] items-center justify-center rounded-2xl bg-white/5 border border-white/5 px-3 text-xs font-bold uppercase tracking-[0.12em] text-white shadow-sm transition hover:bg-white/10 active:scale-95"
+              className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
             >
-              📸 Capture
+              Capture Screen
             </button>
           </div>
 
-          {/* Lighting Controls */}
-          <div className="flex items-center overflow-x-auto gap-2 rounded-2xl border border-white/5 bg-slate-900/50 p-2 text-xs scrollbar-none">
-            <span className="text-[9px] uppercase tracking-[0.18em] text-slate-500 font-bold px-2 whitespace-nowrap">Lighting:</span>
+          {/* Lighting Modes */}
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Lighting:</span>
             {ambientThemeOrder.map((theme) => (
               <button
                 key={theme}
-                type="button"
                 onClick={() => setAmbientThemeDebounced(theme)}
-                className={`rounded-full px-3 py-1.5 text-[9px] font-bold uppercase transition whitespace-nowrap ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
               >
                 {ambientThemeLabels[theme]}
               </button>
             ))}
           </div>
+        </div>
 
-          {/* Live Context Data Grid */}
-          {showDimensions && (
-            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-3 text-xs text-slate-300">
-              <div className="text-[9px] uppercase tracking-[0.2em] text-slate-500 font-bold">Live Room Context</div>
-              <div className="mt-2.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <div className="rounded-xl bg-white/5 p-2">
-                  <div className="text-[8px] uppercase tracking-[0.15em] text-slate-400">Target Zone</div>
-                  <div className="mt-0.5 text-sm font-bold text-white">{placementMode === 'wall' ? 'Wall Surface' : 'Floor Matrix'}</div>
+      </main>
+
+      {/* Slide-over Control Drawer */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm">
+          <div className="w-full max-w-sm border-l border-white/10 bg-slate-900 p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
+            <div>
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-white">AR Configuration</h3>
+                <button onClick={() => setIsSidebarOpen(false)} className="text-slate-400 hover:text-white">
+                  <FiX className="text-lg" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Live Status</p>
+                  <p className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-xl">{statusMessage}</p>
                 </div>
-                <div className="rounded-xl bg-white/5 p-2">
-                  <div className="text-[8px] uppercase tracking-[0.15em] text-slate-400">Measured Area</div>
-                  <div className="mt-0.5 text-sm font-bold text-white">{calculatedArea.length} ft × {calculatedArea.width} ft</div>
-                </div>
-                <div className="rounded-xl bg-white/5 p-2">
-                  <div className="text-[8px] uppercase tracking-[0.15em] text-slate-400">Auto-Fit Matrix</div>
-                  <div className="mt-0.5 text-sm font-bold text-emerald-300">{modelScaleFactor}</div>
-                </div>
-                <div className="rounded-xl bg-white/5 p-2 flex items-center justify-center text-center">
-                  <div className="text-[9px] font-semibold text-slate-400 italic">
-                    {calculatedArea.fitStatus}
+
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-slate-400 mb-2">Ambient Theme</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {ambientThemeOrder.map((theme) => (
+                      <button
+                        key={theme}
+                        onClick={() => setAmbientThemeDebounced(theme)}
+                        className={`rounded-xl p-2.5 text-xs font-bold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-300 hover:bg-white/10'}`}
+                      >
+                        {ambientThemeLabels[theme]}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Live Voice Assistant Tracking Output */}
-          {voiceAssistantActive && (
-            <div className="flex items-center justify-between px-2 py-1 bg-sky-500/10 border border-sky-500/10 rounded-xl text-[10px] text-sky-200">
-              <span className="truncate tracking-wide">🎙️ {voiceStatusMessage}</span>
-              <span className="flex h-1.5 w-1.5 rounded-full bg-sky-400 animate-ping" />
-            </div>
-          )}
-
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="w-full mt-6 rounded-xl bg-white/10 py-3 text-xs font-bold uppercase tracking-wider text-white hover:bg-white/20"
+            >
+              Close Drawer
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Floating Toast Alert */}
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 z-50 -translate-x-1/2">
+          <div className={`rounded-full px-5 py-2.5 text-xs font-bold shadow-2xl backdrop-blur-md border ${toastType === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' : toastType === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-200' : 'bg-slate-900/90 border-white/10 text-slate-200'}`}>
+            {toastMessage}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

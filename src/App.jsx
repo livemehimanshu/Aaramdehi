@@ -71,6 +71,7 @@ const CheckoutPage = lazy(() => import('../component/checkout/CheckoutPage.jsx')
 const PaymentPage = lazy(() => import('../component/payment/PaymentPage.jsx'))
 const OrderSuccess = lazy(() => import('../component/Pages/OrderSuccess/OrderSuccess.jsx'))
 const ARStudio = lazy(() => import('../component/Pages/ARStudio.jsx'))
+const ARStudioUI = lazy(() => import('../component/Pages/ARStudioUI.jsx'))
 const NotFound = lazy(() => import('../component/Pages/NotFound.jsx'))
 
 function AppContent() {
@@ -180,7 +181,7 @@ function AppContent() {
                 <Route path="/product" element={<ProductListing/>}/>
                 <Route path="/products" element={<ProductListing/>}/>
                 <Route path="/product/:id" element={<ProductDetailsPage />} />
-                <Route path="/ar-studio" element={<ARStudio />} />
+                <Route path="/ar-studio" element={<ARStudioUI />} />
                 <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
                 <Route path="/compare" element={<ComparePage />} />
                 <Route path="/categories" element={<CategoriesPage />} />

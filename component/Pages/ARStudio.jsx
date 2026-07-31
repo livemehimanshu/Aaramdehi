@@ -15,7 +15,9 @@ import {
   FiArrowLeft,
   FiX,
   FiCheck,
-  FiAlertTriangle
+  FiAlertTriangle,
+  FiChevronLeft,
+  FiChevronRight
 } from 'react-icons/fi';
 
 // CDN Scripts for TensorFlow.js, COCO-SSD, and Google model-viewer
@@ -32,6 +34,7 @@ const ARStudio = () => {
   const detectionAnimationRef = useRef(null);
   const cocoSsdModelRef = useRef(null);
   const modelViewerRef = useRef(null);
+  const sliderRef = useRef(null);
 
   const [facingMode, setFacingMode] = useState('environment');
   const [isFaceDetected, setIsFaceDetected] = useState(false);
@@ -69,7 +72,19 @@ const ARStudio = () => {
   const voiceBadgeTimerRef = useRef({ hide: null, clear: null });
   const recognitionRef = useRef(null);
 
-  // 1. Dynamic Product Target Mapper
+  // Slider Navigation
+  const slideLeft = () => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: -280, behavior: 'smooth' });
+    }
+  };
+
+  const slideRight = () => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: 280, behavior: 'smooth' });
+    }
+  };
+
   const getProductTarget = (product) => {
     if (!product) return 'floor';
     if (product.target) return product.target;
@@ -97,7 +112,6 @@ const ARStudio = () => {
     return 'floor';
   };
 
-  // 2. Fixed AR Placement Scale Logic
   const getProductScale = (product) => {
     if (!product) return '1 1 1';
     const category = String(product.category || '').toLowerCase();
@@ -515,7 +529,6 @@ const ARStudio = () => {
     loadAaramdehiProducts();
   }, []);
 
-  // Camera, TF.js, and COCO-SSD Integration Hook
   useEffect(() => {
     let isMounted = true;
 
@@ -716,13 +729,13 @@ const ARStudio = () => {
         keywords="AR furniture placement, room scan, preview decor, aaramdehi AR studio"
       />
 
-      {/* 1. Header Bar */}
+      {/* Header Bar */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#07090e]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button 
               onClick={() => navigate(-1)} 
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 active:scale-95"
               aria-label="Back"
             >
               <FiArrowLeft className="text-base" />
@@ -731,24 +744,24 @@ const ARStudio = () => {
               A
             </div>
             <div>
-              <h1 className="text-sm font-black tracking-wider uppercase text-white leading-tight">AARAMDEHI</h1>
-              <p className="text-[9px] font-bold tracking-[0.2em] text-emerald-400 uppercase">AR Studio Experience</p>
+              <h1 className="text-xs sm:text-sm font-black tracking-wider uppercase text-white leading-tight">AARAMDEHI</h1>
+              <p className="text-[8px] sm:text-[9px] font-bold tracking-[0.18em] sm:tracking-[0.2em] text-emerald-400 uppercase">AR Studio Experience</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button 
               onClick={() => setIsSidebarOpen(true)} 
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 sm:px-4 sm:py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
             >
-              <FiSliders className="text-sm" />
+              <FiSliders className="text-xs sm:text-sm" />
               <span className="hidden sm:inline">Controls</span>
             </button>
             <button 
               onClick={addToCart}
-              className="group relative flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-300 transition hover:bg-emerald-500 hover:text-slate-950 active:scale-95"
+              className="group relative flex items-center gap-1.5 sm:gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs font-bold text-emerald-300 transition hover:bg-emerald-500 hover:text-slate-950 active:scale-95"
             >
-              <FiShoppingCart className="text-sm" />
+              <FiShoppingCart className="text-xs sm:text-sm" />
               <span>Cart</span>
             </button>
           </div>
@@ -756,32 +769,32 @@ const ARStudio = () => {
       </header>
 
       {/* Main Workspace Layout */}
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8 space-y-4 sm:space-y-6">
         
         {/* Banner Section */}
-        <div className="rounded-[28px] border border-white/10 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-slate-950/80 p-6 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="rounded-2xl sm:rounded-[28px] border border-white/10 bg-gradient-to-r from-slate-900/80 via-slate-900/40 to-slate-950/80 p-4 sm:p-6 backdrop-blur-xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-extrabold uppercase tracking-[0.25em] text-emerald-400">Live 3D Placement</span>
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">Preview items directly in your room</h2>
-            <p className="mt-2 text-xs leading-relaxed text-slate-400 max-w-xl">
+            <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.25em] text-emerald-400">Live 3D Placement</span>
+            <h2 className="mt-0.5 sm:mt-1 text-xl sm:text-2xl font-black tracking-tight text-white lg:text-3xl">Preview items directly in your room</h2>
+            <p className="mt-1 sm:mt-2 text-[11px] sm:text-xs leading-relaxed text-slate-400 max-w-xl">
               Scan surface dimensions, position bedding or decor in real time, and scale correctly before making a purchase decision.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2.5">
-            <Link to="/products" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10">
+          <div className="flex flex-wrap gap-2">
+            <Link to="/products" className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/10">
               Browse Collection
             </Link>
-            <Link to="/compare" className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-white/10">
+            <Link to="/compare" className="rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-white/10">
               Compare
             </Link>
           </div>
         </div>
 
-        {/* Studio Canvas Matrix */}
-        <div className="grid gap-6 lg:grid-cols-12">
+        {/* Vertical Stack: Camera Top, Slider Bottom */}
+        <div className="flex flex-col gap-4 sm:gap-6">
           
-          {/* AR Viewport */}
-          <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.6)] lg:col-span-8 flex flex-col justify-between min-h-[520px]">
+          {/* 1. AR Viewport (Top Full Width) */}
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_20px_50px_rgba(0,0,0,0.6)] w-full flex flex-col justify-between min-h-[420px] sm:min-h-[520px]">
             
             {/* Live Camera Stream */}
             <video
@@ -822,7 +835,7 @@ const ARStudio = () => {
                   {canPlace && (
                     <button
                       slot="ar-button"
-                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full bg-emerald-500 px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-slate-950 shadow-2xl hover:bg-emerald-400 active:scale-95 transition"
+                      className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-full bg-emerald-500 px-5 py-2.5 sm:px-6 sm:py-3 text-[11px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.18em] text-slate-950 shadow-2xl hover:bg-emerald-400 active:scale-95 transition"
                     >
                       ✨ Tap to Place Selected Product
                     </button>
@@ -835,26 +848,26 @@ const ARStudio = () => {
             {!currentModel && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="relative flex flex-col items-center justify-center text-center p-6">
-                  <div className="h-44 w-44 rounded-full border border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-center animate-pulse">
-                    <FiBox className="text-4xl text-emerald-400/70" />
+                  <div className="h-32 w-32 sm:h-44 sm:w-44 rounded-full border border-dashed border-emerald-500/40 bg-emerald-500/5 flex items-center justify-center animate-pulse">
+                    <FiBox className="text-3xl sm:text-4xl text-emerald-400/70" />
                   </div>
-                  <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Point Camera To Surface</p>
+                  <p className="mt-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400">Point Camera To Surface</p>
                 </div>
               </div>
             )}
 
             {/* Top Bar Controls Inside Camera */}
-            <div className="z-20 flex items-center justify-between p-5">
-              <div className="flex items-center gap-2.5 rounded-full border border-white/10 bg-slate-950/70 px-4 py-2 backdrop-blur-md">
+            <div className="z-20 flex flex-wrap items-center justify-between gap-2 p-3 sm:p-5">
+              <div className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-1.5 sm:px-4 sm:py-2 backdrop-blur-md">
                 <span className={`h-2 w-2 rounded-full ${isFaceDetected ? 'bg-rose-500 animate-ping' : 'bg-emerald-400 animate-pulse'}`} />
-                <span className="text-xs font-medium text-slate-200">{statusMessage}</span>
+                <span className="text-[11px] sm:text-xs font-medium text-slate-200">{statusMessage}</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setFacingMode((mode) => (mode === 'environment' ? 'user' : 'environment'))}
-                  className="rounded-xl border border-white/10 bg-slate-950/60 p-2.5 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/15 active:scale-95"
+                  className="rounded-xl border border-white/10 bg-slate-950/60 p-2 sm:p-2.5 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/15 active:scale-95"
                   title="Switch Camera"
                 >
                   <FiRefreshCw />
@@ -862,7 +875,7 @@ const ARStudio = () => {
                 <button
                   type="button"
                   onClick={startSurfaceScanning}
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
+                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/10 px-3 py-2 sm:px-4 text-xs font-semibold text-white backdrop-blur-md transition hover:bg-white/20 active:scale-95"
                 >
                   <FiCamera /> {scanStep === 'scanning' ? `${scanProgress}%` : 'Scan Space'}
                 </button>
@@ -871,32 +884,32 @@ const ARStudio = () => {
 
             {/* Face Safety Warning Banner Overlay */}
             {isFaceDetected && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center px-6 bg-slate-950/70 backdrop-blur-md">
-                <div className="max-w-md rounded-[28px] border border-rose-500/30 bg-rose-500/10 p-6 text-center backdrop-blur-xl shadow-2xl">
-                  <FiAlertTriangle className="mx-auto text-3xl text-rose-400 mb-2" />
-                  <div className="text-xs font-bold uppercase tracking-[0.2em] text-rose-300">Face Detected</div>
-                  <div className="mt-2 text-xl font-black text-white">AR Paused For Safety</div>
-                  <p className="mt-2 text-xs leading-relaxed text-rose-200/80">Please move face out of view to resume product placement.</p>
+              <div className="absolute inset-0 z-50 flex items-center justify-center px-4 bg-slate-950/70 backdrop-blur-md">
+                <div className="max-w-md rounded-2xl sm:rounded-[28px] border border-rose-500/30 bg-rose-500/10 p-5 sm:p-6 text-center backdrop-blur-xl shadow-2xl">
+                  <FiAlertTriangle className="mx-auto text-2xl sm:text-3xl text-rose-400 mb-2" />
+                  <div className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] text-rose-300">Face Detected</div>
+                  <div className="mt-1 sm:mt-2 text-lg sm:text-xl font-black text-white">AR Paused For Safety</div>
+                  <p className="mt-1 sm:mt-2 text-[11px] sm:text-xs leading-relaxed text-rose-200/80">Please move face out of view to resume product placement.</p>
                 </div>
               </div>
             )}
 
             {/* Bed Warning Overlay */}
             {showBeddingWarning && !isFaceDetected && (
-              <div className="absolute inset-x-4 bottom-24 z-40 flex justify-center pointer-events-none">
-                <div className="max-w-md w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-center backdrop-blur-xl pointer-events-auto shadow-2xl">
+              <div className="absolute inset-x-4 bottom-20 sm:bottom-24 z-40 flex justify-center pointer-events-none">
+                <div className="max-w-md w-full rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 sm:p-4 text-center backdrop-blur-xl pointer-events-auto shadow-2xl">
                   <div className="text-xs font-bold uppercase tracking-[0.2em] text-amber-300">Place Bedding on Bed Only</div>
-                  <p className="mt-1 text-xs text-amber-200/90">Please point your camera towards a bed or couch to position this product correctly.</p>
+                  <p className="mt-1 text-[11px] sm:text-xs text-amber-200/90">Please point your camera towards a bed or couch to position this product correctly.</p>
                 </div>
               </div>
             )}
 
             {/* Bottom Product Action Bar Overlay */}
-            <div className="z-20 p-6 flex flex-wrap items-center justify-between gap-4">
+            <div className="z-20 p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Selected Product</span>
-                <h3 className="text-lg font-bold text-white truncate max-w-xs">{currentProduct?.name || selectedProduct?.name || "Select an AR Item"}</h3>
-                <p className="text-xs text-slate-400">
+                <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-400">Selected Product</span>
+                <h3 className="text-base sm:text-lg font-bold text-white truncate max-w-xs">{currentProduct?.name || selectedProduct?.name || "Select an AR Item"}</h3>
+                <p className="text-[11px] sm:text-xs text-slate-400">
                   {currentProduct ? `₹${Number(currentProduct.sellingPrice || currentProduct.price || 0).toLocaleString()} • ${placementMode.toUpperCase()} placement` : 'Select item from library to inspect.'}
                 </p>
               </div>
@@ -905,7 +918,7 @@ const ARStudio = () => {
                 <button 
                   onClick={addToCart}
                   disabled={cartAdded}
-                  className={`rounded-2xl px-6 py-3 text-xs font-black uppercase tracking-wider transition active:scale-95 shadow-lg ${cartAdded ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-emerald-500/20 hover:brightness-110'}`}
+                  className={`w-full sm:w-auto rounded-xl sm:rounded-2xl px-5 py-2.5 sm:px-6 sm:py-3 text-xs font-black uppercase tracking-wider transition active:scale-95 shadow-lg ${cartAdded ? 'bg-slate-800 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-teal-400 text-slate-950 shadow-emerald-500/20 hover:brightness-110'}`}
                 >
                   {cartAdded ? 'Added to Cart 🛒' : 'Place & Add To Cart 🛒'}
                 </button>
@@ -914,60 +927,114 @@ const ARStudio = () => {
 
           </div>
 
-          {/* Catalog Library & Live Context Side Drawer */}
-          <div className="rounded-[32px] border border-white/10 bg-slate-900/40 p-6 backdrop-blur-xl lg:col-span-4 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-300">AR Product Library</h2>
-                <span className="text-xs text-emerald-400 font-semibold">{dbProducts.length} Items</span>
+          {/* 2. Responsive Slider Carousel Container (Bottom Full Width) */}
+          <div className="rounded-2xl sm:rounded-[32px] border border-white/10 bg-slate-900/40 p-4 sm:p-6 backdrop-blur-xl w-full flex flex-col lg:flex-row justify-between gap-5 sm:gap-6">
+            
+            {/* Left Box: AR Product Slider */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div>
+                  <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[0.2em] text-emerald-400">DOSA BOX</span>
+                  <h3 className="text-base sm:text-lg font-bold text-white">Aaramdehi AR Product Library</h3>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] sm:text-xs text-emerald-400 font-semibold rounded-full bg-emerald-500/10 px-2.5 py-1 border border-emerald-500/20">
+                    {dbProducts.length} Items
+                  </span>
+                  {/* Slider Control Buttons */}
+                  <div className="flex gap-1">
+                    <button 
+                      onClick={slideLeft}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 active:scale-95 transition"
+                      aria-label="Previous Products"
+                    >
+                      <FiChevronLeft className="text-base" />
+                    </button>
+                    <button 
+                      onClick={slideRight}
+                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 active:scale-95 transition"
+                      aria-label="Next Products"
+                    >
+                      <FiChevronRight className="text-base" />
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Product Card List */}
-              <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1 scrollbar-thin">
+              <p className="text-[11px] sm:text-xs text-slate-400 mb-3 sm:mb-4">
+                Khaas AR experience ke saath aap aasaani se slider ko swipe/scroll karke products browse kar sakte hain aur live room preview me fit karke Add To Cart kar sakte hain.
+              </p>
+
+              {/* Horizontal Slider (Carousel) Container */}
+              <div 
+                ref={sliderRef}
+                className="flex items-center gap-3.5 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory scroll-smooth"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
                 {loadingProducts ? (
-                  <p className="text-xs text-slate-500">Loading catalog...</p>
+                  <p className="text-xs text-slate-500 py-4">Loading catalog...</p>
                 ) : dbProducts.length ? (
-                  dbProducts.map((item) => (
-                    <div
-                      key={item._id || item.id || item.name}
-                      onClick={() => selectProduct(item)}
-                      className={`group flex items-center justify-between rounded-2xl border p-3 transition-all cursor-pointer ${currentProduct?.id === item.id || currentProduct?.name === item.name ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/5 bg-white/5 hover:border-emerald-500/30 hover:bg-white/10'}`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-800 text-slate-400 group-hover:text-emerald-300">
-                          <FiBox className="text-lg" />
+                  dbProducts.map((item) => {
+                    const isSelected = currentProduct?.id === item.id || currentProduct?.name === item.name;
+                    const productImage = item.thumbnail || (item.images && item.images[0]?.url) || item.image || '';
+
+                    return (
+                      <div
+                        key={item._id || item.id || item.name}
+                        onClick={() => selectProduct(item)}
+                        className={`snap-start flex-shrink-0 w-[240px] sm:w-[260px] flex items-center justify-between rounded-2xl border p-3 transition-all cursor-pointer ${isSelected ? 'border-emerald-500 bg-emerald-500/15 shadow-lg shadow-emerald-500/10' : 'border-white/10 bg-slate-950/60 hover:border-emerald-500/40 hover:bg-white/5'}`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-800 text-slate-400 group-hover:text-emerald-300 flex-shrink-0 overflow-hidden border border-white/5">
+                            {productImage ? (
+                              <img src={productImage} alt={item.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <FiBox className="text-xl text-emerald-400" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold text-white truncate">{item.name || item.productName}</h4>
+                            <p className="text-[10px] text-slate-400 truncate">{item.category || item.placementType || 'Floor'}</p>
+                            <p className="text-xs font-extrabold text-emerald-400 mt-0.5">₹{item.sellingPrice || item.price || 0}</p>
+                          </div>
                         </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-white line-clamp-1">{item.name || item.productName}</h4>
-                          <p className="text-[10px] text-slate-400">{item.category || item.placementType || 'Floor'} • ₹{item.sellingPrice || item.price || 0}</p>
-                        </div>
+
+                        <span className={`rounded-full px-2 py-1 text-[9px] font-bold ml-2 flex-shrink-0 ${isSelected ? 'bg-emerald-500 text-slate-950' : 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'}`}>
+                          {isSelected ? 'Active' : '3D AR'}
+                        </span>
                       </div>
-                      <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[9px] font-bold text-emerald-300">3D AR</span>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
-                  <p className="text-xs text-slate-500">No AR products available.</p>
+                  <p className="text-xs text-slate-500 py-4">No AR products available.</p>
                 )}
               </div>
             </div>
 
-            {/* Room Scale Info */}
+            {/* Right Box: Room Scale Matrix Info */}
             {showDimensions && (
-              <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>Room Scale Matrix</span>
-                  <span className="text-emerald-400 font-bold flex items-center gap-1">
-                    <FiCheck /> {calculatedArea.fitStatus}
-                  </span>
-                </div>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-center">
-                  <div className="rounded-xl bg-white/5 p-2">
-                    <span className="block text-[9px] text-slate-500 uppercase font-bold">Length</span>
-                    <span className="text-xs font-black text-white">{calculatedArea.length} ft</span>
+              <div className="w-full lg:w-72 rounded-2xl border border-white/10 bg-slate-950/60 p-4 sm:p-5 flex flex-col justify-between flex-shrink-0">
+                <div>
+                  <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
+                    <span className="font-bold text-white">Room Scale Matrix</span>
+                    <span className="text-emerald-400 font-bold flex items-center gap-1 text-[11px]">
+                      <FiCheck /> {calculatedArea.fitStatus}
+                    </span>
                   </div>
-                  <div className="rounded-xl bg-white/5 p-2">
-                    <span className="block text-[9px] text-slate-500 uppercase font-bold">Width</span>
-                    <span className="text-xs font-black text-white">{calculatedArea.width} ft</span>
+                  <p className="text-[11px] text-slate-400 mb-3">
+                    Dimensions scanned dynamically from surface area.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5 text-center">
+                  <div className="rounded-xl bg-white/5 p-2.5 border border-white/5">
+                    <span className="block text-[8px] sm:text-[9px] text-slate-500 uppercase font-bold">Length</span>
+                    <span className="text-xs sm:text-sm font-black text-white">{calculatedArea.length} ft</span>
+                  </div>
+                  <div className="rounded-xl bg-white/5 p-2.5 border border-white/5">
+                    <span className="block text-[8px] sm:text-[9px] text-slate-500 uppercase font-bold">Width</span>
+                    <span className="text-xs sm:text-sm font-black text-white">{calculatedArea.width} ft</span>
                   </div>
                 </div>
               </div>
@@ -978,45 +1045,45 @@ const ARStudio = () => {
         </div>
 
         {/* Action Button Matrix */}
-        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-4 backdrop-blur-xl flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-3.5 sm:p-4 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <button
               onClick={startSurfaceScanning}
-              className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
             >
-              <FiCamera /> {scanStep === 'scanning' ? `Scanning ${scanProgress}%` : 'Scan Surface'}
+              <FiCamera /> {scanStep === 'scanning' ? `${scanProgress}%` : 'Scan Surface'}
             </button>
 
             <button
               onClick={voiceAssistantActive ? stopVoiceAssistant : startVoiceAssistant}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition active:scale-95 ${voiceAssistantActive ? 'bg-sky-500/20 border-sky-500/40 text-sky-200 animate-pulse' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider transition active:scale-95 ${voiceAssistantActive ? 'bg-sky-500/20 border-sky-500/40 text-sky-200 animate-pulse' : 'bg-white/5 border-white/10 text-white hover:bg-white/10'}`}
             >
               <FiMic /> {voiceAssistantActive ? 'Listening...' : 'Voice Assist'}
             </button>
 
             <button
               onClick={() => setShowDimensions((prev) => !prev)}
-              className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-bold uppercase tracking-wider transition active:scale-95 ${showDimensions ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl border px-3.5 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider transition active:scale-95 ${showDimensions ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300' : 'bg-white/5 border-white/10 text-slate-400'}`}
             >
               <FiMaximize /> Dimensions
             </button>
 
             <button
               onClick={captureScreenshot}
-              className="flex items-center gap-2 rounded-xl bg-white/5 border border-white/10 px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
+              className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 rounded-xl bg-white/5 border border-white/10 px-3.5 py-2 sm:px-4 sm:py-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10 active:scale-95"
             >
               Capture Screen
             </button>
           </div>
 
           {/* Lighting Modes */}
-          <div className="flex items-center gap-1.5 overflow-x-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pt-1 sm:pt-0">
             <span className="text-[10px] uppercase font-bold text-slate-500 mr-1">Lighting:</span>
             {ambientThemeOrder.map((theme) => (
               <button
                 key={theme}
                 onClick={() => setAmbientThemeDebounced(theme)}
-                className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase transition ${ambientTheme === theme ? 'bg-emerald-500 text-slate-950' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
               >
                 {ambientThemeLabels[theme]}
               </button>
@@ -1029,7 +1096,7 @@ const ARStudio = () => {
       {/* Slide-over Control Drawer */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm">
-          <div className="w-full max-w-sm border-l border-white/10 bg-slate-900 p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
+          <div className="w-full max-w-sm border-l border-white/10 bg-slate-900 p-5 sm:p-6 shadow-2xl flex flex-col justify-between overflow-y-auto">
             <div>
               <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-white">AR Configuration</h3>
@@ -1073,8 +1140,8 @@ const ARStudio = () => {
 
       {/* Floating Toast Alert */}
       {toastMessage && (
-        <div className="fixed top-20 left-1/2 z-50 -translate-x-1/2">
-          <div className={`rounded-full px-5 py-2.5 text-xs font-bold shadow-2xl backdrop-blur-md border ${toastType === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' : toastType === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-200' : 'bg-slate-900/90 border-white/10 text-slate-200'}`}>
+        <div className="fixed top-16 sm:top-20 left-1/2 z-50 -translate-x-1/2 px-4 max-w-sm w-full">
+          <div className={`rounded-full px-4 py-2 sm:px-5 sm:py-2.5 text-center text-xs font-bold shadow-2xl backdrop-blur-md border ${toastType === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-200' : toastType === 'warning' ? 'bg-amber-500/20 border-amber-500/30 text-amber-200' : 'bg-slate-900/90 border-white/10 text-slate-200'}`}>
             {toastMessage}
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMaximize2 } from 'react-icons/fi';
 import api from '@/api/axiosInstance';
@@ -6,6 +6,22 @@ import { useCart } from '@/context/CartContext';
 import SEO from '../header/SEO';
 
 const MODEL_VIEWER_SCRIPT = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js';
+
+// Utility helper to inject script tags dynamically
+const loadScript = (src) => {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.type = 'module';
+    script.onload = () => resolve();
+    script.onerror = (err) => reject(err);
+    document.head.appendChild(script);
+  });
+};
 
 const lightingOptions = {
   neutral: {
@@ -31,7 +47,7 @@ const lightingOptions = {
 };
 
 const initialProduct = {
-  id: 1,
+  id: '1',
   name: 'Pillow / Decor',
   price: 1299,
   image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80',
@@ -64,6 +80,12 @@ const ARStudioUI = () => {
   const [toast, setToast] = useState('');
   const [statusText, setStatusText] = useState('Ready');
 
+  const [roomMetrics, setRoomMetrics] = useState({
+    length: '4.8',
+    width: '3.2',
+    fit: '100% Calibrated / Ready',
+  });
+
   const getProductModelUrl = (product) => {
     if (!product) return '';
     return (
@@ -77,12 +99,18 @@ const ARStudioUI = () => {
     );
   };
 
-  const selectProduct = (product) => {
+  const selectProduct = useCallback((product) => {
     setSelectedProduct(product);
     const modelUrl = getProductModelUrl(product);
     setCurrentModel(modelUrl);
-    setStatusText(modelUrl ? `${product.name} ready in camera preview` : `${product.name} selected, no 3D model found`);
+    setStatusText(
+      modelUrl ? `${product.name} ready in camera preview` : `${product.name} selected, no 3D model found`
+    );
     setIsAdded(false);
+  }, []);
+
+  const getProductPrice = (product) => {
+    return Number(product?.sellingPrice || product?.price || product?.mrp || 0);
   };
 
   useEffect(() => {
@@ -93,8 +121,9 @@ const ARStudioUI = () => {
         const payload = response.data?.data ?? response.data ?? [];
         const products = Array.isArray(payload) ? payload : [];
         const arItems = products.filter((product) => Boolean(getProductModelUrl(product)));
+        
         setArProducts(arItems);
-        if (arItems.length && selectedProduct === initialProduct) {
+        if (arItems.length) {
           selectProduct(arItems[0]);
         }
       } catch (error) {
@@ -105,7 +134,7 @@ const ARStudioUI = () => {
     };
 
     loadArProducts();
-  }, []);
+  }, [selectProduct]);
 
   useEffect(() => {
     const initModelViewer = async () => {
@@ -126,12 +155,6 @@ const ARStudioUI = () => {
 
     initModelViewer();
   }, [isModelViewerReady]);
-
-  const [roomMetrics, setRoomMetrics] = useState({
-    length: '4.8',
-    width: '3.2',
-    fit: '100% Calibrated / Ready',
-  });
 
   const showToast = (message) => {
     setToast(message);
@@ -215,6 +238,7 @@ const ARStudioUI = () => {
   const handleVoiceToggle = () => {
     if (isListening) {
       setIsListening(false);
+      if (recognitionRef.current) recognitionRef.current.stop();
       return;
     }
 
@@ -291,14 +315,16 @@ const ARStudioUI = () => {
 
   const handleAddToCart = () => {
     const productId = String(selectedProduct._id || selectedProduct.id || Date.now());
+    const price = getProductPrice(selectedProduct);
+    
     const productToAdd = {
       ...selectedProduct,
       id: productId,
       _id: productId,
       quantity: 1,
       name: selectedProduct.name || selectedProduct.productName || 'AR Product',
-      price: Number(selectedProduct.sellingPrice || selectedProduct.price || selectedProduct.mrp || 0),
-      sellingPrice: Number(selectedProduct.sellingPrice || selectedProduct.price || selectedProduct.mrp || 0),
+      price: price,
+      sellingPrice: price,
       image: selectedProduct.thumbnail || selectedProduct.image || selectedProduct.images?.[0]?.url || '',
     };
 
@@ -316,7 +342,7 @@ const ARStudioUI = () => {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.18),_transparent_35%),linear-gradient(135deg,_#020617_0%,_#0f172a_45%,_#111827_100%)] text-white">
       <SEO
         title="AR Studio | Aaramdehi"
-        description="Interactive AR studio with camera preview, lighting controls, voice assist, and quick add-to-cart." 
+        description="Interactive AR studio with camera preview, lighting controls, voice assist, and quick add-to-cart."
         keywords="AR studio, room preview, 3d product viewer, aaramdehi"
       />
 
@@ -324,9 +350,15 @@ const ARStudioUI = () => {
         <div className="rounded-[28px] border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur-xl">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300">Aaramdehi AR Studio</p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">Preview your room in immersive AR</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">Scan, style, and shop with a smooth live preview experience built for modern furniture browsing.</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.3em] text-emerald-300">
+                Aaramdehi AR Studio
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-white sm:text-4xl">
+                Preview your room in immersive AR
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
+                Scan, style, and shop with a smooth live preview experience built for modern furniture browsing.
+              </p>
             </div>
             <div className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-sm font-semibold text-emerald-200">
               Cart {cartCount}
@@ -335,16 +367,30 @@ const ARStudioUI = () => {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1.7fr_0.9fr]">
-          <div ref={stageRef} className="relative overflow-hidden rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_24px_80px_rgba(0,0,0,0.4)]">
-            <div className="absolute left-4 top-4 z-30 rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md">
-              Aaramdehi AR Studio • Camera Preview
+          <div
+            ref={stageRef}
+            className="relative overflow-hidden rounded-[32px] border border-white/10 bg-slate-950 shadow-[0_24px_80px_rgba(0,0,0,0.4)] min-h-[400px]"
+          >
+            <div className="absolute left-4 top-4 z-30 flex items-center gap-2">
+              <span className="rounded-2xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-white backdrop-blur-md">
+                Aaramdehi AR Studio • Camera Preview
+              </span>
+              <button
+                onClick={toggleFullscreen}
+                className="rounded-2xl border border-white/10 bg-slate-950/80 p-2 text-white backdrop-blur-md hover:bg-white/10 transition"
+              >
+                <FiMaximize2 className="h-4 w-4" />
+              </button>
             </div>
+
             <video
               ref={videoRef}
               autoPlay
               playsInline
               muted
-              className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ${isCameraActive ? 'opacity-100' : 'opacity-0'}`}
+              className={`absolute inset-0 h-full w-full object-cover transition-all duration-500 ${
+                isCameraActive ? 'opacity-100' : 'opacity-0'
+              }`}
             />
 
             {currentModel && isModelViewerReady && (
@@ -377,20 +423,24 @@ const ARStudioUI = () => {
                     <div className="h-14 w-14 rounded-xl border border-emerald-300/40 shadow-[0_0_40px_rgba(16,185,129,0.25)]" />
                   </div>
                   <p className="text-sm font-semibold text-white">Mock AR preview active</p>
-                  <p className="mt-2 text-sm text-slate-400">Camera permission was denied or unsupported, so a styled 3D grid preview is shown instead.</p>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Camera permission was denied or unsupported, so a styled 3D grid preview is shown instead.
+                  </p>
                 </div>
               </div>
             )}
 
             {isListening && (
-              <div className="absolute left-4 top-4 z-30 flex items-center gap-2 rounded-full border border-sky-400/20 bg-slate-950/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
+              <div className="absolute left-4 top-16 z-30 flex items-center gap-2 rounded-full border border-sky-400/20 bg-slate-950/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
                 <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-sky-400" />
                 Listening...
               </div>
             )}
 
             <div className="absolute bottom-4 left-4 z-30 max-w-sm rounded-[24px] border border-white/10 bg-slate-950/70 p-4 shadow-2xl backdrop-blur-xl">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">Room Metrics</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
+                Room Metrics
+              </div>
               <div className="mt-2 flex items-center justify-between text-sm text-white">
                 <span>Length</span>
                 <span className="font-semibold">{roomMetrics.length} m</span>
@@ -405,10 +455,20 @@ const ARStudioUI = () => {
             </div>
 
             <div className="absolute bottom-4 right-4 z-30 flex flex-col gap-2">
-              <button type="button" onClick={handleScanSpace} className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-black uppercase tracking-[0.18em] text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400">
+              <button
+                type="button"
+                onClick={handleScanSpace}
+                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-black uppercase tracking-[0.18em] text-slate-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-400"
+              >
                 {isScanning ? 'Scanning...' : 'Scan Space'}
               </button>
-              <button type="button" onClick={handleAddToCart} className={`rounded-full px-4 py-2 text-sm font-black uppercase tracking-[0.18em] text-slate-950 shadow-lg transition ${isAdded ? 'bg-amber-400' : 'bg-white hover:bg-slate-100'}`}>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className={`rounded-full px-4 py-2 text-sm font-black uppercase tracking-[0.18em] text-slate-950 shadow-lg transition ${
+                  isAdded ? 'bg-amber-400' : 'bg-white hover:bg-slate-100'
+                }`}
+              >
                 {isAdded ? 'Added!' : 'Add to Cart'}
               </button>
             </div>
@@ -420,30 +480,50 @@ const ARStudioUI = () => {
                 <p className="text-[10px] uppercase tracking-[0.24em] text-emerald-300">Dosa Box</p>
                 <h2 className="mt-2 text-2xl font-black text-white">Aaramdehi Dosa Box</h2>
               </div>
-              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200">New</span>
+              <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200">
+                New
+              </span>
             </div>
             <div className="mt-5 space-y-4 text-sm text-slate-300">
-              <p>Khaas AR experience ke saath ab Aaramdehi Dosa Box bhi dekh sakte hain. Yeh container aapki product aur room preview ko ek saath present karta hai.</p>
+              <p>
+                Khaas AR experience ke saath ab Aaramdehi Dosa Box bhi dekh sakte hain. Yeh container aapki product aur room preview ko ek saath present karta hai.
+              </p>
               <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-4">
-                <div className="mb-3 text-xs uppercase tracking-[0.2em] text-slate-500">AR Product Library</div>
+                <div className="mb-3 text-xs uppercase tracking-[0.2em] text-slate-500">
+                  AR Product Library
+                </div>
                 {loadingProducts ? (
                   <div className="text-sm text-slate-400">Loading AR products...</div>
                 ) : arProducts.length ? (
                   <div className="space-y-3">
-                    {arProducts.slice(0, 4).map((product) => (
-                      <button
-                        key={product._id || product.id || product.name}
-                        type="button"
-                        onClick={() => selectProduct(product)}
-                        className={`w-full rounded-2xl border px-3 py-3 text-left transition ${selectedProduct?.id === product.id || selectedProduct?.name === product.name ? 'border-emerald-400 bg-emerald-500/10 text-white' : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'}`}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="font-semibold text-sm truncate">{product.name || 'Untitled AR Item'}</span>
-                          <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">{product.sellingPrice ? `₹${Number(product.sellingPrice).toLocaleString()}` : '₹0'}</span>
-                        </div>
-                        <div className="mt-1 text-[10px] text-slate-400">{getProductModelUrl(product) ? 'AR model available' : 'No model'}</div>
-                      </button>
-                    ))}
+                    {arProducts.slice(0, 4).map((product) => {
+                      const isSelected =
+                        selectedProduct?.id === product.id || selectedProduct?.name === product.name;
+                      return (
+                        <button
+                          key={product._id || product.id || product.name}
+                          type="button"
+                          onClick={() => selectProduct(product)}
+                          className={`w-full rounded-2xl border px-3 py-3 text-left transition ${
+                            isSelected
+                              ? 'border-emerald-400 bg-emerald-500/10 text-white'
+                              : 'border-white/10 bg-white/5 text-slate-300 hover:bg-white/10'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="font-semibold text-sm truncate">
+                              {product.name || 'Untitled AR Item'}
+                            </span>
+                            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                              ₹{getProductPrice(product).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-[10px] text-slate-400">
+                            {getProductModelUrl(product) ? 'AR model available' : 'No model'}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-sm text-slate-400">No AR products available yet.</div>
@@ -453,20 +533,38 @@ const ARStudioUI = () => {
                 <div className="text-sm font-semibold text-white">Selected AR product</div>
                 <div className="mt-3 grid gap-3">
                   <img
-                    src={selectedProduct?.thumbnail || selectedProduct?.image || 'https://placehold.co/400x280?text=No+Image'}
+                    src={
+                      selectedProduct?.thumbnail ||
+                      selectedProduct?.image ||
+                      'https://placehold.co/400x280?text=No+Image'
+                    }
                     alt={selectedProduct?.name || 'Selected product'}
                     className="h-28 w-full rounded-3xl object-cover"
                   />
                   <div>
-                    <div className="font-black text-white">{selectedProduct?.name || 'No product selected'}</div>
-                    <div className="text-slate-400 text-sm">{selectedProduct?.category || selectedProduct?.placementType || 'AR product'}</div>
-                    <div className="mt-2 text-lg font-black text-emerald-300">₹{Number(selectedProduct?.sellingPrice || selectedProduct?.price || 0).toLocaleString()}</div>
-                    <div className="mt-1 text-xs text-slate-400">{getProductModelUrl(selectedProduct) ? 'Blend/glTF model ready for camera preview' : 'Static preview only'}</div>
+                    <div className="font-black text-white">
+                      {selectedProduct?.name || 'No product selected'}
+                    </div>
+                    <div className="text-slate-400 text-sm">
+                      {selectedProduct?.category || selectedProduct?.placementType || 'AR product'}
+                    </div>
+                    <div className="mt-2 text-lg font-black text-emerald-300">
+                      ₹{getProductPrice(selectedProduct).toLocaleString()}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      {getProductModelUrl(selectedProduct)
+                        ? 'Blend/glTF model ready for camera preview'
+                        : 'Static preview only'}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-            <button type="button" onClick={handleAddToCart} className="mt-6 w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-slate-950 transition hover:bg-emerald-400">
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="mt-6 w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-slate-950 transition hover:bg-emerald-400"
+            >
               Add Selected Product to Cart
             </button>
           </div>
@@ -475,13 +573,29 @@ const ARStudioUI = () => {
         <div className="rounded-[24px] border border-white/10 bg-slate-950/70 p-4 shadow-xl backdrop-blur-xl">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">Selected Product</div>
-              <div className="mt-1 text-xl font-black text-white">{selectedProduct.name}</div>
-              <div className="mt-1 text-sm text-slate-300">₹{selectedProduct.price.toLocaleString()} • AR-ready preview</div>
+              <div className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                Selected Product
+              </div>
+              <div className="mt-1 text-xl font-black text-white">{selectedProduct?.name}</div>
+              <div className="mt-1 text-sm text-slate-300">
+                ₹{getProductPrice(selectedProduct).toLocaleString()} • AR-ready preview
+              </div>
             </div>
             <div className="flex items-center gap-3">
-              <button type="button" onClick={() => setSelectedProduct(initialProduct)} className="rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10">Reset</button>
-              <button type="button" onClick={handleAddToCart} className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-black uppercase tracking-[0.16em] text-slate-950 transition hover:bg-emerald-400">Add to cart</button>
+              <button
+                type="button"
+                onClick={() => selectProduct(initialProduct)}
+                className="rounded-full border border-white/10 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Reset
+              </button>
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-black uppercase tracking-[0.16em] text-slate-950 transition hover:bg-emerald-400"
+              >
+                Add to cart
+              </button>
             </div>
           </div>
         </div>

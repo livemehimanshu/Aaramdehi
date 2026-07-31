@@ -66,12 +66,11 @@ const BehavioralAdsAdmin = lazy(() => import('../component/Admin/BehavioralAdsAd
 const BehavioralAnalyticsDashboard = lazy(() => import('../component/Admin/BehavioralAnalyticsDashboard.jsx'))
 const BehavioralInteractionLogs = lazy(() => import('../component/Admin/BehavioralInteractionLogs.jsx'))
 
-// Checkout Pages
+// Checkout & Studio Pages
 const CheckoutPage = lazy(() => import('../component/checkout/CheckoutPage.jsx'))
 const PaymentPage = lazy(() => import('../component/payment/PaymentPage.jsx'))
 const OrderSuccess = lazy(() => import('../component/Pages/OrderSuccess/OrderSuccess.jsx'))
 const ARStudio = lazy(() => import('../component/Pages/ARStudio.jsx'))
-const ARStudioUI = lazy(() => import('../component/Pages/ARStudioUI.jsx'))
 const NotFound = lazy(() => import('../component/Pages/NotFound.jsx'))
 
 function AppContent() {
@@ -111,7 +110,8 @@ function AppContent() {
   };
 
   const isAdminRoute = location.pathname.startsWith('/admin')
-  const hideHeaderRoutes = ['/order-success', '/login', '/signup']
+  // Updated: Added '/ar-studio' here to hide main Header/Footer for full-screen studio
+  const hideHeaderRoutes = ['/order-success', '/login', '/signup', '/ar-studio']
   const shouldHideHeaderFooter = isAdminRoute || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
 
   const accountPaths = ['/account/profile', '/account/addresses', '/account/pan', '/orders', '/order-details', '/payments/giftcards', '/payments/upi', '/payments/cards', '/coupons', '/reviews', '/wishlist']
@@ -181,7 +181,10 @@ function AppContent() {
                 <Route path="/product" element={<ProductListing/>}/>
                 <Route path="/products" element={<ProductListing/>}/>
                 <Route path="/product/:id" element={<ProductDetailsPage />} />
-                <Route path="/ar-studio" element={<ARStudioUI />} />
+                
+                {/* Updated: Using ARStudio instead of ARStudioUI */}
+                <Route path="/ar-studio" element={<ARStudio />} />
+                
                 <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
                 <Route path="/compare" element={<ComparePage />} />
                 <Route path="/categories" element={<CategoriesPage />} />

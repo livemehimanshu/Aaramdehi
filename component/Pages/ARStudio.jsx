@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dump';
 import api from '@/api/axiosInstance';
 import { getProductByIdAPI } from '@/api/authAndAdminApi';
 import { useCart } from '@/context/CartContext';
@@ -486,10 +486,15 @@ const ARStudio = () => {
           fitStatus: fit.fitStatus,
         });
         setModelScaleFactor(`${fit.rawScale}%`);
+        
+        // Apple-style Surface Lock State Updates
         setSurfaceDetected(true);
         setScanStep('completed');
-        setAiStatus(`Surface measured: ${lengthGrid}ft × ${widthGrid}ft — ${fit.fitStatus}`);
-        showToast(`Scan complete: ${lengthGrid}ft × ${widthGrid}ft`, 'success');
+        setCanPlace(true);
+        setShowBeddingWarning(false);
+
+        setAiStatus(`Surface locked: ${lengthGrid}ft × ${widthGrid}ft — Tap button to place product`);
+        showToast(`Surface Aligned: ${lengthGrid}ft × ${widthGrid}ft`, 'success');
       }
     }, 120);
   };
@@ -806,6 +811,29 @@ const ARStudio = () => {
             />
             <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300`} />
             <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-transparent to-slate-950/90 pointer-events-none" />
+
+            {/* Apple-Style AR Surface Alignment Box / Target Line */}
+            {scanStep !== 'completed' && (
+              <div className="absolute inset-0 pointer-events-none z-10 flex items-center justify-center">
+                <div className="relative w-56 h-56 sm:w-64 sm:h-64 border-2 border-dashed border-emerald-400/80 rounded-3xl flex items-center justify-center animate-pulse">
+                  
+                  {/* Center Target Point (Apple-style Dot) */}
+                  <div className="w-4 h-4 rounded-full bg-emerald-400 shadow-[0_0_20px_#10b981] animate-ping" />
+                  <div className="absolute w-2 h-2 rounded-full bg-white" />
+
+                  {/* Surface Alignment Corner Lines */}
+                  <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-emerald-400 rounded-tl-xl" />
+                  <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-emerald-400 rounded-tr-xl" />
+                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b-4 border-l-4 border-emerald-400 rounded-bl-xl" />
+                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b-4 border-r-4 border-emerald-400 rounded-br-xl" />
+
+                  {/* Instructional Badge */}
+                  <span className="absolute -bottom-10 text-[10px] font-bold uppercase tracking-widest text-emerald-300 bg-slate-950/80 backdrop-blur-md px-3 py-1.5 rounded-full border border-emerald-500/30">
+                    Point Surface & Scan
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* 3D Model Viewer Layer */}
             {!isFaceDetected && currentModel && isModelViewerReady && (

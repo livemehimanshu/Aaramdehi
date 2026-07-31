@@ -5,6 +5,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
 // Load environment variables before initializing Firebase
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
@@ -13,11 +14,10 @@ let serviceAccount;
 
 // 1. Firebase Credentials Setup
 if (process.env.FIREBASE_CONFIG_JSON) {
-  console.log('✅ Using Firebase credentials from FIREBASE_CONFIG_JSON');
   try {
     serviceAccount = JSON.parse(process.env.FIREBASE_CONFIG_JSON);
   } catch (e) {
-    throw new Error("Invalid FIREBASE_CONFIG_JSON format");
+    throw new Error("Invalid FIREBASE_CONFIG_JSON format in .env file");
   }
 } else if (process.env.FIREBASE_PROJECT_ID) {
   serviceAccount = {
@@ -30,10 +30,11 @@ if (process.env.FIREBASE_CONFIG_JSON) {
   if (fs.existsSync(keyPath)) {
     serviceAccount = JSON.parse(fs.readFileSync(keyPath, 'utf8'));
   } else {
-    throw new Error("Firebase Admin SDK failed to initialize: No credentials found.");
+    throw new Error("Firebase Admin SDK failed to initialize: No credentials found in ENV or serviceAccountKey.json.");
   }
 }
 
+// Ensure app initialization happens only once
 if (!admin.apps.length) {
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -43,7 +44,8 @@ if (!admin.apps.length) {
 
 export const db = admin.database();
 
-// 2. Helper Functions (Saare EXPORTED hain)
+// 2. Optimized Helper Functions
+
 export const findAll = async (collectionName) => {
   const snapshot = await db.ref(collectionName).once('value');
   const data = snapshot.val();
@@ -61,19 +63,19 @@ export const findPaginated = async (collectionName, limit = 10, lastKey = null) 
 };
 
 export const findById = async (collectionName, id) => {
-  const cleanId = (id && typeof id === 'object') ? (id._id || id.id) : id;
+  if (!id) return null;
+  const cleanId = typeof id === 'object' ? (id._id || id.id) : id;
   const snapshot = await db.ref(`${collectionName}/${cleanId}`).once('value');
   const data = snapshot.val();
   return data ? { _id: cleanId, ...data } : null;
 };
 
 export const findByQuery = async (collectionName, property, value) => {
-  // ✅ Optimization: Use Firebase's native filtering instead of JS memory filter
   const snapshot = await db.ref(collectionName)
     .orderByChild(property)
     .equalTo(value)
     .once('value');
-  
+
   const data = snapshot.val();
   return data ? Object.keys(data).map(key => ({ _id: key, ...data[key] })) : [];
 };
@@ -87,8 +89,8 @@ export const create = async (collectionName, data) => {
 };
 
 export const updateById = async (collectionName, id, updateData) => {
-  const cleanId = (id && typeof id === 'object') ? (id._id || id.id) : id;
-  if (!cleanId) throw new Error("Invalid ID");
+  const cleanId = typeof id === 'object' ? (id._id || id.id) : id;
+  if (!cleanId) throw new Error("Invalid ID provided for update");
   const timestamp = new Date().toISOString();
   const updates = { ...updateData, updatedAt: timestamp };
   await db.ref(`${collectionName}/${cleanId}`).update(updates);
@@ -97,14 +99,19 @@ export const updateById = async (collectionName, id, updateData) => {
 };
 
 export const deleteById = async (collectionName, id) => {
-  const cleanId = (id && typeof id === 'object') ? (id._id || id.id) : id;
+  const cleanId = typeof id === 'object' ? (id._id || id.id) : id;
+  if (!cleanId) throw new Error("Invalid ID provided for deletion");
   await db.ref(`${collectionName}/${cleanId}`).remove();
   return { success: true };
 };
 
-export const deleteMany = async (collectionName, ids) => {
+export const deleteMany = async (collectionName, ids = []) => {
+  if (!Array.isArray(ids) || ids.length === 0) return { success: true };
   const updates = {};
-  ids.forEach(id => { updates[`${collectionName}/${id}`] = null; });
+  ids.forEach(id => {
+    const cleanId = typeof id === 'object' ? (id._id || id.id) : id;
+    if (cleanId) updates[`${collectionName}/${cleanId}`] = null;
+  });
   await db.ref().update(updates);
   return { success: true };
 };

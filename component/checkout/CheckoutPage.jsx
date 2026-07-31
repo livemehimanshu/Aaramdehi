@@ -7,7 +7,7 @@ import {
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { addressSchema } from '../../src/schemas/validationSchemas';
-import toast from 'react-hot-toast'; // ✅ Import Toast
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
 const CheckoutPage = () => {
@@ -17,7 +17,6 @@ const CheckoutPage = () => {
     const [quantities, setQuantities] = useState({});
     const PLACEHOLDER = 'https://placehold.co/150x150?text=Product';
 
-    // Loyalty Points States (जो पहले मिसिंग थीं)
     const [usePoints, setUsePoints] = useState(false);
     const [userPoints, setUserPoints] = useState(0);
 
@@ -31,9 +30,9 @@ const CheckoutPage = () => {
     });
 
     const [showAddressModal, setShowAddressModal] = useState(false);
-    const [editingAddress, setEditingAddress] = useState(null);
+    const [wishlistItems, setWishlistItems] = useState([]);
 
-    // ✅ Setup React Hook Form for Address
+    // React Hook Form Setup
     const { register, handleSubmit, formState: { errors }, reset } = useForm({
         resolver: zodResolver(addressSchema),
         defaultValues: {
@@ -42,28 +41,39 @@ const CheckoutPage = () => {
             phone: userAddress.phone.replace(/[^0-9]/g, '').slice(-10),
             city: userAddress.city,
             postalCode: userAddress.postalCode,
-            email: 'user@example.com', // Fallback for schema
-            state: 'UP' // Fallback for schema
+            email: 'user@example.com',
+            state: 'UP'
         }
     });
 
-    const [wishlistItems, setWishlistItems] = useState([]);
+    // Reset Form values when modal opens or userAddress updates
+    useEffect(() => {
+        if (showAddressModal) {
+            reset({
+                fullName: userAddress.name,
+                address: userAddress.address,
+                phone: userAddress.phone.replace(/[^0-9]/g, '').slice(-10),
+                city: userAddress.city,
+                postalCode: userAddress.postalCode,
+                email: 'user@example.com',
+                state: 'UP'
+            });
+        }
+    }, [showAddressModal, userAddress, reset]);
 
-    // Load cart, wishlist and loyalty points
+    // Initial Load
     useEffect(() => {
         const savedCart = JSON.parse(localStorage.getItem("cart")) || [];
         setCartItems(savedCart);
 
-        // लोकल स्टोरेज से यूजर के लॉयल्टी पॉइंट्स लोड करें
-        let userData = {};
         try {
-          const rawUserData = localStorage.getItem('userData');
-          userData = rawUserData ? JSON.parse(rawUserData) : {};
+            const rawUserData = localStorage.getItem('userData');
+            const userData = rawUserData ? JSON.parse(rawUserData) : {};
+            setUserPoints(userData.loyaltyPoints || 0);
         } catch (err) {
-          console.warn('Invalid userData in localStorage:', err);
-          userData = {};
+            console.warn('Invalid userData in localStorage:', err);
+            setUserPoints(0);
         }
-        setUserPoints(userData.loyaltyPoints || 0);
 
         const initialQuantities = {};
         savedCart.forEach(item => {
@@ -85,17 +95,30 @@ const CheckoutPage = () => {
         setWishlistItems(savedWishlist);
     };
 
-    // Quantity update
+    // FIX 1: Quantity Change with localStorage Sync
     const handleQuantityChange = (productId, newQuantity) => {
         if (newQuantity < 1) return;
 
-        setQuantities(prev => ({
-            ...prev,
+        const updatedQuantities = {
+            ...quantities,
             [productId]: newQuantity
-        }));
+        };
+        setQuantities(updatedQuantities);
+
+        // Sync local storage so refresh doesn't reset quantity
+        const updatedCart = cartItems.map(item => {
+            const id = item._id || item.id;
+            if (id === productId) {
+                return { ...item, quantity: newQuantity, qty: newQuantity };
+            }
+            return item;
+        });
+
+        setCartItems(updatedCart);
+        localStorage.setItem("cart", JSON.stringify(updatedCart));
     };
 
-    // Remove cart item
+    // Remove Item
     const handleRemoveItem = (productId) => {
         const updatedCart = cartItems.filter(
             item => (item._id || item.id) !== productId
@@ -106,7 +129,7 @@ const CheckoutPage = () => {
         window.dispatchEvent(new Event("cartUpdated"));
     };
 
-    // Wishlist toggle
+    // Toggle Wishlist
     const handleToggleWishlist = (product) => {
         let currentWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
 
@@ -133,7 +156,7 @@ const CheckoutPage = () => {
         syncWishlist();
     };
 
-    // Calculate prices (डुप्लीकेट लूप्स और वेरिएबल्स को यहाँ फिक्स किया गया है)
+    // Price Calculations
     const prices = useMemo(() => {
         let mrp = 0;
         let sellingTotal = 0;
@@ -141,21 +164,17 @@ const CheckoutPage = () => {
         cartItems.forEach(item => {
             const id = item._id || item.id;
             const qty = quantities[id] || item.qty || 1;
-            
+
             const salePrice = item.price || item.sellingPrice || 0;
-            const basePrice = item.originalPrice || item.mrp || (item.sellingPrice > salePrice ? item.sellingPrice : salePrice) || 0;
+            const basePrice = item.originalPrice || item.mrp || (item.sellingPrice > salePrice ? item.sellingPrice : salePrice) || salePrice;
 
             mrp += basePrice * qty;
             sellingTotal += salePrice * qty;
         });
 
-        // 1 Point = 1 Rupee (यह सुनिश्चित करता है कि पॉइंट्स कभी भी बिल से ज्यादा न घटें)
         const pointsValue = usePoints ? Math.min(userPoints, sellingTotal) : 0;
-
         const discount = mrp - sellingTotal;
         const deliveryFee = sellingTotal >= 2000 ? 0 : 50;
-        
-        // फाइनल अमाउंट कैलकुलेशन (पॉइंट्स माइनस करने के बाद)
         const total = Math.max(0, sellingTotal + deliveryFee - pointsValue);
 
         return {
@@ -167,81 +186,82 @@ const CheckoutPage = () => {
         };
     }, [cartItems, quantities, usePoints, userPoints]);
 
-    // Save address
+    // Save Address
     const onAddressSubmit = (data) => {
-        setUserAddress({ ...data, name: data.fullName });
+        setUserAddress(prev => ({
+            ...prev,
+            name: data.fullName,
+            address: data.address,
+            phone: data.phone,
+            city: data.city,
+            postalCode: data.postalCode
+        }));
         setShowAddressModal(false);
+        toast.success("Address updated successfully!");
     };
 
-    // Continue to payment
+    // Checkout Proceed
     const handleContinue = async () => {
         if (cartItems.length === 0) {
-            toast.error("Your cart is empty. Please add items."); // ✅ Better UX
+            toast.error("Your cart is empty. Please add items.");
             return;
         }
 
         if (!userAddress.name || !userAddress.address || !userAddress.phone) {
-            toast.error("Please provide complete shipping address.");
+            toast.error("Please provide a complete shipping address.");
             return;
         }
 
-        try {
-            const token = localStorage.getItem('accessToken');
-
-            if (!token) {
-                toast.error("Order place karne ke liye please login karein.");
-                navigate('/login');
-                return;
-            }
-
-            const appliedCouponCode = cartItems.find(item => item.appliedCoupon)?.appliedCoupon || null;
-
-            const orderPayload = {
-                orderItems: cartItems.map(item => {
-                    const itemId = item._id || item.id;
-                    const quantityValue = Number(quantities[itemId] || item.qty || item.quantity || 1);
-                    return {
-                        ...item,
-                        product: itemId,
-                        productId: itemId,
-                        quantity: quantityValue,
-                        qty: quantityValue,
-                        price: Number(item.price || item.sellingPrice || item.newPrice || 0),
-                        image: item.thumbnail || (item.images && item.images[0]?.url) || item.image || 'https://placehold.co/150x150?text=Product'
-                    };
-                }),
-                shippingAddress: {
-                    fullName: userAddress.name || 'Anonymous',
-                    address: userAddress.address,
-                    city: userAddress.city || 'N/A',
-                    pincode: String(userAddress.postalCode || '000000'), 
-                    postalCode: userAddress.postalCode || '000000',
-                    mobile: userAddress.phone
-                },
-                paymentInfo: { id: "n/a", status: "pending" }, 
-                paymentMethod: "COD", 
-                itemsPrice: Number(prices.mrp - prices.discount),
-                shippingPrice: Number(prices.deliveryFee),
-                taxPrice: 0,
-                totalPrice: Number(prices.total), 
-                totalAmount: Number(prices.total), 
-                discountAmount: Number(prices.discount),
-                loyaltyPointsUsed: prices.pointsRedeemed, // बैकएंड को रिडीम पॉइंट्स भेजना
-                couponCode: appliedCouponCode, 
-                deliveryFee: Number(prices.deliveryFee)
-            };
-
-            navigate("/payment", { 
-                state: { 
-                    orderPayload: orderPayload,
-                    totalAmount: prices.total
-                } 
-            });
-
-        } catch (error) {
-            console.error("Checkout API Error:", error);
-            toast.error(error.response?.data?.message || "Something went wrong. Please try again.");
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+            toast.error("Please log in to place an order.");
+            navigate('/login');
+            return;
         }
+
+        const appliedCouponCode = cartItems.find(item => item.appliedCoupon)?.appliedCoupon || null;
+
+        const orderPayload = {
+            orderItems: cartItems.map(item => {
+                const itemId = item._id || item.id;
+                const quantityValue = Number(quantities[itemId] || item.qty || item.quantity || 1);
+                return {
+                    ...item,
+                    product: itemId,
+                    productId: itemId,
+                    quantity: quantityValue,
+                    qty: quantityValue,
+                    price: Number(item.price || item.sellingPrice || item.newPrice || 0),
+                    image: item.thumbnail || (item.images && item.images[0]?.url) || item.image || PLACEHOLDER
+                };
+            }),
+            shippingAddress: {
+                fullName: userAddress.name || 'Anonymous',
+                address: userAddress.address,
+                city: userAddress.city || 'N/A',
+                pincode: String(userAddress.postalCode || '000000'),
+                postalCode: userAddress.postalCode || '000000',
+                mobile: userAddress.phone
+            },
+            paymentInfo: { id: "n/a", status: "pending" },
+            paymentMethod: "COD",
+            itemsPrice: Number(prices.mrp - prices.discount),
+            shippingPrice: Number(prices.deliveryFee),
+            taxPrice: 0,
+            totalPrice: Number(prices.total),
+            totalAmount: Number(prices.total),
+            discountAmount: Number(prices.discount),
+            loyaltyPointsUsed: prices.pointsRedeemed,
+            couponCode: appliedCouponCode,
+            deliveryFee: Number(prices.deliveryFee)
+        };
+
+        navigate("/payment", {
+            state: {
+                orderPayload,
+                totalAmount: prices.total
+            }
+        });
     };
 
     if (cartItems.length === 0) {
@@ -284,10 +304,7 @@ const CheckoutPage = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => {
-                                        setEditingAddress(userAddress);
-                                        setShowAddressModal(true);
-                                    }}
+                                    onClick={() => setShowAddressModal(true)}
                                     className="text-blue-600 text-sm font-bold hover:underline"
                                 >
                                     Change
@@ -295,27 +312,27 @@ const CheckoutPage = () => {
                             </div>
                         </div>
 
-                        {/* FEATURE 1: Frequently Bought Together (Cross-Selling) */}
+                        {/* Smart Combo Offer */}
                         <div className="bg-orange-50 rounded-xl p-6 border border-orange-200 shadow-sm relative overflow-hidden">
                             <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-100 rounded-full opacity-50"></div>
                             <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
                                 <div className="w-20 h-20 bg-white rounded-lg p-2 shadow-sm flex-shrink-0">
-                                    <img 
-                                        src="https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg?q=90" 
-                                        alt="Pillow Suggestion" 
+                                    <img
+                                        src="https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg?q=90"
+                                        alt="Pillow Suggestion"
                                         className="w-full h-full object-contain"
                                     />
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
                                     <h4 className="font-black text-gray-900 text-sm uppercase">Smart Combo Offer! 🛋️</h4>
                                     <p className="text-xs text-gray-600 mt-1">
-                                        Add <span className="font-bold text-gray-800">Premium Memory Foam Pillow</span> for just 
-                                        <span className="text-red-600 font-black ml-1 text-sm">₹499</span> 
+                                        Add <span className="font-bold text-gray-800">Premium Memory Foam Pillow</span> for just
+                                        <span className="text-red-600 font-black ml-1 text-sm">₹499</span>
                                         <span className="text-gray-500 line-through ml-1 text-[10px]">₹699</span>
                                     </p>
                                 </div>
-                                <button 
-                                    onClick={() => alert("Pillow added to your combo!")}
+                                <button
+                                    onClick={() => toast.success("Pillow added to your combo!")}
                                     className="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-md shadow-gray-900/20"
                                 >
                                     + Add to Cart
@@ -323,7 +340,7 @@ const CheckoutPage = () => {
                             </div>
                         </div>
 
-                        {/* Products */}
+                        {/* Products List */}
                         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">
                             <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
                             <div className="space-y-4">
@@ -336,7 +353,12 @@ const CheckoutPage = () => {
                                     return (
                                         <div key={id} className="flex gap-4 pb-4 border-b border-gray-100 last:border-0">
                                             <div className="w-20 h-20 bg-gray-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                <img src={(item.thumbnail || item.image) || PLACEHOLDER} alt={item.name} className="w-16 h-16 object-contain" onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }} />
+                                                <img
+                                                    src={(item.thumbnail || item.image) || PLACEHOLDER}
+                                                    alt={item.name}
+                                                    className="w-16 h-16 object-contain"
+                                                    onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; }}
+                                                />
                                             </div>
                                             <div className="flex-1">
                                                 <h4 className="font-bold text-gray-900 text-sm mb-1">{item.name}</h4>
@@ -367,8 +389,8 @@ const CheckoutPage = () => {
                     {/* Right Column */}
                     <div className="lg:col-span-1 space-y-6">
                         <div className="sticky top-6 bg-white rounded-lg p-6 shadow-sm border border-gray-100">
-                            
-                            {/* Loyalty Points Redemption UI (यह सुंदर नीले रंग का कार्ड अब पूरी तरह काम करेगा) */}
+
+                            {/* Loyalty Points */}
                             {userPoints > 0 && (
                                 <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
                                     <div className="flex items-center justify-between mb-2">
@@ -376,9 +398,9 @@ const CheckoutPage = () => {
                                         <p className="text-xs font-bold text-blue-600">{userPoints} Available</p>
                                     </div>
                                     <label className="flex items-center gap-3 cursor-pointer select-none">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={usePoints} 
+                                        <input
+                                            type="checkbox"
+                                            checked={usePoints}
                                             onChange={(e) => setUsePoints(e.target.checked)}
                                             className="w-4 h-4 rounded accent-blue-900 cursor-pointer"
                                         />
@@ -401,7 +423,6 @@ const CheckoutPage = () => {
                                     </div>
                                 )}
 
-                                {/* Points Redeemed Row (तभी दिखेगा जब चेकबॉक्स टिक होगा) */}
                                 {prices.pointsRedeemed > 0 && (
                                     <div className="flex justify-between text-sm text-gray-600">
                                         <span>Points Redeemed</span>

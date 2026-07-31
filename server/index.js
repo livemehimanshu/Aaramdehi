@@ -23,6 +23,9 @@ import https from 'node:https';
 import { URL } from 'node:url';
 import securityHeaders from './middleware/securityHeaders.js';
 
+// Payment Credentials Listener Import
+import { initPaymentGatewaySync } from './config/paymentConfig.js';
+
 import authRouter from './routes/auth.route.js';
 import userRouter from './routes/user.route.js';
 import productRouter from './routes/product.route.js';
@@ -92,8 +95,7 @@ apiRouter.use("/coupons", couponRouter);
 apiRouter.use("/shops", shopsRouter);
 apiRouter.use("/appointments", appointmentRouter);
 
-// ✅ FIX: behavioralTrackingRouter ko PEHLE mount karein, fir analyticsRouter ko
-// Taaki `/all-interactions` route behavioralTrackingRouter me pehle match ho sake
+// ✅ behavioralTrackingRouter ko PEHLE mount kiya gaya hai, fir analyticsRouter ko
 apiRouter.use("/analytics", behavioralTrackingRouter);
 apiRouter.use("/analytics", analyticsRouter);
 
@@ -201,6 +203,15 @@ const pingHealthEndpoint = async () => {
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is running on port ${PORT}`);
+    
+    // ✅ Initialize Dynamic Payment Gateways Listener on Server Startup
+    try {
+        initPaymentGatewaySync();
+        console.log('⚡ Dynamic Payment Gateway listener initialized');
+    } catch (err) {
+        console.error('❌ Failed to initialize Payment Gateway sync:', err.message);
+    }
+
     console.log(`🔁 Keep-alive ping target: ${keepAliveUrl}`);
     console.log(`⏱️ Keep-alive interval: ${keepAliveIntervalMinutes} minute(s)`);
 

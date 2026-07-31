@@ -2,28 +2,29 @@ import api from './axiosInstance';
 
 export { api };
 
-// ✅ Pro Cache: Prevent redundant network waterfalls
+// Cache memory for optimizing redundant GET requests
 const memoryCache = new Map();
+
+/* ==========================================================================
+   PRODUCTS API
+   ========================================================================== */
 
 export async function getAllProductsAPI(params = {}) {
   try {
-    console.log('🔍 Fetching products with params:', params); // ✅ DEBUG LOG
     const res = await api.get('/products', { params });
-    console.log('✅ Products API Response:', res.data); // ✅ DEBUG LOG
     return res.data;
   } catch (e) {
     console.error('❌ Products API Error:', e);
-    return { success: false, data: [] }
+    return { success: false, data: [] };
   }
 }
 
 export async function createProductAPI(productData) {
   try {
-    // Let Axios handle the headers for FormData automatically
-    const res = await api.post('/products/create', productData); 
+    const res = await api.post('/products/create', productData);
     return res.data;
   } catch (e) {
-    throw e; // Standard practice: Re-throw to allow component-level error handling
+    throw e;
   }
 }
 
@@ -36,28 +37,114 @@ export async function getProductByIdAPI(id) {
   }
 }
 
+export async function updateProductAPI(id, formData) {
+  try {
+    const res = await api.put(`/products/${id}`, formData);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function deleteProductAPI(id) {
+  try {
+    const res = await api.delete(`/products/${id}`);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function analyzeRoomAPI(params) {
+  try {
+    const res = await api.post('/products/analyze-room', params);
+    return res.data;
+  } catch (e) {
+    console.error('❌ analyzeRoomAPI error:', e);
+    return {
+      success: false,
+      message: e.response?.data?.message || e.message || 'Room analysis failed.'
+    };
+  }
+}
+
+export async function createProductReviewAPI(productId, reviewData) {
+  try {
+    const res = await api.post(`/products/${productId}/review`, reviewData);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function deleteProductReviewAPI(productId, reviewId) {
+  try {
+    const res = await api.delete(`/products/${productId}/review/${reviewId}`);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/* ==========================================================================
+   CATEGORIES API
+   ========================================================================== */
+
 export async function getActiveCategoriesAPI() {
   try {
     if (memoryCache.has('active_categories')) return memoryCache.get('active_categories');
-    
+
     const res = await api.get('/categories/active');
     const data = res.data;
     memoryCache.set('active_categories', data);
     return data;
   } catch (e) {
-    return { success: false, data: [] } // ✅ Consistent error return
+    return { success: false, data: [] };
   }
 }
 
 export async function getAllCategoriesAPI() {
   try {
-    // ✅ Corrected to match category.routes.js root handler
-    const res = await api.get('/categories'); 
+    const res = await api.get('/categories');
     return res.data;
   } catch (e) {
-    return { success: false, data: [] }
+    return { success: false, data: [] };
   }
 }
+
+export async function createCategoryAPI(categoryData) {
+  try {
+    const res = await api.post('/categories/create', categoryData);
+    memoryCache.delete('active_categories');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function updateCategoryAPI(id, categoryData) {
+  try {
+    const res = await api.put(`/categories/${id}`, categoryData);
+    memoryCache.delete('active_categories');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function deleteCategoryAPI(id) {
+  try {
+    const res = await api.delete(`/categories/${id}`);
+    memoryCache.delete('active_categories');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/* ==========================================================================
+   BANNERS API
+   ========================================================================== */
 
 export async function getAllBannersAPI() {
   try {
@@ -113,55 +200,169 @@ export async function deleteBannerAPI(id) {
   }
 }
 
-export async function getSettingsAPI() {
-  try {
-    if (memoryCache.has('site_settings')) return memoryCache.get('site_settings');
+/* ==========================================================================
+   ORDERS & PAYMENT GATEWAY API
+   ========================================================================== */
 
-    // Use the public settings endpoint so frontend doesn't require admin auth
-    const res = await api.get('/settings/public');
-    const data = res.data;
-    memoryCache.set('site_settings', data);
-    return data;
-  } catch (e) {
-    return { success: false, data: {} };
-  }
-}
-
-export async function validateCouponAPI(params) {
+export async function placeOrderAPI(orderData) {
   try {
-    // ✅ Changed to POST because backend coupon.controller.js expects data in req.body
-    const res = await api.post('/coupons/validate', params);
-    return res.data;
-  } catch (e) {
-    return { success: false }
-  }
-}
-
-export async function analyzeRoomAPI(params) {
-  try {
-    const res = await api.post('/products/analyze-room', params);
-    return res.data;
-  } catch (e) {
-    console.error('❌ analyzeRoomAPI error:', e);
-    return { success: false, message: e.response?.data?.message || e.message || 'Room analysis failed.' };
-  }
-}
-
-export async function getAdminDetailsAPI() {
-  try {
-    const res = await api.get('/user/details');
-    return res.data;
-  } catch (e) {
-    return e.response?.data || { success: false, message: e.message };
-  }
-}
-
-export async function deleteCouponAPI(id) {
-  try {
-    const res = await api.delete(`/coupons/delete/${id}`);
+    const res = await api.post('/orders', orderData);
     return res.data;
   } catch (e) {
     throw e;
+  }
+}
+
+export async function getUserOrdersAPI() {
+  try {
+    const res = await api.get('/orders/my-orders');
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [], message: e.message };
+  }
+}
+
+export async function getOrderDetailsAPI(orderId) {
+  try {
+    const res = await api.get(`/orders/${orderId}`);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getAllOrdersAdminAPI() {
+  try {
+    const res = await api.get('/orders');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getShopOrdersAPI(shopId) {
+  try {
+    const res = await api.get(`/orders/shop/${shopId}`);
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
+export async function updateOrderStatusAPI(orderId, status) {
+  try {
+    const res = await api.patch(`/orders/${orderId}/status`, { status });
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function createPaymentOrderAPI(amount) {
+  try {
+    const res = await api.post('/payments/razorpay/create-order', { amount });
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function verifyPaymentAPI(paymentDetails) {
+  try {
+    const res = await api.post('/payments/razorpay/verify', paymentDetails);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+// 💳 Admin Gateway Configuration API (Fixes 401 Error)
+export async function getGatewayConfigAPI() {
+  try {
+    const res = await api.get('/payments/admin/gateway-config');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function updateGatewayConfigAPI(payload) {
+  try {
+    const res = await api.post('/payments/admin/gateway-config', payload);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/* ==========================================================================
+   REFUNDS & APPOINTMENTS API
+   ========================================================================== */
+
+export async function getAllRefundsAPI() {
+  try {
+    const res = await api.get('/refunds');
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
+export async function updateRefundStatusAPI(id, status) {
+  try {
+    const res = await api.patch(`/refunds/${id}`, { status });
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getAllAppointmentsAPI() {
+  try {
+    const res = await api.get('/appointments');
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
+export async function deleteAppointmentAPI(id) {
+  try {
+    const res = await api.delete(`/appointments/${id}`);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function confirmAppointmentAPI(id) {
+  try {
+    const res = await api.put(`/appointments/${id}/confirm`);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/* ==========================================================================
+   COUPONS API
+   ========================================================================== */
+
+export async function validateCouponAPI(params) {
+  try {
+    const res = await api.post('/coupons/validate', params);
+    return res.data;
+  } catch (e) {
+    return { success: false };
+  }
+}
+
+export async function getAllCouponsAPI() {
+  try {
+    const res = await api.get('/coupons');
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
   }
 }
 
@@ -174,52 +375,79 @@ export async function createCouponAPI(couponData) {
   }
 }
 
-export async function placeOrderAPI(orderData) {
+export async function deleteCouponAPI(id) {
   try {
-    const res = await api.post('/orders', orderData); // Standardized REST POST
+    const res = await api.delete(`/coupons/delete/${id}`);
     return res.data;
   } catch (e) {
     throw e;
   }
 }
 
-export async function getUserOrdersAPI() {
-  try {
-    // Correct path: plural 'orders' and no leading '/api'
-    const res = await api.get('/orders/my-orders'); 
-    return res.data;
-  } catch (e) {
-    return { success: false, data: [], message: e.message };
-  }
-}
+/* ==========================================================================
+   AUTHENTICATION & USER API
+   ========================================================================== */
 
-export async function getOrderDetailsAPI(orderId) {
+export async function signupAPI(userData) {
   try {
-    const res = await api.get(`/orders/${orderId}`);
-    return res.data;
-  } catch (e) {
-    // If API returns 404, we want to know why
-    throw e;
-  }
-}
-
-export async function createProductReviewAPI(productId, reviewData) {
-  try {
-    const res = await api.post(`/products/${productId}/review`, reviewData);
+    const res = await api.post('/auth/register', userData);
     return res.data;
   } catch (e) {
     throw e;
   }
 }
 
-export async function deleteProductReviewAPI(productId, reviewId) {
+export async function loginAPI(emailOrData, password) {
+  const payload = typeof emailOrData === 'string' ? { email: emailOrData, password } : emailOrData;
   try {
-    const res = await api.delete(`/products/${productId}/review/${reviewId}`);
+    const res = await api.post('/auth/login', payload);
     return res.data;
   } catch (e) {
     throw e;
   }
 }
+
+export async function verifyOTPAPI(email, otp) {
+  try {
+    const res = await api.post('/auth/verify-otp', { email, otp });
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function forgotPasswordAPI(data) {
+  try {
+    const payload = typeof data === 'string' ? { email: data } : data;
+    const res = await api.post('/auth/forgot-password', payload);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function resetPasswordAPI(data) {
+  try {
+    const payload = typeof data === 'object' && data !== null ? data : {};
+    const res = await api.post('/auth/reset-password', payload);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function getAdminDetailsAPI() {
+  try {
+    const res = await api.get('/user/details');
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
+/* ==========================================================================
+   NEWSLETTER API
+   ========================================================================== */
 
 export async function subscribeNewsletterAPI(email) {
   try {
@@ -248,75 +476,19 @@ export async function sendNewsletterAPI(payload) {
   }
 }
 
-export async function getAllOrdersAdminAPI() {
-  try {
-    const res = await api.get('/orders'); 
-    return res.data;
-  } catch (e) {
-    throw e; // Re-throw ताकि component का catch block इसे handle कर सके
-  }
-}
+/* ==========================================================================
+   SETTINGS, SEO, ANALYTICS & ROOMS API
+   ========================================================================== */
 
-export async function getShopOrdersAPI(shopId) {
+export async function getSettingsAPI() {
   try {
-    const res = await api.get(`/orders/shop/${shopId}`);
-    return res.data;
+    if (memoryCache.has('site_settings')) return memoryCache.get('site_settings');
+    const res = await api.get('/settings/public');
+    const data = res.data;
+    memoryCache.set('site_settings', data);
+    return data;
   } catch (e) {
-    return { success: false, data: [] };
-  }
-}
-
-export async function updateOrderStatusAPI(orderId, status) {
-  try {
-    const res = await api.patch(`/orders/${orderId}/status`, { status }); // Standardized PATCH for partial updates
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function getAllRefundsAPI() {
-  try {
-    const res = await api.get('/refunds');
-    return res.data;
-  } catch (e) {
-    return { success: false, data: [] };
-  }
-}
-
-export async function updateRefundStatusAPI(id, status) {
-  try {
-    const res = await api.patch(`/refunds/${id}`, { status });
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function getAllAppointmentsAPI() {
-  try {
-    const res = await api.get('/appointments');
-    return res.data;
-  } catch (e) {
-    return { success: false, data: [] }
-  }
-}
-
-export async function deleteAppointmentAPI(id) {
-  try {
-    const res = await api.delete(`/appointments/${id}`);
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function confirmAppointmentAPI(id) {
-  try {
-    const res = await api.put(`/appointments/${id}/confirm`);
-    return res.data;
-  } catch (e) {
-    throw e;
+    return { success: false, data: {} };
   }
 }
 
@@ -338,121 +510,8 @@ export async function updateGlobalSeoAPI(payload) {
   }
 }
 
-export async function getAllCouponsAPI() {
-  try {
-    const res = await api.get('/coupons');
-    return res.data;
-  } catch (e) {
-    return { success: false, data: [] }
-  }
-}
-
-export async function deleteCategoryAPI(id) {
-  try {
-    // ✅ Standardized REST path to match backend router and resolve 404 error
-    const res = await api.delete(`/categories/${id}`);
-    memoryCache.delete('active_categories'); // ✅ कैटेगरी डिलीट होने पर कैशे साफ़ करें
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function updateCategoryAPI(id, categoryData) {
-  try {
-    const res = await api.put(`/categories/${id}`, categoryData);
-    memoryCache.delete('active_categories'); // कैशे साफ़ करें ताकि फ्रंटएंड पर नया डेटा दिखे
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function createCategoryAPI(categoryData) {
-  try {
-    // Ensure we use the exact route defined in category.routes.js
-    const res = await api.post('/categories/create', categoryData);
-    memoryCache.delete('active_categories'); // ✅ नई कैटेगरी बनने पर कैशे साफ़ करें
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function verifyOTPAPI(email, otp) {
-  try {
-    // Send both email and otp as an object
-    const res = await api.post('/auth/verify-otp', { email, otp });
-    return res.data;
-  } catch (e) {
-    throw e; // ✅ Error ko throw karein
-  }
-}
-
-export async function loginAPI(emailOrData, password) {
-  const payload = typeof emailOrData === 'string' ? { email: emailOrData, password } : emailOrData;
-  try {
-    const res = await api.post('/auth/login', payload);
-    return res.data;
-  } catch (e) {
-    // ✅ Re-throw error so caller's catch block can inspect e.response
-    throw e;
-  }
-}
-
-export async function signupAPI(userData) {
-  try {
-    // Backend standard convention 'register' use karta hai
-    const res = await api.post('/auth/register', userData);
-    return res.data;
-  } catch (e) {
-    throw e; // ✅ Error ko throw karein taaki calling component ka catch block use handle kar sake
-  }
-}
-
-export async function forgotPasswordAPI(data) {
-  try {
-    const payload = typeof data === 'string' ? { email: data } : data;
-    const res = await api.post('/auth/forgot-password', payload);
-    return res.data;
-  } catch (e) {
-    throw e; // ✅ Error ko throw karein
-  }
-}
-
-export async function resetPasswordAPI(data) {
-  try {
-    const payload = typeof data === 'object' && data !== null ? data : {};
-    const res = await api.post('/auth/reset-password', payload);
-    return res.data;
-  } catch (e) {
-    throw e; // ✅ Error ko throw karein
-  }
-}
-
-export async function deleteProductAPI(id) {
-  try {
-    // ✅ Standardized REST path: /api/products/:id
-    const res = await api.delete(`/products/${id}`);
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function updateProductAPI(id, formData) {
-  try {
-    // ✅ Standardized REST path: /api/products/:id
-    const res = await api.put(`/products/${id}`, formData);
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
 export async function getAnalyticsSummaryAPI() {
   try {
-    // ✅ Match analytics.route.js
     const res = await api.get('/analytics/summary');
     return res.data;
   } catch (e) {
@@ -462,8 +521,7 @@ export async function getAnalyticsSummaryAPI() {
 
 export async function getAdminStatsAPI() {
   try {
-    // ✅ Match analytics.route.js (Dashboard usually needs the summary)
-    const res = await api.get('/analytics/summary'); 
+    const res = await api.get('/analytics/summary');
     return res.data;
   } catch (e) {
     throw e;
@@ -473,7 +531,7 @@ export async function getAdminStatsAPI() {
 export async function getAllRoomsAPI() {
   try {
     if (memoryCache.has('all_rooms')) return memoryCache.get('all_rooms');
-    const res = await api.get('/rooms'); 
+    const res = await api.get('/rooms');
     const data = res.data;
     memoryCache.set('all_rooms', data);
     return data;
@@ -484,18 +542,8 @@ export async function getAllRoomsAPI() {
 
 export async function createRoomAPI(roomData) {
   try {
-    const res = await api.post('/rooms/create', roomData); 
-    memoryCache.delete('all_rooms'); // ✅ नया रूम बनाने के बाद कैशे क्लियर करें
-    return res.data;
-  } catch (e) {
-    throw e;
-  }
-}
-
-export async function deleteRoomAPI(id) {
-  try {
-    const res = await api.delete(`/rooms/${id}`); 
-    memoryCache.delete('all_rooms'); // ✅ रूम डिलीट करने के बाद कैशे क्लियर करें
+    const res = await api.post('/rooms/create', roomData);
+    memoryCache.delete('all_rooms');
     return res.data;
   } catch (e) {
     throw e;
@@ -505,6 +553,16 @@ export async function deleteRoomAPI(id) {
 export async function updateRoomAPI(id, roomData) {
   try {
     const res = await api.put(`/rooms/${id}`, roomData);
+    memoryCache.delete('all_rooms');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function deleteRoomAPI(id) {
+  try {
+    const res = await api.delete(`/rooms/${id}`);
     memoryCache.delete('all_rooms');
     return res.data;
   } catch (e) {

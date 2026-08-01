@@ -1,3 +1,5 @@
+// server/index.js
+
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -97,7 +99,7 @@ apiRouter.use("/coupons", couponRouter);
 apiRouter.use("/shops", shopsRouter);
 apiRouter.use("/appointments", appointmentRouter);
 
-// ✅ behavioralTrackingRouter ko PEHLE mount kiya gaya hai, fir analyticsRouter ko
+// behavioralTrackingRouter ko PEHLE mount kiya gaya hai, fir analyticsRouter ko
 apiRouter.use("/analytics", behavioralTrackingRouter);
 apiRouter.use("/analytics", analyticsRouter);
 
@@ -125,7 +127,7 @@ app.get('/ping', (req, res) => {
     return res.status(200).json({ success: true, message: 'pong' });
 });
 
-// Serve dynamic sitemap at site root so Search Console sees all product/category URLs
+// Dynamic Sitemap Endpoint (Serve XML at Root URL for Search Engines)
 app.get('/sitemap.xml', async (req, res) => {
     try {
         const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
@@ -222,7 +224,7 @@ const pingHealthEndpoint = async () => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server is running on port ${PORT}`);
     
-    // ✅ Initialize Dynamic Payment Gateways Listener on Server Startup
+    // Initialize Dynamic Payment Gateways Listener on Server Startup
     try {
         initPaymentGatewaySync();
         console.log('⚡ Dynamic Payment Gateway listener initialized');

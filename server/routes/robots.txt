@@ -1,8 +1,8 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
-Disallow: /api/
-Disallow: /temp/
+Disallow: /account/
+Disallow: /checkout
+Disallow: /payment
 
-# Sitemap location
 Sitemap: https://www.aaramdehi.co.in/sitemap.xml

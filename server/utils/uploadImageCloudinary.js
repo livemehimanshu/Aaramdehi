@@ -29,35 +29,41 @@ export const uploadImageCloudinary = async (fileBuffer, folderName = "Aaramdehi_
 
         const uploadOptions = {
             folder: folderName,
-            resource_type: "auto",
+            resource_type: "auto", // 👈 Automatic Image / Video detection
             ...options
         };
 
         const { noTransformation, ...cloudinaryOptions } = uploadOptions;
 
+        // ✅ FIX: Image transformation tabhi apply hogi jab explicitly request ki gayi ho aur file video na ho
         if (!Object.prototype.hasOwnProperty.call(uploadOptions, 'transformation') && !noTransformation) {
-            cloudinaryOptions.transformation = [
-                { width: 800, crop: "limit" },
-                { quality: "auto" },
-                { fetch_format: "auto" }
-            ];
+            // Agar options mein explicitly video specify na kiya ho, tabhi image transformations add hongi
+            if (uploadOptions.resource_type !== "video") {
+                cloudinaryOptions.transformation = [
+                    { width: 800, crop: "limit" },
+                    { quality: "auto" },
+                    { fetch_format: "auto" }
+                ];
+            }
         }
 
         const uploadResponse = await new Promise((resolve, reject) => {
+            // ✅ FIX: `uploadOptions` ki bajaye cleaned `cloudinaryOptions` pass kiya gaya hai
             const uploadStream = cloudinary.uploader.upload_stream(
-                uploadOptions,
+                cloudinaryOptions,
                 (error, result) => {
                     if (error) return reject(error);
                     resolve(result);
                 }
             );
-            uploadStream.end(fileBuffer); // Buffer yahan end hota hai
+            uploadStream.end(fileBuffer);
         });
 
         return {
             success: true,
             url: uploadResponse.secure_url,
-            public_id: uploadResponse.public_id
+            public_id: uploadResponse.public_id,
+            resource_type: uploadResponse.resource_type // 👈 Returns "image" or "video"
         };
 
     } catch (error) {

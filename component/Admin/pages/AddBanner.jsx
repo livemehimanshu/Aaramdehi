@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, X, Loader2, CheckCircle, AlertCircle, Image as ImageIcon, Layout } from 'lucide-react';
+import { Upload, X, Loader2, CheckCircle, AlertCircle, Layout, Video } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { createBannerAPI } from '../../../src/api/authAndAdminApi';
 
@@ -17,10 +17,11 @@ const BANNER_SECTIONS = [
 const AddBanner = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [imageProcessing, setImageProcessing] = useState(false);
+    const [mediaProcessing, setMediaProcessing] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
     const [preview, setPreview] = useState(null);
-    const [imageFile, setImageFile] = useState(null);
+    const [mediaFile, setMediaFile] = useState(null);
+    const [mediaType, setMediaType] = useState('image'); // 'image' or 'video'
 
     const [formData, setFormData] = useState({
         title: '',
@@ -35,24 +36,37 @@ const AddBanner = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleImageChange = async (e) => {
+    const handleMediaChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setImageProcessing(true);
+        setMediaProcessing(true);
         setMessage({ type: '', text: '' });
+
+        const isVideo = file.type.startsWith('video/');
+
         try {
-            // Use same settings as product upload for consistency
-            const compressedFile = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1920 });
-            const webpFile = await convertToWebP(compressedFile);
-            
-            setPreview(URL.createObjectURL(webpFile));
-            setImageFile(webpFile);
-            setMessage({ type: 'success', text: 'Image processed successfully ✓' });
+            if (isVideo) {
+                // If video, skip image compression and webp conversion
+                setMediaType('video');
+                setPreview(URL.createObjectURL(file));
+                setMediaFile(file);
+                setMessage({ type: 'success', text: 'Video processed successfully ✓' });
+            } else {
+                // If image, compress and convert to WebP
+                setMediaType('image');
+                const compressedFile = await imageCompression(file, { maxSizeMB: 0.8, maxWidthOrHeight: 1920 });
+                const webpFile = await convertToWebP(compressedFile);
+                
+                setPreview(URL.createObjectURL(webpFile));
+                setMediaFile(webpFile);
+                setMessage({ type: 'success', text: 'Image processed successfully ✓' });
+            }
         } catch (err) {
-            setMessage({ type: 'error', text: 'Image processing failed' });
+            console.error("Media processing error:", err);
+            setMessage({ type: 'error', text: 'Media processing failed' });
         } finally {
-            setImageProcessing(false);
+            setMediaProcessing(false);
         }
     };
 
@@ -82,7 +96,7 @@ const AddBanner = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!imageFile) return setMessage({ type: 'error', text: 'Banner image is required!' });
+        if (!mediaFile) return setMessage({ type: 'error', text: 'Banner image or video is required!' });
         if (!formData.category) return setMessage({ type: 'error', text: 'Please select a placement section!' });
 
         setLoading(true);
@@ -91,13 +105,13 @@ const AddBanner = () => {
         try {
             const data = new FormData();
             
-            if (imageProcessing) return setMessage({ type: 'error', text: 'Please wait, image is still processing...' });
+            if (mediaProcessing) return setMessage({ type: 'error', text: 'Please wait, media is still processing...' });
 
             // Debugging log to verify file
             console.log("📤 Uploading Banner:", {
-                name: imageFile.name,
-                size: (imageFile.size / 1024).toFixed(2) + " KB",
-                type: imageFile.type
+                name: mediaFile.name,
+                size: (mediaFile.size / (1024 * 1024)).toFixed(2) + " MB",
+                type: mediaFile.type
             });
 
             data.append('title', formData.title);
@@ -105,7 +119,8 @@ const AddBanner = () => {
             data.append('category', formData.category);
             data.append('description', formData.description);
             data.append('position', Number(formData.position));
-            data.append('image', imageFile);
+            data.append('image', mediaFile); // Backend uses req.file ("image")
+            data.append('mediaType', mediaType);
 
             const response = await createBannerAPI(data);
 
@@ -136,7 +151,7 @@ const AddBanner = () => {
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2 uppercase tracking-tight">
                         <Layout className="text-blue-500" /> Add New Banner
                     </h1>
-                    <p className="text-slate-400 text-xs mt-1">Create promotional sliders for your homepage</p>
+                    <p className="text-slate-400 text-xs mt-1">Create promotional image/video sliders for your homepage</p>
                 </div>
 
                 {message.text && (
@@ -228,37 +243,63 @@ const AddBanner = () => {
                         </div>
                     </div>
 
-                    {/* Image Upload Area */}
+                    {/* Media Upload Area (Image/Video) */}
                     <div className="space-y-2">
-                        <label className="text-xs font-black uppercase text-slate-500">Banner Image</label>
+                        <label className="text-xs font-black uppercase text-slate-500">Banner Media (Image / Video)</label>
                         <div className={`relative border-2 border-dashed rounded-2xl transition-all ${
                             preview ? 'border-blue-500/50 bg-blue-500/5' : 'border-gray-800 hover:border-gray-700 bg-gray-950'
                         }`}>
                             <input 
-                                type="file" accept="image/*" 
-                                onChange={handleImageChange}
+                                type="file" 
+                                accept="image/*,video/*" 
+                                onChange={handleMediaChange}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             />
                             
                             {preview ? (
                                 <div className="p-4 relative">
-                                    <img src={preview} alt="Preview" className="w-full h-48 object-cover rounded-xl border border-gray-800" />
+                                    {mediaType === 'video' ? (
+                                        <video 
+                                            src={preview} 
+                                            controls 
+                                            autoPlay 
+                                            muted 
+                                            loop 
+                                            className="w-full h-48 object-cover rounded-xl border border-gray-800"
+                                        />
+                                    ) : (
+                                        <img 
+                                            src={preview} 
+                                            alt="Preview" 
+                                            className="w-full h-48 object-cover rounded-xl border border-gray-800" 
+                                        />
+                                    )}
                                     <button 
-                                        type="button" onClick={() => {setPreview(null); setImageFile(null);}}
+                                        type="button" 
+                                        onClick={() => { setPreview(null); setMediaFile(null); setMediaType('image'); }}
                                         className="absolute top-6 right-6 p-2 bg-rose-600 rounded-full text-white shadow-xl hover:bg-rose-500 transition-all z-20"
                                     >
                                         <X size={16} />
                                     </button>
-                                    {imageProcessing && <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center"><Loader2 className="animate-spin text-white" /></div>}
+                                    {mediaProcessing && (
+                                        <div className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center">
+                                            <Loader2 className="animate-spin text-white" />
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="py-12 flex flex-col items-center justify-center gap-3">
-                                    <div className="p-4 bg-gray-900 rounded-full text-blue-500">
-                                        <Upload size={32} />
+                                    <div className="p-4 bg-gray-900 rounded-full text-blue-500 flex gap-2">
+                                        <Upload size={28} />
+                                        <Video size={28} />
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-sm font-bold text-gray-300">{imageProcessing ? 'Processing...' : 'Click to upload banner'}</p>
-                                        <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest">Recommended: 1920x600px (JPG/PNG/WEBP)</p>
+                                        <p className="text-sm font-bold text-gray-300">
+                                            {mediaProcessing ? 'Processing...' : 'Click or drag file to upload banner'}
+                                        </p>
+                                        <p className="text-[10px] text-slate-500 mt-1 uppercase tracking-widest">
+                                            Supported: Images (JPG, PNG, WEBP) & Videos (MP4, WEBM, MOV) | Max size: 50MB
+                                        </p>
                                     </div>
                                 </div>
                             )}
@@ -268,10 +309,10 @@ const AddBanner = () => {
                     {/* Action Buttons */}
                     <div className="flex gap-4 pt-4">
                         <button 
-                            type="submit" disabled={loading || imageProcessing}
+                            type="submit" disabled={loading || mediaProcessing}
                             className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
                         >
-                            {loading ? <Loader2 className="animate-spin" size={18} /> : imageProcessing ? 'Processing Image...' : 'Save Banner'}
+                            {loading ? <Loader2 className="animate-spin" size={18} /> : mediaProcessing ? 'Processing File...' : 'Save Banner'}
                         </button>
                         <button type="button" onClick={() => navigate('/admin/banners')} className="px-8 py-4 border border-gray-800 rounded-xl font-black uppercase text-xs text-slate-400 hover:bg-gray-800 transition-all">Cancel</button>
                     </div>

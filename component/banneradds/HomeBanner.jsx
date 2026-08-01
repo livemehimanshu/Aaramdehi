@@ -17,6 +17,14 @@ const normalizeBannerLink = (link) => {
 
 const isExternalLink = (link) => /^(https?:\/\/|mailto:|tel:)/i.test(link);
 
+// Helper function to check if the media URL or object is a video
+const checkIsVideo = (banner) => {
+    if (banner?.mediaType === 'video') return true;
+    const url = banner?.mediaUrl || banner?.image || '';
+    if (typeof url !== 'string') return false;
+    return url.includes('/video/upload/') || /\.(mp4|webm|mkv|mov|avi)($|\?)/i.test(url);
+};
+
 const DEFAULT_HERO = [
   {
     _id: 'default-hero-1',
@@ -24,7 +32,8 @@ const DEFAULT_HERO = [
     description: 'Explore curated beds, sofas, and home decor designed for luxury and everyday living.',
     image: 'https://images.unsplash.com/photo-1584100936595-c0654b55a2e6?auto=format&fit=crop&q=80&w=1200',
     link: '/products',
-    category: 'hero'
+    category: 'hero',
+    mediaType: 'image'
   }
 ];
 
@@ -83,7 +92,7 @@ const HomeBanner = ({ section = 'hero' }) => {
                 modules={[Navigation, Autoplay, Pagination]}
                 navigation={true}
                 pagination={{ clickable: true }}
-                autoplay={{ delay: 5000 }}
+                autoplay={{ delay: 5000, disableOnInteraction: false }}
                 loop={banners.length > 1}
                 className="rounded-2xl overflow-hidden shadow-lg border border-gray-100"
             >
@@ -93,8 +102,11 @@ const HomeBanner = ({ section = 'hero' }) => {
                     const Wrapper = external ? 'a' : Link;
                     const wrapperProps = external ? { href: bannerUrl, target: '_blank', rel: 'noreferrer' } : { to: bannerUrl };
                     const isFirst = index === 0 && section === 'hero';
+                    const isVideo = checkIsVideo(banner);
+                    const mediaSrc = banner.mediaUrl || banner.image || PLACEHOLDER;
+
                     return (
-                        <SwiperSlide key={banner._id}>
+                        <SwiperSlide key={banner._id || index}>
                             <Wrapper {...wrapperProps} className="block">
                                 <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-4 md:p-6 xl:p-8 rounded-[28px] shadow-xl">
                                     <div className="space-y-5">
@@ -123,17 +135,28 @@ const HomeBanner = ({ section = 'hero' }) => {
                                     </div>
 
                                     <div className="relative overflow-hidden rounded-[24px] bg-slate-100 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]">
-                                        <img
-                                            {...getResponsiveImageAttributes(banner.image || PLACEHOLDER, [500, 800, 1200], "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 1200px")}
-                                            alt={banner.title}
-                                            width="1200"
-                                            height="420"
-                                            loading={isFirst ? "eager" : "lazy"}
-                                            fetchPriority={isFirst ? "high" : "auto"}
-                                            decoding="async"
-                                            className="h-full w-full object-contain"
-                                            onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; e.target.srcset = ''; }}
-                                        />
+                                        {isVideo ? (
+                                            <video
+                                                src={mediaSrc}
+                                                autoPlay
+                                                muted
+                                                loop
+                                                playsInline
+                                                className="h-full w-full object-cover"
+                                            />
+                                        ) : (
+                                            <img
+                                                {...getResponsiveImageAttributes(mediaSrc, [500, 800, 1200], "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 1200px")}
+                                                alt={banner.title || 'Banner'}
+                                                width="1200"
+                                                height="420"
+                                                loading={isFirst ? "eager" : "lazy"}
+                                                fetchPriority={isFirst ? "high" : "auto"}
+                                                decoding="async"
+                                                className="h-full w-full object-contain"
+                                                onError={(e) => { e.target.onerror = null; e.target.src = PLACEHOLDER; e.target.srcset = ''; }}
+                                            />
+                                        )}
                                     </div>
                                 </div>
                             </Wrapper>

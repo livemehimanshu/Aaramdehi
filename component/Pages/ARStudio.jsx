@@ -80,6 +80,42 @@ const ARStudio = () => {
   const voiceBadgeTimerRef = useRef({ hide: null, clear: null });
   const recognitionRef = useRef(null);
 
+  // --- FIX: Native Event Listener Attachment for <model-viewer> ---
+  useEffect(() => {
+    const viewerElement = modelViewerRef.current;
+    if (!viewerElement) return;
+
+    const handleLoad = () => {
+      console.log('Native DOM Event: 3D Model Loaded Successfully!');
+      setIsModelLoaded(true);
+      setModelError(false);
+    };
+
+    const handleError = (event) => {
+      console.error('Native DOM Event: 3D Model Error', event);
+      setModelError(true);
+      setIsModelLoaded(true); // Stop spinner to show error
+    };
+
+    // Attach native DOM listeners directly to the custom element
+    viewerElement.addEventListener('load', handleLoad);
+    viewerElement.addEventListener('error', handleError);
+
+    // Fallback safety timeout (if network stalls without error)
+    const safetyTimer = setTimeout(() => {
+      if (!isModelLoaded && !modelError) {
+        console.warn('Model load timeout reached. Forcing visibility.');
+        setIsModelLoaded(true);
+      }
+    }, 12000);
+
+    return () => {
+      viewerElement.removeEventListener('load', handleLoad);
+      viewerElement.removeEventListener('error', handleError);
+      clearTimeout(safetyTimer);
+    };
+  }, [currentModel]);
+
   // --- Face Detection Functions ---
   const toggleFaceDetection = async () => {
     if (isFaceDetecting) {
@@ -758,7 +794,7 @@ const ARStudio = () => {
             <div className={`absolute inset-0 ${ambientFilterClass} pointer-events-none transition-colors duration-300 z-10`} />
 
             {/* Direct 3D Model Rendering Layer */}
-            <div className="absolute inset-0 w-full h-full z-30 flex items-center justify-center pointer-events-auto">
+            <div className="absolute inset-0 w-full h-full z-30 flex items-center justify-center">
               {currentModel ? (
                 <model-viewer
                   key={currentModel}
@@ -776,27 +812,11 @@ const ARStudio = () => {
                   shadow-intensity="1.5"
                   exposure="1.0"
                   interaction-prompt="none"
-                  onLoad={() => {
-                    console.log("3D Model successfully loaded!");
-                    setIsModelLoaded(true);
-                    setModelError(false);
-                    setAiStatus(`Rendered 3D Model: ${selectedProduct?.name || 'Product'}`);
-                  }}
-                  onError={(err) => {
-                    console.error('Model Viewer Load Error:', err);
-                    setModelError(true);
-                    setIsModelLoaded(true); // Stop spinner to show error
-                    setAiStatus('3D Model failed to load (Check CORS / .glb URL)');
-                  }}
                   style={{
                     width: '100%',
                     height: '100%',
-                    minHeight: '350px',
-                    opacity: isModelLoaded ? 1 : 0,
-                    visibility: isModelLoaded ? 'visible' : 'hidden',
-                    transition: 'opacity 0.3s ease-in-out',
                     backgroundColor: 'transparent',
-                    '--poster-color': 'transparent'
+                    display: 'block'
                   }}
                 />
               ) : (
@@ -808,9 +828,9 @@ const ARStudio = () => {
                 </div>
               )}
 
-              {/* Solid Loading Overlay */}
+              {/* Loading Overlay */}
               {currentModel && !isModelLoaded && !modelError && (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-40">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/80 z-40 pointer-events-none">
                   <div className="flex items-center gap-3 bg-slate-900 border border-white/10 px-4 py-3 rounded-xl shadow-xl">
                     <div className="h-4 w-4 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
                     <span className="text-xs font-bold text-white">Loading 3D Mesh...</span>
@@ -819,7 +839,7 @@ const ARStudio = () => {
                 </div>
               )}
 
-              {/* Error Indicator */}
+              {/* Error Overlay */}
               {modelError && (
                 <div className="absolute inset-x-4 top-4 flex justify-center pointer-events-none z-40">
                   <div className="flex items-center gap-2 bg-rose-500/20 border border-rose-500/40 px-4 py-2 rounded-xl text-rose-300 text-xs font-bold backdrop-blur-md">

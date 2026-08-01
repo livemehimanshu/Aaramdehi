@@ -1,8 +1,14 @@
 User-agent: *
 Allow: /
+Allow: /products/
+
+# Block Query parameters to prevent duplicate indexing issues in Search Console
+Disallow: /*?*
+Disallow: /*?
 Disallow: /admin/
 Disallow: /account/
 Disallow: /checkout
 Disallow: /payment
 
+# Dynamic Sitemap Reference
 Sitemap: https://www.aaramdehi.co.in/sitemap.xml

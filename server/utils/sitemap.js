@@ -14,9 +14,13 @@ const normalizeBaseUrl = (baseUrl) =>
 export const buildSitemapXml = ({ baseUrl, products = [], categories = [] }) => {
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
 
-  // 1. Primary Static Pages
+  // Normalize Firebase Array or Object responses safely
+  const prodList = Array.isArray(products) ? products : Object.values(products || {});
+  const catList = Array.isArray(categories) ? categories : Object.values(categories || {});
+
+  // 1. Primary Clean Static Pages (No trailing slashes or redirects)
   const staticPages = [
-    { path: '/', changefreq: 'daily', priority: '1.0' },
+    { path: '', changefreq: 'daily', priority: '1.0' },
     { path: '/products', changefreq: 'weekly', priority: '0.9' },
     { path: '/about-us', changefreq: 'monthly', priority: '0.8' },
     { path: '/contact-us', changefreq: 'monthly', priority: '0.7' },
@@ -36,12 +40,13 @@ export const buildSitemapXml = ({ baseUrl, products = [], categories = [] }) => 
     xml += `  </url>\n`;
   });
 
-  // 2. Append Dynamic Category URLs
-  categories.forEach((category) => {
-    const categorySlug = category?.slug || category?.name || category?._id;
+  // 2. Append Dynamic Category Pages (Only if custom category path exists)
+  catList.forEach((category) => {
+    const categorySlug = category?.slug || category?.id || category?._id;
     if (!categorySlug) return;
 
-    const categoryPath = `/products?category=${encodeURIComponent(String(categorySlug))}`;
+    // Direct clean path for categories to prevent canonical duplication
+    const categoryPath = `/category/${encodeURIComponent(String(categorySlug))}`;
     xml += `  <url>\n`;
     xml += `    <loc>${escapeXml(`${normalizedBaseUrl}${categoryPath}`)}</loc>\n`;
     xml += `    <changefreq>weekly</changefreq>\n`;
@@ -50,11 +55,11 @@ export const buildSitemapXml = ({ baseUrl, products = [], categories = [] }) => 
   });
 
   // 3. Append Dynamic Product URLs
-  products.forEach((product) => {
+  prodList.forEach((product) => {
     const productId = product?.slug || product?._id || product?.id;
     if (!productId) return;
 
-    const productPath = `/products/${encodeURIComponent(productId)}`;
+    const productPath = `/products/${encodeURIComponent(String(productId))}`;
     const lastmod = product?.updatedAt || product?.createdAt || new Date().toISOString();
 
     xml += `  <url>\n`;

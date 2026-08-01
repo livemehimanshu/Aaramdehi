@@ -17,7 +17,6 @@ const normalizeBannerLink = (link) => {
 
 const isExternalLink = (link) => /^(https?:\/\/|mailto:|tel:)/i.test(link);
 
-// Helper function to check if the media URL or object is a video
 const checkIsVideo = (banner) => {
     if (banner?.mediaType === 'video') return true;
     const url = banner?.mediaUrl || banner?.image || '';
@@ -37,10 +36,6 @@ const DEFAULT_HERO = [
   }
 ];
 
-/**
- * HomeBanner Component
- * @param {string} section - Kaunsa section dikhana hai (e.g. 'hero', 'promotional')
- */
 const HomeBanner = ({ section = 'hero' }) => {
     const [banners, setBanners] = useState(section === 'hero' ? DEFAULT_HERO : []);
     const [loading, setLoading] = useState(section === 'hero' ? false : true);
@@ -71,14 +66,14 @@ const HomeBanner = ({ section = 'hero' }) => {
     if (loading) {
         return (
             <div className={`w-full ${section === 'hero' ? 'mb-10' : 'my-8'} px-4 container mx-auto`}>
-                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-slate-50 p-6 md:p-8 rounded-[28px] border border-gray-100 animate-pulse min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
+                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-6 md:p-8 rounded-2xl border border-gray-100 animate-pulse min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
                     <div className="space-y-4">
                         <div className="h-6 w-24 bg-slate-200 rounded-full"></div>
                         <div className="h-10 w-3/4 bg-slate-200 rounded-xl"></div>
                         <div className="h-16 w-full bg-slate-200 rounded-xl"></div>
                         <div className="h-10 w-32 bg-slate-200 rounded-full"></div>
                     </div>
-                    <div className="w-full rounded-[24px] bg-slate-200 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]"></div>
+                    <div className="w-full rounded-xl bg-slate-200 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]"></div>
                 </div>
             </div>
         );
@@ -88,13 +83,18 @@ const HomeBanner = ({ section = 'hero' }) => {
 
     return (
         <div className={`w-full ${section === 'hero' ? 'mb-10' : 'my-8'} px-4 container mx-auto min-h-[300px] sm:min-h-[360px] md:min-h-[420px]`}>
+            {/* 
+              FIX APPLIED: 
+              - Removed extra roundness mismatches by synchronizing rounded classes to 'rounded-2xl'.
+              - Added 'bg-white' directly to Swiper and wrapper so corners are clean and filled.
+            */}
             <Swiper
                 modules={[Navigation, Autoplay, Pagination]}
                 navigation={true}
                 pagination={{ clickable: true }}
                 autoplay={{ delay: 5000, disableOnInteraction: false }}
                 loop={banners.length > 1}
-                className="rounded-2xl overflow-hidden shadow-lg border border-gray-100"
+                className="rounded-2xl overflow-hidden shadow-lg border border-gray-100 bg-white"
             >
                 {banners.map((banner, index) => {
                     const bannerUrl = normalizeBannerLink(banner.link);
@@ -107,8 +107,8 @@ const HomeBanner = ({ section = 'hero' }) => {
 
                     return (
                         <SwiperSlide key={banner._id || index}>
-                            <Wrapper {...wrapperProps} className="block">
-                                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-4 md:p-6 xl:p-8 rounded-[28px] shadow-xl">
+                            <Wrapper {...wrapperProps} className="block w-full bg-white">
+                                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-4 md:p-6 xl:p-8">
                                     <div className="space-y-5">
                                         {banner.category?.toLowerCase() !== 'hero' && (
                                             <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
@@ -134,7 +134,7 @@ const HomeBanner = ({ section = 'hero' }) => {
                                         </span>
                                     </div>
 
-                                    <div className="relative overflow-hidden rounded-[24px] bg-slate-100 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]">
+                                    <div className="relative overflow-hidden rounded-xl bg-slate-100 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]">
                                         {isVideo ? (
                                             <video
                                                 src={mediaSrc}

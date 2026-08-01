@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Autoplay, Pagination } from 'swiper/modules';
 import { getActiveBannersAPI } from '../../src/api/authAndAdminApi';
-import { optimizeImage, getResponsiveImageAttributes } from '../../src/utils/imageOptimizer';
+import { getResponsiveImageAttributes } from '../../src/utils/imageOptimizer';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
@@ -42,6 +42,10 @@ const HomeBanner = ({ section = 'hero' }) => {
     const PLACEHOLDER = 'https://placehold.co/1200x400?text=Banner';
     const swiperStyles = ".swiper-button-next, .swiper-button-prev { color: #fff !important; } .swiper-pagination-bullet-active { background: #dc2626 !important; }";
 
+    // SIRF 'category' section ke liye compact height apply hogi.
+    // 'hero' aur 'promotional' (ya koi bhi aur banner) pehle ki tarah hi rahenge.
+    const isCategory = section.toLowerCase() === 'category';
+
     useEffect(() => {
         const fetchBanners = async () => {
             try {
@@ -65,15 +69,14 @@ const HomeBanner = ({ section = 'hero' }) => {
 
     if (loading) {
         return (
-            <div className={`w-full ${section === 'hero' ? 'mb-10' : 'my-8'} px-4 container mx-auto`}>
-                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-6 md:p-8 rounded-2xl border border-gray-100 animate-pulse min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
-                    <div className="space-y-4">
-                        <div className="h-6 w-24 bg-slate-200 rounded-full"></div>
-                        <div className="h-10 w-3/4 bg-slate-200 rounded-xl"></div>
-                        <div className="h-16 w-full bg-slate-200 rounded-xl"></div>
-                        <div className="h-10 w-32 bg-slate-200 rounded-full"></div>
+            <div className={`w-full ${isCategory ? 'my-3' : 'mb-10'} px-4 container mx-auto`}>
+                <div className={`grid gap-4 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white ${isCategory ? 'p-3 md:p-4 min-h-[160px]' : 'p-6 md:p-8 min-h-[300px] sm:min-h-[360px] md:min-h-[420px]'} rounded-2xl border border-gray-100 animate-pulse`}>
+                    <div className="space-y-2">
+                        <div className="h-4 w-20 bg-slate-200 rounded-full"></div>
+                        <div className="h-6 w-3/4 bg-slate-200 rounded-xl"></div>
+                        <div className="h-8 w-full bg-slate-200 rounded-xl"></div>
                     </div>
-                    <div className="w-full rounded-xl bg-slate-200 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]"></div>
+                    <div className={`w-full rounded-xl bg-slate-200 ${isCategory ? 'h-[140px] md:h-[180px]' : 'h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]'}`}></div>
                 </div>
             </div>
         );
@@ -82,12 +85,7 @@ const HomeBanner = ({ section = 'hero' }) => {
     if (banners.length === 0) return null;
 
     return (
-        <div className={`w-full ${section === 'hero' ? 'mb-10' : 'my-8'} px-4 container mx-auto min-h-[300px] sm:min-h-[360px] md:min-h-[420px]`}>
-            {/* 
-              FIX APPLIED: 
-              - Removed extra roundness mismatches by synchronizing rounded classes to 'rounded-2xl'.
-              - Added 'bg-white' directly to Swiper and wrapper so corners are clean and filled.
-            */}
+        <div className={`w-full ${isCategory ? 'my-3' : 'mb-10'} px-4 container mx-auto`}>
             <Swiper
                 modules={[Navigation, Autoplay, Pagination]}
                 navigation={true}
@@ -108,33 +106,34 @@ const HomeBanner = ({ section = 'hero' }) => {
                     return (
                         <SwiperSlide key={banner._id || index}>
                             <Wrapper {...wrapperProps} className="block w-full bg-white">
-                                <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white p-4 md:p-6 xl:p-8">
-                                    <div className="space-y-5">
+                                <div className={`grid gap-4 lg:grid-cols-[0.95fr_1.05fr] items-center bg-white ${isCategory ? 'p-3 md:p-4 lg:p-5' : 'p-4 md:p-6 xl:p-8'}`}>
+                                    <div className={isCategory ? 'space-y-2' : 'space-y-5'}>
                                         {banner.category?.toLowerCase() !== 'hero' && (
-                                            <span className="inline-flex rounded-full bg-emerald-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700">
+                                            <span className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
                                                 {banner.category || 'Featured'}
                                             </span>
                                         )}
-                                        <h2 className="text-3xl font-black text-slate-900 sm:text-4xl lg:text-5xl">
+                                        <h2 className={`font-black text-slate-900 ${isCategory ? 'text-lg sm:text-xl lg:text-2xl' : 'text-3xl sm:text-4xl lg:text-5xl'}`}>
                                             {banner.title || 'Shop the latest collection'}
                                         </h2>
-                                        <p className="max-w-xl text-sm text-slate-600 sm:text-base">
-                                            {banner.description || 'Discover curated offers and polished banner placements designed to match your brand theme seamlessly.'}
+                                        <p className={`max-w-xl text-slate-600 line-clamp-2 ${isCategory ? 'text-xs sm:text-sm' : 'text-sm sm:text-base'}`}>
+                                            {banner.description || 'Discover curated offers and polished banner placements.'}
                                         </p>
-                                        <div className="flex flex-wrap gap-3">
-                                            <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+                                        <div className="flex flex-wrap gap-2">
+                                            <span className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                                                 Fresh arrivals
                                             </span>
-                                            <span className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+                                            <span className="rounded-xl bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                                                 On-trend deals
                                             </span>
                                         </div>
-                                        <span className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                                        <span className={`inline-flex items-center justify-center rounded-full bg-emerald-600 text-white font-semibold transition hover:bg-emerald-700 ${isCategory ? 'px-4 py-1.5 text-xs' : 'px-6 py-3 text-sm'}`}>
                                             Explore now
                                         </span>
                                     </div>
 
-                                    <div className="relative overflow-hidden rounded-xl bg-slate-100 h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]">
+                                    {/* Image/Video Container - Height condition specific to section='category' */}
+                                    <div className={`relative overflow-hidden rounded-xl bg-slate-100 ${isCategory ? 'h-[140px] sm:h-[160px] md:h-[180px] lg:h-[200px]' : 'h-[260px] sm:h-[320px] md:h-[360px] lg:h-[420px]'}`}>
                                         {isVideo ? (
                                             <video
                                                 src={mediaSrc}
@@ -149,7 +148,7 @@ const HomeBanner = ({ section = 'hero' }) => {
                                                 {...getResponsiveImageAttributes(mediaSrc, [500, 800, 1200], "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 1200px")}
                                                 alt={banner.title || 'Banner'}
                                                 width="1200"
-                                                height="420"
+                                                height={isCategory ? "200" : "420"}
                                                 loading={isFirst ? "eager" : "lazy"}
                                                 fetchPriority={isFirst ? "high" : "auto"}
                                                 decoding="async"

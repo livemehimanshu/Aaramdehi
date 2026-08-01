@@ -761,6 +761,7 @@ const ARStudio = () => {
             <div className="absolute inset-0 w-full h-full z-30 flex items-center justify-center pointer-events-auto">
               {currentModel ? (
                 <model-viewer
+                  key={currentModel} // Re-creates element on model change
                   ref={modelViewerRef}
                   src={currentModel}
                   ios-src={selectedProduct?.usdzUrl || selectedProduct?.usdz || ''}
@@ -789,7 +790,7 @@ const ARStudio = () => {
                     width: '100%',
                     height: '100%',
                     minHeight: '350px',
-                    display: 'block',
+                    display: isModelLoaded ? 'block' : 'none', // Hides canvas until loaded
                     backgroundColor: 'transparent',
                     '--poster-color': 'transparent'
                   }}
@@ -803,9 +804,9 @@ const ARStudio = () => {
                 </div>
               )}
 
-              {/* Loading Indicator */}
+              {/* Solid Background Loading Overlay (Hides model behind until ready) */}
               {currentModel && !isModelLoaded && !modelError && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm pointer-events-none z-40">
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 backdrop-blur-md pointer-events-none z-40">
                   <div className="flex items-center gap-3 bg-slate-900 border border-white/10 px-4 py-3 rounded-xl shadow-xl">
                     <div className="h-4 w-4 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
                     <span className="text-xs font-bold text-white">Loading 3D Mesh...</span>

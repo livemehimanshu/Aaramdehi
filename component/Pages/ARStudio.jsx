@@ -761,7 +761,7 @@ const ARStudio = () => {
             <div className="absolute inset-0 w-full h-full z-30 flex items-center justify-center pointer-events-auto">
               {currentModel ? (
                 <model-viewer
-                  key={currentModel} // Re-creates element on model change
+                  key={currentModel}
                   ref={modelViewerRef}
                   src={currentModel}
                   ios-src={selectedProduct?.usdzUrl || selectedProduct?.usdz || ''}
@@ -777,6 +777,7 @@ const ARStudio = () => {
                   exposure="1.0"
                   interaction-prompt="none"
                   onLoad={() => {
+                    console.log("3D Model successfully loaded!");
                     setIsModelLoaded(true);
                     setModelError(false);
                     setAiStatus(`Rendered 3D Model: ${selectedProduct?.name || 'Product'}`);
@@ -784,13 +785,16 @@ const ARStudio = () => {
                   onError={(err) => {
                     console.error('Model Viewer Load Error:', err);
                     setModelError(true);
+                    setIsModelLoaded(true); // Stop spinner to show error
                     setAiStatus('3D Model failed to load (Check CORS / .glb URL)');
                   }}
                   style={{
                     width: '100%',
                     height: '100%',
                     minHeight: '350px',
-                    display: isModelLoaded ? 'block' : 'none', // Hides canvas until loaded
+                    opacity: isModelLoaded ? 1 : 0,
+                    visibility: isModelLoaded ? 'visible' : 'hidden',
+                    transition: 'opacity 0.3s ease-in-out',
                     backgroundColor: 'transparent',
                     '--poster-color': 'transparent'
                   }}
@@ -804,13 +808,14 @@ const ARStudio = () => {
                 </div>
               )}
 
-              {/* Solid Background Loading Overlay (Hides model behind until ready) */}
+              {/* Solid Loading Overlay */}
               {currentModel && !isModelLoaded && !modelError && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/80 backdrop-blur-md pointer-events-none z-40">
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 z-40">
                   <div className="flex items-center gap-3 bg-slate-900 border border-white/10 px-4 py-3 rounded-xl shadow-xl">
                     <div className="h-4 w-4 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin" />
                     <span className="text-xs font-bold text-white">Loading 3D Mesh...</span>
                   </div>
+                  <p className="text-[10px] text-slate-400 mt-2 truncate max-w-xs">{currentModel}</p>
                 </div>
               )}
 

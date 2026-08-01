@@ -53,6 +53,18 @@ const app = express();
 
 app.set('trust proxy', 1);
 
+// ==========================================
+// 1. SEO FIX: Force WWW & HTTPS 301 Redirects
+// ==========================================
+app.use((req, res, next) => {
+    const host = req.headers.host;
+    // Check if domain is non-www in production
+    if (process.env.NODE_ENV === 'production' && host === 'aaramdehi.co.in') {
+        return res.redirect(301, `https://www.aaramdehi.co.in${req.url}`);
+    }
+    next();
+});
+
 const allowedCorsOrigins = [
     'https://www.aaramdehi.co.in',
     'https://aaramdehi.co.in',
@@ -143,8 +155,19 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 });
 
+// ==========================================
+// 2. SEO FIX: 301 Redirects for Known Broken / 404 URLs
+// ==========================================
+// Yahan aap purane deleted/broken URLs ko active pages par redirect kar sakte hain:
+app.get('/old-product-url', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/products');
+});
+
 app.get("/", (req, res) => res.json({ message: "Server is Active" }));
 
+// ==========================================
+// 3. SEO FIX: Clean 404 Response
+// ==========================================
 app.use((req, res) => {
     res.status(404).json({ success: false, message: "Route not found" });
 });

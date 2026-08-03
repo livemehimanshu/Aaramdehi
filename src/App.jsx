@@ -1,5 +1,5 @@
 import './App.css'
-import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { HelmetProvider, Helmet } from 'react-helmet-async'
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { auth } from '../src/api/firebase.js'
@@ -75,7 +75,16 @@ const NotFound = lazy(() => import('../component/Pages/NotFound.jsx'))
 
 function AppContent() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
+
+  // SEO FIX: Automatically redirect any .htm URL to its clean path
+  useEffect(() => {
+    if (location.pathname.toLowerCase().endsWith('.htm')) {
+      const cleanPath = location.pathname.replace(/\.htm$/i, '');
+      navigate(cleanPath, { replace: true });
+    }
+  }, [location.pathname, navigate]);
 
   const safeParseJSON = (rawValue) => {
     if (typeof rawValue !== 'string' || !rawValue.trim() || rawValue === 'undefined' || rawValue === 'null') {
@@ -110,7 +119,6 @@ function AppContent() {
   };
 
   const isAdminRoute = location.pathname.startsWith('/admin')
-  // Updated: Added '/ar-studio' here to hide main Header/Footer for full-screen studio
   const hideHeaderRoutes = ['/order-success', '/login', '/signup', '/ar-studio']
   const shouldHideHeaderFooter = isAdminRoute || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
 
@@ -162,7 +170,6 @@ function AppContent() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="seo-global" element={<SeoGlobal />} />
                   <Route path="team" element={<Team />} />
-                  {/* Behavioral Tracking & Retargeting */}
                   <Route path="behavioral-ads" element={<BehavioralAdsAdmin />} />
                   <Route path="behavioral-analytics" element={<BehavioralAnalyticsDashboard />} />
                   <Route path="analytics/dashboard" element={<BehavioralAnalyticsDashboard />} />
@@ -182,9 +189,10 @@ function AppContent() {
                 <Route path="/products" element={<ProductListing/>}/>
                 <Route path="/product/:id" element={<ProductDetailsPage />} />
                 
-                {/* Updated: Using ARStudio instead of ARStudioUI */}
-                <Route path="/ar-studio" element={<ARStudio />} />
+                {/* Specific product slug routes */}
+                <Route path="/:id" element={<ProductDetailsPage />} />
                 
+                <Route path="/ar-studio" element={<ARStudio />} />
                 <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
                 <Route path="/compare" element={<ComparePage />} />
                 <Route path="/categories" element={<CategoriesPage />} />

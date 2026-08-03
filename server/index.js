@@ -158,9 +158,44 @@ app.get('/sitemap.xml', async (req, res) => {
 // ==========================================
 // 2. SEO FIX: 301 Redirects for Known Broken / 404 URLs
 // ==========================================
-// Yahan aap purane deleted/broken URLs ko active pages par redirect kar sakte hain:
-app.get('/old-product-url', (req, res) => {
-    return res.redirect(301, 'https://www.aaramdehi.co.in/products');
+
+// Automatic Dynamic Redirect for any .htm URL to its clean counterpart
+app.get('/:slug.htm', (req, res) => {
+    const cleanSlug = req.params.slug;
+    return res.redirect(301, `https://www.aaramdehi.co.in/${cleanSlug}`);
+});
+
+// Specific Redirects (If needed for explicit mapping)
+app.get('/cotton-dori-cushion.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/cotton-dori-cushion');
+});
+
+app.get('/anti-slip-door-mat.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/anti-slip-door-mat');
+});
+
+app.get('/satin-cushions.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/satin-cushions');
+});
+
+app.get('/24x24-inch-handicraft-cushion.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/24x24-inch-handicraft-cushion');
+});
+
+app.get('/designer-door-mat.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/designer-door-mat');
+});
+
+app.get('/compressed-fiber-pillow.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/compressed-fiber-pillow');
+});
+
+app.get('/cotton-pillows.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/cotton-pillows');
+});
+
+app.get('/plain-white-fiber-bolster.htm', (req, res) => {
+    return res.redirect(301, 'https://www.aaramdehi.co.in/plain-white-fiber-bolster');
 });
 
 app.get("/", (req, res) => res.json({ message: "Server is Active" }));

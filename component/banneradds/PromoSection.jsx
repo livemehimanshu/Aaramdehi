@@ -59,7 +59,7 @@ const PromoSection = () => {
               </h3>
               <p className="text-red-500 font-bold text-lg mb-3">{card.price}</p>
               <button className="text-[12px] font-bold uppercase tracking-widest border-b-2 border-gray-800 pb-1 hover:text-blue-600 hover:border-blue-600 transition-all">
-                Shop Now
+                
               </button>
             </div>
 

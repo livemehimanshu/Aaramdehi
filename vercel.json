@@ -33,6 +33,13 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/:slug.htm",
+      "destination": "/:slug",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",

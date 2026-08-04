@@ -175,18 +175,34 @@ const ProductDetailsPage = () => {
                      p.name?.toLowerCase().trim().replace(/\s+/g, '-') === id
             );
           }
-
-          if (found) {
-            const mappedData = normalizeProductPayload(found);
-            setProductData(mappedData);
-            setSelectedImage((mappedData.images?.[0]?.url || mappedData.images?.[0]) || PLACEHOLDER_IMAGE);
-            setSelectedSize(mappedData.sizes?.[0]);
-            setReviews(mappedData.reviews || []);
-          } else {
-            setProductData(null);
-          }
         } catch (err) {
-          console.error('API product fetch failed:', err);
+          // If backend returns 404 for non-ObjectId slugs, try the all-products fallback
+          const status = err?.response?.status;
+          if (status === 404) {
+            try {
+              const allRes = await getAllProductsAPI();
+              const allProducts = allRes?.data || allRes?.products || (Array.isArray(allRes) ? allRes : []);
+              found = allProducts.find(
+                (p) => p.slug === id || 
+                       p._id === id || 
+                       p.id === id || 
+                       p.name?.toLowerCase().trim().replace(/\s+/g, '-') === id
+              );
+            } catch (innerErr) {
+              console.error('All products fetch failed after 404 fallback:', innerErr);
+            }
+          } else {
+            console.error('API product fetch failed:', err);
+          }
+        }
+
+        if (found) {
+          const mappedData = normalizeProductPayload(found);
+          setProductData(mappedData);
+          setSelectedImage((mappedData.images?.[0]?.url || mappedData.images?.[0]) || PLACEHOLDER_IMAGE);
+          setSelectedSize(mappedData.sizes?.[0]);
+          setReviews(mappedData.reviews || []);
+        } else {
           setProductData(null);
         }
       } catch (err) {

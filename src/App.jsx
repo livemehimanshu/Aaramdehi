@@ -1,261 +1,321 @@
-import './App.css'
-import { BrowserRouter as Router, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { HelmetProvider, Helmet } from 'react-helmet-async'
-import { useState, useEffect, lazy, Suspense } from 'react'
-import { auth } from '../src/api/firebase.js'
-import { onAuthStateChanged } from 'firebase/auth'
+// server/index.js
 
-// Layouts
-import Header from '../component/header/index.jsx'
-import Footer from '../component/Footer/Footer.jsx'
-import AdminRoute from '../component/auth/AdminRoute.jsx'
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dns from 'node:dns';
 
-const AdminLayout = lazy(() => import('../component/Admin/AdminLayout.jsx'))
-const Sidebar = lazy(() => import('../component/sidebar/Sidebar.jsx'))
+dns.setDefaultResultOrder('ipv4first');
 
-// Public Pages
-const Home = lazy(() => import('../component/Pages/Home/index.jsx'))
-const ProductListing = lazy(() => import('../component/Pages/productListing/index.jsx'))
-const ProductDetailsPage = lazy(() => import('../component/Pages/productpage/ProductDetailsPage.jsx'))
-const RoomProductsPage = lazy(() => import('../component/Pages/productListing/RoomProductsPage.jsx'))
-const ComparePage = lazy(() => import('../component/Pages/ComparePage/index.jsx'))
-const CategoriesPage = lazy(() => import('../component/Pages/CategoriesPage.jsx'))
-const AboutUs = lazy(() => import('../component/Pages/AboutUs.jsx'))
-const ContactUs = lazy(() => import('../component/Pages/ContactUs.jsx'))
-const BlogList = lazy(() => import('../component/Pages/blog/blog.jsx').then((mod) => ({ default: mod.BlogList })))
-const BlogDetail = lazy(() => import('../component/Pages/blog/blog.jsx').then((mod) => ({ default: mod.BlogDetail })))
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Auth & User Pages
-const AccountSettings = lazy(() => import('../component/auth/AccountSettings.jsx'))
-const ManageAddresses = lazy(() => import('../component/auth/ManageAddresses.jsx'))
-const PanCardInfo = lazy(() => import('../component/pancard/PanCardInfo.jsx'))
-const GiftCards = lazy(() => import('../component/giftcard/GiftCards.jsx'))
-const MyCoupons = lazy(() => import('../component/giftcard/MyCoupons.jsx'))
-const Wishlist = lazy(() => import('../component/WishlistDrawer/Wishlist.jsx'))
-const MyOrders = lazy(() => import('../component/order/MyOrders.jsx'))
-const OrderDetailsPage = lazy(() => import('../component/order/OrderDetailsPage.jsx'))
-const AuthPage = lazy(() => import('../component/auth/AuthPage.jsx'))
+dotenv.config({ path: path.join(__dirname, '.env') });
+dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
-// Admin Pages
-const Dashboard = lazy(() => import('../component/Admin/pages/Dashboard.jsx'))
-const Analytics = lazy(() => import('../component/Admin/pages/analytics.jsx'))
-const AllProducts = lazy(() => import('../component/Admin/pages/AllProducts.jsx'))
-const AddProduct = lazy(() => import('../component/Admin/pages/AddProduct.jsx'))
-const EditProduct = lazy(() => import('../component/Admin/pages/EditProduct.jsx'))
-const Categories = lazy(() => import('../component/Admin/pages/categories.jsx'))
-const Inventory = lazy(() => import('../component/Admin/pages/inventory.jsx'))
-const Orders = lazy(() => import('../component/Admin/pages/orders.jsx'))
-const Payments = lazy(() => import('../component/Admin/pages/payments.jsx'))
-const Refunds = lazy(() => import('../component/Admin/pages/refunds.jsx'))
-const SeoOptimizer = lazy(() => import('../component/Admin/pages/ProductSeoEditor.jsx'))
-const Coupons = lazy(() => import('../component/Admin/pages/coupons.jsx'))
-const Newsletter = lazy(() => import('../component/Admin/pages/newsletter.jsx'))
-const Users = lazy(() => import('../component/Admin/pages/users.jsx'))
-const Reviews = lazy(() => import('../component/Admin/pages/reviews.jsx'))
-const Settings = lazy(() => import('../component/Admin/pages/settings.jsx'))
-const SeoGlobal = lazy(() => import('../component/Admin/pages/seo-global.jsx'))
-const Team = lazy(() => import('../component/Admin/pages/team.jsx'))
-const FileManager = lazy(() => import('../component/Admin/component/filemanger/FileManager.jsx'))
-const Appointments = lazy(() => import('../component/Admin/pages/appointment.jsx'))
-const Shops = lazy(() => import('../component/Admin/pages/Shops.jsx'))
-const Rooms = lazy(() => import('../component/Admin/pages/rooms.jsx'))
-const BannerList = lazy(() => import('../component/Admin/pages/BannerList.jsx'))
-const AddBanner = lazy(() => import('../component/Admin/pages/AddBanner.jsx'))
-const EditBanner = lazy(() => import('../component/Admin/pages/EditBanner.jsx'))
-const BehavioralAdsAdmin = lazy(() => import('../component/Admin/BehavioralAdsAdmin.jsx'))
-const BehavioralAnalyticsDashboard = lazy(() => import('../component/Admin/BehavioralAnalyticsDashboard.jsx'))
-const BehavioralInteractionLogs = lazy(() => import('../component/Admin/BehavioralInteractionLogs.jsx'))
+import express from 'express';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import morgan from "morgan";
+import helmet from "helmet";
+import http from 'node:http';
+import https from 'node:https';
+import { URL } from 'node:url';
+import securityHeaders from './middleware/securityHeaders.js';
 
-// Checkout & Studio Pages
-const CheckoutPage = lazy(() => import('../component/checkout/CheckoutPage.jsx'))
-const PaymentPage = lazy(() => import('../component/payment/PaymentPage.jsx'))
-const OrderSuccess = lazy(() => import('../component/Pages/OrderSuccess/OrderSuccess.jsx'))
-const ARStudio = lazy(() => import('../component/Pages/ARStudio.jsx'))
-const NotFound = lazy(() => import('../component/Pages/NotFound.jsx'))
+// Payment Credentials Listener Import
+import { initPaymentGatewaySync } from './config/paymentConfig.js';
 
-function AppContent() {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [user, setUser] = useState(null)
+import authRouter from './routes/auth.route.js';
+import userRouter from './routes/user.route.js';
+import productRouter from './routes/product.route.js';
+import seoRouter from './routes/seo.route.js';
+import bannerRouter from './routes/banner.route.js';
+import categoryRouter from './routes/category.route.js';
+import couponRouter from './routes/coupon.route.js';
+import appointmentRouter from './routes/appointment.route.js';
+import analyticsRouter from './routes/analytics.route.js';
+import paymentRouter from './routes/payment.route.js';
+import refundRouter from './routes/refund.route.js';
+import settingsRouter from './routes/settings.route.js';
+import teamRouter from './routes/team.route.js';
+import orderRouter from './routes/order.route.js';
+import shopsRouter from './routes/shops.route.js';
+import roomRouter from './routes/room.route.js';
+import newsletterRouter from './routes/newsletter.route.js';
+import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
+import { findAll } from './config/db.js';
+import { buildSitemapXml } from './utils/sitemap.js';
 
-  // SEO FIX: Automatically redirect any .htm URL to its clean path
-  useEffect(() => {
-    if (location.pathname.toLowerCase().endsWith('.htm')) {
-      const cleanPath = location.pathname.replace(/\.htm$/i, '');
-      navigate(cleanPath, { replace: true });
+const app = express();
+
+app.set('trust proxy', 1);
+
+// ==========================================
+// 1. SEO FIX: Force WWW & HTTPS 301 Redirects
+// ==========================================
+app.use((req, res, next) => {
+    const host = req.headers.host;
+    // Check if domain is non-www in production
+    if (process.env.NODE_ENV === 'production' && host === 'aaramdehi.co.in') {
+        return res.redirect(301, `https://www.aaramdehi.co.in${req.url}`);
     }
-  }, [location.pathname, navigate]);
+    next();
+});
 
-  const safeParseJSON = (rawValue) => {
-    if (typeof rawValue !== 'string' || !rawValue.trim() || rawValue === 'undefined' || rawValue === 'null') {
-      return null;
-    }
+const allowedCorsOrigins = [
+    'https://www.aaramdehi.co.in',
+    'https://aaramdehi.co.in',
+    'https://aaramdehi.vercel.app',
+    'https://aaramdehi-backend.onrender.com',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173'
+];
+
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        const normalizedOrigin = origin.replace(/\/$/, '');
+        const isAllowed = allowedCorsOrigins.includes(normalizedOrigin)
+            || normalizedOrigin.endsWith('.aaramdehi.co.in')
+            || normalizedOrigin.endsWith('.aaramdehi.vercel.app');
+        callback(null, isAllowed);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization", "accessToken", "accesstoken"]
+};
+
+app.use(cors(corsOptions));
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(morgan('dev'));
+app.use(securityHeaders);
+app.use(helmet({ crossOriginResourcePolicy: false }));
+
+const apiRouter = express.Router();
+
+apiRouter.use("/auth", authRouter);
+apiRouter.use("/products", productRouter);
+apiRouter.use("/banners", bannerRouter);
+apiRouter.use("/categories", categoryRouter);
+
+apiRouter.use("/user", userRouter);
+apiRouter.use("/seo", seoRouter);
+apiRouter.use("/orders", orderRouter);
+apiRouter.use("/coupons", couponRouter);
+apiRouter.use("/shops", shopsRouter);
+apiRouter.use("/appointments", appointmentRouter);
+
+// behavioralTrackingRouter ko PEHLE mount kiya gaya hai, fir analyticsRouter ko
+apiRouter.use("/analytics", behavioralTrackingRouter);
+apiRouter.use("/analytics", analyticsRouter);
+
+apiRouter.use("/payments", paymentRouter);
+apiRouter.use("/refunds", refundRouter);
+apiRouter.use("/settings", settingsRouter);
+apiRouter.use("/rooms", roomRouter);
+apiRouter.use('/newsletter', newsletterRouter);
+apiRouter.use("/team", teamRouter);
+
+app.use("/api", apiRouter);
+app.use("/products", productRouter);
+app.use("/settings", settingsRouter);
+
+app.get('/health', (req, res) => {
+    return res.status(200).json({
+        success: true,
+        status: 'ok',
+        uptimeSeconds: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString()
+    });
+});
+
+app.get('/ping', (req, res) => {
+    return res.status(200).json({ success: true, message: 'pong' });
+});
+
+// Dynamic Sitemap Endpoint (Serve XML at Root URL for Search Engines)
+app.get('/sitemap.xml', async (req, res) => {
     try {
-      return JSON.parse(rawValue);
+        const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
+        const products = await findAll('products');
+        const categories = await findAll('categories');
+        const xml = buildSitemapXml({ baseUrl: apiBase, products, categories });
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (error) {
+        console.error('Sitemap generation error:', error);
+        res.status(500).send('Error generating sitemap');
+    }
+});
+
+// ==========================================
+// 2. SEO FIX: Dynamic Check for Active vs Deleted Products (Status 410 / 301 Redirect)
+// ==========================================
+app.get('/:slug', async (req, res, next) => {
+    const { slug } = req.params;
+
+    // Direct system/static/API routes ko bypass hone dein
+    const systemRoutes = [
+        'api', 'admin', 'checkout', 'payment', 'login', 'signup', 
+        'orders', 'about', 'contact', 'sitemap.xml', 'health', 'ping', 
+        'products', 'settings', 'static', 'assets', 'favicon.ico'
+    ];
+
+    if (systemRoutes.some(route => slug === route || slug.startsWith(route + '/'))) {
+        return next();
+    }
+
+    try {
+        // Clean slug (.htm ko clean remove karein)
+        const cleanSlug = slug.replace(/\.htm$/i, '');
+
+        // 1. Database me search karein
+        const products = await findAll('products');
+        const product = products.find(p => p.slug === cleanSlug || p.id === cleanSlug || p._id === cleanSlug);
+
+        // 2. Agar Product DB mein MIL JATA hai, par URL `.htm` se aaya tha -> Clean URL par 301 Redirect
+        if (product) {
+            if (slug.toLowerCase().endsWith('.htm')) {
+                return res.redirect(301, `https://www.aaramdehi.co.in/${cleanSlug}`);
+            }
+            // Normal active product request -> React App/Next step par pass kar dein
+            return next();
+        }
+
+        // 3. PERMANENT FIX: Agar Product Delete/Not Found hai -> 410 Gone Headers
+        res.status(410).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8" />
+                <title>410 - Product Permanently Removed</title>
+                <meta name="robots" content="noindex, nofollow" />
+                <style>
+                    body { font-family: system-ui, sans-serif; text-align: center; padding: 40px; background-color: #f9fafb; color: #1f2937; }
+                    h1 { font-size: 24px; font-weight: bold; margin-bottom: 8px; color: #111827; }
+                    p { font-size: 14px; color: #6b7280; margin-bottom: 24px; }
+                    a { background-color: #1e40af; color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; display: inline-block; }
+                </style>
+            </head>
+            <body>
+                <h1>Item No Longer Available</h1>
+                <p>The product you are looking for has been permanently removed from Aaramdehi.</p>
+                <a href="https://www.aaramdehi.co.in">Back to Home</a>
+            </body>
+            </html>
+        `);
+    } catch (error) {
+        console.error("SEO Slug Lookup Error:", error);
+        next();
+    }
+});
+
+app.get("/", (req, res) => res.json({ message: "Server is Active" }));
+
+// ==========================================
+// 3. SEO FIX: Clean 404 Response
+// ==========================================
+app.use((req, res) => {
+    res.status(404).json({ success: false, message: "Route not found" });
+});
+
+app.use((err, req, res, next) => {
+    console.error("❌ [Backend Error]:", {
+        message: err.message,
+        stack: err.stack,
+        path: req.path
+    });
+
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid JSON payload. Please send valid JSON in the request body.',
+        });
+    }
+    res.status(err.statusCode || 500).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+        error: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
+});
+
+const PORT = process.env.PORT || 8000;
+
+const keepAliveIntervalMinutes = Number(process.env.KEEP_ALIVE_INTERVAL_MINUTES ?? 11);
+const keepAliveUrl = process.env.KEEP_ALIVE_URL || `http://127.0.0.1:${PORT}/health`;
+const keepAliveIntervalMs = Math.max(1, keepAliveIntervalMinutes) * 60 * 1000;
+
+const makeRequest = (url) => {
+    return new Promise((resolve, reject) => {
+        try {
+            const parsed = new URL(url);
+            const lib = parsed.protocol === 'https:' ? https : http;
+            const req = lib.request(parsed, { method: 'GET', timeout: 10000 }, (res) => {
+                const { statusCode } = res;
+                res.resume();
+                if (statusCode >= 200 && statusCode < 300) {
+                    return resolve({ ok: true, statusCode });
+                }
+                return resolve({ ok: false, statusCode });
+            });
+
+            req.on('error', reject);
+            req.on('timeout', () => {
+                req.destroy(new Error('Keep-alive request timed out'));
+            });
+            req.end();
+        } catch (error) {
+            reject(error);
+        }
+    });
+};
+
+const runPeriodicLightTasks = async () => {
+    try {
+        console.log('🧹 Running periodic light maintenance tasks');
+    } catch (error) {
+        console.error('⚠️ Periodic task failed:', error);
+    }
+};
+
+const pingHealthEndpoint = async () => {
+    try {
+        const result = await makeRequest(keepAliveUrl);
+        if (!result.ok) {
+            console.warn(`⚠️ Keep-alive ping returned ${result.statusCode} for ${keepAliveUrl}`);
+        } else {
+            console.log(`✅ Keep-alive ping successful: ${keepAliveUrl}`);
+        }
+    } catch (error) {
+        console.error(`❌ Keep-alive ping failed for ${keepAliveUrl}:`, error.message || error);
+    }
+};
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server is running on port ${PORT}`);
+    
+    // Initialize Dynamic Payment Gateways Listener on Server Startup
+    try {
+        initPaymentGatewaySync();
+        console.log('⚡ Dynamic Payment Gateway listener initialized');
     } catch (err) {
-      console.warn('App.jsx: invalid JSON in localStorage userData', err, rawValue);
-      return null;
-    }
-  };
-
-  // Session Sync for Sidebar
-  useEffect(() => {
-    const savedUser = safeParseJSON(localStorage.getItem("userData"));
-    if (savedUser) {
-      setUser(savedUser);
+        console.error('❌ Failed to initialize Payment Gateway sync:', err.message);
     }
 
-    const unsubscribe = auth ? onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser && !localStorage.getItem("accessToken")) {
-        setUser(null);
-      }
-    }) : null;
-    return () => { if (unsubscribe) unsubscribe(); };
-  }, []);
+    console.log(`🔁 Keep-alive ping target: ${keepAliveUrl}`);
+    console.log(`⏱️ Keep-alive interval: ${keepAliveIntervalMinutes} minute(s)`);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = '/login';
-  };
+    setInterval(async () => {
+        await pingHealthEndpoint();
+        await runPeriodicLightTasks();
+    }, keepAliveIntervalMs);
+});
 
-  const isAdminRoute = location.pathname.startsWith('/admin')
-  const hideHeaderRoutes = ['/order-success', '/login', '/signup', '/ar-studio']
-  const shouldHideHeaderFooter = isAdminRoute || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
-
-  const accountPaths = ['/account/profile', '/account/addresses', '/account/pan', '/orders', '/order-details', '/payments/giftcards', '/payments/upi', '/payments/cards', '/coupons', '/reviews', '/wishlist']
-  const isAccountPage = accountPaths.some(path => location.pathname.startsWith(path))
-
-  const PageWrapper = ({ title }) => (
-    <div className="p-6 md:p-10 bg-white flex-1 shadow-sm rounded-[30px] min-h-[500px] border border-gray-100 flex flex-col justify-center items-center text-center">
-      <h2 className="text-2xl font-black text-blue-900 mb-4 uppercase tracking-tighter">{title}</h2>
-      <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] max-w-xs leading-loose italic">Coming Soon: Premium {title} section for Aaramdehi comfort seekers.</p>
-    </div>
-  )
-
-  return (
-    <>
-      {!shouldHideHeaderFooter && <Header hideNav={location.pathname.startsWith('/checkout') || location.pathname.startsWith('/payment')} />}
-
-      <main className={isAccountPage ? "bg-gray-100 min-h-screen pb-10" : ""}>
-        <div className={isAccountPage ? "max-w-[1248px] mx-auto flex flex-col md:flex-row py-4 md:py-8 px-2 md:px-4 gap-0 md:gap-4" : ""}>
-          {isAccountPage && (
-            <div className="w-full md:w-80 flex-shrink-0 mb-4 md:mb-0">
-              <Suspense fallback={<div className="p-4 text-xs text-gray-400">Loading...</div>}>
-                <Sidebar user={user} handleLogout={handleLogout} isOpen={true} isStatic={true} />
-              </Suspense>
-            </div>
-          )}
-
-          <div className="flex-1 w-full overflow-hidden">
-            <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-400">Loading page...</div>}>
-              <Routes>
-                {/* ADMIN ROUTES */}
-                <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-                  <Route index element={<Dashboard />} />
-                  <Route path="dashboard" element={<Dashboard />} />
-                  <Route path="analytics" element={<Analytics />} />
-                  <Route path="products" element={<AllProducts />} />
-                  <Route path="add-product" element={<AddProduct />} />
-                  <Route path="edit-product/:id" element={<EditProduct />} />
-                  <Route path="categories" element={<Categories />} />
-                  <Route path="inventory" element={<Inventory />} />
-                  <Route path="orders" element={<Orders />} />
-                  <Route path="payments" element={<Payments />} />
-                  <Route path="refunds" element={<Refunds />} />
-                  <Route path="seo-optimizer" element={<SeoOptimizer />} />
-                  <Route path="coupons" element={<Coupons />} />
-                  <Route path="newsletter" element={<Newsletter />} />
-                  <Route path="users" element={<Users />} />
-                  <Route path="reviews" element={<Reviews />} />
-                  <Route path="settings" element={<Settings />} />
-                  <Route path="seo-global" element={<SeoGlobal />} />
-                  <Route path="team" element={<Team />} />
-                  <Route path="behavioral-ads" element={<BehavioralAdsAdmin />} />
-                  <Route path="behavioral-analytics" element={<BehavioralAnalyticsDashboard />} />
-                  <Route path="analytics/dashboard" element={<BehavioralAnalyticsDashboard />} />
-                  <Route path="interaction-logs" element={<BehavioralInteractionLogs />} />
-                  <Route path="files" element={<FileManager />} />
-                  <Route path="appointments" element={<Appointments />} />
-                  <Route path="shops" element={<Shops />} />
-                  <Route path="rooms" element={<Rooms />} />
-                  <Route path="banners" element={<BannerList />} />
-                  <Route path="add-banner" element={<AddBanner />} />
-                  <Route path="edit-banner/:id" element={<EditBanner />} />
-                </Route>
-
-                {/* PUBLIC ROUTES */}
-                <Route path="/" element={<Home/>}/>
-                <Route path="/product" element={<ProductListing/>}/>
-                <Route path="/products" element={<ProductListing/>}/>
-                <Route path="/product/:id" element={<ProductDetailsPage />} />
-                
-                {/* Specific product slug routes */}
-                <Route path="/:id" element={<ProductDetailsPage />} />
-                
-                <Route path="/ar-studio" element={<ARStudio />} />
-                <Route path="/shop-by-room/:slug" element={<RoomProductsPage />} />
-                <Route path="/compare" element={<ComparePage />} />
-                <Route path="/categories" element={<CategoriesPage />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/about-us" element={<AboutUs />} />
-                <Route path="/contact" element={<ContactUs />} />
-                <Route path="/contact-us" element={<ContactUs />} />
-                <Route path="/login" element={<AuthPage />} /> 
-                <Route path="/register" element={<AuthPage />} />
-                <Route path="/signup" element={<AuthPage />} />
-                <Route path="/account/profile" element={<AccountSettings />} />
-                <Route path="/account/addresses" element={<ManageAddresses />} />
-                <Route path="/account/pan" element={<PanCardInfo />} />
-                <Route path="/orders" element={<MyOrders />} />
-                <Route path="/order-details/:id" element={<OrderDetailsPage />} />
-                <Route path="/payments/giftcards" element={<GiftCards />} />
-                <Route path="/payments/upi" element={<PageWrapper title="Saved UPI" />} />
-                <Route path="/payments/cards" element={<PageWrapper title="Saved Cards" />} />
-                <Route path="/coupons" element={<MyCoupons />} />
-                <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/reviews" element={<PageWrapper title="My Reviews & Ratings" />} />
-                <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/payment" element={<PaymentPage />} />
-                <Route path="/order-success" element={<OrderSuccess />} />
-                <Route path="/blog" element={<BlogList />} />
-                <Route path="/blog/:slug" element={<BlogDetail />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </div>
-        </div>
-      </main>
-
-      {!shouldHideHeaderFooter && <Footer />}
-    </>
-  )
-}
-
-function App() {
-  const jsonLdData = {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "name": "Aaramdehi",
-    "url": "https://www.aaramdehi.co.in",
-    "logo": "https://www.aaramdehi.co.in/logo.png",
-    "sameAs": [
-      "https://www.instagram.com/aaramdehi",
-      "https://www.facebook.com/aaramdehi"
-    ]
-  };
-
-  return (
-    <HelmetProvider>
-      <Helmet>
-        <script type="application/ld+json">
-          {JSON.stringify(jsonLdData)}
-        </script>
-      </Helmet>
-      <Router>
-        <AppContent />
-      </Router>
-    </HelmetProvider>
-  )
-}
-
-export default App
+export default app;

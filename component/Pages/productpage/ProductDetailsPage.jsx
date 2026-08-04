@@ -100,7 +100,7 @@ const ProductDetailsPage = () => {
   
   // Initialize behavioral tracking
   const userId = localStorage.getItem('userId');
-  const { trackInteraction, sessionId } = useBehaviorTracking(id, userId);
+  const { trackInteraction } = useBehaviorTracking(id, userId);
 
   // --- STATES ---
   const [productData, setProductData] = useState(null);
@@ -126,16 +126,6 @@ const ProductDetailsPage = () => {
   const [appliedDiscount, setAppliedDiscount] = useState(0); 
   const [couponMessage, setCouponMessage] = useState({ type: '', text: '', code: '' });
   const [isValidating, setIsValidating] = useState(false);
-  
-  // Delivery Logic
-  const [pincode, setPincode] = useState("");
-  const [deliveryStatus, setDeliveryStatus] = useState("");
-
-  const handleCheckDelivery = () => {
-    if (pincode.length < 6) return setDeliveryStatus("❌ Invalid Pincode");
-    const isAvailable = pincode.startsWith('11') || pincode.startsWith('24') || pincode.startsWith('40'); 
-    setDeliveryStatus(isAvailable ? "✅ Standard Delivery Available" : "⏳ Shipping takes 5-7 working days");
-  };
 
   const parsePrice = (rawPrice) => {
     if (rawPrice == null) return 0;
@@ -145,7 +135,7 @@ const ProductDetailsPage = () => {
     return Number.isNaN(numeric) ? 0 : numeric;
   };
 
-  // useEffect: Product data fetch with Slug and ID support
+  // useEffect: Improved Product Data Lookup (Supports ID and Slug)
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -153,44 +143,60 @@ const ProductDetailsPage = () => {
         setQuantity(1);
         setShowReviewForm(false);
 
-        // 1. Direct ID lookup in local dictionary
-        let data = productDetailsData[id];
-
-        // 2. Fallback: Search local dictionary by slug matching
-        if (!data && productDetailsData) {
-          data = Object.values(productDetailsData).find(
+        // 1. Direct or Slug lookup in local static data
+        let found = productDetailsData[id] || 
+          Object.values(productDetailsData || {}).find(
             (prod) => prod.slug === id || prod.id === id || prod._id === id
           );
+
+        if (found) {
+          setProductData(found);
+          setSelectedImage((found.images?.[0]?.url || found.images?.[0]) || PLACEHOLDER_IMAGE);
+          setSelectedSize(found.sizes?.[0]);
+          setReviews(found.reviews || []);
+          setLoading(false);
+          return;
         }
 
-        if (data) {
-          setProductData(data);
-          setSelectedImage((data.images[0]?.url || data.images[0]) || PLACEHOLDER_IMAGE);
-          setSelectedSize(data.sizes[0]);
-          setReviews(data.reviews || []);
-        } else {
-          // 3. Backend API Fetch (handles both ID or Slug lookup)
-          try {
-            const res = await getProductByIdAPI(id);
-            const found = res?.success ? (res.data || null) : null;
-
-            if (found) {
-              const mappedData = normalizeProductPayload(found);
-              setProductData(mappedData);
-              setSelectedImage((mappedData.images[0]?.url || mappedData.images[0]) || PLACEHOLDER_IMAGE);
-              setSelectedSize(mappedData.sizes[0]);
-              setReviews(mappedData.reviews);
-            }
-          } catch (err) {
-            console.error('Fallback product fetch failed:', err);
+        // 2. Fallback: Backend API Fetch
+        try {
+          // Attempt direct ID/slug fetch
+          const res = await getProductByIdAPI(id);
+          if (res?.success && res?.data) {
+            found = res.data;
+          } else {
+            // Fallback: Fetch all products and find matching slug or ID
+            const allRes = await getAllProductsAPI();
+            const allProducts = allRes?.data || allRes?.products || (Array.isArray(allRes) ? allRes : []);
+            found = allProducts.find(
+              (p) => p.slug === id || 
+                     p._id === id || 
+                     p.id === id || 
+                     p.name?.toLowerCase().trim().replace(/\s+/g, '-') === id
+            );
           }
+
+          if (found) {
+            const mappedData = normalizeProductPayload(found);
+            setProductData(mappedData);
+            setSelectedImage((mappedData.images?.[0]?.url || mappedData.images?.[0]) || PLACEHOLDER_IMAGE);
+            setSelectedSize(mappedData.sizes?.[0]);
+            setReviews(mappedData.reviews || []);
+          } else {
+            setProductData(null);
+          }
+        } catch (err) {
+          console.error('API product fetch failed:', err);
+          setProductData(null);
         }
       } catch (err) {
         console.error("Error fetching product details:", err);
+        setProductData(null);
       } finally {
         setLoading(false);
       }
     };
+
     fetchProduct();
   }, [id]);
 
@@ -227,7 +233,7 @@ const ProductDetailsPage = () => {
     return Math.max(0, basePrice - appliedDiscount);
   }, [selectedSize, appliedDiscount, productData]);
 
-  // --- FUNCTIONALITY HANDLERS ---
+  // --- HANDLERS ---
 
   const handleApplyCoupon = async (codeFromModal) => {
     const codeToApply = codeFromModal || couponInput;
@@ -243,22 +249,15 @@ const ProductDetailsPage = () => {
     try {
       setIsValidating(true);
       const amount = parsePrice(selectedSize?.price);
-
       const rawUserData = localStorage.getItem('userData');
       let userData = null;
-      try {
-        userData = rawUserData ? JSON.parse(rawUserData) : null;
-      } catch (err) {
-        console.warn('Invalid userData in localStorage:', err);
-        userData = null;
-      }
-      
-      const userId = userData?._id || userData?.id;
+      try { userData = rawUserData ? JSON.parse(rawUserData) : null; } catch {}
+      const activeUserId = userData?._id || userData?.id;
 
       const res = await validateCouponAPI({ 
         code: codeToApply, 
         orderAmount: amount,
-        userId: userId
+        userId: activeUserId
       });
       
       if (res.success) {
@@ -283,15 +282,8 @@ const ProductDetailsPage = () => {
     }
   };
 
-  const handleRemoveCoupon = () => {
-    setAppliedDiscount(0);
-    setCouponInput("");
-    setCouponMessage({ type: '', text: '', code: '' });
-  };
-
   const handleToggleWishlist = () => {
     const productId = productData.id || id;
-    
     addToWishlist({
       id: productId,
       name: productData.name,
@@ -440,7 +432,7 @@ const ProductDetailsPage = () => {
   }
 
   if (!productData) {
-    return <div className="min-h-screen flex items-center justify-center"><p className="text-xl text-gray-700">Product not found.</p></div>;
+    return <div className="min-h-screen flex items-center justify-center"><p className="text-xl text-gray-700 font-semibold">Product not found.</p></div>;
   }
 
   return (
@@ -460,7 +452,7 @@ const ProductDetailsPage = () => {
       {/* --- CONTENT CONTAINER --- */}
       <div className="container mx-auto px-4 md:px-12 lg:px-24 py-6 md:py-10">
         
-        {/* PRODUCT TOP SECTION (Gallery + Info) */}
+        {/* PRODUCT TOP SECTION */}
         <ProductPage
           product={productData}
           images={productData.images.map((img) => (img?.url || img) || PLACEHOLDER_IMAGE)}
@@ -468,7 +460,7 @@ const ProductDetailsPage = () => {
           sizes={productData.sizes || []}
           brand={productData.brand}
           title={productData.name}
-          subtitle={productData.category || 'Premium Comfort Pillow'}
+          subtitle={productData.category || 'Premium Comfort'}
           price={Number(finalPrice || 0)}
           rating={productData.rating || 5}
           reviewsCount={reviews.length}
@@ -527,13 +519,13 @@ const ProductDetailsPage = () => {
           }
         />
 
-        {/* --- DYNAMIC FREQUENTLY BOUGHT TOGETHER --- */}
+        {/* FREQUENTLY BOUGHT TOGETHER */}
         <FrequentlyBoughtTogether 
             mainProduct={productData} 
             mainProductPrice={finalPrice} 
         />
 
-        {/* Product Information Accordion */}
+        {/* ACCORDION INFORMATION */}
         {productData.productInformation && productData.productInformation.length > 0 && (
           <div className="mt-20 border-t pt-16">
             <h2 className="text-3xl font-black tracking-tighter uppercase mb-8">Product Information</h2>
@@ -550,7 +542,7 @@ const ProductDetailsPage = () => {
                   {openAccordion === idx && (
                     <div className="p-6 bg-white grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                       {section.details.map((detail, dIdx) => (
-                        <div key={dIdx} className="flex flex-col sm:flex-row text-sm border-b border-gray-100 pb-2 last:border-b-0 last:pb-0 md:last:border-b md:last:pb-2">
+                        <div key={dIdx} className="flex flex-col sm:flex-row text-sm border-b border-gray-100 pb-2 last:border-b-0">
                           <span className="font-semibold text-gray-700 sm:w-1/3 min-w-[140px] bg-gray-50 p-2 rounded-l-md">{detail.key}</span>
                           <span className="text-gray-600 sm:w-2/3 p-2">{detail.value}</span>
                         </div>
@@ -563,7 +555,7 @@ const ProductDetailsPage = () => {
           </div>
         )}
 
-        {/* --- REVIEWS SECTION --- */}
+        {/* REVIEWS */}
         <div className="mt-20 border-t pt-16">
           <div className="flex flex-col lg:flex-row gap-12">
             <div className="lg:w-1/3 space-y-6">
@@ -643,12 +635,11 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
-        {/* PRODUCT Page Banner */}
         <HomeBanner section="product" />
 
       </div>
 
-      {/* --- TRENDING SECTION --- */}
+      {/* TRENDING SECTION */}
       <div className="mt-24 bg-[#f8f9fb] py-20 w-full overflow-hidden border-t">
         <div className="container mx-auto px-4 md:px-12 lg:px-24 mb-10">
            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -670,7 +661,7 @@ const ProductDetailsPage = () => {
         </div>
       </div>
 
-      {/* --- COUPON MODAL --- */}
+      {/* COUPON MODAL */}
       {isCouponModalOpen && (
         <div 
           className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"

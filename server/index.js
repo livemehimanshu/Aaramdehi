@@ -183,8 +183,20 @@ app.get('/sitemap.xml', async (req, res) => {
 // ==========================================
 
 // Automatic Dynamic Redirect for any .htm URL to its clean counterpart
-app.get('/:slug.htm', (req, res) => {
-    const cleanSlug = req.params.slug;
+app.get('/:slug.htm', async (req, res) => {
+    const rawSlug = req.params.slug;
+    const cleanSlug = rawSlug;
+
+    try {
+        const { resolveProductByIdentifier } = await import('./controllers/product.controller.js');
+        const result = await resolveProductByIdentifier(cleanSlug);
+        if (result?.product?.slug) {
+            return res.redirect(301, `https://www.aaramdehi.co.in/${result.product.slug}`);
+        }
+    } catch (err) {
+        console.warn('Legacy slug redirect resolver failed:', err?.message || err);
+    }
+
     return res.redirect(301, `https://www.aaramdehi.co.in/${cleanSlug}`);
 });
 

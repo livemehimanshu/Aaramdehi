@@ -22,6 +22,91 @@ const getAllProductsCached = async () => {
     return all;
 };
 
+const normalizeLegacyIdentifier = (value) => {
+    return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+};
+
+export const resolveProductByIdentifier = async (identifier) => {
+    const lookup = normalizeLegacyIdentifier(identifier);
+    if (!lookup) return null;
+
+    // 1) direct lookup by ID/key
+    let product = await findById(COLLECTION, lookup);
+    if (product) {
+        return { product, matchedBy: 'id', resolvedSlug: product.slug || lookup };
+    }
+
+    // 2) slug index lookup
+    try {
+        const slugSnapshot = await db.ref(`slugs/${lookup}`).once('value');
+        const mappedId = slugSnapshot.val();
+        if (mappedId) {
+            product = await findById(COLLECTION, mappedId);
+            if (product) {
+                return { product, matchedBy: 'slugIndex', mappedId, resolvedSlug: product.slug || lookup };
+            }
+        }
+    } catch (slugErr) {
+        console.warn('Slug index read failed during identifier resolution:', slugErr && slugErr.message);
+    }
+
+    // 3) exact slug lookup in products
+    try {
+        const slugMatches = await findByQuery(COLLECTION, 'slug', lookup);
+        if (Array.isArray(slugMatches) && slugMatches.length > 0) {
+            product = slugMatches[0];
+            return { product, matchedBy: 'exactSlug', resolvedSlug: product.slug || lookup };
+        }
+    } catch (innerErr) {
+        console.warn('Exact slug lookup failed during identifier resolution:', innerErr && innerErr.message);
+    }
+
+    // 4) fuzzy fallback over products
+    try {
+        const tokens = lookup.split(/[^a-z0-9]+/).map(t => t.trim()).filter(t => t && t.length > 1);
+        if (tokens.length > 0) {
+            const allProducts = await getAllProductsCached();
+            let best = null;
+            let bestScore = 0;
+
+            const scoreForProduct = (p) => {
+                let score = 0;
+                const name = String(p.name || p.title || '').toLowerCase();
+                const desc = String(p.description || '').toLowerCase();
+                const category = String(p.category || p.subtitle || '').toLowerCase();
+                const tags = Array.isArray(p.tags) ? p.tags.map(t => String(t).toLowerCase()) : [];
+                for (const token of tokens) {
+                    if (name.includes(token)) score += 3;
+                    if (tags.some(t => t.includes(token))) score += 3;
+                    if (category.includes(token)) score += 2;
+                    if (desc.includes(token)) score += 1;
+                }
+                return score;
+            };
+
+            for (const p of allProducts) {
+                const s = scoreForProduct(p);
+                if (s > bestScore) {
+                    bestScore = s;
+                    best = p;
+                } else if (s === bestScore && s > 0 && best) {
+                    const aRating = Number(p.ratings?.average || p.rating || 0);
+                    const bRating = Number(best.ratings?.average || best.rating || 0);
+                    if (aRating > bRating) best = p;
+                }
+            }
+
+            if (best && bestScore > 0) {
+                return { product: best, matchedBy: 'fuzzy', fuzzyScore: bestScore, resolvedSlug: best.slug || normalizeLegacyIdentifier(best.name || best.title || '') };
+            }
+        }
+    } catch (fuzzyErr) {
+        console.warn('Fuzzy identifier resolution failed:', fuzzyErr && fuzzyErr.message);
+    }
+
+    return null;
+};
+
 const normalizeImageValue = (value) => {
     if (value == null) return [];
     if (typeof value === 'string') {
@@ -554,109 +639,14 @@ export const getProductById = async (req, res) => {
         const { id } = req.params;
         if (!id) return res.status(400).json({ success: false, message: "ID is required" });
 
-        // 1) Try direct lookup by ID/key first
-        let product = await findById(COLLECTION, id);
-
-        // 2) If no direct product, try slug index lookup and fetch mapped product
-        if (!product) {
-            try {
-                const slugSnapshot = await db.ref(`slugs/${id}`).once('value');
-                const mappedId = slugSnapshot.val();
-                if (mappedId) {
-                    product = await findById(COLLECTION, mappedId);
-                    console.info(`Slug index lookup: ${id} -> ${mappedId} (${product ? 'hit' : 'missing product'})`);
-                } else {
-                    console.info(`Slug index lookup miss: ${id}`);
-                }
-            } catch (slugErr) {
-                console.warn('Slug index read failed:', slugErr && slugErr.message);
-            }
-        }
-
-        // 3) Exact slug lookup in products if slug index did not resolve
-        if (!product) {
-            try {
-                const slugMatches = await findByQuery(COLLECTION, 'slug', id);
-                if (Array.isArray(slugMatches) && slugMatches.length > 0) {
-                    product = slugMatches[0];
-                    console.info(`Exact slug query hit: ${id} -> ${product._id}`);
-                }
-            } catch (innerErr) {
-                console.warn('Exact slug lookup failed:', innerErr && innerErr.message);
-            }
-        }
-
-        // 3) Fuzzy fallback: tokenize requested id/slug and score products by keyword overlap
-        let usedFuzzy = false;
-        if (!product) {
-            try {
-                const raw = String(id || '').toLowerCase().trim();
-                // Split on non-alphanumeric characters, remove short tokens
-                const tokens = raw.split(/[^a-z0-9]+/).map(t => t.trim()).filter(t => t && t.length > 1);
-
-                if (tokens.length > 0) {
-                    usedFuzzy = true;
-                    // Use cached products to reduce repeated DB reads
-                    const allProducts = await getAllProductsCached();
-
-                    const scoreForProduct = (p) => {
-                        let score = 0;
-                        const name = String(p.name || p.title || '').toLowerCase();
-                        const desc = String(p.description || '').toLowerCase();
-                        const category = String(p.category || p.subtitle || '').toLowerCase();
-                        const tags = Array.isArray(p.tags) ? p.tags.map(t => String(t).toLowerCase()) : [];
-
-                        for (const token of tokens) {
-                            // higher weight for name and tags
-                            if (name.includes(token)) score += 3;
-                            if (tags.some(t => t.includes(token))) score += 3;
-                            if (category.includes(token)) score += 2;
-                            if (desc.includes(token)) score += 1;
-                        }
-
-                        return score;
-                    };
-
-                    let best = null;
-                    let bestScore = 0;
-                    for (const p of allProducts) {
-                        const s = scoreForProduct(p);
-                        if (s > bestScore) {
-                            bestScore = s;
-                            best = p;
-                        } else if (s === bestScore && s > 0 && best) {
-                            // tie-breaker: prefer higher rating or newer
-                            const aRating = Number(p.ratings?.average || p.rating || 0);
-                            const bRating = Number(best.ratings?.average || best.rating || 0);
-                            if (aRating > bRating) best = p;
-                        }
-                    }
-
-                    if (best && bestScore > 0) {
-                        product = best;
-                    }
-
-                    // Logging for observability in production
-                    try {
-                        const sampleId = product?._id || product?.id || null;
-                        console.info(`[FuzzySearch] tokens=${tokens.join(',')} scanned=${allProducts.length} bestScore=${bestScore} matchedId=${sampleId}`);
-                    } catch (lg) {
-                        /* ignore logging errors */
-                    }
-                }
-            } catch (fuzzyErr) {
-                console.warn('Fuzzy product lookup failed:', fuzzyErr && fuzzyErr.message);
-            }
-        }
-
-        if (!product) {
+        const result = await resolveProductByIdentifier(id);
+        if (!result || !result.product) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        const formattedProduct = normalizeProductForResponse(product);
+        const formattedProduct = normalizeProductForResponse(result.product);
 
-        // If fuzzy was used and matched, include flag for frontend awareness
-        if (usedFuzzy && formattedProduct) {
+        if (result.matchedBy === 'fuzzy') {
             return res.json({ success: true, matchedBy: 'fuzzy', isFallback: true, data: formattedProduct });
         }
 

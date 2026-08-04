@@ -554,30 +554,32 @@ export const getProductById = async (req, res) => {
         const { id } = req.params;
         if (!id) return res.status(400).json({ success: false, message: "ID is required" });
 
-        // 1) Check slug index map first: /slugs/:slug -> productId (fast O(1) lookup)
-        let product = null;
-        try {
-            const slugSnapshot = await db.ref(`slugs/${id}`).once('value');
-            const mappedId = slugSnapshot.val();
-            if (mappedId) {
-                product = await findById(COLLECTION, mappedId);
-            }
-        } catch (slugErr) {
-            // ignore slug index read failures and continue with other lookups
-            console.warn('Slug index read failed:', slugErr && slugErr.message);
-        }
+        // 1) Try direct lookup by ID/key first
+        let product = await findById(COLLECTION, id);
 
-        // 2) Try direct lookup by ID/key if slug map didn't return a product
+        // 2) If no direct product, try slug index lookup and fetch mapped product
         if (!product) {
-            product = await findById(COLLECTION, id);
+            try {
+                const slugSnapshot = await db.ref(`slugs/${id}`).once('value');
+                const mappedId = slugSnapshot.val();
+                if (mappedId) {
+                    product = await findById(COLLECTION, mappedId);
+                    console.info(`Slug index lookup: ${id} -> ${mappedId} (${product ? 'hit' : 'missing product'})`);
+                } else {
+                    console.info(`Slug index lookup miss: ${id}`);
+                }
+            } catch (slugErr) {
+                console.warn('Slug index read failed:', slugErr && slugErr.message);
+            }
         }
 
-        // 2) Exact slug lookup
+        // 3) Exact slug lookup in products if slug index did not resolve
         if (!product) {
             try {
                 const slugMatches = await findByQuery(COLLECTION, 'slug', id);
                 if (Array.isArray(slugMatches) && slugMatches.length > 0) {
                     product = slugMatches[0];
+                    console.info(`Exact slug query hit: ${id} -> ${product._id}`);
                 }
             } catch (innerErr) {
                 console.warn('Exact slug lookup failed:', innerErr && innerErr.message);

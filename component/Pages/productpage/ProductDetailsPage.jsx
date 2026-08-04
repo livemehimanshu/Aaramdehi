@@ -176,9 +176,13 @@ const ProductDetailsPage = () => {
             );
           }
         } catch (err) {
-          // If backend returns 404 for non-ObjectId slugs, try the all-products fallback
+          // If backend returns 404 for non-ObjectId slugs, try the all-products fallback.
+          // Some Axios errors may not have response.status, so check message too.
           const status = err?.response?.status;
-          if (status === 404) {
+          const message = err?.message || err?.response?.data?.message || '';
+          const looksLike404 = status === 404 || (typeof message === 'string' && message.includes('404'));
+
+          if (looksLike404) {
             try {
               const allRes = await getAllProductsAPI();
               const allProducts = allRes?.data || allRes?.products || (Array.isArray(allRes) ? allRes : []);
@@ -189,10 +193,10 @@ const ProductDetailsPage = () => {
                        p.name?.toLowerCase().trim().replace(/\s+/g, '-') === id
               );
             } catch (innerErr) {
-              console.error('All products fetch failed after 404 fallback:', innerErr);
+              console.error('All products fetch failed after getProductById 404 fallback:', innerErr);
             }
           } else {
-            console.error('API product fetch failed:', err);
+            console.error('API product fetch failed (non-404):', err);
           }
         }
 

@@ -17,7 +17,7 @@ import { productDetailsData } from '@/data/productDetails';
 import { useCart } from '@/hooks/useCart';
 import { sanitizationUtils } from '@/utils/sanitizationUtils';
 import useBehaviorTracking from '@/hooks/useBehaviorTracking';
-import toast from 'react-hot-toast'; // ✅ Import Toast
+import toast from 'react-hot-toast';
 import ProductPage from './ProductPage';
 import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
 
@@ -85,8 +85,8 @@ const normalizeProductPayload = (found) => {
     price: source.sellingPrice || source.price || 0,
     sellingPrice: source.sellingPrice || source.price || 0,
     mrp: source.mrp || source.originalPrice || source.price || 0,
-    rating: source.ratings?.average || 5,
-    reviews: [],
+    rating: source.ratings?.average || source.rating || 5,
+    reviews: Array.isArray(source.reviews) ? source.reviews : [],
     category: source.category || '',
     tags: source.tags || [],
     productInformation: Array.isArray(source.productInformation) ? source.productInformation : []
@@ -98,7 +98,7 @@ const ProductDetailsPage = () => {
   const { id } = useParams();
   const { addToCart: addToCartContext, addToWishlist, isInWishlist } = useCart(); 
   
-  // ✅ Initialize behavioral tracking
+  // Initialize behavioral tracking
   const userId = localStorage.getItem('userId');
   const { trackInteraction, sessionId } = useBehaviorTracking(id, userId);
 
@@ -113,9 +113,9 @@ const ProductDetailsPage = () => {
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false); 
   const [isAdminUser, setIsAdminUser] = useState(false);
-  const [openAccordion, setOpenAccordion] = useState(0); // For Product Information
+  const [openAccordion, setOpenAccordion] = useState(0); 
   
-  // ✅ Setup React Hook Form for Reviews
+  // Setup React Hook Form for Reviews
   const { register, handleSubmit, setValue, watch, formState: { errors: reviewErrors }, reset: resetReview } = useForm({
     resolver: zodResolver(reviewSchema),
     defaultValues: { rating: 5, comment: '', userName: '' }
@@ -133,7 +133,6 @@ const ProductDetailsPage = () => {
 
   const handleCheckDelivery = () => {
     if (pincode.length < 6) return setDeliveryStatus("❌ Invalid Pincode");
-    // Mock delivery logic: usually you'd call an API here
     const isAvailable = pincode.startsWith('11') || pincode.startsWith('24') || pincode.startsWith('40'); 
     setDeliveryStatus(isAvailable ? "✅ Standard Delivery Available" : "⏳ Shipping takes 5-7 working days");
   };
@@ -146,7 +145,7 @@ const ProductDetailsPage = () => {
     return Number.isNaN(numeric) ? 0 : numeric;
   };
 
-  // useEffect: Product data fetch karna
+  // useEffect: Product data fetch with Slug and ID support
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -154,67 +153,29 @@ const ProductDetailsPage = () => {
         setQuantity(1);
         setShowReviewForm(false);
 
-        if (productDetailsData[id]) {
-          const data = productDetailsData[id];
+        // 1. Direct ID lookup in local dictionary
+        let data = productDetailsData[id];
+
+        // 2. Fallback: Search local dictionary by slug matching
+        if (!data && productDetailsData) {
+          data = Object.values(productDetailsData).find(
+            (prod) => prod.slug === id || prod.id === id || prod._id === id
+          );
+        }
+
+        if (data) {
           setProductData(data);
           setSelectedImage((data.images[0]?.url || data.images[0]) || PLACEHOLDER_IMAGE);
           setSelectedSize(data.sizes[0]);
           setReviews(data.reviews || []);
         } else {
+          // 3. Backend API Fetch (handles both ID or Slug lookup)
           try {
             const res = await getProductByIdAPI(id);
             const found = res?.success ? (res.data || null) : null;
 
             if (found) {
-              const parsedColors = parseVariantData(found.colors);
-              const parsedSizes = parseVariantData(found.sizes);
-              const normalizedColors = parsedColors.length
-                ? parsedColors.map((color) => {
-                    if (typeof color === 'string') {
-                      return { name: color, images: [] };
-                    }
-                    return {
-                      ...color,
-                      name: color?.name || color?.label || color?.color || 'Variant',
-                      images: Array.isArray(color?.images) ? color.images : []
-                    };
-                  })
-                : [];
-              const normalizedSizes = parsedSizes.length
-                ? parsedSizes.map((size) => {
-                    if (typeof size === 'string') {
-                      return { label: size, name: size, price: found.sellingPrice || found.price, oldPrice: null };
-                    }
-                    return {
-                      ...size,
-                      label: size?.label || size?.name || size?.value || 'Standard',
-                      name: size?.name || size?.label || size?.value || 'Standard',
-                      price: size && (size.price !== undefined ? size.price : (size.amount !== undefined ? size.amount : (size.cost !== undefined ? size.cost : (found.sellingPrice || found.price)))),
-                      oldPrice: size && (size.oldPrice !== undefined ? size.oldPrice : (size.mrp !== undefined ? size.mrp : null))
-                    };
-                  })
-                : [{ label: 'Standard', name: 'Standard', price: found.sellingPrice || found.price, oldPrice: null }];
-              const normalizedImages = Array.isArray(found.images)
-                ? found.images
-                : (found.thumbnail ? [found.thumbnail] : []);
-
-              const mappedData = {
-                id: found._id || found.id,
-                brand: found.brand || "Aaramdehi Luxe",
-                name: found.name || found.title || 'Unnamed Product',
-                description: found.description || "Premium quality product.",
-                images: normalizedImages,
-                model3dUrl: found.model3dUrl || found.modelUrl || '',
-                colors: normalizedColors,
-                sizes: normalizedSizes,
-                price: found.sellingPrice || found.price,
-                sellingPrice: found.sellingPrice || found.price,
-                mrp: found.mrp || found.originalPrice || found.price,
-                rating: found.ratings?.average || found.rating || 5,
-                reviews: Array.isArray(found.reviews) ? found.reviews : [],
-                category: found.category || '',
-                tags: found.tags || []
-              };
+              const mappedData = normalizeProductPayload(found);
               setProductData(mappedData);
               setSelectedImage((mappedData.images[0]?.url || mappedData.images[0]) || PLACEHOLDER_IMAGE);
               setSelectedSize(mappedData.sizes[0]);
@@ -231,7 +192,7 @@ const ProductDetailsPage = () => {
       }
     };
     fetchProduct();
-    }, [id]);
+  }, [id]);
 
   useEffect(() => {
     if (productData) {
@@ -272,8 +233,6 @@ const ProductDetailsPage = () => {
     const codeToApply = codeFromModal || couponInput;
     if (!codeToApply) return setCouponMessage({ type: 'error', text: 'Please enter a coupon code' });
 
-    // Check if user is logged in (Once per user logic depends on userId)
-    // Dono keys check karein taaki kisi bhi login system se kaam kare
     const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
     if (!token) {
       setCouponMessage({ type: 'error', text: 'Please login to apply coupons', code: '' });
@@ -285,8 +244,6 @@ const ProductDetailsPage = () => {
       setIsValidating(true);
       const amount = parsePrice(selectedSize?.price);
 
-      // Get userId from localStorage to pass it to validation
-      // JSON parsing safe banayein agar data na ho
       const rawUserData = localStorage.getItem('userData');
       let userData = null;
       try {
@@ -301,7 +258,7 @@ const ProductDetailsPage = () => {
       const res = await validateCouponAPI({ 
         code: codeToApply, 
         orderAmount: amount,
-        userId: userId // Ab backend ko pata chalega kaun user hai
+        userId: userId
       });
       
       if (res.success) {
@@ -319,7 +276,6 @@ const ProductDetailsPage = () => {
       }
     } catch (err) {
       setAppliedDiscount(0);
-      // Backend se aane wale exact error message ko dikhane ke liye
       const errorMessage = err.response?.data?.message || err.message || 'Validation failed';
       setCouponMessage({ type: 'error', text: errorMessage, code: '' });
     } finally {
@@ -577,7 +533,7 @@ const ProductDetailsPage = () => {
             mainProductPrice={finalPrice} 
         />
 
-        {/* Amazon-style Product Information Accordion */}
+        {/* Product Information Accordion */}
         {productData.productInformation && productData.productInformation.length > 0 && (
           <div className="mt-20 border-t pt-16">
             <h2 className="text-3xl font-black tracking-tighter uppercase mb-8">Product Information</h2>
@@ -613,7 +569,7 @@ const ProductDetailsPage = () => {
             <div className="lg:w-1/3 space-y-6">
               <h2 className="text-3xl font-black tracking-tighter uppercase">Happy Sleepers</h2>
               <div className="flex items-center gap-4 bg-gray-50 p-6 rounded-3xl">
-                <span className="text-5xl font-black text-blue-900">4.8</span>
+                <span className="text-5xl font-black text-blue-900">{productData.rating || '4.8'}</span>
                 <div>
                    <div className="flex text-amber-400 text-lg"><AiFillStar/><AiFillStar/><AiFillStar/><AiFillStar/><AiFillStar/></div>
                    <p className="text-[10px] font-bold text-gray-500 uppercase mt-1 tracking-widest">{reviews.length} Verified Reviews</p>
@@ -664,7 +620,7 @@ const ProductDetailsPage = () => {
             </div>
             <div className="lg:w-2/3 space-y-6">
               {reviews.map(rev => (
-                <div key={rev.id} className="p-6 bg-gray-50/50 rounded-[25px] border border-gray-100 space-y-3">
+                <div key={rev.id || rev._id} className="p-6 bg-gray-50/50 rounded-[25px] border border-gray-100 space-y-3">
                   <div className="flex justify-between items-start gap-4">
                     <div><p className="font-black text-gray-900 uppercase">{rev.user || rev.name || rev.userName || 'Customer'}</p></div>
                     <div className="flex items-center gap-3">
@@ -672,7 +628,7 @@ const ProductDetailsPage = () => {
                       {isAdminUser && (
                         <button
                           type="button"
-                          onClick={() => handleDeleteReview(rev.id)}
+                          onClick={() => handleDeleteReview(rev.id || rev._id)}
                           className="text-rose-500 text-[10px] uppercase font-bold tracking-widest hover:text-rose-700"
                         >
                           Delete
@@ -687,12 +643,12 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
-        {/* PRODUCT Page Banner - Bottom Placement */}
+        {/* PRODUCT Page Banner */}
         <HomeBanner section="product" />
 
-      </div> {/* Container End */}
+      </div>
 
-      {/* --- FULL WIDTH TRENDING SECTION --- */}
+      {/* --- TRENDING SECTION --- */}
       <div className="mt-24 bg-[#f8f9fb] py-20 w-full overflow-hidden border-t">
         <div className="container mx-auto px-4 md:px-12 lg:px-24 mb-10">
            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -714,17 +670,16 @@ const ProductDetailsPage = () => {
         </div>
       </div>
 
-      {/* --- DYNAMIC COUPON MODAL POPUP COMPONENT --- */}
+      {/* --- COUPON MODAL --- */}
       {isCouponModalOpen && (
         <div 
           className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-          onClick={() => setIsCouponModalOpen(false)} // Bahar click karne par band hoga
+          onClick={() => setIsCouponModalOpen(false)}
         >
           <div 
             className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 overflow-hidden relative animate-in fade-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()} // Modal ke andar click karne par band nahi hoga
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
               <div className="flex items-center gap-2 text-blue-900">
                 <BsLightningCharge size={22} className="text-red-500" />
@@ -738,14 +693,13 @@ const ProductDetailsPage = () => {
               </button>
             </div>
 
-            {/* Modal Content */}
             <div className="mt-6 space-y-4">
               <div className="flex gap-2">
                 <input 
                   type="text" 
-                  autoFocus // Modal khulte hi cursor yahan aa jayega
-                  placeholder="Enter Coupon Code (e.g. WELCOME10)" 
-                  value={couponInput} // Input field ki current value
+                  autoFocus 
+                  placeholder="Enter Coupon Code" 
+                  value={couponInput} 
                   onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                   className="flex-1 px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold tracking-wide focus:outline-none focus:ring-2 focus:ring-blue-900"
                 />
@@ -758,14 +712,12 @@ const ProductDetailsPage = () => {
                 </button>
               </div>
 
-              {/* Error Message inside Modal */}
               {couponMessage.type === 'error' && (
                 <div className="mt-2 flex items-center gap-2 text-rose-500 bg-rose-50 p-2 rounded-lg border border-rose-100">
                   <span className="text-[10px] font-black uppercase tracking-tight">{couponMessage.text}</span>
                 </div>
               )}
 
-              {/* Quick Available Offers / Examples */}
               <div className="pt-4">
                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3">Available Offers For You</p>
                 <div className="space-y-2">

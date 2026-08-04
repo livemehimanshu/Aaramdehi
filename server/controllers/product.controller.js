@@ -554,8 +554,23 @@ export const getProductById = async (req, res) => {
         const { id } = req.params;
         if (!id) return res.status(400).json({ success: false, message: "ID is required" });
 
-        // 1) Try direct lookup by ID/key first
-        let product = await findById(COLLECTION, id);
+        // 1) Check slug index map first: /slugs/:slug -> productId (fast O(1) lookup)
+        let product = null;
+        try {
+            const slugSnapshot = await db.ref(`slugs/${id}`).once('value');
+            const mappedId = slugSnapshot.val();
+            if (mappedId) {
+                product = await findById(COLLECTION, mappedId);
+            }
+        } catch (slugErr) {
+            // ignore slug index read failures and continue with other lookups
+            console.warn('Slug index read failed:', slugErr && slugErr.message);
+        }
+
+        // 2) Try direct lookup by ID/key if slug map didn't return a product
+        if (!product) {
+            product = await findById(COLLECTION, id);
+        }
 
         // 2) Exact slug lookup
         if (!product) {

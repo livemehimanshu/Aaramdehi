@@ -4,6 +4,24 @@ import { MultiversalEngine } from "../utils/MultiversalEngine.js";
 
 const COLLECTION = 'products';
 
+// In-memory cache for products to avoid fetching entire collection on every request
+let _productsCache = {
+    items: null,
+    ts: 0
+};
+const PRODUCTS_CACHE_TTL_MS = Number(process.env.PRODUCTS_CACHE_TTL_MS || 5 * 60 * 1000); // default 5 minutes
+
+const getAllProductsCached = async () => {
+    const now = Date.now();
+    if (Array.isArray(_productsCache.items) && (now - _productsCache.ts) < PRODUCTS_CACHE_TTL_MS) {
+        return _productsCache.items;
+    }
+    const all = await findAll(COLLECTION) || [];
+    _productsCache.items = all;
+    _productsCache.ts = now;
+    return all;
+};
+
 const normalizeImageValue = (value) => {
     if (value == null) return [];
     if (typeof value === 'string') {
@@ -561,7 +579,8 @@ export const getProductById = async (req, res) => {
 
                 if (tokens.length > 0) {
                     usedFuzzy = true;
-                    const allProducts = await findAll(COLLECTION) || [];
+                    // Use cached products to reduce repeated DB reads
+                    const allProducts = await getAllProductsCached();
 
                     const scoreForProduct = (p) => {
                         let score = 0;
@@ -598,6 +617,14 @@ export const getProductById = async (req, res) => {
 
                     if (best && bestScore > 0) {
                         product = best;
+                    }
+
+                    // Logging for observability in production
+                    try {
+                        const sampleId = product?._id || product?.id || null;
+                        console.info(`[FuzzySearch] tokens=${tokens.join(',')} scanned=${allProducts.length} bestScore=${bestScore} matchedId=${sampleId}`);
+                    } catch (lg) {
+                        /* ignore logging errors */
                     }
                 }
             } catch (fuzzyErr) {

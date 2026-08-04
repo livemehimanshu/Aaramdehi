@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
     getAllProducts,
     getProductById,
+    getProductBySlug,
     createProduct,
     updateProduct,
     deleteProduct,
@@ -40,6 +41,7 @@ productRouter.post('/analyze-room', analyzeRoom);
 productRouter.post('/:id/review', isAuthenticatedUser, addProductReview);
 productRouter.delete('/:id/review/:reviewId', isAuthenticatedUser, isAdmin, deleteProductReview);
 productRouter.get('/', getAllProducts);  // Get all products
+productRouter.get('/slug/:slug', getProductBySlug); // Debug slug-to-product lookup
 productRouter.get('/:id', getProductById);  // Get single product
 
 export default productRouter;

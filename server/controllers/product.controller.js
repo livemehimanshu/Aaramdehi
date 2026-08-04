@@ -667,6 +667,39 @@ export const getProductById = async (req, res) => {
     }
 };
 
+// DEBUG ROUTE: verify slug-index resolution and mapped product existence
+export const getProductBySlug = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        if (!slug) return res.status(400).json({ success: false, message: "Slug is required" });
+
+        let mappedId = null;
+        let product = null;
+
+        try {
+            const slugSnapshot = await db.ref(`slugs/${slug}`).once('value');
+            mappedId = slugSnapshot.val();
+        } catch (err) {
+            console.warn('Slug lookup failed:', err && err.message);
+            return res.status(500).json({ success: false, message: 'Failed to read slug index', error: err.message });
+        }
+
+        if (!mappedId) {
+            return res.status(404).json({ success: false, message: 'Slug mapping not found', slug });
+        }
+
+        product = await findById(COLLECTION, mappedId);
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Mapped product not found', slug, mappedId });
+        }
+
+        return res.json({ success: true, slug, mappedId, data: normalizeProductForResponse(product) });
+    } catch (error) {
+        console.error(`❌ Error fetching slug product [${req.params.slug}]:`, error);
+        return res.status(500).json({ success: false, message: 'Internal server error while fetching slug product', error: error.message });
+    }
+};
+
 // ✅ 4. ROOM ANALYSIS
 export const analyzeRoom = async (req, res) => {
     try {

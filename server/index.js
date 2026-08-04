@@ -136,7 +136,7 @@ const staticDir = path.join(__dirname, '..', 'public');
 if (fs.existsSync(staticDir)) {
     app.use(express.static(staticDir, { maxAge: '1d' }));
 
-    app.get('*', (req, res, next) => {
+    app.use((req, res, next) => {
         const urlPath = req.path || '';
         // Do not rewrite API or asset requests
         if (urlPath.startsWith('/api') || urlPath.startsWith('/products') || urlPath.startsWith('/assets') || urlPath.startsWith('/static')) return next();

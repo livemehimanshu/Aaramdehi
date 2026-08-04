@@ -70,7 +70,6 @@ const allowedCorsOrigins = [
     'https://www.aaramdehi.co.in',
     'https://aaramdehi.co.in',
     'https://aaramdehi.vercel.app',
-    'https://aaramdehi-backend.onrender.com',
     'http://localhost:5173',
     'http://127.0.0.1:5173'
 ];

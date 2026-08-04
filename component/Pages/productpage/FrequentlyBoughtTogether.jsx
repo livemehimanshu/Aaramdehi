@@ -19,7 +19,7 @@ const FrequentlyBoughtTogether = ({ mainProduct, mainProductPrice }) => {
                 setLoading(true);
                 setError(null);
                 const pId = mainProduct._id || mainProduct.id;
-                const res = await api.get(`/order/recommendations/${pId}`);
+                const res = await api.get(`/orders/recommendations/${pId}`);
                 if (res.data.success) {
                     setRecommendations(res.data.data);
                     // Store IDs as Strings

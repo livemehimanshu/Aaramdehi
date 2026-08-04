@@ -14,6 +14,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 import express from 'express';
+import fs from 'fs';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
@@ -125,6 +126,28 @@ apiRouter.use("/team", teamRouter);
 app.use("/api", apiRouter);
 app.use("/products", productRouter);
 app.use("/settings", settingsRouter);
+
+// ==========================================
+// 4. Static Asset Serving & SPA Fallback
+// If a `public` folder exists, serve it as static assets and
+// return `index.html` for SPA routes (but avoid rewriting API or asset requests).
+// ==========================================
+const staticDir = path.join(__dirname, '..', 'public');
+if (fs.existsSync(staticDir)) {
+    app.use(express.static(staticDir, { maxAge: '1d' }));
+
+    app.get('*', (req, res, next) => {
+        const urlPath = req.path || '';
+        // Do not rewrite API or asset requests
+        if (urlPath.startsWith('/api') || urlPath.startsWith('/products') || urlPath.startsWith('/assets') || urlPath.startsWith('/static')) return next();
+
+        const indexFile = path.join(staticDir, 'index.html');
+        if (fs.existsSync(indexFile)) {
+            return res.sendFile(indexFile);
+        }
+        return next();
+    });
+}
 
 app.get('/health', (req, res) => {
     return res.status(200).json({

@@ -536,7 +536,29 @@ export const getProductById = async (req, res) => {
         const { id } = req.params;
         if (!id) return res.status(400).json({ success: false, message: "ID is required" });
 
-        const product = await findById(COLLECTION, id);
+        // Try direct lookup by ID/key first
+        let product = await findById(COLLECTION, id);
+
+        // If not found, attempt slug lookup (permanent fix for slug vs id requests)
+        if (!product) {
+            try {
+                const slugMatches = await findByQuery(COLLECTION, 'slug', id);
+                if (Array.isArray(slugMatches) && slugMatches.length > 0) {
+                    product = slugMatches[0];
+                } else {
+                    // Try normalized name match (replace spaces with dashes)
+                    const normalized = String(id).toLowerCase().trim();
+                    const all = await findAll(COLLECTION);
+                    product = (all || []).find(p => {
+                        const nameNormalized = String(p.name || p.title || '').toLowerCase().trim().replace(/\s+/g, '-');
+                        return nameNormalized === normalized || String(p._id) === normalized || String(p.id) === normalized;
+                    }) || null;
+                }
+            } catch (innerErr) {
+                console.warn('Fallback slug/name lookup failed:', innerErr && innerErr.message);
+            }
+        }
+
         if (!product) return res.status(404).json({ success: false, message: "Product not found" });
 
         const formattedProduct = normalizeProductForResponse(product);

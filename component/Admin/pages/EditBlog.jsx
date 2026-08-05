@@ -133,14 +133,14 @@ const EditBlog = () => {
   if (loading) return <div className="p-10 text-center text-gray-500 font-semibold animate-pulse">Loading editor...</div>;
 
   return (
-    <div className="p-4 md:p-8 bg-gray-50 min-h-screen">
+    <div className="p-4 md:p-8 bg-gray-950 min-h-screen text-gray-200">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 max-w-5xl mx-auto">
         <div className="flex items-center gap-4">
-          <button onClick={() => navigate('/admin/blogs')} className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-            <FiArrowLeft size={20} className="text-gray-600" />
+          <button onClick={() => navigate('/admin/blogs')} className="p-2 bg-gray-900 border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors">
+            <FiArrowLeft size={20} className="text-gray-400" />
           </button>
           <div>
-            <h1 className="text-2xl font-black text-blue-900 tracking-tight">{isEditing ? 'Edit Article' : 'Write New Article'}</h1>
+            <h1 className="text-2xl font-black text-white tracking-tight">{isEditing ? 'Edit Article' : 'Write New Article'}</h1>
             <p className="text-sm text-gray-500 mt-1">{formData.status} • {formData.views || 0} Views</p>
           </div>
         </div>
@@ -149,7 +149,7 @@ const EditBlog = () => {
             name="status"
             value={formData.status}
             onChange={handleInputChange}
-            className="bg-white border border-gray-200 text-sm font-bold text-gray-700 rounded-lg px-4 py-2.5 outline-none focus:border-blue-500"
+            className="bg-gray-900 border border-gray-800 text-sm font-bold text-gray-300 rounded-lg px-4 py-2.5 outline-none focus:border-emerald-500"
           >
             <option value="Draft">Save as Draft</option>
             <option value="Published">Publish Live</option>
@@ -157,7 +157,7 @@ const EditBlog = () => {
           <button 
             onClick={handleSubmit}
             disabled={saving}
-            className="flex-1 md:flex-none flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-sm"
+            className="flex-1 md:flex-none flex justify-center items-center gap-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white px-6 py-2.5 rounded-lg font-bold transition-all shadow-sm"
           >
             <FiSave size={18} />
             {saving ? 'Saving...' : 'Save Article'}
@@ -167,24 +167,24 @@ const EditBlog = () => {
 
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row gap-6">
         {/* Main Editor Area */}
-        <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="flex-1 bg-gray-900 rounded-2xl shadow-xl border border-gray-800 overflow-hidden">
           {/* Tabs */}
-          <div className="flex items-center border-b border-gray-100 bg-gray-50/50">
+          <div className="flex items-center border-b border-gray-800 bg-gray-950/50">
             <button 
               onClick={() => setActiveTab('content')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-colors ${activeTab === 'content' ? 'text-blue-600 bg-white border-b-2 border-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-colors ${activeTab === 'content' ? 'text-emerald-500 bg-gray-900 border-b-2 border-emerald-500' : 'text-gray-500 hover:bg-gray-800'}`}
             >
               <FiEdit size={16} /> Content
             </button>
             <button 
               onClick={() => setActiveTab('seo')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-colors ${activeTab === 'seo' ? 'text-blue-600 bg-white border-b-2 border-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-colors ${activeTab === 'seo' ? 'text-emerald-500 bg-gray-900 border-b-2 border-emerald-500' : 'text-gray-500 hover:bg-gray-800'}`}
             >
               <FiBarChart2 size={16} /> SEO & Meta
             </button>
             <button 
               onClick={() => setActiveTab('settings')}
-              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-colors ${activeTab === 'settings' ? 'text-blue-600 bg-white border-b-2 border-blue-600' : 'text-gray-500 hover:bg-gray-100'}`}
+              className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-4 text-sm font-bold transition-colors ${activeTab === 'settings' ? 'text-emerald-500 bg-gray-900 border-b-2 border-emerald-500' : 'text-gray-500 hover:bg-gray-800'}`}
             >
               <FiSettings size={16} /> Settings
             </button>
@@ -201,7 +201,7 @@ const EditBlog = () => {
                   value={formData.title}
                   onChange={handleInputChange}
                   placeholder="e.g. 5 Ways to Decorate Your Living Room"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-lg font-semibold text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-lg font-semibold text-white outline-none focus:border-emerald-500 focus:bg-gray-900 transition-all"
                 />
               </div>
               
@@ -213,7 +213,7 @@ const EditBlog = () => {
                   onChange={handleInputChange}
                   placeholder="A brief summary of what the article is about..."
                   rows={2}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all resize-none"
+                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-300 outline-none focus:border-emerald-500 focus:bg-gray-900 transition-all resize-none"
                 />
               </div>
 
@@ -234,8 +234,8 @@ const EditBlog = () => {
 
             {/* SEO TAB */}
             <div className={activeTab === 'seo' ? 'block' : 'hidden'}>
-              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-                <p className="text-sm text-blue-800 font-medium">These fields control how your article appears on Google Search and Social Media (Facebook/Twitter).</p>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-6">
+                <p className="text-sm text-emerald-800 font-medium">These fields control how your article appears on Google Search and Social Media (Facebook/Twitter).</p>
               </div>
 
               <div className="mb-6">
@@ -246,7 +246,7 @@ const EditBlog = () => {
                   value={formData.metaTitle}
                   onChange={handleInputChange}
                   placeholder="Custom SEO Title (defaults to Article Title)"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm font-semibold text-white outline-none focus:border-emerald-500 focus:bg-gray-900 transition-all"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">Recommended length: 50-60 characters.</p>
               </div>
@@ -259,7 +259,7 @@ const EditBlog = () => {
                   onChange={handleInputChange}
                   placeholder="Custom SEO Description (defaults to Excerpt)"
                   rows={3}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-700 outline-none focus:border-blue-500 focus:bg-white transition-all resize-none"
+                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-gray-300 outline-none focus:border-emerald-500 focus:bg-gray-900 transition-all resize-none"
                 />
                 <p className="text-[10px] text-gray-400 mt-1">Recommended length: 150-160 characters.</p>
               </div>
@@ -272,13 +272,13 @@ const EditBlog = () => {
                   value={formData.metaKeywords}
                   onChange={handleInputChange}
                   placeholder="e.g. home decor, living room, cushions"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                  className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-emerald-500 focus:bg-gray-900 transition-all"
                 />
               </div>
 
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Custom URL Slug (Optional)</label>
-                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-blue-500 focus-within:bg-white transition-all">
+                <div className="flex items-center bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 focus-within:border-blue-500 focus-within:bg-white transition-all">
                   <span className="text-gray-400 text-sm">/blog/</span>
                   <input 
                     type="text"
@@ -286,7 +286,7 @@ const EditBlog = () => {
                     value={formData.slug}
                     onChange={handleInputChange}
                     placeholder="my-custom-url-slug"
-                    className="w-full bg-transparent border-none outline-none text-sm font-semibold text-gray-800 ml-1"
+                    className="w-full bg-transparent border-none outline-none text-sm font-semibold text-white ml-1"
                   />
                 </div>
               </div>
@@ -297,7 +297,7 @@ const EditBlog = () => {
               
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cover Image URL *</label>
-                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus-within:border-blue-500 focus-within:bg-white transition-all">
+                <div className="flex items-center bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 focus-within:border-blue-500 focus-within:bg-white transition-all">
                   <FiImage className="text-gray-400 mr-2" />
                   <input 
                     type="text"
@@ -305,7 +305,7 @@ const EditBlog = () => {
                     value={formData.image}
                     onChange={handleInputChange}
                     placeholder="https://example.com/image.jpg"
-                    className="w-full bg-transparent border-none outline-none text-sm text-gray-800"
+                    className="w-full bg-transparent border-none outline-none text-sm text-white"
                   />
                 </div>
                 {formData.image && (
@@ -322,7 +322,7 @@ const EditBlog = () => {
                     name="category"
                     value={formData.category}
                     onChange={handleInputChange}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm font-semibold text-white outline-none focus:border-emerald-500 focus:bg-gray-900 transition-all"
                   >
                     <option value="General">General</option>
                     <option value="Home Decor">Home Decor</option>
@@ -339,16 +339,16 @@ const EditBlog = () => {
                     value={formData.author}
                     onChange={handleInputChange}
                     placeholder="Aaramdehi Team"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition-all"
+                    className="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-sm font-semibold text-white outline-none focus:border-emerald-500 focus:bg-gray-900 transition-all"
                   />
                 </div>
               </div>
 
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Tags (Press Enter)</label>
-                <div className="bg-gray-50 border border-gray-200 rounded-xl p-2 focus-within:border-blue-500 focus-within:bg-white transition-all flex flex-wrap gap-2 items-center">
+                <div className="bg-gray-950 border border-gray-800 rounded-xl p-2 focus-within:border-blue-500 focus-within:bg-white transition-all flex flex-wrap gap-2 items-center">
                   {formData.tags.map(tag => (
-                    <span key={tag} className="flex items-center gap-1 bg-white border border-gray-200 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-full">
+                    <span key={tag} className="flex items-center gap-1 bg-white border border-gray-200 text-gray-300 text-xs font-bold px-3 py-1.5 rounded-full">
                       {tag}
                       <button type="button" onClick={() => handleRemoveTag(tag)} className="text-gray-400 hover:text-red-500 ml-1">&times;</button>
                     </span>
@@ -359,7 +359,7 @@ const EditBlog = () => {
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={handleAddTag}
                     placeholder="Type a tag and press Enter..."
-                    className="flex-1 bg-transparent border-none outline-none text-sm text-gray-800 min-w-[150px] p-2"
+                    className="flex-1 bg-transparent border-none outline-none text-sm text-white min-w-[150px] p-2"
                   />
                 </div>
               </div>

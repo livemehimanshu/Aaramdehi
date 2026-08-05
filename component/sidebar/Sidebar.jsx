@@ -116,6 +116,17 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
                 </div>
                 <IoChevronForwardOutline className="text-emerald-300" />
               </Link>
+              
+              {/* Blog Management Link */}
+              <Link to="/admin/blogs" onClick={onClose} className="flex items-center justify-between p-3 bg-blue-50 rounded-2xl group active:scale-95 transition-all border border-blue-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-600">
+                    <IoStatsChartOutline size={22} />
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-widest text-blue-700">Manage Blogs</span>
+                </div>
+                <IoChevronForwardOutline className="text-blue-300" />
+              </Link>
             </div>
           )}
 

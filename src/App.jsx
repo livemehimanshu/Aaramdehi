@@ -65,6 +65,8 @@ const EditBanner = lazy(() => import('../component/Admin/pages/EditBanner.jsx'))
 const BehavioralAdsAdmin = lazy(() => import('../component/Admin/BehavioralAdsAdmin.jsx'))
 const BehavioralAnalyticsDashboard = lazy(() => import('../component/Admin/BehavioralAnalyticsDashboard.jsx'))
 const BehavioralInteractionLogs = lazy(() => import('../component/Admin/BehavioralInteractionLogs.jsx'))
+const BlogsManagement = lazy(() => import('../component/Admin/pages/blogs.jsx'))
+const EditBlog = lazy(() => import('../component/Admin/pages/EditBlog.jsx'))
 
 // Checkout & Studio Pages
 const CheckoutPage = lazy(() => import('../component/checkout/CheckoutPage.jsx'))
@@ -160,8 +162,13 @@ function AppContent() {
                   <Route path="settings" element={<Settings />} />
                   <Route path="seo-global" element={<SeoGlobal />} />
                   <Route path="team" element={<Team />} />
+                  <Route path="banner/add" element={<AddBanner />} />
+                  <Route path="banner/edit/:id" element={<EditBanner />} />
                   <Route path="behavioral-ads" element={<BehavioralAdsAdmin />} />
                   <Route path="behavioral-analytics" element={<BehavioralAnalyticsDashboard />} />
+                  <Route path="behavioral-logs" element={<BehavioralInteractionLogs />} />
+                  <Route path="blogs" element={<BlogsManagement />} />
+                  <Route path="edit-blog/:id" element={<EditBlog />} />
                   <Route path="analytics/dashboard" element={<BehavioralAnalyticsDashboard />} />
                   <Route path="interaction-logs" element={<BehavioralInteractionLogs />} />
                   <Route path="files" element={<FileManager />} />
@@ -169,7 +176,6 @@ function AppContent() {
                   <Route path="shops" element={<Shops />} />
                   <Route path="rooms" element={<Rooms />} />
                   <Route path="banners" element={<BannerList />} />
-                  <Route path="add-banner" element={<AddBanner />} />
                   <Route path="edit-banner/:id" element={<EditBanner />} />
                 </Route>
 

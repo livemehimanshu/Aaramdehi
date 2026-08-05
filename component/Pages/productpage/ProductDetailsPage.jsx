@@ -466,6 +466,26 @@ const ProductDetailsPage = () => {
           keywords={productKeywords}
           ogImage={selectedImage || PLACEHOLDER_IMAGE}
           ogUrl={window.location.href}
+          schemaType="Product"
+          schemaData={{
+            "@context": "https://schema.org/",
+            "@type": "Product",
+            "name": productData.name,
+            "image": selectedImage || productData.images?.[0]?.url || productData.images?.[0],
+            "description": productData.description,
+            "brand": {
+              "@type": "Brand",
+              "name": productData.brand || "Aaramdehi"
+            },
+            "offers": {
+              "@type": "Offer",
+              "url": window.location.href,
+              "priceCurrency": "INR",
+              "price": finalPrice,
+              "availability": "https://schema.org/InStock",
+              "itemCondition": "https://schema.org/NewCondition"
+            }
+          }}
         />
       )}
 

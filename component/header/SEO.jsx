@@ -10,7 +10,7 @@ import { Helmet } from 'react-helmet-async';
  * @param {string} path - Path/Route of current page (e.g. "/products")
  * @param {string} ogUrl - Custom Canonical URL override
  */
-const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl }) => {
+const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData }) => {
   const siteName = "Aaramdehi - Comfort Redefined";
   const siteUrl = "https://www.aaramdehi.co.in";
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
@@ -53,6 +53,13 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl }) => {
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description || defaultDescription} />
       <meta name="twitter:image" content={ogImage || "/logo.png"} />
+
+      {/* JSON-LD Structured Data */}
+      {schemaData && schemaType && (
+        <script type="application/ld+json">
+          {JSON.stringify(schemaData)}
+        </script>
+      )}
     </Helmet>
   );
 };

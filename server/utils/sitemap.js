@@ -11,12 +11,13 @@ const escapeXml = (value) =>
 const normalizeBaseUrl = (baseUrl) =>
   String(baseUrl || 'https://www.aaramdehi.co.in').replace(/\/$/, '');
 
-export const buildSitemapXml = ({ baseUrl, products = [], categories = [] }) => {
+export const buildSitemapXml = ({ baseUrl, products = [], categories = [], blogs = [] }) => {
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
 
   // Normalize Firebase Array or Object responses safely
   const prodList = Array.isArray(products) ? products : Object.values(products || {});
   const catList = Array.isArray(categories) ? categories : Object.values(categories || {});
+  const blogList = Array.isArray(blogs) ? blogs : Object.values(blogs || {});
 
   // 1. Primary Clean Static Pages (No trailing slashes or redirects)
   const staticPages = [
@@ -67,6 +68,23 @@ export const buildSitemapXml = ({ baseUrl, products = [], categories = [] }) => 
     xml += `    <lastmod>${escapeXml(lastmod)}</lastmod>\n`;
     xml += `    <changefreq>weekly</changefreq>\n`;
     xml += `    <priority>0.9</priority>\n`;
+    xml += `  </url>\n`;
+  });
+
+  // 4. Append Dynamic Blog URLs
+  blogList.forEach((blog) => {
+    if (blog.status !== 'Published') return; // Only include published blogs
+    const blogSlug = blog?.slug || blog?._id || blog?.id;
+    if (!blogSlug) return;
+
+    const blogPath = `/blog/${encodeURIComponent(String(blogSlug))}`;
+    const lastmod = blog?.updatedAt || blog?.publishedAt || blog?.createdAt || new Date().toISOString();
+
+    xml += `  <url>\n`;
+    xml += `    <loc>${escapeXml(`${normalizedBaseUrl}${blogPath}`)}</loc>\n`;
+    xml += `    <lastmod>${escapeXml(lastmod)}</lastmod>\n`;
+    xml += `    <changefreq>weekly</changefreq>\n`;
+    xml += `    <priority>0.8</priority>\n`;
     xml += `  </url>\n`;
   });
 

@@ -12,7 +12,8 @@ export default async function handler(req, res) {
     const baseUrl = process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in';
     const products = await findAll('products');
     const categories = await findAll('categories');
-    const xml = buildSitemapXml({ baseUrl, products, categories });
+    const blogs = await findAll('blogs');
+    const xml = buildSitemapXml({ baseUrl, products, categories, blogs });
 
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.status(200).send(xml);

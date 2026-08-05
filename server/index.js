@@ -47,6 +47,7 @@ import shopsRouter from './routes/shops.route.js';
 import roomRouter from './routes/room.route.js';
 import newsletterRouter from './routes/newsletter.route.js';
 import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
+import blogRouter from './routes/blog.route.js';
 import { findAll } from './config/db.js';
 import { buildSitemapXml } from './utils/sitemap.js';
 
@@ -101,6 +102,7 @@ const apiRouter = express.Router();
 
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/products", productRouter);
+apiRouter.use("/blogs", blogRouter);
 apiRouter.use("/banners", bannerRouter);
 apiRouter.use("/categories", categoryRouter);
 
@@ -167,7 +169,8 @@ app.get('/sitemap.xml', async (req, res) => {
         const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
         const products = await findAll('products');
         const categories = await findAll('categories');
-        const xml = buildSitemapXml({ baseUrl: apiBase, products, categories });
+        const blogs = await findAll('blogs');
+        const xml = buildSitemapXml({ baseUrl: apiBase, products, categories, blogs });
 
         res.header('Content-Type', 'application/xml');
         res.send(xml);

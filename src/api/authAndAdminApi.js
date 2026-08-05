@@ -492,6 +492,65 @@ export async function getSettingsAPI() {
   }
 }
 
+export async function getRoomsForHomeAPI() {
+  try {
+    const res = await api.get('/rooms/home');
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+/* ==========================================================================
+   BLOGS API
+   ========================================================================== */
+
+export async function getAllBlogsAPI(params = {}) {
+  try {
+    const res = await api.get('/blogs', { params });
+    return res.data;
+  } catch (e) {
+    console.error('❌ Blogs API Error:', e);
+    return { success: false, data: [] };
+  }
+}
+
+export async function getBlogByIdOrSlugAPI(identifier, params = {}) {
+  try {
+    const res = await api.get(`/blogs/${identifier}`, { params });
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function createBlogAPI(blogData) {
+  try {
+    const res = await api.post('/blogs/create', blogData);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function updateBlogAPI(id, blogData) {
+  try {
+    const res = await api.put(`/blogs/${id}`, blogData);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
+export async function deleteBlogAPI(id) {
+  try {
+    const res = await api.delete(`/blogs/${id}`);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
 export async function getGlobalSeoAPI() {
   try {
     const res = await api.get('/seo/global');

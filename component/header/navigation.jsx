@@ -58,6 +58,20 @@ const Navigation = ({ categories = [] }) => {
             )}
           </div>
         ))}
+        
+        {/* Static Blog Link */}
+        <div className="group relative flex flex-col items-center cursor-pointer flex-shrink-0">
+          <Link to="/blog" className="group flex flex-col items-center gap-1">
+            <div className="w-12 h-12 lg:w-20 lg:h-20 bg-transparent rounded-full flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:bg-blue-50 group-hover:shadow-sm">
+              <div className="w-full h-full flex items-center justify-center p-2.5 lg:p-4 transition-transform duration-300 group-hover:scale-105">
+                <span className="text-2xl">📝</span>
+              </div>
+            </div>
+            <span className="text-[10px] lg:text-[11px] font-extrabold text-slate-700 tracking-tight group-hover:text-[#1A365D] transition-colors duration-200 whitespace-nowrap">
+              Journal
+            </span>
+          </Link>
+        </div>
       </div>
     </nav>
   );

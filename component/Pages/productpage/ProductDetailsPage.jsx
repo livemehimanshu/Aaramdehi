@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom'; 
+import { Helmet } from 'react-helmet-async';
 import { 
   FiHeart, FiShoppingCart, FiPlus, FiMinus, FiCheck, FiArrowRight, FiX 
 } from 'react-icons/fi';
@@ -488,6 +489,47 @@ const ProductDetailsPage = () => {
           }}
         />
       )}
+      
+      {/* Advanced E-commerce Traffic Injection (Breadcrumbs & OG) */}
+      {productData && (
+        <Helmet>
+          {/* Breadcrumb Schema for Google SERP */}
+          <script type="application/ld+json">
+            {JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://www.aaramdehi.co.in"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": productData.category || "Products",
+                  "item": `https://www.aaramdehi.co.in/products?category=${encodeURIComponent(productData.category || 'All')}`
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 3,
+                  "name": productData.name,
+                  "item": window.location.href
+                }
+              ]
+            })}
+          </script>
+          
+          {/* Social Media Open Graph Enhancements */}
+          <meta property="og:site_name" content="Aaramdehi Luxe" />
+          <meta property="product:price:amount" content={finalPrice} />
+          <meta property="product:price:currency" content="INR" />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={`Buy ${productData.name} - Aaramdehi`} />
+          <meta name="twitter:image" content={selectedImage || productData.images?.[0]?.url || productData.images?.[0]} />
+        </Helmet>
+      )}
 
       {/* --- CONTENT CONTAINER --- */}
       <div className="container mx-auto px-4 md:px-12 lg:px-24 py-6 md:py-10">
@@ -509,7 +551,7 @@ const ProductDetailsPage = () => {
           onQuantityChange={setQuantity}
           activeImg={selectedImage}
           onActiveImgChange={setSelectedImage}
-          imageAlt={productData.name}
+          imageAlt={`Buy ${productData.name} online in India - Aaramdehi`}
           model3dUrl={productData.model3dUrl}
           trackInteraction={trackInteraction}
           onAddToCart={handleAddToCart}

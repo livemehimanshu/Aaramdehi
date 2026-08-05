@@ -50,6 +50,7 @@ import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
 import blogRouter from './routes/blog.route.js';
 import { findAll } from './config/db.js';
 import { buildSitemapXml } from './utils/sitemap.js';
+import { buildMerchantFeedXml } from './utils/merchantFeed.js';
 
 const app = express();
 
@@ -164,7 +165,7 @@ app.get('/ping', (req, res) => {
 });
 
 // Dynamic Sitemap Endpoint (Serve XML at Root URL for Search Engines)
-app.get('/sitemap.xml', async (req, res) => {
+app.get('/api/sitemap', async (req, res) => {
     try {
         const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
         const products = await findAll('products');
@@ -175,8 +176,22 @@ app.get('/sitemap.xml', async (req, res) => {
         res.header('Content-Type', 'application/xml');
         res.send(xml);
     } catch (error) {
-        console.error('Sitemap generation error:', error);
-        res.status(500).send('Error generating sitemap');
+        console.error("Sitemap generation error:", error);
+        res.status(500).end();
+    }
+});
+
+app.get('/api/google-merchant-feed', async (req, res) => {
+    try {
+        const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
+        const products = await findAll('products');
+        const xml = buildMerchantFeedXml({ baseUrl: apiBase, products });
+
+        res.header('Content-Type', 'application/xml');
+        res.send(xml);
+    } catch (error) {
+        console.error("Merchant feed generation error:", error);
+        res.status(500).end();
     }
 });
 

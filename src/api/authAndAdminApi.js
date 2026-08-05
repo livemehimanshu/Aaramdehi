@@ -659,3 +659,43 @@ export async function createSettingAPI(payload) {
     return { success: false, message: e.response?.data?.message || e.message };
   }
 }
+
+/* ==========================================================================
+   TEAM API
+   ========================================================================== */
+
+export async function getTeamMembersAPI() {
+  try {
+    const res = await api.get('/team');
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}
+
+export async function addTeamMemberAPI(data) {
+  try {
+    const res = await api.post('/team', data);
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}
+
+export async function updateTeamMemberAPI(id, data) {
+  try {
+    const res = await api.put(`/team/${id}`, data);
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}
+
+export async function deleteTeamMemberAPI(id) {
+  try {
+    const res = await api.delete(`/team/${id}`);
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}

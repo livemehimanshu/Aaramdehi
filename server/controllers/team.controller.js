@@ -1,324 +1,117 @@
-import { findAll, findByQuery, findById, create, updateById, deleteById } from "../config/db.js";
-import { uploadImageCloudinary } from "../utils/uploadImageCloudinary.js";
+import { db, findByQuery, findById, updateById, deleteById, create } from '../config/db.js';
+import bcrypt from 'bcryptjs';
 
-const parseInteger = (value, fallback) => {
-  const parsed = parseInt(value, 10);
-  return Number.isNaN(parsed) ? fallback : parsed;
+const COLLECTION = 'users';
+
+// Fetch all team members (Admins & Managers)
+export const getTeamMembers = async (req, res) => {
+    try {
+        const usersSnapshot = await db.ref(COLLECTION).once('value');
+        const users = usersSnapshot.val() || {};
+        
+        const team = [];
+        for (const [key, user] of Object.entries(users)) {
+            if (user.role && ['ADMIN', 'Super Admin', 'Manager'].includes(user.role)) {
+                team.push({
+                    id: key,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    createdAt: user.createdAt
+                });
+            }
+        }
+
+        return res.status(200).json({ success: true, data: team });
+    } catch (error) {
+        console.error('Error fetching team members:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
 };
 
-// Get all team members
-export const getAllTeamMembers = async (req, res) => {
-  try {
-    const page = parseInteger(req.query.page, 1);
-    const limit = parseInteger(req.query.limit, 10);
-    const { isActive, designation } = req.query;
+// Add new team member
+export const addTeamMember = async (req, res) => {
+    try {
+        const { name, email, password, role } = req.body;
+        
+        if (req.user.role !== 'Super Admin' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'Only Super Admins can add team members' });
+        }
 
-    let members = await findAll('team');
+        const lowerEmail = email.toLowerCase();
+        const existing = await findByQuery(COLLECTION, 'email', lowerEmail);
+        if (existing.length > 0) {
+            return res.status(400).json({ success: false, message: 'Email already exists' });
+        }
 
-    if (isActive !== undefined) {
-      const active = String(isActive).toLowerCase() === 'true';
-      members = members.filter(member => Boolean(member.isActive) === active);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const newAdmin = {
+            name,
+            email: lowerEmail,
+            password: hashedPassword,
+            role: role || 'Manager',
+            isVerified: true,
+            status: 'Active',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        const created = await create(COLLECTION, newAdmin);
+        
+        return res.status(201).json({ success: true, message: 'Team member added successfully', data: { id: created._id || created.id, name, email, role } });
+    } catch (error) {
+        console.error('Error adding team member:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
-
-    if (designation) {
-      members = members.filter(member => member.designation === designation);
-    }
-
-    members = members.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const total = members.length;
-    const startIndex = (page - 1) * limit;
-    const paginated = members.slice(startIndex, startIndex + limit);
-
-    return res.json({
-      success: true,
-      message: "Team members fetched successfully",
-      data: paginated,
-      pagination: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
 };
 
-// Get team member by ID
-export const getTeamMemberById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const member = await findById('team', id);
-
-    if (!member) {
-      return res.status(404).json({
-        success: false,
-        message: "Team member not found",
-      });
-    }
-
-    return res.json({
-      success: true,
-      message: "Team member fetched successfully",
-      data: member,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// Create team member
-export const createTeamMember = async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      designation,
-      department,
-      bio,
-      reportingTo,
-      permissions,
-      startDate,
-      salary,
-      workingHours,
-      socialMedia,
-      emergencyContact,
-    } = req.body;
-
-    if (!firstName || !lastName || !email || !designation) {
-      return res.status(400).json({
-        success: false,
-        message: "Required fields are missing",
-      });
-    }
-
-    const existingMember = await findByQuery('team', 'email', email.toLowerCase().trim());
-    if (existingMember?.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Email already exists",
-      });
-    }
-
-    let profileImageUrl = "";
-    let profileImagePublicId = "";
-
-    if (req.file) {
-      const fileToUpload = req.file.buffer || req.file.path;
-      if (!fileToUpload) {
-        return res.status(400).json({ success: false, message: "Profile image file content is missing. Ensure Multer uses memoryStorage." });
-      }
-
-      const uploadResult = await uploadImageCloudinary(
-        fileToUpload,
-        "team_profiles"
-      );
-      
-      if (uploadResult && uploadResult.success) {
-          profileImageUrl = uploadResult.url;
-          profileImagePublicId = uploadResult.public_id;
-      } else {
-          console.error("❌ Team Profile Upload Failed:", uploadResult?.message);
-      }
-    }
-
-    const member = await create('team', {
-      firstName,
-      lastName,
-      email: email.toLowerCase().trim(),
-      phone: phone || "",
-      designation,
-      department: department || "",
-      profileImage: profileImageUrl || null,
-      profileImagePublicId: profileImagePublicId || null,
-      bio: bio || "",
-      reportingTo: reportingTo || null,
-      permissions: permissions || [],
-      startDate: startDate || new Date().toISOString(),
-      salary: salary || null,
-      workingHours: workingHours || { startTime: "09:00", endTime: "17:00" },
-      socialMedia: socialMedia || {},
-      emergencyContact: emergencyContact || {},
-      createdBy: req.userId || null,
-      isActive: true,
-    });
-
-    return res.status(201).json({
-      success: true,
-      message: "Team member created successfully",
-      data: member,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// Update team member
+// Update team member role
 export const updateTeamMember = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const {
-      firstName,
-      lastName,
-      email,
-      phone,
-      designation,
-      department,
-      bio,
-      reportingTo,
-      permissions,
-      isActive,
-      salary,
-      workingHours,
-      socialMedia,
-      emergencyContact,
-    } = req.body;
+    try {
+        const { id } = req.params;
+        const { role } = req.body;
 
-    const member = await findById('team', id);
+        if (req.user.role !== 'Super Admin' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'Only Super Admins can update roles' });
+        }
 
-    if (!member) {
-      return res.status(404).json({
-        success: false,
-        message: "Team member not found",
-      });
+        const user = await findById(COLLECTION, id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        await updateById(COLLECTION, id, { role, updatedAt: new Date().toISOString() });
+        return res.status(200).json({ success: true, message: 'Team member updated successfully' });
+    } catch (error) {
+        console.error('Error updating team member:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
-
-    const updatePayload = {};
-    if (email && email.toLowerCase().trim() !== member.email) {
-      const existingMember = await findByQuery('team', 'email', email.toLowerCase().trim());
-      if (existingMember?.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Email already exists",
-        });
-      }
-      updatePayload.email = email.toLowerCase().trim();
-    }
-    if (firstName) updatePayload.firstName = firstName;
-    if (lastName) updatePayload.lastName = lastName;
-    if (phone !== undefined) updatePayload.phone = phone;
-    if (designation) updatePayload.designation = designation;
-    if (department !== undefined) updatePayload.department = department;
-    if (bio !== undefined) updatePayload.bio = bio;
-    if (reportingTo !== undefined) updatePayload.reportingTo = reportingTo;
-    if (permissions !== undefined) updatePayload.permissions = permissions;
-    if (isActive !== undefined) updatePayload.isActive = isActive;
-    if (salary !== undefined) updatePayload.salary = salary;
-    if (workingHours !== undefined) updatePayload.workingHours = workingHours;
-    if (socialMedia !== undefined) updatePayload.socialMedia = socialMedia;
-    if (emergencyContact !== undefined) updatePayload.emergencyContact = emergencyContact;
-
-    if (req.file) {
-      const fileToUpload = req.file.buffer || req.file.path;
-      if (!fileToUpload) {
-        return res.status(400).json({ success: false, message: "Profile image file content is missing for update. Ensure Multer uses memoryStorage." });
-      }
-
-      const uploadResult = await uploadImageCloudinary(
-        fileToUpload,
-        "team_profiles"
-      );
-      
-      if (uploadResult && uploadResult.success) {
-          updatePayload.profileImage = uploadResult.url;
-          updatePayload.profileImagePublicId = uploadResult.public_id;
-      } else {
-          console.error("❌ Team Profile Update Failed:", uploadResult?.message);
-      }
-    }
-
-    const updatedMember = await updateById('team', id, updatePayload);
-
-    return res.json({
-      success: true,
-      message: "Team member updated successfully",
-      data: updatedMember,
-    });
-  } catch (error) {
-    console.error("🔥 updateTeamMember Controller Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
 };
 
 // Delete team member
 export const deleteTeamMember = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const member = await findById('team', id);
+    try {
+        const { id } = req.params;
+        
+        if (req.user.role !== 'Super Admin' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: 'Only Super Admins can delete team members' });
+        }
 
-    if (!member) {
-      return res.status(404).json({
-        success: false,
-        message: "Team member not found",
-      });
+        if (id === req.userId) {
+            return res.status(400).json({ success: false, message: 'Cannot delete your own account' });
+        }
+
+        const user = await findById(COLLECTION, id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        await deleteById(COLLECTION, id);
+        return res.status(200).json({ success: true, message: 'Team member removed successfully' });
+    } catch (error) {
+        console.error('Error deleting team member:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
     }
-
-    await deleteById('team', id);
-
-    return res.json({
-      success: true,
-      message: "Team member deleted successfully",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// Get team stats
-export const getTeamStats = async (req, res) => {
-  try {
-    const members = await findAll('team');
-    const totalMembers = members.length;
-    const activeMembers = members.filter(member => Boolean(member.isActive)).length;
-    const inactiveMembers = members.filter(member => !Boolean(member.isActive)).length;
-
-    const byDesignation = Object.values(members.reduce((acc, member) => {
-      const key = member.designation || 'Unknown';
-      acc[key] = acc[key] || { _id: key, count: 0 };
-      acc[key].count += 1;
-      return acc;
-    }, {}));
-
-    const byDepartment = Object.values(members.reduce((acc, member) => {
-      const key = member.department || 'Unknown';
-      acc[key] = acc[key] || { _id: key, count: 0 };
-      acc[key].count += 1;
-      return acc;
-    }, {}));
-
-    return res.json({
-      success: true,
-      message: "Team stats fetched successfully",
-      data: {
-        totalMembers,
-        activeMembers,
-        inactiveMembers,
-        byDesignation,
-        byDepartment,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
 };

@@ -421,3 +421,25 @@ export const getMyCoupons = async (req, res) => {
         return res.status(500).json({ success: false, message: error.message });
     }
 };
+
+// 6. Delete Customer By Admin
+export const deleteUserByAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ success: false, message: "User ID is required" });
+
+        // Only Admin can delete
+        if (req.user.role !== 'Super Admin' && req.user.role !== 'ADMIN') {
+            return res.status(403).json({ success: false, message: "Unauthorized to delete users" });
+        }
+
+        const user = await findById(COLLECTION, id);
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        await db.ref(`${COLLECTION}/${id}`).remove();
+        
+        return res.json({ success: true, message: "Customer deleted successfully" });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};

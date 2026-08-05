@@ -10,7 +10,8 @@ import {
     getMyCoupons,
     deleteAccount,
     listUsersForAdminController,
-    toggleUserBlockStatusController
+    toggleUserBlockStatusController,
+    deleteUserByAdmin
 } from '../controllers/user.controller.js'; // loginController is not used here
 
 // ✅ Fix: Named import use kiya hai kyunki auth.middleware.js mein 'export const' hai
@@ -30,6 +31,7 @@ const userRouter = Router();
 // Admin customer management
 userRouter.get('/admin/list', isAuthenticatedUser, listUsersForAdminController);
 userRouter.patch('/admin/toggle-block/:id', isAuthenticatedUser, toggleUserBlockStatusController);
+userRouter.delete('/admin/delete/:id', isAuthenticatedUser, deleteUserByAdmin);
 
 // Avatar Image Upload (Multer + Cloudinary)
 // ✅ Fix: 'auth' ki jagah 'isAuthenticatedUser' use kiya gaya hai

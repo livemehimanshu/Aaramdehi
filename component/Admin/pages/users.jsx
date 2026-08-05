@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Users, UserX, UserCheck, Search, Mail, ShieldAlert, Loader2 } from 'lucide-react';
+import { Users, UserX, UserCheck, Search, Mail, ShieldAlert, Loader2, Trash2 } from 'lucide-react';
 import { api } from '../../../src/api/authAndAdminApi';
 
 export default function UsersPage() {
@@ -43,6 +43,18 @@ export default function UsersPage() {
       }
     } catch (err) {
       setError(err?.response?.data?.message || 'Unable to update customer status');
+    }
+  };
+
+  const deleteUser = async (id) => {
+    if (!window.confirm("Are you sure you want to permanently delete this customer?")) return;
+    try {
+      const res = await api.delete(`/user/admin/delete/${id}`);
+      if (res?.data?.success) {
+        setUsers(prev => prev.filter(user => user.id !== id));
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Unable to delete customer');
     }
   };
 
@@ -114,12 +126,22 @@ export default function UsersPage() {
                         </span>
                       </td>
                       <td className="p-4 text-center">
-                        <button
-                          onClick={() => toggleUserStatus(user.id)}
-                          className={`p-2 rounded-lg transition-all hover:scale-110 ${isActive ? 'text-rose-500 hover:bg-rose-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
-                        >
-                          {isActive ? <UserX size={18} /> : <UserCheck size={18} />}
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => toggleUserStatus(user.id)}
+                            title={isActive ? "Block Customer" : "Unblock Customer"}
+                            className={`p-2 rounded-lg transition-all hover:scale-110 ${isActive ? 'text-amber-500 hover:bg-amber-500/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}
+                          >
+                            {isActive ? <UserX size={18} /> : <UserCheck size={18} />}
+                          </button>
+                          <button
+                            onClick={() => deleteUser(user.id)}
+                            title="Delete Customer"
+                            className="p-2 rounded-lg transition-all hover:scale-110 text-rose-500 hover:bg-rose-500/10"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

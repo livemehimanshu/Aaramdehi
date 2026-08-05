@@ -4,7 +4,7 @@ import {
   X, LayoutDashboard, ShoppingBag, BarChart2, Package, Tags, 
   Layers, CreditCard, RefreshCcw, TrendingUp, Mail, Users, 
   MessageSquare, Settings, Globe, ShieldCheck, LogOut, Image as ImageIcon, Store,
-  Target, Eye, Activity
+  Target, Eye, Activity, FileText
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -47,6 +47,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     { 
       title: "Marketing & SEO", 
       items: [
+        { name: 'Manage Blogs', path: '/admin/blogs', icon: FileText },
         { name: 'SEO Optimizer', path: '/admin/seo-optimizer', icon: TrendingUp },
         { name: 'Coupons', path: '/admin/coupons', icon: Tags },
         { name: 'Newsletter', path: '/admin/newsletter', icon: Mail },
@@ -138,7 +139,13 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
         {/* Logout Button */}
         <div className="p-6 border-t border-white/5">
-          <button className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all duration-200 group">
+          <button 
+            onClick={() => {
+              localStorage.clear();
+              window.location.href = '/login';
+            }}
+            className="flex items-center gap-3 px-4 py-3 w-full text-slate-400 hover:bg-red-500/10 hover:text-red-500 rounded-xl transition-all duration-200 group"
+          >
             <LogOut size={18} className="group-hover:rotate-12 transition-transform" />
             <span className="text-[13px] font-bold uppercase tracking-wider">Logout</span>
           </button>

@@ -49,7 +49,7 @@ const ProductSeoEditor = () => {
         const filtered = products.filter(product =>
             product.name?.toLowerCase().includes(lowercasedSearchTerm) ||
             product.brand?.toLowerCase().includes(lowercasedSearchTerm) ||
-            product._id?.toLowerCase().includes(lowercasedSearchTerm)
+            (product._id || product.id)?.toLowerCase().includes(lowercasedSearchTerm)
         );
         setFilteredProducts(filtered);
     }, [searchTerm, products]);
@@ -57,7 +57,8 @@ const ProductSeoEditor = () => {
     const handleSelectProduct = async (product) => {
         setSelectedProduct(product);
         try {
-            const res = await getProductByIdAPI(product._id);
+            const productId = product._id || product.id;
+            const res = await getProductByIdAPI(productId);
             if (res.success) {
                 const p = res.data;
                 setSeoData({
@@ -97,7 +98,8 @@ const ProductSeoEditor = () => {
             formData.append('sellingPrice', selectedProduct.sellingPrice || 0);
             formData.append('stock', selectedProduct.stock || 0);
 
-            const res = await updateProductAPI(selectedProduct._id, formData);
+            const productId = selectedProduct._id || selectedProduct.id;
+            const res = await updateProductAPI(productId, formData);
             if (res.success) {
                 toast.success("SEO details updated successfully!");
                 fetchProducts(); // Refresh list

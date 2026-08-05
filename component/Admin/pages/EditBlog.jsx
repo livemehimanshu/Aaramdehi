@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // ES6
 import toast from 'react-hot-toast';
-import { FiSave, FiArrowLeft, FiImage, FiSettings, FiBarChart2 } from 'react-icons/fi';
+import { FiSave, FiArrowLeft, FiImage, FiSettings, FiBarChart2, FiEdit } from 'react-icons/fi';
 import { getBlogByIdOrSlugAPI, createBlogAPI, updateBlogAPI } from '../../../src/api/authAndAdminApi';
 
 const EditBlog = () => {

@@ -134,7 +134,7 @@ app.use("/settings", settingsRouter);
 // If a `public` folder exists, serve it as static assets and
 // return `index.html` for SPA routes (but avoid rewriting API or asset requests).
 // ==========================================
-const staticDir = path.join(__dirname, '..', 'public');
+const staticDir = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(staticDir)) {
     app.use(express.static(staticDir, { maxAge: '1d' }));
 

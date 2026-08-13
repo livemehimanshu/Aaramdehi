@@ -21,6 +21,7 @@ import useBehaviorTracking from '@/hooks/useBehaviorTracking';
 import toast from 'react-hot-toast';
 import ProductPage from './ProductPage';
 import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
+import NotFound from '../NotFound';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/600x750?text=No+Image";
 
@@ -453,7 +454,7 @@ const ProductDetailsPage = () => {
   }
 
   if (!productData) {
-    return <div className="min-h-screen flex items-center justify-center"><p className="text-xl text-gray-700 font-semibold">Product not found.</p></div>;
+    return <NotFound />;
   }
 
   return (

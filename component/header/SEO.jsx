@@ -10,7 +10,7 @@ import { Helmet } from 'react-helmet-async';
  * @param {string} path - Path/Route of current page (e.g. "/products")
  * @param {string} ogUrl - Custom Canonical URL override
  */
-const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData }) => {
+const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData, noindex = false }) => {
   const siteName = "Aaramdehi - Comfort Redefined";
   const siteUrl = "https://www.aaramdehi.co.in";
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
@@ -36,7 +36,11 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
       <title>{fullTitle}</title>
       <meta name='description' content={description || defaultDescription} />
       <meta name='keywords' content={keywords || "furniture, luxury bedding, home decor, Aaramdehi"} />
-      <meta name='robots' content='index,follow,max-snippet:-1,max-image-preview:large' />
+      {noindex ? (
+        <meta name='robots' content='noindex,nofollow' />
+      ) : (
+        <meta name='robots' content='index,follow,max-snippet:-1,max-image-preview:large' />
+      )}
       
       {/* 🟢 Fixed Canonical Tag for Google Search Console */}
       <link rel="canonical" href={cleanCanonical} />

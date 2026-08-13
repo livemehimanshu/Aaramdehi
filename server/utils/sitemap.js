@@ -47,7 +47,7 @@ export const buildSitemapXml = ({ baseUrl, products = [], categories = [], blogs
     if (!categorySlug) return;
 
     // Direct clean path for categories to prevent canonical duplication
-    const categoryPath = `/category/${encodeURIComponent(String(categorySlug))}`;
+    const categoryPath = `/products?category=${encodeURIComponent(String(categorySlug))}`;
     xml += `  <url>\n`;
     xml += `    <loc>${escapeXml(`${normalizedBaseUrl}${categoryPath}`)}</loc>\n`;
     xml += `    <changefreq>weekly</changefreq>\n`;
@@ -60,7 +60,7 @@ export const buildSitemapXml = ({ baseUrl, products = [], categories = [], blogs
     const productId = product?.slug || product?._id || product?.id;
     if (!productId) return;
 
-    const productPath = `/products/${encodeURIComponent(String(productId))}`;
+    const productPath = `/${encodeURIComponent(String(productId))}`;
     const lastmod = product?.updatedAt || product?.createdAt || new Date().toISOString();
 
     xml += `  <url>\n`;

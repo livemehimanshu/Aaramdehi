@@ -31,6 +31,7 @@ const NotFound = () => {
         description="The page you are looking for could not be found. Discover premium furniture and home decor at Aaramdehi."
         keywords="404 page, furniture, home decor, aaramdehi, page not found"
         ogUrl={currentUrl}
+        noindex={true}
       />
 
       <div className="max-w-4xl w-full text-center space-y-8">

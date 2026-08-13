@@ -32,7 +32,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       title: "Appearance (UI)", 
       items: [
         { name: 'Banner List', path: '/admin/banners', icon: ImageIcon },
-        { name: 'Add Home Banner', path: '/admin/add-banner', icon: Layers },
+        { name: 'Add Home Banner', path: '/admin/banner/add', icon: Layers },
       ]
     },
     { 

@@ -1,4 +1,4 @@
-import { findById, updateById, db, findByQuery, create } from '../config/db.js';
+import { findById, updateById, db, findByQuery, create, findAll } from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import generatedOtp from '../utils/generatedOtp.js';
 import sendEmail from '../config/sendEmail.js';

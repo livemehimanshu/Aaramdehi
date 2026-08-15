@@ -31,19 +31,38 @@ seoRouter.put('/type/:type', updateSeoByType);
 // Fetch All SEO Data Route
 seoRouter.get('/all', getAllSeo);
 
+const safeFindAll = async (collectionName) => {
+    try {
+        return await findAll(collectionName);
+    } catch (error) {
+        console.warn(`Sitemap fallback: unable to read ${collectionName}:`, error?.message || error);
+        return [];
+    }
+};
+
 // Dynamic Sitemap Endpoint
 seoRouter.get('/sitemap.xml', async (req, res) => {
     try {
         const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
-        const products = await findAll('products');
-        const categories = await findAll('categories');
-        const xml = buildSitemapXml({ baseUrl: apiBase, products, categories });
+        const [products, categories, blogs] = await Promise.all([
+            safeFindAll('products'),
+            safeFindAll('categories'),
+            safeFindAll('blogs')
+        ]);
+        const xml = buildSitemapXml({ baseUrl: apiBase, products, categories, blogs });
 
         res.header('Content-Type', 'application/xml');
         res.send(xml);
     } catch (error) {
         console.error("❌ Error generating sitemap:", error);
-        res.status(500).send("Error generating sitemap");
+        const fallbackXml = buildSitemapXml({
+            baseUrl: process.env.FRONTEND_URL || "https://www.aaramdehi.co.in",
+            products: [],
+            categories: [],
+            blogs: []
+        });
+        res.header('Content-Type', 'application/xml');
+        res.status(200).send(fallbackXml);
     }
 });
 

@@ -379,7 +379,7 @@ const ProductListing = ({ forcedCategory }) => {
                   </div>
                 )}
                 <Link 
-                  to={`/product/${item._id || item.id}`} 
+                  to={`/product/${item.slug || item._id || item.id}`} 
                   onClick={() => handleProductView(item)}
                   className="w-full h-full flex items-center justify-center">
                   <img 
@@ -422,7 +422,7 @@ const ProductListing = ({ forcedCategory }) => {
                   }
                 </p>
                 <Link 
-                  to={`/product/${item._id || item.id}`}
+                  to={`/product/${item.slug || item._id || item.id}`}
                   onClick={() => handleProductView(item)}>
                   <h3 title={item.name} className="text-sm mc-serif font-medium text-gray-800 line-clamp-2 group-hover:text-gray-900 transition-colors leading-snug">
                     {item.name}

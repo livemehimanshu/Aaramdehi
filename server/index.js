@@ -164,20 +164,38 @@ app.get('/ping', (req, res) => {
     return res.status(200).json({ success: true, message: 'pong' });
 });
 
+const safeFindAll = async (collectionName) => {
+    try {
+        return await findAll(collectionName);
+    } catch (error) {
+        console.warn(`Sitemap fallback: unable to read ${collectionName}:`, error?.message || error);
+        return [];
+    }
+};
+
 // Dynamic Sitemap Endpoint (Serve XML at Root URL for Search Engines)
 app.get('/api/sitemap', async (req, res) => {
     try {
         const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
-        const products = await findAll('products');
-        const categories = await findAll('categories');
-        const blogs = await findAll('blogs');
+        const [products, categories, blogs] = await Promise.all([
+            safeFindAll('products'),
+            safeFindAll('categories'),
+            safeFindAll('blogs')
+        ]);
         const xml = buildSitemapXml({ baseUrl: apiBase, products, categories, blogs });
 
         res.header('Content-Type', 'application/xml');
         res.send(xml);
     } catch (error) {
         console.error("Sitemap generation error:", error);
-        res.status(500).end();
+        const fallbackXml = buildSitemapXml({
+            baseUrl: process.env.FRONTEND_URL || "https://www.aaramdehi.co.in",
+            products: [],
+            categories: [],
+            blogs: []
+        });
+        res.header('Content-Type', 'application/xml');
+        res.status(200).send(fallbackXml);
     }
 });
 

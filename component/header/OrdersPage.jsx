@@ -159,7 +159,7 @@ const OrdersPage = () => {
                                                 <p className="text-xs text-gray-500 font-medium">Qty: {item.qty || item.quantity}</p>
                                             </div>
                                             <Link 
-                                                to={`/product/${item.productId || item.id}`}
+                                                to={`/product/${item.productSlug || item.productId || item.id}`}
                                                 className="text-[11px] font-black text-blue-600 hover:text-blue-900 uppercase tracking-tighter"
                                             >
                                                 View Product

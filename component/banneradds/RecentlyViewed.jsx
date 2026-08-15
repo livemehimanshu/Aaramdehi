@@ -62,7 +62,7 @@ const RecentlyViewed = () => {
         >
           {recentProducts.map((item) => (
             <SwiperSlide key={item._id || item.id}>
-              <Link to={`/product/${item._id || item.id}`}>
+              <Link to={`/product/${item.slug || item._id || item.id}`}>
                 <div className="bg-white border border-gray-100 rounded-lg p-3 h-full flex flex-col items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
                   <div className="w-full aspect-square flex items-center justify-center p-2">
                     <img 

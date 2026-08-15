@@ -117,7 +117,7 @@ const PopularProducts = () => {
           <div key={item._id} className="group bg-white rounded-[30px] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500 border border-transparent hover:border-blue-100 flex flex-col h-full relative">
             <div className="h-64 bg-[#f8f9fb] p-6 relative flex items-center justify-center overflow-hidden">
               <Link
-                to={`/product/${item._id}`}
+                to={`/product/${item.slug || item._id || item.id}`}
                 className="w-full h-full flex items-center justify-center">
                 <img src={item.thumbnail || 'https://placehold.co/300x300?text=No+Image'} className="max-h-full object-contain mix-blend-multiply group-hover:scale-110 transition-transform duration-700" alt={item.name}/>
               </Link>
@@ -125,7 +125,7 @@ const PopularProducts = () => {
                 {isInWishlist(item._id || item.id) ? <AiFillHeart className="text-red-500 text-2xl" /> : <AiOutlineHeart className="text-gray-300 text-2xl hover:text-red-400" />}
               </button>
               <div className="absolute bottom-[-60px] group-hover:bottom-4 left-0 right-0 flex justify-center gap-2 transition-all duration-500">
-                <Link to={`/product/${item._id}`} className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90 flex items-center justify-center">
+                <Link to={`/product/${item.slug || item._id || item.id}`} className="bg-white p-3 rounded-full shadow-xl text-blue-900 hover:bg-blue-900 hover:text-white transition-all transform active:scale-90 flex items-center justify-center">
                   <AiOutlineEye size={20} />
                 </Link>
                 <button // Event handler ko update kiya
@@ -141,7 +141,7 @@ const PopularProducts = () => {
                 {typeof item.category === 'object' ? item.category?.name : (item.category || "Aaramdehi Luxe")}
               </p>
               <Link
-                to={`/product/${item._id}`}
+                to={`/product/${item.slug || item._id || item.id}`}
                 onClick={() => handleProductView(item)}>
                 <h3 className="text-sm font-bold text-gray-800 line-clamp-2 h-10 group-hover:text-blue-900 transition-colors leading-tight">
                   {item.name}

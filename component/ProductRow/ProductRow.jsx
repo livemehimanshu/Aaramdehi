@@ -76,7 +76,7 @@ const ProductRow = ({ title, products = [], categoryPath = '/category/all' }) =>
                                 return (
                                     <Link
                                         key={product.id}
-                                        to={`/product/${product.id}`}
+                                        to={`/product/${product.slug || product.id || product._id}`}
                                         className="flex-shrink-0 w-48 bg-white border border-gray-100 rounded-sm overflow-hidden group transition-all duration-500 hover:shadow-lg"
                                     >
                                         {/* Image Container */}

@@ -1,6 +1,15 @@
 import { findAll } from '../server/config/db.js';
 import { buildSitemapXml } from '../server/utils/sitemap.js';
 
+const safeFindAll = async (collectionName) => {
+  try {
+    return await findAll(collectionName);
+  } catch (error) {
+    console.warn(`Sitemap fallback: unable to read ${collectionName}:`, error?.message || error);
+    return [];
+  }
+};
+
 export default async function handler(req, res) {
   if (req.method && req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
@@ -10,15 +19,24 @@ export default async function handler(req, res) {
 
   try {
     const baseUrl = process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in';
-    const products = await findAll('products');
-    const categories = await findAll('categories');
-    const blogs = await findAll('blogs');
+    const [products, categories, blogs] = await Promise.all([
+      safeFindAll('products'),
+      safeFindAll('categories'),
+      safeFindAll('blogs')
+    ]);
     const xml = buildSitemapXml({ baseUrl, products, categories, blogs });
 
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.status(200).send(xml);
   } catch (error) {
     console.error('Vercel sitemap generation failed:', error);
-    res.status(500).send('Error generating sitemap');
+    const fallbackXml = buildSitemapXml({
+      baseUrl: process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in',
+      products: [],
+      categories: [],
+      blogs: []
+    });
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.status(200).send(fallbackXml);
   }
 }

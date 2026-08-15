@@ -168,7 +168,7 @@ const MainGrid = ({ apiEndpoint = null }) => {
                                 return (
                                     <Link
                                         key={product.id}
-                                        to={`/product/${product.id}`}
+                                        to={`/product/${product.slug || product.id || product._id}`}
                                         className="bg-white border border-gray-100 rounded-sm overflow-hidden group transition-all duration-500 hover:shadow-lg"
                                     >
                                         {/* Image Container */}

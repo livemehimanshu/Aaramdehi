@@ -128,7 +128,7 @@ const PopularProducts = () => {
           <div key={item._id} className="group mc-card overflow-hidden transition-all duration-500 border border-transparent hover:border-blue-50 flex flex-col h-full relative">
             <div className="h-64 bg-gradient-to-br from-white to-[#fbfbfd] p-6 relative flex items-center justify-center overflow-hidden">
               <Link
-                to={`/product/${item._id}`}
+                to={`/product/${item.slug || item._id || item.id}`}
                 onClick={() => handleProductView(item)}
                 className="w-full h-full flex items-center justify-center">
                   <img
@@ -163,7 +163,7 @@ const PopularProducts = () => {
                 {typeof item.category === 'object' ? item.category?.name : (item.category || "Aaramdehi Luxe")}
               </p>
               <Link
-                to={`/product/${item._id}`}
+                to={`/product/${item.slug || item._id || item.id}`}
                 onClick={() => handleProductView(item)}>
                 <h3 className="text-sm mc-serif font-medium text-gray-800 line-clamp-2 h-10 group-hover:text-gray-900 transition-colors leading-tight">
                   {item.name}

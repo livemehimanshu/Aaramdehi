@@ -27,13 +27,18 @@ const normalizeLegacyIdentifier = (value) => {
 };
 
 export const resolveProductByIdentifier = async (identifier) => {
-    const lookup = normalizeLegacyIdentifier(identifier);
-    if (!lookup) return null;
+    const rawIdentifier = String(identifier ?? '').trim();
+    if (!rawIdentifier) return null;
 
-    // 1) direct lookup by ID/key
-    let product = await findById(COLLECTION, lookup);
-    if (product) {
-        return { product, matchedBy: 'id', resolvedSlug: product.slug || lookup };
+    const lookup = normalizeLegacyIdentifier(rawIdentifier);
+    const candidateIds = [...new Set([rawIdentifier, lookup].filter(Boolean))];
+
+    // 1) direct lookup by original ID/key first, because Firebase keys are case-sensitive and may include hyphens/dashes
+    for (const candidate of candidateIds) {
+        const product = await findById(COLLECTION, candidate);
+        if (product) {
+            return { product, matchedBy: candidate === rawIdentifier ? 'id' : 'normalizedId', resolvedSlug: product.slug || candidate };
+        }
     }
 
     // 2) slug index lookup
@@ -41,7 +46,7 @@ export const resolveProductByIdentifier = async (identifier) => {
         const slugSnapshot = await db.ref(`slugs/${lookup}`).once('value');
         const mappedId = slugSnapshot.val();
         if (mappedId) {
-            product = await findById(COLLECTION, mappedId);
+            const product = await findById(COLLECTION, mappedId);
             if (product) {
                 return { product, matchedBy: 'slugIndex', mappedId, resolvedSlug: product.slug || lookup };
             }
@@ -52,10 +57,13 @@ export const resolveProductByIdentifier = async (identifier) => {
 
     // 3) exact slug lookup in products
     try {
-        const slugMatches = await findByQuery(COLLECTION, 'slug', lookup);
-        if (Array.isArray(slugMatches) && slugMatches.length > 0) {
-            product = slugMatches[0];
-            return { product, matchedBy: 'exactSlug', resolvedSlug: product.slug || lookup };
+        const slugCandidates = [...new Set([lookup, rawIdentifier.toLowerCase(), rawIdentifier].filter(Boolean))];
+        for (const slugValue of slugCandidates) {
+            const slugMatches = await findByQuery(COLLECTION, 'slug', slugValue);
+            if (Array.isArray(slugMatches) && slugMatches.length > 0) {
+                const product = slugMatches[0];
+                return { product, matchedBy: 'exactSlug', resolvedSlug: product.slug || slugValue };
+            }
         }
     } catch (innerErr) {
         console.warn('Exact slug lookup failed during identifier resolution:', innerErr && innerErr.message);

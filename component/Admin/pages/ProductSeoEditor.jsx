@@ -88,15 +88,6 @@ const ProductSeoEditor = () => {
             formData.append('seoTitle', seoData.seoTitle);
             formData.append('seoDescription', seoData.seoDescription);
             formData.append('seoKeywords', seoData.seoKeywords);
-            
-            // Required basic fields (Backend validation requires these)
-            formData.append('name', selectedProduct.name);
-            formData.append('brand', selectedProduct.brand);
-            formData.append('category', selectedProduct.category);
-            // Add basic numeric fields to prevent NaN errors on backend
-            formData.append('mrp', selectedProduct.mrp || 0);
-            formData.append('sellingPrice', selectedProduct.sellingPrice || 0);
-            formData.append('stock', selectedProduct.stock || 0);
 
             const productId = selectedProduct._id || selectedProduct.id;
             const res = await updateProductAPI(productId, formData);

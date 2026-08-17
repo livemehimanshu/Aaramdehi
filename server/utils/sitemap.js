@@ -15,9 +15,23 @@ export const buildSitemapXml = ({ baseUrl, products = [], categories = [], blogs
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
 
   // Normalize Firebase Array or Object responses safely
-  const prodList = Array.isArray(products) ? products : Object.values(products || {});
+  const rawProdList = Array.isArray(products) ? products : Object.values(products || {});
   const catList = Array.isArray(categories) ? categories : Object.values(categories || {});
   const blogList = Array.isArray(blogs) ? blogs : Object.values(blogs || {});
+
+  // ✅ FILTER: Only include products with valid slugs/names (fixes 404 errors)
+  const prodList = rawProdList.filter(product => {
+    if (!product) return false;
+    const hasValidId = product?.slug && String(product.slug).trim();
+    const hasName = product?.name && String(product.name).trim();
+    const isActive = product?.active !== false; // Exclude explicitly inactive products
+    return (hasValidId || hasName) && isActive;
+  });
+
+  if (rawProdList.length > prodList.length) {
+    const filtered = rawProdList.length - prodList.length;
+    console.warn(`⚠️  Sitemap: Filtered out ${filtered} invalid/missing products`);
+  }
 
   // 1. Primary Clean Static Pages (No trailing slashes or redirects)
   const staticPages = [

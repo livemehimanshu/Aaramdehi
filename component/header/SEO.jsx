@@ -10,11 +10,14 @@ import { Helmet } from 'react-helmet-async';
  * @param {string} path - Path/Route of current page (e.g. "/products")
  * @param {string} ogUrl - Custom Canonical URL override
  */
-const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData, noindex = false }) => {
+const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData, noindex = false, is404 = false }) => {
   const siteName = "Aaramdehi - Comfort Redefined";
   const siteUrl = "https://www.aaramdehi.co.in";
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
   const defaultDescription = "Aaramdehi offers premium furniture and home decor. Redefine your comfort with our curated collection.";
+  
+  // ✅ SEO FIX: Add noindex for actual 404 pages
+  const shouldNoindex = noindex || is404;
 
   // 🟢 Dynamic Clean Canonical URL Construction (Removes Query Parameters & Trailing Slashes)
   let cleanCanonical = ogUrl;
@@ -36,7 +39,7 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
       <title>{fullTitle}</title>
       <meta name='description' content={description || defaultDescription} />
       <meta name='keywords' content={keywords || "furniture, luxury bedding, home decor, Aaramdehi"} />
-      {noindex ? (
+      {shouldNoindex ? (
         <meta name='robots' content='noindex,nofollow' />
       ) : (
         <meta name='robots' content='index,follow,max-snippet:-1,max-image-preview:large' />

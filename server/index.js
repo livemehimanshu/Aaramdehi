@@ -218,6 +218,28 @@ app.get('/api/google-merchant-feed', async (req, res) => {
 // ==========================================
 
 // Automatic Dynamic Redirect for any .htm URL to its clean counterpart
+// ✅ SEO FIX: Server-side product existence middleware for proper 404s
+app.head('/:slug', async (req, res) => {
+    const { slug } = req.params;
+    try {
+        const { resolveProductByIdentifier } = await import('./controllers/product.controller.js');
+        const result = await resolveProductByIdentifier(slug);
+        if (result?.product) {
+            // Product exists - set SEO headers
+            res.set('X-Product-Found', 'true');
+            res.set('Cache-Control', 'public, max-age=3600');
+            return res.status(200).end();
+        } else {
+            // Product doesn't exist - return 404 for crawlers
+            res.set('X-Product-Found', 'false');
+            return res.status(404).end();
+        }
+    } catch (err) {
+        console.warn('Product existence check failed:', err?.message);
+        res.status(500).end();
+    }
+});
+
 app.get('/:slug.htm', async (req, res) => {
     const rawSlug = req.params.slug;
     const cleanSlug = rawSlug;

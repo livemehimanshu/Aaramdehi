@@ -453,8 +453,19 @@ const ProductDetailsPage = () => {
     return <div className="min-h-screen flex items-center justify-center font-bold uppercase tracking-widest text-gray-500 animate-pulse">Loading Product Details...</div>;
   }
 
+  // ✅ SEO FIX: Properly handle 404 products with noindex + structured data
   if (!productData) {
-    return <NotFound />;
+    return (
+      <>
+        <SEO
+          title="404 - Product Not Found"
+          description="The product you're looking for could not be found."
+          keywords="404, product not found"
+          is404={true}
+        />
+        <NotFound />
+      </>
+    );
   }
 
   return (

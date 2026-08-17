@@ -41,6 +41,17 @@ const ProductListing = ({ forcedCategory }) => {
   const categoryParam = searchParams.get('category');
   const subCategoryParam = searchParams.get('subCategory');
   const searchParam = searchParams.get('search'); // Extract search query
+  
+  // ✅ CANONICAL FIX: Build canonical URL without query params (for duplicate prevention)
+  const getCanonicalUrl = () => {
+    if (searchParam) {
+      return `https://www.aaramdehi.co.in/products?search=${encodeURIComponent(searchParam)}`;
+    }
+    if (categoryParam) {
+      return `https://www.aaramdehi.co.in/products?category=${encodeURIComponent(categoryParam)}`;
+    }
+    return 'https://www.aaramdehi.co.in/products';
+  };
 
   const [selectedCategory, setSelectedCategory] = useState(forcedCategory || categoryParam || 'All');
   const [selectedSubCategory, setSelectedSubCategory] = useState(subCategoryParam || null);
@@ -294,11 +305,13 @@ const ProductListing = ({ forcedCategory }) => {
 
   return (
     <div className="flex bg-[#f4f7f9] min-h-screen p-4 lg:p-8 gap-8 mt-20">
-      {/* ✅ SEO Optimizer implementation */}
+      {/* ✅ SEO Optimizer implementation with canonical URL */}
       <SEO 
         title={pageTitle}
         description={pageDescription}
         keywords={pageKeywords}
+        ogUrl={`https://www.aaramdehi.co.in/products${searchParam ? `?search=${encodeURIComponent(searchParam)}` : categoryParam ? `?category=${encodeURIComponent(categoryParam)}` : ''}`}
+        path="/products"
       />
 
       <aside className="hidden lg:block w-[280px] sticky top-24 h-fit">

@@ -2,11 +2,16 @@ import React from 'react';
 import SEO from '../header/SEO';
 
 const AboutUs = () => {
+  // ✅ CANONICAL FIX: Explicit canonical for about page
+  const canonicalUrl = "https://www.aaramdehi.co.in/about-us";
+  
   return (
     <div className="bg-[#FAF9F6] min-h-screen pb-20">
       <SEO 
         title="About Us | Aaramdehi" 
         description="Learn more about Aaramdehi, your trusted partner for premium furniture, home decor, and unparalleled comfort."
+        ogUrl={canonicalUrl}
+        path="/about-us"
       />
       
       {/* Hero Section */}

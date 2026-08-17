@@ -3,11 +3,16 @@ import SEO from '../header/SEO';
 import CategoriesBar from '../CategoriesBar/CategoriesBar';
 
 const CategoriesPage = () => {
+  // ✅ CANONICAL FIX: Explicit canonical URL for duplicate prevention
+  const canonicalUrl = "https://www.aaramdehi.co.in/categories";
+  
   return (
     <div className="bg-[#FAF9F6] min-h-screen pb-20">
       <SEO 
         title="Shop by Category | Aaramdehi" 
         description="Explore premium furniture and home decor by category at Aaramdehi."
+        ogUrl={canonicalUrl}
+        path="/categories"
       />
       
       {/* Hero Section */}

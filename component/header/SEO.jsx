@@ -2,13 +2,29 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 /**
+ * Normalize URL for canonical tag (removes query params, trailing slashes, duplicates)
+ * CRITICAL: Google requires explicit canonical tags to resolve "Duplicate without user-selected canonical" issues
+ */
+const getNormalizedUrl = (url) => {
+  if (!url) return '';
+  try {
+    const urlObj = new URL(url);
+    // Remove query parameters and trailing slash for clean canonical
+    const normalized = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`.replace(/\/$/, '');
+    return normalized;
+  } catch {
+    return url;
+  }
+};
+
+/**
  * SEO Optimizer Component
  * @param {string} title - Page ka title
  * @param {string} description - Page ka description
  * @param {string} keywords - Keywords for search engines
  * @param {string} ogImage - Social media image
  * @param {string} path - Path/Route of current page (e.g. "/products")
- * @param {string} ogUrl - Custom Canonical URL override
+ * @param {string} ogUrl - Custom Canonical URL override (REQUIRED for product pages)
  */
 const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData, noindex = false, is404 = false }) => {
   const siteName = "Aaramdehi - Comfort Redefined";
@@ -19,7 +35,8 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
   // ✅ SEO FIX: Add noindex for actual 404 pages
   const shouldNoindex = noindex || is404;
 
-  // 🟢 Dynamic Clean Canonical URL Construction (Removes Query Parameters & Trailing Slashes)
+  // 🟢 EXPLICIT Canonical URL Construction (Removes Query Parameters & Trailing Slashes)
+  // GOOGLE FIX: Explicit canonical tags resolve "Duplicate without user-selected canonical" errors
   let cleanCanonical = ogUrl;
   if (!cleanCanonical) {
     if (path) {
@@ -32,6 +49,9 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
       cleanCanonical = siteUrl;
     }
   }
+  
+  // ✅ Normalize canonical URL to prevent duplicates
+  cleanCanonical = getNormalizedUrl(cleanCanonical);
 
   return (
     <Helmet>

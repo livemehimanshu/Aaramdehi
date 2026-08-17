@@ -10,6 +10,9 @@ import AaramdehiAdBanner from '../../header/AaramdehiAdBanner.jsx';
 import RecentlyViewed from '../../banneradds/RecentlyViewed.jsx';
 
 const Home = () => {
+  // ✅ CANONICAL FIX: Explicit canonical for homepage
+  const canonicalUrl = "https://www.aaramdehi.co.in";
+  
   return (
     <main className="w-full bg-white">
       <SEO
@@ -17,7 +20,8 @@ const Home = () => {
         description="Discover premium furniture, beds, sofas, and home decor at Aaramdehi. Shop modern and timeless designs curated for comfort and style."
         keywords="furniture, home decor, beds, sofas, premium furniture, aaramdehi"
         ogImage="/logo.png"
-        ogUrl={window.location.href}
+        ogUrl={canonicalUrl}
+        path="/"
       />
       {/* 1. Premium Hero Banner Section */}
       <section className="relative">

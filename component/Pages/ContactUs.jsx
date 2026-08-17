@@ -3,6 +3,9 @@ import SEO from '../header/SEO';
 import { FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 
 const ContactUs = () => {
+  // ✅ CANONICAL FIX: Explicit canonical for contact page
+  const canonicalUrl = "https://www.aaramdehi.co.in/contact-us";
+  
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
   const handleSubmit = (e) => {
@@ -16,6 +19,8 @@ const ContactUs = () => {
       <SEO 
         title="Contact Us | Aaramdehi" 
         description="Get in touch with Aaramdehi for support, inquiries, and more."
+        ogUrl={canonicalUrl}
+        path="/contact-us"
       />
       
       {/* Hero Section */}

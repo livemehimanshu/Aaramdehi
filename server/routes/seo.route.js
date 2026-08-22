@@ -11,7 +11,8 @@ import {
     updateGlobalSeo,
     getSeoByType,
     updateSeoByType,
-    getAllSeo
+    getAllSeo,
+    generateDynamicSitemap
 } from '../controllers/seo.controller.js';
 
 const seoRouter = Router();
@@ -31,40 +32,9 @@ seoRouter.put('/type/:type', updateSeoByType);
 // Fetch All SEO Data Route
 seoRouter.get('/all', getAllSeo);
 
-const safeFindAll = async (collectionName) => {
-    try {
-        return await findAll(collectionName);
-    } catch (error) {
-        console.warn(`Sitemap fallback: unable to read ${collectionName}:`, error?.message || error);
-        return [];
-    }
-};
-
 // Dynamic Sitemap Endpoint
-seoRouter.get('/sitemap.xml', async (req, res) => {
-    try {
-        const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
-        const [products, categories, blogs] = await Promise.all([
-            safeFindAll('products'),
-            safeFindAll('categories'),
-            safeFindAll('blogs')
-        ]);
-        const xml = buildSitemapXml({ baseUrl: apiBase, products, categories, blogs });
+seoRouter.get('/sitemap.xml', generateDynamicSitemap);
 
-        res.header('Content-Type', 'application/xml');
-        res.send(xml);
-    } catch (error) {
-        console.error("❌ Error generating sitemap:", error);
-        const fallbackXml = buildSitemapXml({
-            baseUrl: process.env.FRONTEND_URL || "https://www.aaramdehi.co.in",
-            products: [],
-            categories: [],
-            blogs: []
-        });
-        res.header('Content-Type', 'application/xml');
-        res.status(200).send(fallbackXml);
-    }
-});
 
 // Robots.txt Endpoint
 seoRouter.get('/robots.txt', (req, res) => {

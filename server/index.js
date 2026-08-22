@@ -68,6 +68,21 @@ app.use((req, res, next) => {
     next();
 });
 
+// ==========================================
+// 2. SEO FIX: 301 Catch-all Redirect for Old IndiaMART URLs
+// ==========================================
+app.use((req, res, next) => {
+    const url = req.url.toLowerCase();
+    
+    // Check if the URL matches old IndiaMART indexed patterns
+    if (url.endsWith('.htm') || url.includes('/seller/register') || url.includes('/seller/')) {
+        // 301 Permanent Redirect to homepage
+        return res.redirect(301, `https://www.aaramdehi.co.in`);
+    }
+    
+    next();
+});
+
 const allowedCorsOrigins = [
     'https://www.aaramdehi.co.in',
     'https://aaramdehi.co.in',

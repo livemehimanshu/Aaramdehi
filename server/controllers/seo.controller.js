@@ -1,4 +1,5 @@
 import { findByQuery, create, updateById, findAll } from "../config/db.js";
+import { buildSitemapXml } from "../utils/sitemap.js";
 
 const normalizeKeywords = (keywords) => {
     if (Array.isArray(keywords)) return keywords;
@@ -177,5 +178,46 @@ export const getAllSeo = async (req, res) => {
             message: "Error fetching SEO data",
             error: error.message
         });
+    }
+};
+
+const safeFindAll = async (collectionName) => {
+    try {
+        return await findAll(collectionName);
+    } catch (error) {
+        console.warn(`Sitemap fallback: unable to read ${collectionName}:`, error?.message || error);
+        return [];
+    }
+};
+
+export const generateDynamicSitemap = async (req, res) => {
+    try {
+        const baseUrl = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
+        
+        // Fetch all necessary active documents from Firebase
+        const [products, categories, blogs] = await Promise.all([
+            safeFindAll('products'),
+            safeFindAll('categories'),
+            safeFindAll('blogs')
+        ]);
+        
+        // Generate the XML format using your utility
+        const xml = buildSitemapXml({ baseUrl, products, categories, blogs });
+
+        res.header('Content-Type', 'application/xml');
+        return res.status(200).send(xml);
+    } catch (error) {
+        console.error("❌ Error generating dynamic sitemap:", error);
+        
+        // Fallback to static URLs if database fails
+        const fallbackXml = buildSitemapXml({
+            baseUrl: process.env.FRONTEND_URL || "https://www.aaramdehi.co.in",
+            products: [],
+            categories: [],
+            blogs: []
+        });
+        
+        res.header('Content-Type', 'application/xml');
+        return res.status(200).send(fallbackXml);
     }
 };

@@ -37,6 +37,11 @@ const settingValue = (settings, key, fallback = '') => {
   return setting?.value ?? fallback;
 };
 
+const normalizeModel = (value) => {
+  const model = String(value || '').trim();
+  return model === 'gemini-2.5-flash' || !model ? 'gemini-3.6-flash' : model;
+};
+
 const slugify = (value) => String(value || '').toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
 
 const parseModelJson = (text) => {
@@ -86,7 +91,7 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
 
   const geminiApiKey = process.env.GEMINI_API_KEY || settingValue(settings, 'AI_BLOGGER_GEMINI_API_KEY');
   const unsplashApiKey = process.env.UNSPLASH_API_KEY || settingValue(settings, 'AI_BLOGGER_UNSPLASH_API_KEY');
-  const model = process.env.GEMINI_MODEL || settingValue(settings, 'AI_BLOGGER_MODEL', 'gemini-3.6-flash');
+  const model = normalizeModel(process.env.GEMINI_MODEL || settingValue(settings, 'AI_BLOGGER_MODEL', 'gemini-3.6-flash'));
   if (!geminiApiKey) throw new Error('Gemini API key is not configured');
 
   const existingBlogs = blogsSnapshot.val() ? Object.values(blogsSnapshot.val()) : [];

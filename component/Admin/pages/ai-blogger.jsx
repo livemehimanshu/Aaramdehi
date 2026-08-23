@@ -29,7 +29,9 @@ export default function AiBloggerPage() {
         setValues({
           geminiApiKey: settings[SETTING_KEYS.geminiApiKey]?.value || '',
           unsplashApiKey: settings[SETTING_KEYS.unsplashApiKey]?.value || '',
-          selectedModel: settings[SETTING_KEYS.selectedModel]?.value || defaultValues.selectedModel,
+          selectedModel: settings[SETTING_KEYS.selectedModel]?.value === 'gemini-2.5-flash'
+            ? defaultValues.selectedModel
+            : settings[SETTING_KEYS.selectedModel]?.value || defaultValues.selectedModel,
           enabled: settings[SETTING_KEYS.enabled]?.value === true || settings[SETTING_KEYS.enabled]?.value === 'true' ? 'true' : 'false',
         });
       } else {

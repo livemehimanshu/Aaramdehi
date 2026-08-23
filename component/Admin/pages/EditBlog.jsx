@@ -125,8 +125,22 @@ const EditBlog = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title.trim() || !formData.content.trim() || formData.content === '<p><br></p>') {
-      toast.error('Title and Content are required!');
+    const isPublished = formData.status === 'Published';
+    const missingFields = [];
+
+    if (!formData.title.trim()) missingFields.push('title');
+    if (!formData.content.trim() || formData.content === '<p><br></p>') missingFields.push('article content');
+    if (isPublished) {
+      if (!formData.image.trim()) missingFields.push('cover image');
+      if (!formData.excerpt.trim()) missingFields.push('excerpt');
+      if (!formData.metaTitle.trim()) missingFields.push('SEO meta title');
+      if (!formData.metaDescription.trim()) missingFields.push('SEO meta description');
+      if (!formData.metaKeywords.trim()) missingFields.push('SEO keywords');
+      if (!formData.author.trim()) missingFields.push('author');
+    }
+
+    if (missingFields.length > 0) {
+      toast.error(`Please complete: ${missingFields.join(', ')}`);
       return;
     }
 
@@ -285,7 +299,7 @@ const EditBlog = () => {
               </div>
 
               <div className="mb-6">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Meta Title</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Meta Title (Required to Publish)</label>
                 <input 
                   type="text"
                   name="metaTitle"
@@ -298,7 +312,7 @@ const EditBlog = () => {
               </div>
 
               <div className="mb-6">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Meta Description</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Meta Description (Required to Publish)</label>
                 <textarea 
                   name="metaDescription"
                   value={formData.metaDescription}
@@ -311,7 +325,7 @@ const EditBlog = () => {
               </div>
 
               <div className="mb-6">
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Focus Keywords</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Focus Keywords (Required to Publish)</label>
                 <input 
                   type="text"
                   name="metaKeywords"

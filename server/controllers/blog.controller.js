@@ -23,6 +23,13 @@ export const createBlog = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Title and content are required' });
         }
 
+        if (normalizedStatus === 'Published' && (!image || !excerpt || !metaTitle || !metaDescription || !metaKeywords || !author)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cover image, excerpt, author, and all SEO fields are required before publishing'
+            });
+        }
+
         let slug = req.body.slug;
         if (!slug) {
             slug = generateSlug(title);
@@ -143,6 +150,17 @@ export const updateBlog = async (req, res) => {
             updateData.status = String(updateData.status).trim().toLowerCase() === 'published'
                 ? 'Published'
                 : 'Draft';
+        }
+
+        if (updateData.status === 'Published') {
+            const existing = (await findAll('blogs')).find((blog) => blog._id === id);
+            const publishData = { ...existing, ...updateData };
+            if (!publishData.image || !publishData.excerpt || !publishData.metaTitle || !publishData.metaDescription || !publishData.metaKeywords || !publishData.author) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Cover image, excerpt, author, and all SEO fields are required before publishing'
+                });
+            }
         }
 
         if (updateData.title && !updateData.slug) {

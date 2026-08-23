@@ -19,12 +19,11 @@ export default async function handler(req, res) {
 
   try {
     const baseUrl = process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in';
-    const [products, categories, blogs] = await Promise.all([
+    const [products, blogs] = await Promise.all([
       safeFindAll('products'),
-      safeFindAll('categories'),
       safeFindAll('blogs')
     ]);
-    const xml = buildSitemapXml({ baseUrl, products, categories, blogs });
+    const xml = buildSitemapXml({ baseUrl, products, blogs });
 
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');
     res.status(200).send(xml);
@@ -33,7 +32,6 @@ export default async function handler(req, res) {
     const fallbackXml = buildSitemapXml({
       baseUrl: process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in',
       products: [],
-      categories: [],
       blogs: []
     });
     res.setHeader('Content-Type', 'application/xml; charset=utf-8');

@@ -11,6 +11,11 @@ const escapeXml = (value) =>
 const normalizeBaseUrl = (baseUrl) =>
   String(baseUrl || 'https://www.aaramdehi.co.in').replace(/\/$/, '');
 
+const toIsoDate = (value) => {
+  const date = new Date(value || Date.now());
+  return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
+};
+
 export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
   const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
 
@@ -23,7 +28,7 @@ export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
     if (!product) return false;
     const hasValidId = product?.slug && String(product.slug).trim();
     const hasName = product?.name && String(product.name).trim();
-    const isActive = product?.active !== false; // Exclude explicitly inactive products
+    const isActive = product?.active !== false && product?.isActive !== false;
     return (hasValidId || hasName) && isActive;
   });
 
@@ -36,9 +41,11 @@ export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
   const staticPages = [
     { path: '', changefreq: 'daily', priority: '1.0' },
     { path: '/products', changefreq: 'weekly', priority: '0.9' },
+    { path: '/categories', changefreq: 'weekly', priority: '0.8' },
     { path: '/about-us', changefreq: 'monthly', priority: '0.8' },
     { path: '/contact-us', changefreq: 'monthly', priority: '0.7' },
     { path: '/ar-studio', changefreq: 'monthly', priority: '0.7' },
+    { path: '/compare', changefreq: 'weekly', priority: '0.6' },
     { path: '/blog', changefreq: 'weekly', priority: '0.7' },
   ];
 
@@ -68,7 +75,7 @@ export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
     if (!productId) return;
 
     const productPath = `/${encodeURIComponent(String(productId))}`;
-    const lastmod = product?.updatedAt || product?.createdAt || new Date().toISOString();
+    const lastmod = toIsoDate(product?.updatedAt || product?.createdAt);
 
     appendUrl({ path: productPath, lastmod, changefreq: 'weekly', priority: '0.9' });
   });
@@ -80,7 +87,7 @@ export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
     if (!blogSlug) return;
 
     const blogPath = `/blog/${encodeURIComponent(String(blogSlug))}`;
-    const lastmod = blog?.updatedAt || blog?.publishedAt || blog?.createdAt || new Date().toISOString();
+    const lastmod = toIsoDate(blog?.updatedAt || blog?.publishedAt || blog?.createdAt);
 
     appendUrl({ path: blogPath, lastmod, changefreq: 'weekly', priority: '0.8' });
   });

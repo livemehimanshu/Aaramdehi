@@ -3,8 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // ES6
 import toast from 'react-hot-toast';
-import { FiSave, FiArrowLeft, FiImage, FiSettings, FiBarChart2, FiEdit } from 'react-icons/fi';
-import { getBlogByIdOrSlugAPI, createBlogAPI, updateBlogAPI } from '../../../src/api/authAndAdminApi';
+import { FiSave, FiArrowLeft, FiImage, FiSettings, FiBarChart2, FiEdit, FiUpload } from 'react-icons/fi';
+import { getBlogByIdOrSlugAPI, createBlogAPI, updateBlogAPI, uploadBlogImageAPI } from '../../../src/api/authAndAdminApi';
 
 const EditBlog = () => {
   const { id } = useParams();
@@ -13,6 +13,7 @@ const EditBlog = () => {
 
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [activeTab, setActiveTab] = useState('content'); // content, seo, settings
 
   const [formData, setFormData] = useState({
@@ -65,6 +66,31 @@ const EditBlog = () => {
 
   const handleContentChange = (value) => {
     setFormData(prev => ({ ...prev, content: value }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const imageFile = e.target.files?.[0];
+    e.target.value = '';
+    if (!imageFile) return;
+    if (!imageFile.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    try {
+      setImageUploading(true);
+      const res = await uploadBlogImageAPI(imageFile);
+      if (!res.success || !res.data?.url) {
+        throw new Error(res.message || 'Image upload failed');
+      }
+      setFormData(prev => ({ ...prev, image: res.data.url }));
+      toast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Blog image upload failed:', error);
+      toast.error(error.response?.data?.message || error.message || 'Image upload failed');
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const handleAddTag = (e) => {
@@ -304,7 +330,13 @@ const EditBlog = () => {
               
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cover Image URL *</label>
-                <div className="flex items-center bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 focus-within:border-blue-500 focus-within:bg-white transition-all">
+                <div className="flex flex-col md:flex-row gap-3">
+                  <label className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-dashed border-emerald-500/50 text-emerald-400 cursor-pointer hover:bg-emerald-500/10 transition-all ${imageUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <FiUpload />
+                    {imageUploading ? 'Uploading...' : 'Upload Image'}
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={imageUploading} />
+                  </label>
+                  <div className="flex items-center flex-1 bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 focus-within:border-blue-500 focus-within:bg-white transition-all">
                   <FiImage className="text-gray-400 mr-2" />
                   <input 
                     type="text"
@@ -314,6 +346,7 @@ const EditBlog = () => {
                     placeholder="https://example.com/image.jpg"
                     className="w-full bg-transparent border-none outline-none text-sm text-white"
                   />
+                  </div>
                 </div>
                 {formData.image && (
                   <div className="mt-4 rounded-xl overflow-hidden h-40 border border-gray-200">

@@ -699,3 +699,14 @@ export async function deleteTeamMemberAPI(id) {
     return { success: false, message: e.response?.data?.message || e.message };
   }
 }
+
+export async function uploadBlogImageAPI(imageFile) {
+  try {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    const res = await api.post('/blogs/upload-image', formData);
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}

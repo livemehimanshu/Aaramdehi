@@ -1,4 +1,5 @@
 import { create, findAll, updateById, deleteById, findByQuery } from '../config/db.js';
+import { uploadImageCloudinary } from '../utils/uploadImageCloudinary.js';
 
 // Convert string to URL-friendly slug
 const generateSlug = (title) => {
@@ -57,6 +58,28 @@ export const createBlog = async (req, res) => {
     } catch (error) {
         console.error('Error creating blog:', error);
         res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
+    }
+};
+
+export const uploadBlogImage = async (req, res) => {
+    try {
+        if (!req.file?.buffer) {
+            return res.status(400).json({ success: false, message: 'Please select an image file' });
+        }
+
+        const uploadResult = await uploadImageCloudinary(req.file.buffer, 'Aaramdehi_Uploads/blogs');
+        if (!uploadResult.success) {
+            return res.status(500).json({ success: false, message: uploadResult.message || 'Image upload failed' });
+        }
+
+        return res.status(201).json({
+            success: true,
+            data: { url: uploadResult.url, public_id: uploadResult.public_id },
+            message: 'Blog image uploaded successfully'
+        });
+    } catch (error) {
+        console.error('Error uploading blog image:', error);
+        return res.status(500).json({ success: false, message: error.message || 'Image upload failed' });
     }
 };
 

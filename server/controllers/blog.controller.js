@@ -1,5 +1,5 @@
-import { create, findAll, updateById, deleteById, findByQuery } from '../config/db.js';
-import { uploadImageCloudinary } from '../utils/uploadImageCloudinary.js';
+import { create, findAll, findById, updateById, deleteById, findByQuery } from '../config/db.js';
+import { uploadImageCloudinary, deleteImageCloudinary, extractCloudinaryPublicIdFromUrl } from '../utils/uploadImageCloudinary.js';
 
 // Convert string to URL-friendly slug
 const generateSlug = (title) => {
@@ -186,6 +186,20 @@ export const updateBlog = async (req, res) => {
 export const deleteBlog = async (req, res) => {
     try {
         const { id } = req.params;
+        const blog = await findById('blogs', id);
+        if (!blog) {
+            return res.status(404).json({ success: false, message: 'Blog not found' });
+        }
+
+        const publicId = blog.imagePublicId || extractCloudinaryPublicIdFromUrl(blog.image);
+        if (publicId) {
+            try {
+                await deleteImageCloudinary(publicId, { resource_type: 'auto' });
+            } catch (cloudinaryError) {
+                console.warn('Blog image cleanup failed:', cloudinaryError.message);
+            }
+        }
+
         await deleteById('blogs', id);
         res.status(200).json({ success: true, message: 'Blog deleted successfully' });
     } catch (error) {

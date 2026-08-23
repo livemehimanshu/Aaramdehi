@@ -112,7 +112,10 @@ export const extractCloudinaryPublicIdFromUrl = (url) => {
     if (uploadIndex === -1) return null;
 
     const afterUpload = url.substring(uploadIndex + '/upload/'.length);
-    const cleanUrl = afterUpload.replace(/\?.*$/, '');
+    const segments = afterUpload.replace(/\?.*$/, '').split('/').filter(Boolean);
+    const versionIndex = segments.findIndex((segment) => /^v\d+$/.test(segment));
+    const publicPath = versionIndex >= 0 ? segments.slice(versionIndex + 1) : segments;
+    const cleanUrl = publicPath.join('/');
     const publicId = cleanUrl.replace(/\.[^./?]+$/, '');
     return publicId;
 };

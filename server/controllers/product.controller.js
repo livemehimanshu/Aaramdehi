@@ -201,6 +201,12 @@ const normalizeColorValue = (color, index, fallbackPrice, fallbackMrp) => {
 };
 
 const collectCloudinaryPublicIds = (value, publicIds = []) => {
+    if (typeof value === 'string') {
+        const publicId = extractCloudinaryPublicIdFromUrl(value);
+        if (publicId) publicIds.push(publicId);
+        return publicIds;
+    }
+
     if (Array.isArray(value)) {
         value.forEach((item) => collectCloudinaryPublicIds(item, publicIds));
         return publicIds;
@@ -1149,10 +1155,14 @@ export const deleteProduct = async (req, res) => {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
 
-        const publicIds = collectCloudinaryPublicIds(product);
+        const publicIds = [...new Set(collectCloudinaryPublicIds(product))];
         for (const publicId of publicIds) {
             if (publicId) {
-                await deleteImageCloudinary(publicId, { resource_type: 'auto' });
+                try {
+                    await deleteImageCloudinary(publicId, { resource_type: 'auto' });
+                } catch (cloudinaryError) {
+                    console.warn(`Product asset cleanup failed for ${publicId}:`, cloudinaryError.message);
+                }
             }
         }
 

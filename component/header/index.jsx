@@ -149,6 +149,26 @@ const Header = ({ hideNav = false }) => {
       setUser(savedUserData);
     }
 
+    const checkBackendSession = async () => {
+      try {
+        const envApiUrl = import.meta.env.VITE_API_URL;
+        const isProd = import.meta.env.PROD;
+        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api')).replace(/\/$/, "");
+        const response = await fetch(`${apiBase}/auth/me`, { credentials: 'include' });
+        if ((response.status === 401 || response.status === 403) && localStorage.getItem('userData')) {
+          localStorage.removeItem('userData');
+          setUser(null);
+          setShowProfileMenu(false);
+        }
+      } catch (error) {
+        // A temporary network failure must not log the user out locally.
+        console.warn('Backend session check failed:', error.message);
+      }
+    };
+    checkBackendSession();
+    const sessionCheckTimer = setInterval(checkBackendSession, 60 * 1000);
+    window.addEventListener('focus', checkBackendSession);
+
     // ✅ 2. Safety Timeout: Reduced to 5 seconds for better UX
     const safetyTimer = setTimeout(() => {
       setLoading(false);
@@ -245,6 +265,8 @@ const Header = ({ hideNav = false }) => {
     return () => {
       window.removeEventListener("compareUpdated", updateCompareCount);
       window.removeEventListener("userDataUpdated", syncProfile);
+      window.removeEventListener('focus', checkBackendSession);
+      clearInterval(sessionCheckTimer);
       if (typeof unsubscribe === 'function') unsubscribe();
     };
   }, []);

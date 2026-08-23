@@ -49,7 +49,7 @@ import newsletterRouter from './routes/newsletter.route.js';
 import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
 import blogRouter from './routes/blog.route.js';
 import { findAll } from './config/db.js';
-import { buildSitemapXml } from './utils/sitemap.js';
+import { buildFallbackSitemapXml, buildSitemapXml } from './utils/sitemap.js';
 import { buildMerchantFeedXml } from './utils/merchantFeed.js';
 
 const app = express();
@@ -190,8 +190,15 @@ const safeFindAll = async (collectionName) => {
 
 // Dynamic Sitemap Endpoint (Serve XML at Root URL for Search Engines)
 app.get('/api/sitemap', async (req, res) => {
+    const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
+    const sendSitemap = (xml) => res
+        .type('application/xml')
+        .set('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400')
+        .set('X-Content-Type-Options', 'nosniff')
+        .status(200)
+        .send(xml);
+
     try {
-        const apiBase = process.env.FRONTEND_URL || "https://www.aaramdehi.co.in";
         const [products, categories, blogs] = await Promise.all([
             safeFindAll('products'),
             safeFindAll('categories'),
@@ -199,18 +206,10 @@ app.get('/api/sitemap', async (req, res) => {
         ]);
         const xml = buildSitemapXml({ baseUrl: apiBase, products, categories, blogs });
 
-        res.header('Content-Type', 'application/xml');
-        res.send(xml);
+        return sendSitemap(xml);
     } catch (error) {
         console.error("Sitemap generation error:", error);
-        const fallbackXml = buildSitemapXml({
-            baseUrl: process.env.FRONTEND_URL || "https://www.aaramdehi.co.in",
-            products: [],
-            categories: [],
-            blogs: []
-        });
-        res.header('Content-Type', 'application/xml');
-        res.status(200).send(fallbackXml);
+        return sendSitemap(buildFallbackSitemapXml(apiBase));
     }
 });
 

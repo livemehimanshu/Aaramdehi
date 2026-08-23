@@ -96,3 +96,5 @@ export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
 
   return xml;
 };
+
+export const buildFallbackSitemapXml = (baseUrl) => buildSitemapXml({ baseUrl, products: [], blogs: [] });

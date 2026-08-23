@@ -1,7 +1,6 @@
-import { findAll } from '../server/config/db.js';
-import { buildSitemapXml } from '../server/utils/sitemap.js';
+import { buildFallbackSitemapXml, buildSitemapXml } from '../server/utils/sitemap.js';
 
-const safeFindAll = async (collectionName) => {
+const safeFindAll = async (findAll, collectionName) => {
   try {
     return await findAll(collectionName);
   } catch (error) {
@@ -11,30 +10,31 @@ const safeFindAll = async (collectionName) => {
 };
 
 export default async function handler(req, res) {
-  if (req.method && req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
+  const baseUrl = process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in';
+  const sendXml = (xml, status = 200) => {
+    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300, stale-while-revalidate=86400');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.status(status).send(xml);
+  };
+
+  if (req.method && req.method !== 'GET' && req.method !== 'HEAD') {
+    res.setHeader('Allow', 'GET, HEAD');
     res.status(405).end('Method Not Allowed');
     return;
   }
 
   try {
-    const baseUrl = process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in';
+    if (req.method === 'HEAD') return sendXml('', 200);
+    const { findAll } = await import('../server/config/db.js');
     const [products, blogs] = await Promise.all([
-      safeFindAll('products'),
-      safeFindAll('blogs')
+      safeFindAll(findAll, 'products'),
+      safeFindAll(findAll, 'blogs')
     ]);
     const xml = buildSitemapXml({ baseUrl, products, blogs });
-
-    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    res.status(200).send(xml);
+    return sendXml(xml);
   } catch (error) {
     console.error('Vercel sitemap generation failed:', error);
-    const fallbackXml = buildSitemapXml({
-      baseUrl: process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in',
-      products: [],
-      blogs: []
-    });
-    res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-    res.status(200).send(fallbackXml);
+    return sendXml(buildFallbackSitemapXml(baseUrl));
   }
 }

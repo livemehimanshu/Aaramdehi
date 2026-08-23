@@ -68,9 +68,7 @@ const EditBlog = () => {
     setFormData(prev => ({ ...prev, content: value }));
   };
 
-  const handleImageUpload = async (e) => {
-    const imageFile = e.target.files?.[0];
-    e.target.value = '';
+  const uploadImageFile = async (imageFile) => {
     if (!imageFile) return;
     if (!imageFile.type.startsWith('image/')) {
       toast.error('Please select an image file');
@@ -90,6 +88,21 @@ const EditBlog = () => {
       toast.error(error.response?.data?.message || error.message || 'Image upload failed');
     } finally {
       setImageUploading(false);
+    }
+  };
+
+  const handleImageUpload = async (e) => {
+    const imageFile = e.target.files?.[0];
+    e.target.value = '';
+    await uploadImageFile(imageFile);
+  };
+
+  const handleImagePaste = async (e) => {
+    const imageFile = Array.from(e.clipboardData?.files || [])
+      .find((file) => file.type.startsWith('image/'));
+    if (imageFile) {
+      e.preventDefault();
+      await uploadImageFile(imageFile);
     }
   };
 
@@ -330,7 +343,7 @@ const EditBlog = () => {
               
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Cover Image URL *</label>
-                <div className="flex flex-col md:flex-row gap-3">
+                <div className="flex flex-col md:flex-row gap-3" onPaste={handleImagePaste}>
                   <label className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-dashed border-emerald-500/50 text-emerald-400 cursor-pointer hover:bg-emerald-500/10 transition-all ${imageUploading ? 'opacity-50 pointer-events-none' : ''}`}>
                     <FiUpload />
                     {imageUploading ? 'Uploading...' : 'Upload Image'}

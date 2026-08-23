@@ -10,7 +10,18 @@ blogRouter.get('/', getAllBlogs);
 blogRouter.get('/:identifier', getBlogByIdOrSlug);
 
 // Admin Protected Routes
-blogRouter.post('/upload-image', verifyToken, isAdmin, upload.single('image'), uploadBlogImage);
+blogRouter.post(
+	'/upload-image',
+	verifyToken,
+	isAdmin,
+	(req, res, next) => upload.single('image')(req, res, (error) => {
+		if (error) {
+			return res.status(400).json({ success: false, message: error.message || 'Invalid image upload' });
+		}
+		return next();
+	}),
+	uploadBlogImage
+);
 blogRouter.post('/create', verifyToken, isAdmin, createBlog);
 blogRouter.put('/:id', verifyToken, isAdmin, updateBlog);
 blogRouter.delete('/:id', verifyToken, isAdmin, deleteBlog);

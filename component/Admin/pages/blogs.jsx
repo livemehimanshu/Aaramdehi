@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiEdit, FiTrash2, FiPlus, FiEye, FiClock, FiSearch } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiPlus, FiEye, FiClock, FiSearch, FiGlobe } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { getAllBlogsAPI, deleteBlogAPI } from '../../../src/api/authAndAdminApi';
+import { getAllBlogsAPI, deleteBlogAPI, updateBlogAPI } from '../../../src/api/authAndAdminApi';
 
 const BlogsManagement = () => {
   const [blogs, setBlogs] = useState([]);
@@ -10,24 +10,23 @@ const BlogsManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
-
-  const fetchBlogs = async () => {
+  async function fetchBlogs() {
     try {
-      setLoading(true);
       // Pass admin=true to get drafts as well
       const res = await getAllBlogsAPI({ admin: true });
       if (res.success) {
         setBlogs(res.data);
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to load blogs');
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this blog post?')) return;
@@ -39,8 +38,27 @@ const BlogsManagement = () => {
       } else {
         toast.error(res.message || 'Failed to delete blog');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete blog');
+    }
+  };
+
+  const handlePublish = async (blog) => {
+    try {
+      const res = await updateBlogAPI(blog._id, { status: 'Published' });
+      if (!res.success) {
+        toast.error(res.message || 'Failed to publish blog');
+        return;
+      }
+
+      setBlogs((currentBlogs) => currentBlogs.map((item) => (
+        item._id === blog._id
+          ? { ...item, status: 'Published', publishedAt: res.data?.publishedAt || new Date().toISOString() }
+          : item
+      )));
+      toast.success('Article published. It is now visible on the blog.');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to publish blog');
     }
   };
 
@@ -148,6 +166,15 @@ const BlogsManagement = () => {
                         >
                           <FiEdit size={18} />
                         </button>
+                        {blog.status !== 'Published' && (
+                          <button
+                            onClick={() => handlePublish(blog)}
+                            className="p-2 text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-all"
+                            title="Publish Live"
+                          >
+                            <FiGlobe size={18} />
+                          </button>
+                        )}
                         <button 
                           onClick={() => handleDelete(blog._id)}
                           className="p-2 text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-all"

@@ -208,7 +208,10 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
         <div className="p-4 border-t border-gray-100">
           {user ? (
             <button 
-              onClick={() => { handleLogout(); onClose(); }}
+              onClick={async () => {
+                await handleLogout();
+                onClose?.();
+              }}
               className="w-full flex items-center justify-center gap-3 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all active:scale-95"
             >
               <IoLogOutOutline size={20} /> Logout

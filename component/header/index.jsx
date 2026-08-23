@@ -114,30 +114,28 @@ const Header = ({ hideNav = false }) => {
   // Function: Logout
   const handleLogout = async () => {
     try {
-      const envApiUrl = import.meta.env.VITE_API_URL;
-      const isProd = import.meta.env.PROD;
-      const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api')).replace(/\/$/, "");
-
-      // ✅ 1. Sign out from Firebase
-      await signOut(auth);
-
-      // ✅ baseURL handle karega, yahan extra '/api' na lagayein
-      await fetch(`${apiBase}/user/logout`, {
-        method: 'GET',
-        credentials: 'include'
-      });
+      if (auth) await signOut(auth);
     } catch (error) {
-      console.error("Logout API error:", error);
+      console.error("Firebase logout error:", error);
+    } finally {
+      try {
+        const envApiUrl = import.meta.env.VITE_API_URL;
+        const isProd = import.meta.env.PROD;
+        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api')).replace(/\/$/, "");
+        await fetch(`${apiBase}/user/logout`, { method: 'GET', credentials: 'include' });
+      } catch (error) {
+        console.error("Backend logout error:", error);
+      } finally {
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('userData');
+        toast.success("Logged out successfully!");
+        setUser(null);
+        setShowProfileMenu(false);
+        setIsSidebarOpen(false);
+        navigate('/login');
+      }
     }
-
-    // ✅ Client-side state aur storage clear karna
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
-    toast.success("Logged out successfully!");
-    setUser(null);
-    setShowProfileMenu(false);
-    navigate('/login');
   };
 
   // useEffect: Component load hone par aur jab cart/wishlist/compare update ho

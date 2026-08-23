@@ -11,8 +11,6 @@ const BehavioralInteractionLogs = () => {
   const [filterType, setFilterType] = useState('all'); // all, image_click, zoom_open, hover_8s, variant_switch
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-
   /**
    * Fetch all user behavior logs from backend
    */

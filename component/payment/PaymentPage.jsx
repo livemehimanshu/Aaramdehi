@@ -13,6 +13,7 @@ import {
     createPaymentOrderAPI,
     verifyPaymentAPI
 } from '../../src/api/authAndAdminApi';
+import { trackUserAction } from '../../src/hooks/useAnalyticsTracker';
 
 // Dynamically load Razorpay SDK script if not loaded
 const loadRazorpayScript = () => {
@@ -138,6 +139,12 @@ const PaymentPage = () => {
         localStorage.setItem("cart", JSON.stringify([]));
         window.dispatchEvent(new Event("cartUpdated"));
 
+        const orderItems = resData?.orderItems || resData?.data?.orderItems || [];
+        Promise.all(orderItems.map((item) => trackUserAction({
+            productId: item.productId || item.product,
+            eventType: 'checkout_success'
+        }))).catch(() => {});
+
         navigate('/order-success', {
             state: {
                 order: resData,
@@ -163,8 +170,7 @@ const PaymentPage = () => {
         setErrors({});
 
         try {
-            const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
-            if (!token) {
+            if (!localStorage.getItem('userData')) {
                 setErrors({ global: "Your session has expired. Please log in again." });
                 setLoading(false);
                 navigate('/login');

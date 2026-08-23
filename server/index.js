@@ -49,6 +49,8 @@ import roomRouter from './routes/room.route.js';
 import newsletterRouter from './routes/newsletter.route.js';
 import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
 import blogRouter from './routes/blog.route.js';
+import { getAdminAnalytics } from './controllers/analytics.controller.js';
+import { isAuthenticatedUser, isAdmin } from './middleware/auth.middleware.js';
 import { findAll } from './config/db.js';
 import { buildFallbackSitemapXml, buildSitemapXml } from './utils/sitemap.js';
 import { buildMerchantFeedXml } from './utils/merchantFeed.js';
@@ -108,7 +110,14 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(compression());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+    limit: '10mb',
+    verify: (req, res, buffer) => {
+        if (req.originalUrl?.includes('/payments/razorpay/webhook') || req.originalUrl?.includes('/payments/cashfree/webhook')) {
+            req.rawBody = Buffer.from(buffer);
+        }
+    }
+}));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(morgan('dev'));
@@ -133,6 +142,7 @@ apiRouter.use("/appointments", appointmentRouter);
 // behavioralTrackingRouter ko PEHLE mount kiya gaya hai, fir analyticsRouter ko
 apiRouter.use("/analytics", behavioralTrackingRouter);
 apiRouter.use("/analytics", analyticsRouter);
+apiRouter.get("/admin/analytics", isAuthenticatedUser, isAdmin, getAdminAnalytics);
 
 apiRouter.use("/payments", paymentRouter);
 apiRouter.use("/refunds", refundRouter);

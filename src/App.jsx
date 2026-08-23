@@ -67,6 +67,7 @@ const AddBanner = lazy(() => import('../component/Admin/pages/AddBanner.jsx'))
 const EditBanner = lazy(() => import('../component/Admin/pages/EditBanner.jsx'))
 const BehavioralAdsAdmin = lazy(() => import('../component/Admin/BehavioralAdsAdmin.jsx'))
 const BehavioralAnalyticsDashboard = lazy(() => import('../component/Admin/BehavioralAnalyticsDashboard.jsx'))
+const AnalyticsDashboard = lazy(() => import('../component/Admin/AnalyticsDashboard.jsx'))
 const BehavioralInteractionLogs = lazy(() => import('../component/Admin/BehavioralInteractionLogs.jsx'))
 const BlogsManagement = lazy(() => import('../component/Admin/pages/blogs.jsx'))
 const EditBlog = lazy(() => import('../component/Admin/pages/EditBlog.jsx'))
@@ -101,16 +102,20 @@ function AppContent() {
     }
 
     const unsubscribe = auth ? onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser && !localStorage.getItem("accessToken")) {
-        setUser(null);
+      if (firebaseUser) {
+        setUser(firebaseUser);
       }
     }) : null;
     return () => { if (unsubscribe) unsubscribe(); };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/user/logout', { credentials: 'include' });
+    } finally {
+      localStorage.removeItem('userData');
+      window.location.href = '/login';
+    }
   };
 
   const isAdminRoute = location.pathname.startsWith('/admin')
@@ -156,6 +161,7 @@ function AppContent() {
                   <Route index element={<Dashboard />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="analytics" element={<Analytics />} />
+                  <Route path="analytics/dashboard" element={<AnalyticsDashboard />} />
                   <Route path="products" element={<AllProducts />} />
                   <Route path="add-product" element={<AddProduct />} />
                   <Route path="edit-product/:id" element={<EditProduct />} />
@@ -180,7 +186,6 @@ function AppContent() {
                   <Route path="behavioral-logs" element={<BehavioralInteractionLogs />} />
                   <Route path="blogs" element={<BlogsManagement />} />
                   <Route path="edit-blog/:id" element={<EditBlog />} />
-                  <Route path="analytics/dashboard" element={<BehavioralAnalyticsDashboard />} />
                   <Route path="interaction-logs" element={<BehavioralInteractionLogs />} />
                   <Route path="files" element={<FileManager />} />
                   <Route path="appointments" element={<Appointments />} />

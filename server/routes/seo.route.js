@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { isAuthenticatedUser, isAdmin } from '../middleware/auth.middleware.js';
 import {
     getGlobalSeo,
     updateGlobalSeo,
@@ -21,11 +22,11 @@ const robotsTxtPath = path.join(__dirname, 'robots.txt');
 
 // Global SEO Routes
 seoRouter.get('/global', getGlobalSeo);
-seoRouter.put('/global', updateGlobalSeo);
+seoRouter.put('/global', isAuthenticatedUser, isAdmin, updateGlobalSeo);
 
 // Specific Page/Type SEO Routes
 seoRouter.get('/type/:type', getSeoByType);
-seoRouter.put('/type/:type', updateSeoByType);
+seoRouter.put('/type/:type', isAuthenticatedUser, isAdmin, updateSeoByType);
 
 // Fetch All SEO Data Route
 seoRouter.get('/all', getAllSeo);

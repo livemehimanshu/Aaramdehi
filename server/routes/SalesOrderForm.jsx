@@ -50,10 +50,7 @@ const SalesOrderForm = () => {
                 totalAmount: calculateTotal(),
                 paymentMethod: 'credit', // Default for Khata system
             };
-            const token = localStorage.getItem('accessToken');
-            await axios.post(`${apiBase}/order/create`, payload, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            await axios.post(`${apiBase}/order/create`, payload, { withCredentials: true });
             toast.success("Order Placed on Credit (Khata)!");
             setCart([]);
         } catch (error) {

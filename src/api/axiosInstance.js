@@ -13,21 +13,6 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// ✅ Attach saved accessToken or adminToken to every request automatically.
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('accessToken') || 
-                  localStorage.getItem('token') || 
-                  localStorage.getItem('adminToken');
-
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // ✅ Handle unauthorized responses globally
 axiosInstance.interceptors.response.use(
   (response) => response,

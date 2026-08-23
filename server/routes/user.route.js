@@ -56,17 +56,14 @@ userRouter.put('/change-password', authLimiter, isAuthenticatedUser, changePassw
 // ✅ Allow logout without strict auth check to clear cookies even if JWT is expired
 userRouter.get('/logout', (req, res) => {
     try {
-        // Cookies clear kar rahe hain
-        res.clearCookie('accessToken', {
+        const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            sameSite: 'None'
-        });
-        res.clearCookie('refreshToken', {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'None'
-        });
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path: '/'
+        };
+        res.clearCookie('accessToken', cookieOptions);
+        res.clearCookie('refreshToken', cookieOptions);
 
         return res.status(200).json({ 
             message: "Logged out successfully", 

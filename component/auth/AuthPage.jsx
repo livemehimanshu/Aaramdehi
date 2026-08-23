@@ -72,8 +72,6 @@ const AuthPage = () => {
             setLoading(true);
             const response = await loginAPI(data.email.toLowerCase().trim(), data.password);
             
-            // Backend se milne wale tokens aur user details save karein
-            localStorage.setItem('accessToken', response.accessToken);
             if (response.user && typeof response.user === 'object') {
                 localStorage.setItem('userData', JSON.stringify(response.user));
                 window.dispatchEvent(new Event('userDataUpdated'));
@@ -175,7 +173,6 @@ const AuthPage = () => {
             if (otpFlow === 'signup') {
                 const response = await verifyOTPAPI(forgotEmail.toLowerCase().trim(), cleanOtp); // Corrected to use cleanOtp
                 if (response.user) {
-                    localStorage.setItem('accessToken', response.accessToken);
                     localStorage.setItem('userData', JSON.stringify(response.user));
                     window.dispatchEvent(new Event('userDataUpdated'));
                     toast.success("Account verified successfully!");

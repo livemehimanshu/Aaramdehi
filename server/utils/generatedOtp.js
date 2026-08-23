@@ -11,7 +11,6 @@ const generatedOtp = () => {
     // Ensure it's exactly 6 digits (should always be, but just to be safe)
     const paddedOtp = otp.padStart(6, '0');
     
-    console.log(`🔐 Generated OTP: ${paddedOtp}`);
     return paddedOtp;
 };
 

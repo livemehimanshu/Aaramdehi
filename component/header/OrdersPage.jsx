@@ -11,14 +11,6 @@ const OrdersPage = () => {
     const [error, setError] = useState(null);
 
     const fetchOrders = async () => {
-        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-        
-        if (!token) {
-            setError("Please log in to view your orders.");
-            setLoading(false);
-            return;
-        }
-
         try {
             setLoading(true);
             setError(null);

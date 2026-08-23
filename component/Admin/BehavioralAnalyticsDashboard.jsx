@@ -9,8 +9,6 @@ const BehavioralAnalyticsDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-
   /**
    * Fetch high-intent sessions
    */

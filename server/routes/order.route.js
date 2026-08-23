@@ -11,7 +11,7 @@ orderRouter.get('/recommendations/:productId', getFrequentlyBoughtTogether);
 orderRouter.post('/', isAuthenticatedUser, createOrder);
 orderRouter.get('/', isAuthenticatedUser, isAdmin, getAllOrders);
 orderRouter.get('/my-orders', isAuthenticatedUser, getMyOrders); 
-orderRouter.get('/shop/:shopId', getOrdersByShopId);
+orderRouter.get('/shop/:shopId', isAuthenticatedUser, isAdmin, getOrdersByShopId);
 orderRouter.get('/:id', isAuthenticatedUser, getOrderById); // Standard REST path
 orderRouter.patch('/:id/status', isAuthenticatedUser, isAdmin, updateOrderStatus);
 

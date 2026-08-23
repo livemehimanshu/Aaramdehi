@@ -212,19 +212,21 @@ export const razorpayWebhook = async (req, res) => {
 
     const expectedSignature = crypto
       .createHmac("sha256", secret)
-      .update(req.body)
+      .update(req.rawBody || req.body)
       .digest("hex");
 
     if (expectedSignature !== signature) {
       return res.status(400).json({ success: false, message: "Invalid webhook signature" });
     }
 
-    const payload = JSON.parse(req.body.toString());
+    const payload = JSON.parse((req.rawBody || req.body).toString());
 
     if (payload.event === "payment.captured") {
       const paymentEntity = payload.payload.payment.entity;
 
       // Update DB Payment Status
+      const existingPayment = await findByQuery('payments', 'transactionId', paymentEntity.id);
+      if (existingPayment.length > 0) return res.status(200).json({ status: "ok", duplicate: true });
       await create("payments", {
         orderId: paymentEntity.order_id,
         transactionId: paymentEntity.id,
@@ -244,7 +246,7 @@ export const razorpayWebhook = async (req, res) => {
 
 export const cashfreeWebhook = async (req, res) => {
   try {
-    const rawBody = req.body.toString();
+    const rawBody = (req.rawBody || req.body).toString();
     const signature = req.headers['x-webhook-signature'];
     const timestamp = req.headers['x-webhook-timestamp'];
     const config = getCashfreeCredentials();
@@ -259,6 +261,8 @@ export const cashfreeWebhook = async (req, res) => {
     if (payload.type === "PAYMENT_SUCCESS_WEBHOOK") {
       const data = payload.data;
 
+      const existingPayment = await findByQuery('payments', 'transactionId', data.payment.cf_payment_id);
+      if (existingPayment.length > 0) return res.status(200).json({ status: "ok", duplicate: true });
       await create("payments", {
         orderId: data.order.order_id,
         transactionId: data.payment.cf_payment_id,

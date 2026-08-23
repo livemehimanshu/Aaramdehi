@@ -19,6 +19,7 @@ import { productDetailsData } from '@/data/productDetails';
 import { useCart } from '@/hooks/useCart';
 import { sanitizationUtils } from '@/utils/sanitizationUtils';
 import useBehaviorTracking from '@/hooks/useBehaviorTracking';
+import { trackUserAction } from '@/hooks/useAnalyticsTracker';
 import toast from 'react-hot-toast';
 import ProductPage from './ProductPage';
 import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
@@ -237,6 +238,12 @@ const ProductDetailsPage = () => {
 
   useEffect(() => {
     if (productData) {
+      trackUserAction({
+        userId,
+        productId: productData.id || id,
+        eventType: 'product_view',
+        categoryId: productData.category
+      }).catch(() => {});
       addToRecentlyViewed({
         id: id,
         name: productData.name,
@@ -274,13 +281,6 @@ const ProductDetailsPage = () => {
     const codeToApply = codeFromModal || couponInput;
     if (!codeToApply) return setCouponMessage({ type: 'error', text: 'Please enter a coupon code' });
 
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-    if (!token) {
-      setCouponMessage({ type: 'error', text: 'Please login to apply coupons', code: '' });
-      setIsCouponModalOpen(false);
-      return;
-    }
-    
     try {
       setIsValidating(true);
       const amount = parsePrice(selectedSize?.price);
@@ -365,6 +365,12 @@ const ProductDetailsPage = () => {
     };
 
     addToCartContext(productToAdd, quantity);
+    trackUserAction({
+      userId,
+      productId,
+      eventType: 'cart_add',
+      categoryId: productData.category
+    }).catch(() => {});
     toast.success(`${sanitizationUtils.sanitizeText(productData.name)} added to cart!`);
   };
 

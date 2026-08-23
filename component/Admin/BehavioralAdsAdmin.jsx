@@ -20,8 +20,6 @@ const BehavioralAdsAdmin = () => {
     isActive: true
   });
 
-  const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-
   /**
    * Fetch all rules
    */

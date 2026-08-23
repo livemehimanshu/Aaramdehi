@@ -32,11 +32,7 @@ const OrderSuccess = () => {
             // Agar details missing hain toh DB se fetch karein
             if (idToFetch && idToFetch !== 'ORD-XXXXX' && (!orderData.orderItems || orderData.orderItems.length === 0)) {
                 try {
-                    const token = localStorage.getItem('accessToken');
-                    
-                    const response = await api.get(`/orders/${idToFetch}`, { 
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+                    const response = await api.get(`/orders/${idToFetch}`);
                     
                     if (isMounted && response.data?.success) {
                         setDbOrder(response.data.data);

@@ -45,7 +45,6 @@ const useBehaviorTracking = (productId, userId, options = {}) => {
   useEffect(() => {
     const initializeSession = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
         const currentUserId = userId || localStorage.getItem('userId') || sessionStorage.getItem('behavior_guest_id') || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         sessionStorage.setItem('behavior_guest_id', currentUserId);
 
@@ -97,7 +96,6 @@ const useBehaviorTracking = (productId, userId, options = {}) => {
     if (interactionQueueRef.current.length === 0 || !sessionId) return;
 
     try {
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
       const interactions = interactionQueueRef.current;
       interactionQueueRef.current = [];
       const currentUserId = userId || localStorage.getItem('userId') || sessionStorage.getItem('behavior_guest_id') || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

@@ -43,6 +43,7 @@ if (!admin.apps.length) {
 }
 
 export const db = admin.database();
+export const firestore = admin.firestore();
 
 // 2. Optimized Helper Functions
 

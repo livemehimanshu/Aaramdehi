@@ -126,8 +126,13 @@ export const getBlogByIdOrSlug = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Blog not found' });
         }
 
+        const isAdminRequest = req.query.admin === 'true' && req.user?.role === 'ADMIN';
+        if (String(blog.status || '').trim().toLowerCase() !== 'published' && !isAdminRequest) {
+            return res.status(404).json({ success: false, message: 'Blog not found' });
+        }
+
         // Increment Views if not an admin fetching it
-        if (req.query.admin !== 'true') {
+        if (!isAdminRequest) {
             const newViews = (blog.views || 0) + 1;
             await updateById('blogs', blog._id, { views: newViews });
             blog.views = newViews;

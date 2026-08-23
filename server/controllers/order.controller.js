@@ -1,5 +1,6 @@
 import { create, findAll, findById, updateById, findByQuery, db } from '../config/db.js';
 import { sendOrderEmail } from '../utils/sendEmail.js';
+import { updateProductRelations } from '../utils/recommendationEngine.js';
 
 const COLLECTION = 'orders';
 const USERS_COLLECTION = 'users';
@@ -55,7 +56,10 @@ export const createOrder = async (req, res) => {
 
             // ✅ Use actual product price from database (prevents price manipulation)
             const actualPrice = Number(product.sellingPrice || product.price || 0);
-            const quantity = Number(item.quantity) || 1;
+            const quantity = Number(item.quantity);
+            if (!Number.isInteger(quantity) || quantity < 1) {
+                return res.status(400).json({ success: false, message: 'Each item quantity must be a positive whole number.' });
+            }
             const itemTotal = actualPrice * quantity;
             
             calculatedItemsPrice += itemTotal;
@@ -71,18 +75,34 @@ export const createOrder = async (req, res) => {
         }
 
         // ✅ Calculate final amount with backend-validated prices
-        const backendShippingPrice = Number(shippingPrice) || 0;
-        const backendDiscountAmount = Number(discountAmount) || 0;
+        const backendShippingPrice = calculatedItemsPrice >= 2000 ? 0 : 50;
+        let backendDiscountAmount = 0;
+        let validatedCoupon = null;
+        if (couponCode) {
+            const coupons = await findByQuery(COUPON_COLLECTION, 'code', String(couponCode).toUpperCase());
+            const coupon = coupons?.[0];
+            const now = new Date();
+            if (!coupon || coupon.isActive === false || (coupon.expiryDate && now > new Date(coupon.expiryDate)) || (coupon.startDate && now < new Date(coupon.startDate)) || (coupon.usageLimit && Number(coupon.usedCount || 0) >= Number(coupon.usageLimit)) || calculatedItemsPrice < Number(coupon.minOrderAmount || 0)) {
+                return res.status(400).json({ success: false, message: 'Coupon is invalid or no longer available.' });
+            }
+            if (Array.isArray(coupon.usedBy) && coupon.usedBy.some((entry) => String(entry?.userId || entry?.id || entry) === String(userId))) {
+                return res.status(400).json({ success: false, message: 'You have already used this coupon.' });
+            }
+            backendDiscountAmount = coupon.discountType === 'percentage'
+                ? calculatedItemsPrice * Number(coupon.discountValue || 0) / 100
+                : Number(coupon.discountValue || 0);
+            if (coupon.maxDiscountAmount) backendDiscountAmount = Math.min(backendDiscountAmount, Number(coupon.maxDiscountAmount));
+            backendDiscountAmount = Math.min(Math.max(0, Math.round(backendDiscountAmount)), calculatedItemsPrice);
+            validatedCoupon = coupon;
+        }
         const finalAmount = Math.max(0, calculatedItemsPrice + backendShippingPrice - backendDiscountAmount);
 
         const orderId = db.ref(COLLECTION).push().key;
 
         // A. Handle Coupon Usage Update in Firebase
-        if (couponCode) {
-            const coupons = await findByQuery(COUPON_COLLECTION, 'code', String(couponCode).toUpperCase());
-            const coupon = coupons?.[0];
-            
-            if (coupon) {
+        if (validatedCoupon) {
+            const coupon = validatedCoupon;
+            {
                 let usedBy = coupon.usedBy || [];
                 if (!Array.isArray(usedBy)) usedBy = Object.values(usedBy);
                 const userUsageIndex = usedBy.findIndex(u => String(u.userId) === String(userId));
@@ -126,6 +146,10 @@ export const createOrder = async (req, res) => {
         await db.ref().update(updates);
 
         const orderData = { _id: orderId, ...updates[`${COLLECTION}/${orderId}`] };
+
+        updateProductRelations(validatedOrderItems).catch((error) => {
+            console.error("[Recommendation Engine] Relation update failed:", error.message);
+        });
 
         // ✅ Background Processing: Send Email without 'await'
         const user = userId ? await findById(USERS_COLLECTION, userId) : null;

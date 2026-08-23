@@ -121,12 +121,10 @@ const Header = ({ hideNav = false }) => {
       // ✅ 1. Sign out from Firebase
       await signOut(auth);
 
-      const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-      
       // ✅ baseURL handle karega, yahan extra '/api' na lagayein
       await fetch(`${apiBase}/user/logout`, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` }
+        credentials: 'include'
       });
     } catch (error) {
       console.error("Logout API error:", error);
@@ -149,11 +147,8 @@ const Header = ({ hideNav = false }) => {
     
     // ✅ 1. Immediate Session Restore: Check local storage before Firebase async check
     const savedUserData = safeParseJSON(localStorage.getItem("userData"));
-    const savedToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
-    if (savedUserData && savedToken) {
+    if (savedUserData) {
       setUser(savedUserData);
-    } else if (!savedToken) {
-      localStorage.removeItem("userData");
     }
 
     // ✅ 2. Safety Timeout: Reduced to 5 seconds for better UX
@@ -182,9 +177,12 @@ const Header = ({ hideNav = false }) => {
               });
             }
           } else {
-            const currentToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
-            if (!currentToken) {
-              localStorage.removeItem("userData");
+            // Custom backend sessions use the HttpOnly cookie, not Firebase Auth.
+            // Preserve the locally cached profile when Firebase has no session.
+            const savedUserData = safeParseJSON(localStorage.getItem("userData"));
+            if (savedUserData) {
+              setUser(savedUserData);
+            } else {
               setUser(null);
               setShowProfileMenu(false);
             }

@@ -9,7 +9,7 @@ import rateLimit from 'express-rate-limit';
 // Prevents brute force attacks on login/registration
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts per window
+  max: 10, // 10 failed attempts per window
   message: {
     success: false,
     message: 'Too many authentication attempts. Please try again after 15 minutes.',
@@ -17,7 +17,7 @@ export const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: false, // Count all requests
+  skipSuccessfulRequests: true, // Successful login should not consume the limit
   skipFailedRequests: false,
   handler: (req, res) => {
     res.status(429).json({

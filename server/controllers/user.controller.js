@@ -11,6 +11,17 @@ import { mapUserForAdmin } from '../utils/adminUserUtils.js';
 
 const COLLECTION = 'users';
 
+const setAuthCookies = (res, accessToken, refreshToken) => {
+    const cookieOptions = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        path: '/'
+    };
+    res.cookie('accessToken', accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie('refreshToken', refreshToken, { ...cookieOptions, maxAge: 7 * 24 * 60 * 60 * 1000 });
+};
+
 // --- AUTH CONTROLLERS ---
 
 export const registerUserController = async (req, res) => {
@@ -110,11 +121,11 @@ export const verifyEmailController = async (req, res) => {
         if (!accessToken || !refreshToken) {
             throw new Error("Token generation failed. Check server environment variables.");
         }
+        setAuthCookies(res, accessToken, refreshToken);
 
         return res.json({ 
             success: true, 
             message: "Email verified", 
-            accessToken, 
             user: { _id: user._id, name: user.name, email: user.email, role: user.role } 
         });
     } catch (error) {
@@ -167,10 +178,10 @@ export const loginController = async (req, res) => {
             console.error("❌ [Login Controller Error]: JWT generation failed. Check server .env file.");
             return res.status(500).json({ success: false, message: "Authentication service unavailable." });
         }
+        setAuthCookies(res, accessToken, refreshToken);
 
         return res.json({ 
             success: true, 
-            accessToken, 
             user: { _id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } 
         });
     } catch (error) {
@@ -400,7 +411,14 @@ export const deleteAccount = async (req, res) => {
         await db.ref(`${COLLECTION}/${userId}`).remove();
         
         // Step 2: Clear Cookies
-        res.clearCookie('accessToken');
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+            path: '/'
+        };
+        res.clearCookie('accessToken', cookieOptions);
+        res.clearCookie('refreshToken', cookieOptions);
         return res.json({ success: true, message: "Account data deleted successfully" });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });

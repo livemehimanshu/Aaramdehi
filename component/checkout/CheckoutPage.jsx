@@ -212,8 +212,7 @@ const CheckoutPage = () => {
             return;
         }
 
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
+        if (!localStorage.getItem('userData')) {
             toast.error("Please log in to place an order.");
             navigate('/login');
             return;

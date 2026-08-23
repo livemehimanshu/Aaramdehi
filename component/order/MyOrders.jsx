@@ -27,9 +27,7 @@ const MyOrders = () => {
     useEffect(() => {
         // 1. Pehle LocalStorage se session check karein (Custom Backend Login)
         const savedUserData = safeParseJSON(localStorage.getItem("userData"));
-        const savedToken = localStorage.getItem("accessToken") || localStorage.getItem("token");
-
-        if (savedUserData && savedToken) {
+        if (savedUserData) {
             setUser(savedUserData);
         }
 
@@ -37,7 +35,7 @@ const MyOrders = () => {
         const unsubscribe = auth ? onAuthStateChanged(auth, (firebaseUser) => {
             if (firebaseUser) {
                 setUser(firebaseUser);
-            } else if (!localStorage.getItem("accessToken") && !localStorage.getItem("token")) {
+            } else if (!savedUserData) {
                 setUser(null);
                 setLoading(false);
                 setError("Please log in to view your orders.");

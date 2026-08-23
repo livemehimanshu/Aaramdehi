@@ -1,4 +1,4 @@
-import { db, create, findAll, updateById, deleteById, findByQuery } from '../config/db.js';
+import { create, findAll, updateById, deleteById, findByQuery } from '../config/db.js';
 
 // Convert string to URL-friendly slug
 const generateSlug = (title) => {
@@ -14,6 +14,9 @@ const generateSlug = (title) => {
 export const createBlog = async (req, res) => {
     try {
         const { title, excerpt, content, category, tags, author, image, metaTitle, metaDescription, metaKeywords, status } = req.body;
+        const normalizedStatus = String(status || 'Draft').trim().toLowerCase() === 'published'
+            ? 'Published'
+            : 'Draft';
 
         if (!title || !content) {
             return res.status(400).json({ success: false, message: 'Title and content are required' });
@@ -44,9 +47,9 @@ export const createBlog = async (req, res) => {
             metaTitle: metaTitle || title,
             metaDescription: metaDescription || excerpt,
             metaKeywords: metaKeywords || '',
-            status: status || 'Draft', // Draft or Published
+            status: normalizedStatus,
             views: 0,
-            publishedAt: status === 'Published' ? new Date().toISOString() : null,
+            publishedAt: normalizedStatus === 'Published' ? new Date().toISOString() : null,
         };
 
         const created = await create('blogs', newBlog);
@@ -65,7 +68,9 @@ export const getAllBlogs = async (req, res) => {
         
         let filteredBlogs = allBlogs;
         if (!isAdmin) {
-            filteredBlogs = allBlogs.filter(blog => blog.status === 'Published');
+            filteredBlogs = allBlogs.filter(blog => (
+                String(blog.status || '').trim().toLowerCase() === 'published'
+            ));
         }
 
         // Sort by created/published date descending
@@ -110,6 +115,12 @@ export const updateBlog = async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = { ...req.body };
+
+        if (updateData.status !== undefined) {
+            updateData.status = String(updateData.status).trim().toLowerCase() === 'published'
+                ? 'Published'
+                : 'Draft';
+        }
 
         if (updateData.title && !updateData.slug) {
             updateData.slug = generateSlug(updateData.title);

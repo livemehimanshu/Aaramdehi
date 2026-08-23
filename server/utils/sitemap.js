@@ -75,7 +75,7 @@ export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
 
   // 3. Append published blog URLs.
   blogList.forEach((blog) => {
-    if (blog.status !== 'Published') return; // Only include published blogs
+    if (String(blog.status || '').trim().toLowerCase() !== 'published') return;
     const blogSlug = blog?.slug || blog?._id || blog?.id;
     if (!blogSlug) return;
 

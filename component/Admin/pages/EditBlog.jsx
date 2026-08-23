@@ -32,13 +32,7 @@ const EditBlog = () => {
 
   const [tagInput, setTagInput] = useState('');
 
-  useEffect(() => {
-    if (isEditing) {
-      fetchBlogData();
-    }
-  }, [id]);
-
-  const fetchBlogData = async () => {
+  async function fetchBlogData() {
     try {
       const res = await getBlogByIdOrSlugAPI(id, { admin: true });
       if (res.success && res.data) {
@@ -50,13 +44,19 @@ const EditBlog = () => {
         toast.error('Blog not found');
         navigate('/admin/blogs');
       }
-    } catch (error) {
+    } catch {
       toast.error('Error fetching blog');
       navigate('/admin/blogs');
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (isEditing) {
+      fetchBlogData();
+    }
+  }, [id, isEditing]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -86,18 +86,24 @@ const EditBlog = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.content) {
+    if (!formData.title.trim() || !formData.content.trim() || formData.content === '<p><br></p>') {
       toast.error('Title and Content are required!');
       return;
     }
 
     try {
       setSaving(true);
+      const payload = {
+        ...formData,
+        title: formData.title.trim(),
+        slug: formData.slug.trim(),
+        status: formData.status === 'Published' ? 'Published' : 'Draft',
+      };
       let res;
       if (isEditing) {
-        res = await updateBlogAPI(id, formData);
+        res = await updateBlogAPI(id, payload);
       } else {
-        res = await createBlogAPI(formData);
+        res = await createBlogAPI(payload);
       }
 
       if (res.success) {
@@ -107,7 +113,8 @@ const EditBlog = () => {
         toast.error(res.message || 'Failed to save blog');
       }
     } catch (error) {
-      toast.error('An error occurred while saving.');
+      console.error('Blog save failed:', error);
+      toast.error(error.response?.data?.message || error.message || 'Unable to save article.');
     } finally {
       setSaving(false);
     }

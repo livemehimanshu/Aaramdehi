@@ -26,8 +26,9 @@ export default function AaramdehiAIChat() {
     try {
       const response = await api.post('/ai/chat-assistant', { message });
       setMessages((current) => [...current, { sender: 'ai', text: response.data.reply, product: response.data.recommendedProduct }]);
-    } catch {
-      setMessages((current) => [...current, { sender: 'ai', text: 'Maaf kijiye, assistant abhi unavailable hai. Aap WhatsApp par humse baat kar sakte hain.' }]);
+    } catch (error) {
+      const backendMessage = error.response?.data?.message;
+      setMessages((current) => [...current, { sender: 'ai', text: backendMessage || 'Maaf kijiye, assistant abhi unavailable hai. Aap WhatsApp par humse baat kar sakte hain.' }]);
     } finally {
       setLoading(false);
     }

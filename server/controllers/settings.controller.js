@@ -1,6 +1,7 @@
 import { db, findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
 
 const AI_CONFIG_KEYS = {
+  AI_BLOGGER_GEMINI_API_KEY: 'geminiApiKey',
   AI_BLOGGER_MODEL: 'selectedModel',
   AI_BLOGGER_TONE: 'writingTone',
   AI_BLOGGER_MODE: 'publishingMode',

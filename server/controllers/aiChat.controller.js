@@ -24,7 +24,14 @@ export const handleAIChat = async (req, res) => {
     const message = String(req.body.message || '').trim();
     if (!message || message.length > 500) return res.status(400).json({ success: false, message: 'Message is required and must be under 500 characters.' });
 
-    const [allProducts, settings] = await Promise.all([findAll('products'), findAll('settings')]);
+    const [productResult, settingsResult, configResult] = await Promise.allSettled([findAll('products'), findAll('settings'), (async () => {
+      const { db } = await import('../config/db.js');
+      return (await db.ref('admin_settings/ai_config').once('value')).val() || {};
+    })()]);
+    const allProducts = productResult.status === 'fulfilled' ? productResult.value : [];
+    const settings = settingsResult.status === 'fulfilled' ? settingsResult.value : [];
+    const aiConfig = configResult.status === 'fulfilled' ? configResult.value : {};
+    if (productResult.status === 'rejected') console.warn('AI chat product catalog unavailable:', productResult.reason?.message || productResult.reason);
     const products = allProducts.filter((product) => product.active !== false && product.isActive !== false);
     const catalog = products.slice(0, 100).map(productSummary);
     const lowerMessage = message.toLowerCase();
@@ -33,8 +40,8 @@ export const handleAIChat = async (req, res) => {
       return res.json({ success: true, reply: 'Main sirf Aaramdehi ke products, home comfort solutions, delivery, orders aur blogs ke baare mein help kar sakta hoon.', recommendedProduct: null });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY || settings.find((setting) => setting.key === 'AI_BLOGGER_GEMINI_API_KEY')?.value;
-    if (!apiKey) return res.status(503).json({ success: false, message: 'AI assistant is not configured.' });
+    const apiKey = process.env.GEMINI_API_KEY || settings.find((setting) => setting.key === 'AI_BLOGGER_GEMINI_API_KEY')?.value || aiConfig.geminiApiKey;
+    if (!apiKey) return res.status(503).json({ success: false, message: 'AI assistant is not configured. Add GEMINI_API_KEY or save the Gemini key in AI Blogger settings.' });
     const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
     const prompt = `You are Aaramdehi's concise AI Comfort Assistant. Only discuss Aaramdehi products, doormats, pillows, towels, home comfort, delivery, orders and blogs. Reply in the user's language. Use only this product catalog and never invent products, prices, IDs, stock or policies. Return only JSON: {"reply":"short helpful answer","recommendedProductId":"catalog id or empty string"}. User message: ${JSON.stringify(message)}. Catalog: ${JSON.stringify(catalog)}`;
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {

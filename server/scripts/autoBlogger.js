@@ -86,7 +86,7 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
 
   const geminiApiKey = process.env.GEMINI_API_KEY || settingValue(settings, 'AI_BLOGGER_GEMINI_API_KEY');
   const unsplashApiKey = process.env.UNSPLASH_API_KEY || settingValue(settings, 'AI_BLOGGER_UNSPLASH_API_KEY');
-  const model = process.env.GEMINI_MODEL || settingValue(settings, 'AI_BLOGGER_MODEL', 'gemini-2.5-flash');
+  const model = process.env.GEMINI_MODEL || settingValue(settings, 'AI_BLOGGER_MODEL', 'gemini-3.6-flash');
   if (!geminiApiKey) throw new Error('Gemini API key is not configured');
 
   const existingBlogs = blogsSnapshot.val() ? Object.values(blogsSnapshot.val()) : [];

@@ -10,7 +10,7 @@ const SETTING_KEYS = {
   enabled: 'AI_BLOGGER_ENABLED',
 };
 
-const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-2.5-flash', enabled: 'false' };
+const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-3.6-flash', enabled: 'false' };
 
 export default function AiBloggerPage() {
   const [values, setValues] = useState(defaultValues);
@@ -107,7 +107,7 @@ export default function AiBloggerPage() {
         </label>
         <label className="block text-sm font-semibold text-slate-300">Gemini model
           <select value={values.selectedModel} onChange={(event) => setValues({ ...values, selectedModel: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400">
-            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
             <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
             <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
           </select>

@@ -145,6 +145,7 @@ apiRouter.use("/ai", aiChatRouter);
 app.use("/api", apiRouter);
 app.use("/products", productRouter);
 app.use("/settings", settingsRouter);
+app.use("/ai", aiChatRouter);
 
 // ==========================================
 // 4. Static Asset Serving & SPA Fallback

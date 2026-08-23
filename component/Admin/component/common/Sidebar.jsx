@@ -4,7 +4,7 @@ import {
   X, LayoutDashboard, ShoppingBag, BarChart2, Package, Tags, 
   Layers, CreditCard, RefreshCcw, TrendingUp, Mail, Users, 
   MessageSquare, Settings, Globe, ShieldCheck, LogOut, Image as ImageIcon, Store,
-  Target, Eye, Activity, FileText
+  Target, Eye, Activity, FileText, Bot
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
@@ -51,6 +51,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         { name: 'SEO Optimizer', path: '/admin/seo-optimizer', icon: TrendingUp },
         { name: 'Coupons', path: '/admin/coupons', icon: Tags },
         { name: 'Newsletter', path: '/admin/newsletter', icon: Mail },
+        { name: 'AI Blogger', path: '/admin/ai-blogger', icon: Bot },
       ]
     },
     { 

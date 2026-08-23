@@ -53,6 +53,7 @@ const Newsletter = lazy(() => import('../component/Admin/pages/newsletter.jsx'))
 const Users = lazy(() => import('../component/Admin/pages/users.jsx'))
 const Reviews = lazy(() => import('../component/Admin/pages/reviews.jsx'))
 const Settings = lazy(() => import('../component/Admin/pages/settings.jsx'))
+const AiBlogger = lazy(() => import('../component/Admin/pages/ai-blogger.jsx'))
 const SeoGlobal = lazy(() => import('../component/Admin/pages/seo-global.jsx'))
 const Team = lazy(() => import('../component/Admin/pages/team.jsx'))
 const FileManager = lazy(() => import('../component/Admin/component/filemanger/FileManager.jsx'))
@@ -165,6 +166,7 @@ function AppContent() {
                   <Route path="users" element={<Users />} />
                   <Route path="reviews" element={<Reviews />} />
                   <Route path="settings" element={<Settings />} />
+                  <Route path="ai-blogger" element={<AiBlogger />} />
                   <Route path="seo-global" element={<SeoGlobal />} />
                   <Route path="team" element={<Team />} />
                   <Route path="banner/add" element={<AddBanner />} />

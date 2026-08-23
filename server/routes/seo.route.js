@@ -4,8 +4,6 @@ import { Router } from 'express';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { findAll } from '../config/db.js';
-import { buildSitemapXml } from '../utils/sitemap.js';
 import {
     getGlobalSeo,
     updateGlobalSeo,

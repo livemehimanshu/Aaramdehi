@@ -2,18 +2,16 @@ import React from 'react';
 import { Helmet } from 'react-helmet-async';
 
 /**
- * Normalize URL for canonical tag (removes query params, trailing slashes, duplicates)
- * CRITICAL: Google requires explicit canonical tags to resolve "Duplicate without user-selected canonical" issues
+ * Build one absolute canonical URL for every page. Query strings and hashes are
+ * excluded because filters, tracking parameters, and fragments are not pages.
  */
-const getNormalizedUrl = (url) => {
-  if (!url) return '';
+const getNormalizedUrl = (url, siteUrl) => {
   try {
-    const urlObj = new URL(url);
-    // Remove query parameters and trailing slash for clean canonical
-    const normalized = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`.replace(/\/$/, '');
-    return normalized;
+    const urlObj = new URL(url || '/', siteUrl);
+    const pathname = urlObj.pathname.replace(/\/+$/, '') || '/';
+    return `${urlObj.origin}${pathname}`;
   } catch {
-    return url;
+    return siteUrl;
   }
 };
 
@@ -24,7 +22,7 @@ const getNormalizedUrl = (url) => {
  * @param {string} keywords - Keywords for search engines
  * @param {string} ogImage - Social media image
  * @param {string} path - Path/Route of current page (e.g. "/products")
- * @param {string} ogUrl - Custom Canonical URL override (REQUIRED for product pages)
+ * @param {string} ogUrl - Optional absolute or relative canonical URL override
  */
 const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData, noindex = false, is404 = false }) => {
   const siteName = "Aaramdehi - Comfort Redefined";
@@ -32,26 +30,12 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
   const defaultDescription = "Aaramdehi offers premium furniture and home decor. Redefine your comfort with our curated collection.";
   
-  // ✅ SEO FIX: Add noindex for actual 404 pages
-  const shouldNoindex = noindex || is404;
+  // Only callers that explicitly mark a page as non-indexable receive noindex.
+  // is404 remains supported for existing callers that identify a real missing resource.
+  const shouldNoindex = noindex === true || is404 === true;
 
-  // 🟢 EXPLICIT Canonical URL Construction (Removes Query Parameters & Trailing Slashes)
-  // GOOGLE FIX: Explicit canonical tags resolve "Duplicate without user-selected canonical" errors
-  let cleanCanonical = ogUrl;
-  if (!cleanCanonical) {
-    if (path) {
-      const cleanPath = path.split('?')[0].replace(/\/$/, '');
-      cleanCanonical = `${siteUrl}${cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath}`;
-    } else if (typeof window !== 'undefined') {
-      const windowPath = window.location.pathname.replace(/\/$/, '');
-      cleanCanonical = `${siteUrl}${windowPath}`;
-    } else {
-      cleanCanonical = siteUrl;
-    }
-  }
-  
-  // ✅ Normalize canonical URL to prevent duplicates
-  cleanCanonical = getNormalizedUrl(cleanCanonical);
+  const currentPath = path || (typeof window !== 'undefined' ? window.location.pathname : '/');
+  const cleanCanonical = getNormalizedUrl(ogUrl || currentPath, siteUrl);
 
   return (
     <Helmet>

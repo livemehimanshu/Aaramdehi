@@ -47,6 +47,21 @@
       "source": "/:slug.htm",
       "destination": "/:slug",
       "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/about-us",
+      "permanent": true
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact-us",
+      "permanent": true
+    },
+    {
+      "source": "/product",
+      "destination": "/products",
+      "permanent": true
     }
   ],
   "rewrites": [

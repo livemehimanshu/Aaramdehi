@@ -215,7 +215,7 @@ function AppContent() {
                 {/* DYNAMIC CLEAN PRODUCT SLUG ROUTE (e.g. /cotton-dori-cushion) */}
                 <Route path="/:id" element={<ProductDetailsPage />} />
 
-                {/* FALLBACK ROUTE */}
+                {/* Keep this last so unknown URLs render the real not-found page. */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

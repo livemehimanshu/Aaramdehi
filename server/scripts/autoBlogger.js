@@ -17,9 +17,28 @@ const topics = [
   'How to choose the right door mat for a clean and welcoming home'
 ];
 
-const serviceAccount = process.env.FIREBASE_CONFIG_JSON
-  ? JSON.parse(process.env.FIREBASE_CONFIG_JSON)
-  : JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'config', 'serviceAccountKey.json'), 'utf8'));
+const getFirebaseServiceAccount = () => {
+  if (process.env.FIREBASE_CONFIG_JSON) {
+    return JSON.parse(process.env.FIREBASE_CONFIG_JSON);
+  }
+
+  if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    return {
+      project_id: process.env.FIREBASE_PROJECT_ID,
+      client_email: process.env.FIREBASE_CLIENT_EMAIL,
+      private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+    };
+  }
+
+  const localKeyPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'config', 'serviceAccountKey.json');
+  if (fs.existsSync(localKeyPath)) {
+    return JSON.parse(fs.readFileSync(localKeyPath, 'utf8'));
+  }
+
+  throw new Error('Firebase credentials are missing. Set FIREBASE_CONFIG_JSON or FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY.');
+};
+
+const serviceAccount = getFirebaseServiceAccount();
 
 if (!admin.apps.length) {
   admin.initializeApp({

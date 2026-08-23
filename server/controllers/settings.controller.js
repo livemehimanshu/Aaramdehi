@@ -253,7 +253,7 @@ export const generateAutoBlog = async (req, res) => {
   autoBlogRunning = true;
   try {
     const { runAutomation } = await import('../scripts/autoBlogger.js');
-    const result = await runAutomation({ topic });
+    const result = await runAutomation({ topic, force: true });
     return res.status(201).json({ success: true, message: 'AI blog generated and published successfully.', data: result || null });
   } catch (error) {
     console.error('AI blog generation failed:', error);

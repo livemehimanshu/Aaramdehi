@@ -75,11 +75,11 @@ async function notifyGoogle(url) {
   await google.indexing({ version: 'v3', auth: client }).urlNotifications.publish({ requestBody: { url, type: 'URL_UPDATED' } });
 }
 
-export async function runAutomation({ topic: requestedTopic = '' } = {}) {
+export async function runAutomation({ topic: requestedTopic = '', force = false } = {}) {
   const [settingsSnapshot, blogsSnapshot] = await Promise.all([settingsRef.once('value'), blogsRef.once('value')]);
   const settings = settingsSnapshot.val() || {};
   const enabled = String(settingValue(settings, 'AI_BLOGGER_ENABLED', 'false')).toLowerCase() === 'true';
-  if (!enabled && process.env.FORCE_AUTO_BLOG !== 'true') {
+  if (!enabled && !force && process.env.FORCE_AUTO_BLOG !== 'true') {
     console.log('AI Blogger is disabled. Enable it from /admin/ai-blogger or set FORCE_AUTO_BLOG=true.');
     return;
   }

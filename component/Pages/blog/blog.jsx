@@ -57,20 +57,20 @@ export const BlogList = () => {
             </Helmet>
 
             {/* Header Section */}
-            <div className="bg-white py-20 border-b border-gray-100 relative overflow-hidden">
+            <div className="bg-white py-12 sm:py-16 lg:py-20 border-b border-gray-100 relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-full opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#1A365D 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
                 <div className="container mx-auto px-4 text-center relative z-10">
                     <span className="text-red-600 font-bold tracking-[4px] text-xs uppercase mb-4 block">The Journal</span>
-                    <h1 className="text-4xl md:text-6xl font-black text-blue-900 uppercase tracking-tighter">Stories of Comfort</h1>
-                    <p className="text-gray-500 mt-6 text-sm tracking-[1px] max-w-2xl mx-auto leading-relaxed">
+                    <h1 className="text-3xl sm:text-4xl lg:text-6xl font-black text-blue-900 uppercase tracking-tighter break-words">Stories of Comfort</h1>
+                    <p className="text-gray-500 mt-4 sm:mt-6 text-sm tracking-[1px] max-w-2xl mx-auto leading-relaxed px-2">
                         Discover the art of relaxation. Expert tips on orthopedic support, styling your space, and choosing the perfect comfort essentials.
                     </p>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 mt-12 max-w-7xl">
+            <div className="container mx-auto px-4 mt-8 sm:mt-12 max-w-7xl">
                 {/* Search & Filters */}
-                <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-16">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 sm:gap-6 mb-10 sm:mb-16">
                     <div className="flex gap-3 overflow-x-auto pb-2 w-full md:w-auto no-scrollbar">
                         {categories.map(cat => (
                             <button 
@@ -82,7 +82,7 @@ export const BlogList = () => {
                             </button>
                         ))}
                     </div>
-                    <div className="relative w-full md:w-[350px]">
+                    <div className="relative w-full md:w-[350px] md:flex-shrink-0">
                         <input 
                             type="text" 
                             placeholder="Search articles..." 
@@ -109,7 +109,7 @@ export const BlogList = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
                             {filteredBlogs.slice(0, visibleCount).map(blog => (
                                 <div key={blog._id} className="group flex flex-col h-full bg-white rounded-[2rem] overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.08)] transition-all duration-500">
-                                    <Link to={`/blog/${blog.slug}`} className="relative overflow-hidden h-64 md:h-72 block">
+                                    <Link to={`/blog/${blog.slug}`} className="relative overflow-hidden aspect-[16/10] md:aspect-[4/3] block">
                                         {blog.image ? (
                                             <img src={blog.image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-in-out" />
                                         ) : (
@@ -119,8 +119,8 @@ export const BlogList = () => {
                                             {blog.category}
                                         </div>
                                     </Link>
-                                    <div className="p-8 flex flex-col flex-1">
-                                        <div className="flex justify-between items-center text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                                    <div className="p-5 sm:p-8 flex flex-col flex-1 min-w-0">
+                                        <div className="flex flex-wrap justify-between items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
                                             <span>{new Date(blog.publishedAt || blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                             <span className="flex items-center gap-1"><FiClock /> {calculateReadingTime(DOMPurify.sanitize(blog.content, { ALLOWED_TAGS: [] }))}</span>
                                         </div>
@@ -130,11 +130,11 @@ export const BlogList = () => {
                                         <p className="text-gray-500 text-sm leading-relaxed line-clamp-3 mb-6 flex-1">{blog.excerpt}</p>
                                         
                                         <div className="flex items-center justify-between mt-auto pt-6 border-t border-gray-100">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
                                                 <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-800 flex items-center justify-center font-bold text-xs uppercase">
                                                     {blog.author.charAt(0)}
                                                 </div>
-                                                <span className="text-xs font-bold text-gray-700">{blog.author}</span>
+                                                <span className="text-xs font-bold text-gray-700 truncate">{blog.author}</span>
                                             </div>
                                             <Link to={`/blog/${blog.slug}`} className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                                 <IoIosArrowForward />
@@ -160,12 +160,12 @@ export const BlogList = () => {
             </div>
             
             {/* Newsletter Section */}
-            <div className="container mx-auto px-4 mt-32 max-w-5xl">
-                <div className="bg-blue-900 rounded-[3rem] p-10 md:p-16 text-center relative overflow-hidden">
+            <div className="container mx-auto px-4 mt-20 sm:mt-32 max-w-5xl">
+                <div className="bg-blue-900 rounded-[2rem] sm:rounded-[3rem] p-7 sm:p-10 md:p-16 text-center relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-800 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/4"></div>
                     <div className="relative z-10">
-                        <h3 className="text-3xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter">Stay Comfortably Informed</h3>
-                        <p className="text-blue-100 mb-10 max-w-xl mx-auto">Subscribe to our newsletter for exclusive home styling tips, ergonomic advice, and early access to Aaramdehi product launches.</p>
+                        <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-5 sm:mb-6 uppercase tracking-tighter break-words">Stay Comfortably Informed</h3>
+                        <p className="text-blue-100 mb-7 sm:mb-10 max-w-xl mx-auto text-sm sm:text-base">Subscribe to our newsletter for exclusive home styling tips, ergonomic advice, and early access to Aaramdehi product launches.</p>
                         <form className="max-w-md mx-auto flex flex-col md:flex-row gap-3" onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing!"); }}>
                             <input type="email" placeholder="Enter your email address" required className="flex-1 px-6 py-4 rounded-full border-none outline-none text-sm font-medium focus:ring-4 focus:ring-blue-700 transition-shadow" />
                             <button type="submit" className="px-8 py-4 bg-red-600 text-white rounded-full font-black uppercase tracking-widest text-sm hover:bg-red-700 transition-colors">Subscribe</button>
@@ -307,7 +307,7 @@ export const BlogDetail = () => {
             </Helmet>
 
             {/* Post Header */}
-            <header className="max-w-4xl mx-auto px-4 pt-20 pb-12 text-center">
+            <header className="max-w-4xl mx-auto px-4 pt-10 sm:pt-16 lg:pt-20 pb-8 sm:pb-12 text-center">
                 <Link to="/blog" className="text-gray-400 hover:text-blue-600 text-xs font-black uppercase tracking-widest transition-colors mb-8 inline-block">
                     &larr; Back to Journal
                 </Link>
@@ -315,11 +315,11 @@ export const BlogDetail = () => {
                 <span className="inline-block px-4 py-1.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">
                     {blog.category}
                 </span>
-                <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-blue-900 mb-8 leading-tight tracking-tighter">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-blue-900 mb-6 sm:mb-8 leading-tight tracking-tighter break-words">
                     {blog.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 text-gray-500 text-[11px] font-black uppercase tracking-widest">
+                <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 md:gap-8 text-gray-500 text-[10px] sm:text-[11px] font-black uppercase tracking-widest">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-full bg-blue-900 text-white flex items-center justify-center">
                             {blog.author.charAt(0)}
@@ -335,16 +335,16 @@ export const BlogDetail = () => {
 
             {/* Hero Image */}
             {blog.image && (
-                <div className="max-w-[1200px] mx-auto px-4 mb-16">
+                <div className="max-w-[1200px] mx-auto px-4 mb-10 sm:mb-16">
                     <div className="rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl relative group">
-                        <img src={blog.image} alt={blog.title} className="w-full h-[400px] md:h-[600px] object-cover" />
+                        <img src={blog.image} alt={blog.title} className="w-full aspect-[16/10] md:aspect-[16/8] object-cover" />
                         <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
                 </div>
             )}
 
             {/* Main Content Layout (Sidebar + Content) */}
-            <div className="max-w-7xl mx-auto px-4 flex flex-col lg:flex-row gap-12 lg:gap-20">
+            <div className="max-w-7xl mx-auto px-4 flex flex-col lg:flex-row gap-8 sm:gap-12 lg:gap-20">
                 
                 {/* Left Sidebar: Social Sharing & Details (Sticky) */}
                 <div className="lg:w-64 flex-shrink-0 order-2 lg:order-1 hidden md:block">
@@ -387,7 +387,7 @@ export const BlogDetail = () => {
                 </div>
 
                 {/* Right Area: Article Content */}
-                <div className="flex-1 order-1 lg:order-2">
+                <div className="flex-1 min-w-0 order-1 lg:order-2">
                     {/* Mobile Share (Top) */}
                     <div className="flex items-center gap-4 mb-8 md:hidden pb-8 border-b border-gray-100">
                         <span className="text-xs font-bold text-gray-500 uppercase tracking-widest"><FiShare2 className="inline mr-1" /> Share:</span>
@@ -399,7 +399,7 @@ export const BlogDetail = () => {
 
                     {/* Prose Content */}
                     <div 
-                        className="prose prose-lg prose-slate max-w-none prose-headings:font-black prose-headings:text-blue-900 prose-headings:tracking-tight prose-a:text-blue-600 hover:prose-a:text-red-600 prose-img:rounded-2xl prose-img:shadow-lg prose-p:leading-relaxed prose-p:text-gray-700"
+                        className="prose prose-base sm:prose-lg prose-slate max-w-none break-words prose-headings:font-black prose-headings:text-blue-900 prose-headings:tracking-tight prose-a:text-blue-600 hover:prose-a:text-red-600 prose-img:rounded-2xl prose-img:shadow-lg prose-img:max-w-full prose-p:leading-relaxed prose-p:text-gray-700"
                         dangerouslySetInnerHTML={{ __html: modifiedContent }} 
                     />
 
@@ -418,14 +418,14 @@ export const BlogDetail = () => {
             </div>
 
             {/* Newsletter Injection inside Article Page */}
-            <div className="max-w-4xl mx-auto px-4 mt-24">
+            <div className="max-w-4xl mx-auto px-4 mt-16 sm:mt-24">
                 <div className="bg-[#FDFBF7] border border-[#F0EBE1] rounded-[2rem] p-8 md:p-12 text-center flex flex-col items-center">
                     <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-900 mb-6">
                         <FiMail size={24} />
                     </div>
                     <h3 className="text-2xl font-black text-blue-900 mb-2">Did you find this helpful?</h3>
                     <p className="text-gray-500 mb-8 max-w-md text-sm">Join our community of comfort-seekers and get the latest articles delivered straight to your inbox.</p>
-                    <form className="w-full max-w-sm flex gap-2" onSubmit={(e) => e.preventDefault()}>
+                    <form className="w-full max-w-sm flex flex-col sm:flex-row gap-2" onSubmit={(e) => e.preventDefault()}>
                         <input type="email" placeholder="Your email address" required className="flex-1 px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 text-sm" />
                         <button type="submit" className="px-6 py-3 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800 transition-colors">Subscribe</button>
                     </form>

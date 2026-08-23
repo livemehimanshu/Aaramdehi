@@ -113,6 +113,7 @@ function AppContent() {
   const isAdminRoute = location.pathname.startsWith('/admin')
   const hideHeaderRoutes = ['/order-success', '/login', '/signup', '/ar-studio']
   const shouldHideHeaderFooter = isAdminRoute || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
+  const isBlogRoute = location.pathname === '/blog' || location.pathname.startsWith('/blog/')
 
   const accountPaths = ['/account/profile', '/account/addresses', '/account/pan', '/orders', '/order-details', '/payments/giftcards', '/payments/upi', '/payments/cards', '/coupons', '/reviews', '/wishlist']
   const isAccountPage = accountPaths.some(path => location.pathname.startsWith(path))
@@ -126,7 +127,11 @@ function AppContent() {
 
   return (
     <>
-      {!shouldHideHeaderFooter && <Header hideNav={location.pathname.startsWith('/checkout') || location.pathname.startsWith('/payment')} />}
+      {!shouldHideHeaderFooter && (
+        <Header
+          hideNav={isBlogRoute || location.pathname.startsWith('/checkout') || location.pathname.startsWith('/payment')}
+        />
+      )}
 
       <main className={isAccountPage ? "bg-gray-100 min-h-screen pb-10" : ""}>
         <div className={isAccountPage ? "max-w-[1248px] mx-auto flex flex-col md:flex-row py-4 md:py-8 px-2 md:px-4 gap-0 md:gap-4" : ""}>

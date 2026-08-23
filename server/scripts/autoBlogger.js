@@ -115,17 +115,22 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
   if (!geminiApiKey) throw new Error('Gemini API key is not configured');
 
   const existingBlogs = blogsSnapshot.val() ? Object.values(blogsSnapshot.val()) : [];
+  const configuredTopics = String(settingValue(settings, 'AI_BLOGGER_TOPIC_LIST', '') || '')
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
   const currentTime = Date.now();
   const dueQueueItems = Object.entries(queueSnapshot.val() || {})
     .map(([id, item]) => ({ id, ...item }))
     .filter((item) => item.status === 'Scheduled' && new Date(item.publishAt).getTime() <= currentTime)
     .sort((a, b) => new Date(a.publishAt) - new Date(b.publishAt));
   const queueItem = !requestedTopic.trim() && !force ? dueQueueItems[0] : null;
-  if (!requestedTopic.trim() && !force && !queueItem) {
+  if (!requestedTopic.trim() && !force && !queueItem && configuredTopics.length === 0) {
     console.log('No scheduled AI blog topic is due.');
     return;
   }
-  const topic = requestedTopic.trim() || queueItem?.topic || topics[existingBlogs.length % topics.length];
+  const topicPool = configuredTopics.length > 0 ? configuredTopics : topics;
+  const topic = requestedTopic.trim() || queueItem?.topic || topicPool[existingBlogs.length % topicPool.length];
   const article = await generateArticle(geminiApiKey, model, topic);
   const slug = slugify(article.slug || article.title);
   if (!slug || !article.title || !article.content) throw new Error('Generated article is missing required fields');

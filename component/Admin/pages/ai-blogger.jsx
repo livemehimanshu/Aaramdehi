@@ -8,9 +8,16 @@ const SETTING_KEYS = {
   unsplashApiKey: 'AI_BLOGGER_UNSPLASH_API_KEY',
   selectedModel: 'AI_BLOGGER_MODEL',
   enabled: 'AI_BLOGGER_ENABLED',
+  topicList: 'AI_BLOGGER_TOPIC_LIST',
 };
 
-const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-3.6-flash', enabled: 'false' };
+const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-3.6-flash', enabled: 'false', topicList: '' };
+
+const getMinimumScheduleTime = () => {
+  const minimum = new Date(Date.now() + 60 * 1000);
+  const offset = minimum.getTimezoneOffset();
+  return new Date(minimum.getTime() - offset * 60 * 1000).toISOString().slice(0, 16);
+};
 
 export default function AiBloggerPage() {
   const [values, setValues] = useState(defaultValues);
@@ -38,6 +45,7 @@ export default function AiBloggerPage() {
             ? defaultValues.selectedModel
             : settings[SETTING_KEYS.selectedModel]?.value || defaultValues.selectedModel,
           enabled: settings[SETTING_KEYS.enabled]?.value === true || settings[SETTING_KEYS.enabled]?.value === 'true' ? 'true' : 'false',
+          topicList: settings[SETTING_KEYS.topicList]?.value || '',
         });
       } else {
         toast.error(response.message || 'Unable to load AI blogger settings');
@@ -65,6 +73,7 @@ export default function AiBloggerPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!values.geminiApiKey.trim()) return toast.error('Gemini API key is required');
+    if (!values.topicList.trim()) return toast.error('Add at least one daily topic');
     setSaving(true);
     try {
       const results = await Promise.all(Object.entries(SETTING_KEYS).map(([field, key]) => saveSetting(key, values[field])));
@@ -96,7 +105,8 @@ export default function AiBloggerPage() {
   const handleSchedule = async (event) => {
     event.preventDefault();
     if (!scheduledTopic.trim() || !scheduledAt) return toast.error('Enter a topic and publish date/time');
-    if (new Date(scheduledAt).getTime() <= Date.now()) return toast.error('Choose a future publish time');
+    const publishTime = new Date(scheduledAt).getTime();
+    if (Number.isNaN(publishTime) || publishTime <= Date.now()) return toast.error('Choose a future publish time');
     setScheduling(true);
     try {
       const response = await createAiBlogQueueAPI(scheduledTopic.trim(), new Date(scheduledAt).toISOString());
@@ -153,6 +163,10 @@ export default function AiBloggerPage() {
           <input type="checkbox" checked={values.enabled === 'true'} onChange={(event) => setValues({ ...values, enabled: event.target.checked ? 'true' : 'false' })} className="h-4 w-4 accent-emerald-400" />
           Enable scheduled auto-publishing
         </label>
+        <label className="block text-sm font-semibold text-slate-300">Daily topic list (one topic per line)
+          <textarea required value={values.topicList} onChange={(event) => setValues({ ...values, topicList: event.target.value })} rows={6} className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" placeholder={'How to choose the perfect pillow\nSmall living room comfort ideas\nBest bedding for restful sleep'} />
+          <span className="mt-1 block text-xs font-normal text-slate-500">The scheduler publishes one topic per day, in order.</span>
+        </label>
         <button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 font-bold text-[#0F1219] disabled:opacity-60"><Save size={18} />{saving ? 'Saving...' : 'Save AI Settings'}</button>
       </form>
       <section className="space-y-4 rounded-2xl border border-white/10 bg-[#161B28] p-6 shadow-xl">
@@ -173,7 +187,7 @@ export default function AiBloggerPage() {
         </div>
         <form onSubmit={handleSchedule} className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
           <input value={scheduledTopic} onChange={(event) => setScheduledTopic(event.target.value)} maxLength={500} placeholder="Article topic" className="rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
-          <input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} className="rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
+          <input type="datetime-local" min={getMinimumScheduleTime()} value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} className="rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
           <button type="submit" disabled={scheduling} className="rounded-xl bg-emerald-500 px-5 py-3 font-bold text-[#0F1219] disabled:opacity-60">{scheduling ? 'Scheduling...' : 'Add To Queue'}</button>
         </form>
         <div className="space-y-2">

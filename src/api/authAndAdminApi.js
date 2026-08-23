@@ -710,3 +710,13 @@ export async function uploadBlogImageAPI(imageFile) {
     throw e;
   }
 }
+
+export async function updateNewsletterSubscriberAPI(id, status) {
+  const res = await api.put(`/newsletter/subscribers/${id}`, { status });
+  return res.data;
+}
+
+export async function deleteNewsletterSubscriberAPI(id) {
+  const res = await api.delete(`/newsletter/subscribers/${id}`);
+  return res.data;
+}

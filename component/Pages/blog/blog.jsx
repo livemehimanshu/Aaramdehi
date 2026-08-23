@@ -5,7 +5,7 @@ import { IoIosArrowForward, IoIosSearch } from "react-icons/io";
 import { FiClock, FiShare2, FiFacebook, FiTwitter, FiLinkedin, FiMail } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import DOMPurify from 'dompurify';
-import { getAllBlogsAPI, getBlogByIdOrSlugAPI } from '../../../src/api/authAndAdminApi';
+import { getAllBlogsAPI, getBlogByIdOrSlugAPI, subscribeNewsletterAPI } from '../../../src/api/authAndAdminApi';
 
 // Helper to calculate reading time
 const calculateReadingTime = (text) => {
@@ -23,6 +23,23 @@ export const BlogList = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCat, setSelectedCat] = useState('All');
     const [visibleCount, setVisibleCount] = useState(6);
+    const [subscriberEmail, setSubscriberEmail] = useState('');
+    const [subscribing, setSubscribing] = useState(false);
+    const [subscriptionMessage, setSubscriptionMessage] = useState('');
+
+    const handleSubscribe = async (event) => {
+        event.preventDefault();
+        try {
+            setSubscribing(true);
+            const response = await subscribeNewsletterAPI(subscriberEmail);
+            setSubscriptionMessage(response.message || 'Thanks for subscribing!');
+            setSubscriberEmail('');
+        } catch (error) {
+            setSubscriptionMessage(error.response?.data?.message || 'Unable to subscribe right now.');
+        } finally {
+            setSubscribing(false);
+        }
+    };
 
     useEffect(() => {
         const fetchBlogs = async () => {
@@ -166,10 +183,11 @@ export const BlogList = () => {
                     <div className="relative z-10">
                         <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-white mb-5 sm:mb-6 uppercase tracking-tighter break-words">Stay Comfortably Informed</h3>
                         <p className="text-blue-100 mb-7 sm:mb-10 max-w-xl mx-auto text-sm sm:text-base">Subscribe to our newsletter for exclusive home styling tips, ergonomic advice, and early access to Aaramdehi product launches.</p>
-                        <form className="max-w-md mx-auto flex flex-col md:flex-row gap-3" onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing!"); }}>
-                            <input type="email" placeholder="Enter your email address" required className="flex-1 px-6 py-4 rounded-full border-none outline-none text-sm font-medium focus:ring-4 focus:ring-blue-700 transition-shadow" />
-                            <button type="submit" className="px-8 py-4 bg-red-600 text-white rounded-full font-black uppercase tracking-widest text-sm hover:bg-red-700 transition-colors">Subscribe</button>
+                        <form className="max-w-md mx-auto flex flex-col md:flex-row gap-3" onSubmit={handleSubscribe}>
+                            <input type="email" value={subscriberEmail} onChange={(event) => setSubscriberEmail(event.target.value)} placeholder="Enter your email address" required className="flex-1 px-6 py-4 rounded-full border-none outline-none text-sm font-medium focus:ring-4 focus:ring-blue-700 transition-shadow" />
+                            <button type="submit" disabled={subscribing} className="px-8 py-4 bg-red-600 text-white rounded-full font-black uppercase tracking-widest text-sm hover:bg-red-700 disabled:opacity-60 transition-colors">{subscribing ? 'Subscribing...' : 'Subscribe'}</button>
                         </form>
+                        {subscriptionMessage && <p className="mt-4 text-sm text-white" role="status">{subscriptionMessage}</p>}
                     </div>
                 </div>
             </div>

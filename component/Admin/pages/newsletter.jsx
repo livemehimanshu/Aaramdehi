@@ -1,21 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Users, Send, Search, Download, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { firestore } from '../../../src/api/firebase.js';
-import {
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  limit,
-  startAfter,
-  where,
-  deleteDoc,
-  updateDoc,
-  doc,
-} from 'firebase/firestore';
-
-const PAGE_SIZE = 25;
+import { getNewsletterSubscribersAPI, updateNewsletterSubscriberAPI, deleteNewsletterSubscriberAPI } from '../../../src/api/authAndAdminApi';
 
 const formatDateTime = (value) => {
   if (!value) return 'Unknown';
@@ -51,14 +37,7 @@ export default function NewsletterPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const collectionRef = collection(firestore, 'newsletter_subscribers');
-
   const loadSubscribers = async (reset = false) => {
-    if (!firestore) {
-      toast.error('Firestore is not initialized.');
-      return;
-    }
-
     try {
       if (reset) {
         setLoading(true);
@@ -66,14 +45,13 @@ export default function NewsletterPage() {
         setLoadingMore(true);
       }
 
-      const baseQuery = query(collectionRef, orderBy('subscribedAt', 'desc'), limit(PAGE_SIZE));
-      const pagedQuery = reset || !lastVisible ? baseQuery : query(baseQuery, startAfter(lastVisible));
-      const snapshot = await getDocs(pagedQuery);
-      const docs = snapshot.docs.map((doc) => ({ _id: doc.id, ...doc.data() }));
+      const response = await getNewsletterSubscribersAPI();
+      if (!response.success) throw new Error(response.message || 'Failed to load subscribers');
+      const docs = response.data || [];
 
-      setSubscribers((prev) => (reset ? docs : [...prev, ...docs]));
-      setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
+      setSubscribers(docs);
+      setLastVisible(null);
+      setHasMore(false);
     } catch (error) {
       toast.error('Failed to load subscribers.');
       console.error(error);
@@ -96,7 +74,7 @@ export default function NewsletterPage() {
     if (!deleteTarget) return;
     try {
       setLoading(true);
-      await deleteDoc(doc(firestore, 'newsletter_subscribers', deleteTarget._id));
+      await deleteNewsletterSubscriberAPI(deleteTarget._id);
       setSubscribers((prev) => prev.filter((item) => item._id !== deleteTarget._id));
       toast.success('Subscriber deleted successfully.');
     } catch (error) {
@@ -111,8 +89,7 @@ export default function NewsletterPage() {
   const handleToggleStatus = async (subscriber, nextStatus) => {
     try {
       setLoading(true);
-      const subscriberRef = doc(firestore, 'newsletter_subscribers', subscriber._id);
-      await updateDoc(subscriberRef, { status: nextStatus });
+      await updateNewsletterSubscriberAPI(subscriber._id, nextStatus);
       setSubscribers((prev) => prev.map((item) => item._id === subscriber._id ? { ...item, status: nextStatus } : item));
       toast.success(`Subscriber status updated to ${nextStatus}.`);
     } catch (error) {

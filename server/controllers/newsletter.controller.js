@@ -1,4 +1,4 @@
-import { findAll, create, findByQuery } from '../config/db.js';
+import { findAll, findById, create, updateById, deleteById, findByQuery } from '../config/db.js';
 import { validateEmail } from '../utils/validation.js';
 import sendEmail from '../config/sendEmail.js';
 
@@ -44,6 +44,28 @@ export const getNewsletterSubscribers = async (req, res) => {
     return res.json({ success: true, data: sorted });
   } catch (error) {
     console.error('❌ [Newsletter Subscribers Error]:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const updateNewsletterSubscriber = async (req, res) => {
+  try {
+    const subscriber = await findById(COLLECTION, req.params.id);
+    if (!subscriber) return res.status(404).json({ success: false, message: 'Subscriber not found.' });
+    const status = req.body.status === 'unsubscribed' ? 'unsubscribed' : 'active';
+    return res.json({ success: true, data: await updateById(COLLECTION, req.params.id, { status }) });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const deleteNewsletterSubscriber = async (req, res) => {
+  try {
+    const subscriber = await findById(COLLECTION, req.params.id);
+    if (!subscriber) return res.status(404).json({ success: false, message: 'Subscriber not found.' });
+    await deleteById(COLLECTION, req.params.id);
+    return res.json({ success: true, message: 'Subscriber deleted successfully.' });
+  } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };

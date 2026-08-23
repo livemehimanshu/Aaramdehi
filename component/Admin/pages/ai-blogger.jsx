@@ -41,7 +41,16 @@ export default function AiBloggerPage() {
   const saveSetting = async (key, value) => {
     const current = existing[key];
     if (current) return updateSettingAPI(key, value);
-    return createSettingAPI({ key, value, category: 'ai-blogger', isEditable: true });
+
+    // Prefer update first so a stale settings list cannot cause duplicate-key 400s.
+    const updated = await updateSettingAPI(key, value);
+    if (updated?.success || !/not found/i.test(updated?.message || '')) return updated;
+
+    const created = await createSettingAPI({ key, value, category: 'ai-blogger', isEditable: true });
+    if (created?.success && created.data) {
+      setExisting((currentSettings) => ({ ...currentSettings, [key]: created.data }));
+    }
+    return created;
   };
 
   const handleSubmit = async (event) => {

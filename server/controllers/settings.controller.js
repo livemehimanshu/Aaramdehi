@@ -70,9 +70,19 @@ export const createSetting = async (req, res) => {
     // Check if key exists
     const existing = await findByQuery('settings', 'key', key.toUpperCase());
     if (existing && existing.length > 0) {
-        return res.status(400).json({
-            success: false,
-            message: "Setting with this key already exists",
+        const updatedSetting = await updateById('settings', existing[0]._id, {
+          value,
+          label: label || existing[0].label || key,
+          description: description ?? existing[0].description ?? "",
+          category: category || existing[0].category || "general",
+          isEditable: isEditable !== false,
+          updatedBy: req.user?._id || req.user?.id || req.userId,
+        });
+
+        return res.status(200).json({
+          success: true,
+          message: "Setting updated successfully",
+          data: updatedSetting,
         });
     }
 

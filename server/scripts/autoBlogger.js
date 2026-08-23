@@ -50,7 +50,8 @@ if (!admin.apps.length) {
 const database = admin.database();
 const settingsRef = database.ref('settings');
 const blogsRef = database.ref('blogs');
-const queueRef = database.ref('aiBlogQueue');
+const queueRef = database.ref('blog_queue');
+const logsRef = database.ref('blog_logs');
 
 const settingValue = (settings, key, fallback = '') => {
   const setting = Object.values(settings || {}).find((item) => item?.key === key);
@@ -72,8 +73,14 @@ const parseModelJson = (text) => {
   return JSON.parse(cleaned.slice(start, end + 1));
 };
 
-async function generateArticle(apiKey, model, topic) {
-  const prompt = `You are an expert SEO editor for Aaramdehi, an Indian furniture and home-comfort store. Write an original, useful article about: "${topic}". Return ONLY valid JSON with these keys: title, slug, excerpt, content, metaTitle, metaDescription, metaKeywords, category, author. content must be safe HTML using h2, h3, p, ul, li, and strong tags. Use no markdown, no scripts, no links, and no JSON markdown fences. Keep the article 700-1000 words, helpful and specific, not repetitive.`;
+async function generateArticle(apiKey, model, topic, config = {}) {
+  const prompt = `You are an expert SEO editor for Aaramdehi, an Indian furniture and home-comfort store. Write an original, useful article about: "${topic}".
+Language: ${config.language || 'English'}. For Hinglish, use natural Hindi and English in Latin script.
+Writing tone: ${config.writingTone || 'Cozy & Conversational'}.
+Primary focus keyword: ${config.focusKeyword || topic}. Include it naturally.
+Category hint: ${config.categoryHint || 'home comfort'}.
+Include natural internal links to /category/doormats, /category/pillows, and /category/towels where relevant.
+Return ONLY valid JSON with these keys: title, slug, excerpt, content, metaTitle, metaDescription, metaKeywords, category, author, imageSearchQuery, socialCaption, hashtags. content must be safe HTML using h2, h3, p, ul, li, strong, and a tags. Use no scripts and no JSON fences. Keep the article 700-1000 words, helpful and specific, not repetitive. Make metaTitle under 60 characters and metaDescription under 160 characters.`;
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -84,13 +91,15 @@ async function generateArticle(apiKey, model, topic) {
   return parseModelJson(data.candidates?.[0]?.content?.parts?.[0]?.text);
 }
 
-async function fetchCoverImage(apiKey, topic) {
+async function fetchCoverImage(apiKey, query) {
   if (!apiKey) return '';
-  const response = await fetch(`https://api.unsplash.com/photos/random?query=${encodeURIComponent(topic)}&client_id=${encodeURIComponent(apiKey)}`);
+  const response = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&client_id=${encodeURIComponent(apiKey)}&per_page=1`);
   if (!response.ok) throw new Error(`Unsplash request failed (${response.status})`);
   const data = await response.json();
-  return data.urls?.regular || '';
+  return data.results?.[0]?.urls?.regular || '';
 }
+
+const countWords = (value) => String(value || '').trim().split(/\s+/).filter(Boolean).length;
 
 async function notifyGoogle(url) {
   if (!process.env.GOOGLE_SERVICE_ACCOUNT_JSON) return;
@@ -100,9 +109,10 @@ async function notifyGoogle(url) {
   await google.indexing({ version: 'v3', auth: client }).urlNotifications.publish({ requestBody: { url, type: 'URL_UPDATED' } });
 }
 
-export async function runAutomation({ topic: requestedTopic = '', force = false } = {}) {
-  const [settingsSnapshot, blogsSnapshot, queueSnapshot] = await Promise.all([settingsRef.once('value'), blogsRef.once('value'), queueRef.once('value')]);
+export async function runAutomation({ topic: requestedTopic = '', force = false, focusKeyword = '', language = '', categoryHint = '' } = {}) {
+  const [settingsSnapshot, configSnapshot, blogsSnapshot, queueSnapshot] = await Promise.all([settingsRef.once('value'), database.ref('admin_settings/ai_config').once('value'), blogsRef.once('value'), queueRef.once('value')]);
   const settings = settingsSnapshot.val() || {};
+  const aiConfig = configSnapshot.val() || {};
   const enabled = String(settingValue(settings, 'AI_BLOGGER_ENABLED', 'false')).toLowerCase() === 'true';
   if (!enabled && !force && process.env.FORCE_AUTO_BLOG !== 'true') {
     console.log('AI Blogger is disabled. Enable it from /admin/ai-blogger or set FORCE_AUTO_BLOG=true.');
@@ -122,7 +132,7 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
   const currentTime = Date.now();
   const dueQueueItems = Object.entries(queueSnapshot.val() || {})
     .map(([id, item]) => ({ id, ...item }))
-    .filter((item) => item.status === 'Scheduled' && new Date(item.publishAt).getTime() <= currentTime)
+    .filter((item) => ['pending', 'Scheduled'].includes(item.status) && new Date(item.publishAt).getTime() <= currentTime)
     .sort((a, b) => new Date(a.publishAt) - new Date(b.publishAt));
   const queueItem = !requestedTopic.trim() && !force ? dueQueueItems[0] : null;
   if (!requestedTopic.trim() && !force && !queueItem && configuredTopics.length === 0) {
@@ -131,13 +141,23 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
   }
   const topicPool = configuredTopics.length > 0 ? configuredTopics : topics;
   const topic = requestedTopic.trim() || queueItem?.topic || topicPool[existingBlogs.length % topicPool.length];
-  const article = await generateArticle(geminiApiKey, model, topic);
+  const article = await generateArticle(geminiApiKey, model, topic, {
+    writingTone: aiConfig.writingTone,
+    focusKeyword: focusKeyword || queueItem?.focusKeyword || aiConfig.focusKeyword,
+    language: language || queueItem?.language || aiConfig.language,
+    categoryHint: categoryHint || queueItem?.categoryHint || aiConfig.categoryHint,
+  });
   const slug = slugify(article.slug || article.title);
   if (!slug || !article.title || !article.content) throw new Error('Generated article is missing required fields');
   if (existingBlogs.some((blog) => blog.slug === slug)) throw new Error(`Blog slug already exists: ${slug}`);
 
-  const image = await fetchCoverImage(unsplashApiKey, topic);
+  const image = await fetchCoverImage(unsplashApiKey, article.imageSearchQuery || topic);
   const now = new Date().toISOString();
+  const articleWordCount = countWords(article.content);
+  const readTimeMinutes = Math.max(1, Math.ceil(articleWordCount / 200));
+  const articleLanguage = language || queueItem?.language || aiConfig.language || 'English';
+  const publishingMode = aiConfig.publishingMode === 'draft' ? 'draft' : 'publish';
+  const shouldPublish = publishingMode === 'publish' && String(aiConfig.autoPublishEnabled).toLowerCase() !== 'false';
   const blog = {
     title: article.title,
     slug,
@@ -149,22 +169,31 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
     category: article.category || 'Home Decor',
     author: article.author || 'Aaramdehi Editorial Team',
     image,
-    status: 'Published',
-    publishedAt: now,
+    status: shouldPublish ? 'Published' : 'Draft',
+    ...(shouldPublish ? { publishedAt: now } : {}),
     views: 0,
     createdAt: now,
     updatedAt: now,
-    source: 'ai-automation'
+    source: 'ai-automation',
+    writingTone: aiConfig.writingTone || 'Cozy & Conversational',
+    focusKeyword: focusKeyword || queueItem?.focusKeyword || aiConfig.focusKeyword || topic,
+    language: articleLanguage,
+    readTime: `${readTimeMinutes} min read`,
+    wordCount: articleWordCount,
+    socialCaption: article.socialCaption || '',
+    hashtags: article.hashtags || '#Aaramdehi #HomeDecor #CozyHome',
   };
 
   const key = blogsRef.push().key;
   await blogsRef.child(key).set(blog);
   if (queueItem) {
-    await queueRef.child(queueItem.id).update({ status: 'Published', blogId: key, publishedAt: now });
+    await queueRef.child(queueItem.id).update({ status: shouldPublish ? 'published' : 'draft', blogId: key, completedAt: now });
   }
   const targetUrl = `${process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in'}/blog/${slug}`;
-  await notifyGoogle(targetUrl).catch((error) => console.warn('Google Indexing notification skipped:', error.message));
-  console.log(`Published AI blog: ${targetUrl}`);
+  if (shouldPublish) await notifyGoogle(targetUrl).catch((error) => console.warn('Google Indexing notification skipped:', error.message));
+  await logsRef.push({ title: article.title, topic, status: 'success', mode: shouldPublish ? 'publish' : 'draft', timestamp: now, blogId: key });
+  console.log(`${shouldPublish ? 'Published' : 'Saved draft'} AI blog: ${targetUrl}`);
+  return { blogId: key, title: article.title, status: blog.status, mode: publishingMode };
 }
 
 const isDirectExecution = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

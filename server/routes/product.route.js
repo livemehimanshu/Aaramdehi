@@ -38,7 +38,7 @@ productRouter.delete('/:id', isAuthenticatedUser, isAdmin, deleteProduct);
 
 // 1. Public Routes (Sab dekh sakte hain) - MUST COME AFTER protected routes
 productRouter.post('/analyze-room', analyzeRoom);
-productRouter.post('/:id/review', isAuthenticatedUser, addProductReview);
+productRouter.post('/:id/review', isAuthenticatedUser, upload.single('photo'), addProductReview);
 productRouter.delete('/:id/review/:reviewId', isAuthenticatedUser, isAdmin, deleteProductReview);
 productRouter.get('/', getAllProducts);  // Get all products
 productRouter.get('/slug/:slug', getProductBySlug); // Debug slug-to-product lookup

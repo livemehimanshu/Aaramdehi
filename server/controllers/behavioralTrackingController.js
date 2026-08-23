@@ -210,7 +210,7 @@ export const trackBehavior = async (req, res) => {
  */
 export const createSession = async (req, res) => {
   try {
-    const { userId, targetProductId, selectedColorVariant } = req.body;
+    const { userId, targetProductId, targetType = 'product', targetContentId, selectedColorVariant } = req.body;
     
     const effectiveUserId = userId || req.userId || `guest_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     
@@ -218,6 +218,8 @@ export const createSession = async (req, res) => {
       userId: effectiveUserId,
       intendScore: 0,
       targetProductId: targetProductId || null,
+      targetType: targetType === 'blog' ? 'blog' : 'product',
+      targetContentId: targetContentId || targetProductId || null,
       selectedColorVariant: selectedColorVariant || null,
       status: 'active'
     };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bot, Save, ShieldCheck, WandSparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { adminGetAllSettingsAPI, createSettingAPI, updateSettingAPI, generateAutoBlogAPI, getAiBlogQueueAPI, createAiBlogQueueAPI, deleteAiBlogQueueAPI } from '../../../src/api/authAndAdminApi';
+import { adminGetAllSettingsAPI, createSettingAPI, updateSettingAPI, generateAutoBlogAPI, getAiBlogQueueAPI, createAiBlogQueueAPI, deleteAiBlogQueueAPI, getAiBlogLogsAPI, bulkCreateAiBlogQueueAPI } from '../../../src/api/authAndAdminApi';
 
 const SETTING_KEYS = {
   geminiApiKey: 'AI_BLOGGER_GEMINI_API_KEY',
@@ -9,9 +9,14 @@ const SETTING_KEYS = {
   selectedModel: 'AI_BLOGGER_MODEL',
   enabled: 'AI_BLOGGER_ENABLED',
   topicList: 'AI_BLOGGER_TOPIC_LIST',
+  writingTone: 'AI_BLOGGER_TONE',
+  publishingMode: 'AI_BLOGGER_MODE',
+  autoPublishEnabled: 'AI_BLOGGER_AUTO_PUBLISH',
+  focusKeyword: 'AI_BLOGGER_FOCUS_KEYWORD',
+  whatsappNumber: 'AI_BLOGGER_WHATSAPP_NUMBER',
 };
 
-const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-3.6-flash', enabled: 'false', topicList: '' };
+const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-3.6-flash', enabled: 'false', topicList: '', writingTone: 'Cozy & Conversational', publishingMode: 'draft', autoPublishEnabled: 'false', focusKeyword: '', whatsappNumber: '' };
 
 const getMinimumScheduleTime = () => {
   const minimum = new Date(Date.now() + 60 * 1000);
@@ -25,16 +30,20 @@ export default function AiBloggerPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [topic, setTopic] = useState('');
+  const [language, setLanguage] = useState('English');
   const [generating, setGenerating] = useState(false);
   const [queue, setQueue] = useState([]);
+  const [logs, setLogs] = useState([]);
   const [scheduledTopic, setScheduledTopic] = useState('');
   const [scheduledAt, setScheduledAt] = useState('');
   const [scheduling, setScheduling] = useState(false);
+  const [uploadingCsv, setUploadingCsv] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
-      const [response, queueResponse] = await Promise.all([adminGetAllSettingsAPI(), getAiBlogQueueAPI()]);
+      const [response, queueResponse, logsResponse] = await Promise.all([adminGetAllSettingsAPI(), getAiBlogQueueAPI(), getAiBlogLogsAPI()]);
       if (queueResponse.success) setQueue(queueResponse.data || []);
+      if (logsResponse.success) setLogs(logsResponse.data || []);
       if (response.success) {
         const settings = Object.fromEntries((response.data || []).map((item) => [item.key, item]));
         setExisting(settings);
@@ -46,6 +55,11 @@ export default function AiBloggerPage() {
             : settings[SETTING_KEYS.selectedModel]?.value || defaultValues.selectedModel,
           enabled: settings[SETTING_KEYS.enabled]?.value === true || settings[SETTING_KEYS.enabled]?.value === 'true' ? 'true' : 'false',
           topicList: settings[SETTING_KEYS.topicList]?.value || '',
+          writingTone: settings[SETTING_KEYS.writingTone]?.value || defaultValues.writingTone,
+          publishingMode: settings[SETTING_KEYS.publishingMode]?.value || defaultValues.publishingMode,
+          autoPublishEnabled: settings[SETTING_KEYS.autoPublishEnabled]?.value === true || settings[SETTING_KEYS.autoPublishEnabled]?.value === 'true' ? 'true' : 'false',
+          focusKeyword: settings[SETTING_KEYS.focusKeyword]?.value || '',
+          whatsappNumber: settings[SETTING_KEYS.whatsappNumber]?.value || '',
         });
       } else {
         toast.error(response.message || 'Unable to load AI blogger settings');
@@ -91,7 +105,7 @@ export default function AiBloggerPage() {
     if (!topic.trim()) return toast.error('Enter a topic for the article');
     setGenerating(true);
     try {
-      const response = await generateAutoBlogAPI(topic.trim());
+      const response = await generateAutoBlogAPI(topic.trim(), { language, focusKeyword: values.focusKeyword });
       if (!response.success) throw new Error(response.message || 'AI blog generation failed');
       toast.success('AI blog generated and published successfully');
       setTopic('');
@@ -109,7 +123,7 @@ export default function AiBloggerPage() {
     if (Number.isNaN(publishTime) || publishTime <= Date.now()) return toast.error('Choose a future publish time');
     setScheduling(true);
     try {
-      const response = await createAiBlogQueueAPI(scheduledTopic.trim(), new Date(scheduledAt).toISOString());
+      const response = await createAiBlogQueueAPI(scheduledTopic.trim(), new Date(scheduledAt).toISOString(), values.focusKeyword, language);
       if (!response.success) throw new Error(response.message || 'Unable to schedule topic');
       setQueue((current) => [...current, response.data].sort((a, b) => new Date(a.publishAt) - new Date(b.publishAt)));
       setScheduledTopic('');
@@ -119,6 +133,24 @@ export default function AiBloggerPage() {
       toast.error(error.response?.data?.message || error.message || 'Unable to schedule topic');
     } finally {
       setScheduling(false);
+    }
+  };
+
+  const handleCsvUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setUploadingCsv(true);
+    try {
+      const response = await bulkCreateAiBlogQueueAPI(file);
+      if (!response.success) throw new Error(response.message || 'Unable to import CSV');
+      const queueResponse = await getAiBlogQueueAPI();
+      if (queueResponse.success) setQueue(queueResponse.data || []);
+      toast.success(`${response.count} topics added to queue`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || 'Unable to import CSV');
+    } finally {
+      setUploadingCsv(false);
+      event.target.value = '';
     }
   };
 
@@ -159,9 +191,28 @@ export default function AiBloggerPage() {
             <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
           </select>
         </label>
+        <label className="block text-sm font-semibold text-slate-300">Target keyword
+          <input value={values.focusKeyword} onChange={(event) => setValues({ ...values, focusKeyword: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" placeholder="anti-slip entrance doormat" />
+        </label>
+        <label className="block text-sm font-semibold text-slate-300">WhatsApp business number
+          <input type="tel" value={values.whatsappNumber} onChange={(event) => setValues({ ...values, whatsappNumber: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" placeholder="919876543210" />
+          <span className="mt-1 block text-xs font-normal text-slate-500">Include country code, for example 91 for India. This number is shown in customer chat links.</span>
+        </label>
+        <label className="block text-sm font-semibold text-slate-300">Writing tone
+          <select value={values.writingTone} onChange={(event) => setValues({ ...values, writingTone: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400">
+            <option>Cozy &amp; Conversational</option><option>Expert &amp; Helpful</option><option>Warm &amp; Inspirational</option><option>Concise &amp; Practical</option>
+          </select>
+        </label>
+        <label className="block text-sm font-semibold text-slate-300">Publishing mode
+          <select value={values.publishingMode} onChange={(event) => setValues({ ...values, publishingMode: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400"><option value="draft">Save as draft</option><option value="publish">Publish automatically</option></select>
+        </label>
         <label className="flex items-center gap-3 text-sm font-semibold text-slate-300">
           <input type="checkbox" checked={values.enabled === 'true'} onChange={(event) => setValues({ ...values, enabled: event.target.checked ? 'true' : 'false' })} className="h-4 w-4 accent-emerald-400" />
           Enable scheduled auto-publishing
+        </label>
+        <label className="flex items-center gap-3 text-sm font-semibold text-slate-300">
+          <input type="checkbox" checked={values.autoPublishEnabled === 'true'} onChange={(event) => setValues({ ...values, autoPublishEnabled: event.target.checked ? 'true' : 'false' })} className="h-4 w-4 accent-emerald-400" />
+          Allow publish mode to publish articles automatically
         </label>
         <label className="block text-sm font-semibold text-slate-300">Daily topic list (one topic per line)
           <textarea required value={values.topicList} onChange={(event) => setValues({ ...values, topicList: event.target.value })} rows={6} className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" placeholder={'How to choose the perfect pillow\nSmall living room comfort ideas\nBest bedding for restful sleep'} />
@@ -175,6 +226,7 @@ export default function AiBloggerPage() {
           <p className="mt-1 text-sm text-slate-400">Enter a topic. Gemini will create the SEO article, fetch a cover image, publish it, and notify Google when configured.</p>
         </div>
         <textarea value={topic} onChange={(event) => setTopic(event.target.value)} maxLength={500} rows={4} placeholder="Example: How to choose the perfect pillow for side sleepers" className="w-full resize-y rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
+        <select value={language} onChange={(event) => setLanguage(event.target.value)} className="w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400"><option>English</option><option>Hindi</option><option>Hinglish</option></select>
         <div className="flex items-center justify-between gap-4">
           <span className="text-xs text-slate-500">{topic.length}/500</span>
           <button type="button" onClick={handleGenerate} disabled={generating} className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 font-bold text-white disabled:opacity-60"><WandSparkles size={18} />{generating ? 'Generating...' : 'Generate & Publish Now'}</button>
@@ -190,14 +242,28 @@ export default function AiBloggerPage() {
           <input type="datetime-local" min={getMinimumScheduleTime()} value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} className="rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
           <button type="submit" disabled={scheduling} className="rounded-xl bg-emerald-500 px-5 py-3 font-bold text-[#0F1219] disabled:opacity-60">{scheduling ? 'Scheduling...' : 'Add To Queue'}</button>
         </form>
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-bold text-slate-300 hover:border-emerald-400">
+          {uploadingCsv ? 'Importing CSV...' : 'Import CSV queue'}
+          <input type="file" accept=".csv,text/csv" onChange={handleCsvUpload} disabled={uploadingCsv} className="hidden" />
+        </label>
+        <p className="text-xs text-slate-500">CSV columns: topic, focusKeyword, language, publishAt. Maximum 100 topics.</p>
         <div className="space-y-2">
           {queue.length === 0 ? <p className="text-sm text-slate-500">No scheduled topics yet.</p> : queue.map((item) => (
             <div key={item._id} className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[#0F1219] p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0"><p className="break-words font-semibold text-white">{item.topic}</p><p className="mt-1 text-xs text-slate-500">{item.status} · {new Date(item.publishAt).toLocaleString('en-IN')}</p></div>
-              {item.status === 'Scheduled' && <button type="button" onClick={() => handleDeleteSchedule(item._id)} className="self-start rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-400/10 sm:self-auto">Delete</button>}
+              <div className="min-w-0"><p className="break-words font-semibold text-white">{item.topic}</p><p className="mt-1 text-xs text-slate-500">{item.status} · {item.language || 'English'} · {new Date(item.publishAt).toLocaleString('en-IN')}</p></div>
+              {['pending', 'Scheduled'].includes(item.status) && <button type="button" onClick={() => handleDeleteSchedule(item._id)} className="self-start rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-400/10 sm:self-auto">Delete</button>}
             </div>
           ))}
         </div>
+      </section>
+      <section className="space-y-3 rounded-2xl border border-white/10 bg-[#161B28] p-6 shadow-xl">
+        <h2 className="text-xl font-bold text-white">History Logs</h2>
+        {logs.length === 0 ? <p className="text-sm text-slate-500">No AI Blogger runs yet.</p> : logs.map((log) => (
+          <div key={log._id} className="flex items-center justify-between gap-3 border-b border-white/10 py-3 text-sm last:border-0">
+            <div><p className="font-semibold text-white">{log.title || log.topic}</p><p className="text-xs text-slate-500">{log.mode} · {new Date(log.timestamp).toLocaleString('en-IN')}</p></div>
+            <span className="text-emerald-300">{log.status}</span>
+          </div>
+        ))}
       </section>
     </div>
   );

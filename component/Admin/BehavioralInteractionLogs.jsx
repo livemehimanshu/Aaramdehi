@@ -35,6 +35,8 @@ const BehavioralInteractionLogs = () => {
                   sessionId: session.sessionId,
                   userId: session.userId,
                   productId: session.targetProductId,
+                  contentType: session.targetType || 'product',
+                  contentId: session.targetContentId || session.targetProductId,
                   colorVariant: session.selectedColorVariant,
                   sessionScore: session.intendScore,
                   couponCode: session.couponCode
@@ -84,13 +86,14 @@ const BehavioralInteractionLogs = () => {
       result = result.filter(log => log.type === filterType);
     }
 
-    // Search by user ID or product ID
+    // Search by user, product, blog, or session ID
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(log => 
         (log.userId && log.userId.toLowerCase().includes(term)) ||
-        (log.productId && log.productId.toLowerCase().includes(term)) ||
-        (log.sessionId && log.sessionId.toLowerCase().includes(term))
+        (log.productId && String(log.productId).toLowerCase().includes(term)) ||
+        (log.contentId && String(log.contentId).toLowerCase().includes(term)) ||
+        (log.sessionId && String(log.sessionId).toLowerCase().includes(term))
       );
     }
 
@@ -162,11 +165,12 @@ const BehavioralInteractionLogs = () => {
       return;
     }
 
-    const headers = ['Timestamp', 'User ID', 'Product ID', 'Interaction Type', 'Points', 'Session ID', 'Variant', 'Session Score'];
+    const headers = ['Timestamp', 'User ID', 'Content Type', 'Content ID', 'Interaction Type', 'Points', 'Session ID', 'Variant', 'Session Score'];
     const rows = filteredLogs.map(log => [
       `${formatDate(log.timestamp)} ${formatTime(log.timestamp)}`,
       log.userId || 'N/A',
-      log.productId || 'N/A',
+      log.contentType || 'product',
+      log.contentId || log.productId || 'N/A',
       log.type,
       log.points,
       log.sessionId.substring(0, 20),
@@ -361,7 +365,7 @@ const BehavioralInteractionLogs = () => {
                       User ID
                     </th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
-                      Product ID
+                      Content
                     </th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">
                       Interaction
@@ -395,7 +399,8 @@ const BehavioralInteractionLogs = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-slate-300">
-                        <span className="font-medium text-white">{log.productId || 'N/A'}</span>
+                        <span className="font-medium text-white">{log.contentId || log.productId || 'N/A'}</span>
+                        <div className="text-xs uppercase text-slate-500 mt-1">{log.contentType || 'product'}</div>
                         {log.colorVariant && (
                           <div className="text-xs text-slate-500 mt-1">{log.colorVariant}</div>
                         )}

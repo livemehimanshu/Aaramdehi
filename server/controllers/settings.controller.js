@@ -1,4 +1,18 @@
-import { findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
+import { db, findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
+
+const AI_CONFIG_KEYS = {
+  AI_BLOGGER_MODEL: 'selectedModel',
+  AI_BLOGGER_TONE: 'writingTone',
+  AI_BLOGGER_MODE: 'publishingMode',
+  AI_BLOGGER_AUTO_PUBLISH: 'autoPublishEnabled',
+  AI_BLOGGER_FOCUS_KEYWORD: 'focusKeyword',
+};
+
+const syncAiConfig = async (key, value) => {
+  const field = AI_CONFIG_KEYS[key.toUpperCase()];
+  if (field) await db.ref(`admin_settings/ai_config/${field}`).set(value);
+  await db.ref('admin_settings/ai_config/updatedAt').set(Date.now());
+};
 
 // Get all settings
 export const getAllSettings = async (req, res) => {
@@ -78,6 +92,7 @@ export const createSetting = async (req, res) => {
           isEditable: isEditable !== false,
           updatedBy: req.user?._id || req.user?.id || req.userId,
         });
+        await syncAiConfig(key, value);
 
         return res.status(200).json({
           success: true,
@@ -99,6 +114,7 @@ export const createSetting = async (req, res) => {
     };
 
     const savedSetting = await create('settings', settingData);
+    await syncAiConfig(settingData.key, value);
 
     return res.status(201).json({
       success: true,
@@ -144,6 +160,7 @@ export const updateSetting = async (req, res) => {
 
     setting.updatedBy = req.userId || req.user?._id || req.user?.id;
     await updateById('settings', setting._id, setting);
+    await syncAiConfig(setting.key, setting.value);
 
     return res.json({
       success: true,
@@ -224,6 +241,8 @@ export const getPublicSettings = async (req, res) => {
     publicSettings.forEach((s) => {
       if (s.key) data[s.key] = s.value;
     });
+    const whatsappSetting = settingsList.find((s) => s.key === 'AI_BLOGGER_WHATSAPP_NUMBER');
+    if (whatsappSetting?.value) data.AI_BLOGGER_WHATSAPP_NUMBER = String(whatsappSetting.value).replace(/[^\d]/g, '');
 
     return res.json({
       success: true,
@@ -246,6 +265,11 @@ export const generateAutoBlog = async (req, res) => {
   }
 
   const topic = String(req.body.topic || '').trim();
+  const options = {
+    focusKeyword: String(req.body.focusKeyword || '').trim(),
+    language: String(req.body.language || 'English').trim(),
+    categoryHint: String(req.body.categoryHint || '').trim(),
+  };
   if (topic.length > 500) {
     return res.status(400).json({ success: false, message: 'Topic must be 500 characters or fewer.' });
   }
@@ -253,10 +277,11 @@ export const generateAutoBlog = async (req, res) => {
   autoBlogRunning = true;
   try {
     const { runAutomation } = await import('../scripts/autoBlogger.js');
-    const result = await runAutomation({ topic, force: true });
-    return res.status(201).json({ success: true, message: 'AI blog generated and published successfully.', data: result || null });
+    const result = await runAutomation({ topic, force: true, ...options });
+    return res.status(201).json({ success: true, message: result?.status === 'Draft' ? 'AI blog generated and saved as draft.' : 'AI blog generated and published successfully.', data: result || null });
   } catch (error) {
     console.error('AI blog generation failed:', error);
+    await db.ref('blog_logs').push({ topic, status: 'failed', mode: 'error', error: error.message, timestamp: Date.now() });
     return res.status(500).json({ success: false, message: error.message || 'AI blog generation failed.' });
   } finally {
     autoBlogRunning = false;
@@ -265,7 +290,7 @@ export const generateAutoBlog = async (req, res) => {
 
 export const getAiBlogQueue = async (req, res) => {
   try {
-    const queue = await findAll('aiBlogQueue');
+    const queue = await findAll('blog_queue');
     queue.sort((a, b) => new Date(a.publishAt || 0) - new Date(b.publishAt || 0));
     return res.json({ success: true, data: queue });
   } catch (error) {
@@ -276,21 +301,71 @@ export const getAiBlogQueue = async (req, res) => {
 export const createAiBlogQueueItem = async (req, res) => {
   try {
     const topic = String(req.body.topic || '').trim();
+    const focusKeyword = String(req.body.focusKeyword || '').trim();
+    const language = String(req.body.language || 'English').trim();
     const publishAt = new Date(req.body.publishAt).toISOString();
     if (!topic || topic.length > 500 || Number.isNaN(new Date(publishAt).getTime())) {
       return res.status(400).json({ success: false, message: 'Valid topic and publish date are required.' });
     }
-    const item = await create('aiBlogQueue', { topic, publishAt, status: 'Scheduled', createdBy: req.userId });
+    const item = await create('blog_queue', { topic, focusKeyword, language, publishAt, status: 'pending', createdBy: req.userId });
     return res.status(201).json({ success: true, data: item });
   } catch (error) {
     return res.status(400).json({ success: false, message: 'Valid topic and publish date are required.' });
   }
 };
 
+const parseCsvLine = (line) => {
+  const cells = [];
+  let cell = '';
+  let quoted = false;
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+    if (character === '"' && line[index + 1] === '"') { cell += '"'; index += 1; }
+    else if (character === '"') quoted = !quoted;
+    else if (character === ',' && !quoted) { cells.push(cell.trim()); cell = ''; }
+    else cell += character;
+  }
+  cells.push(cell.trim());
+  return cells;
+};
+
+export const bulkCreateAiBlogQueue = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ success: false, message: 'CSV file is required.' });
+    const rows = req.file.buffer.toString('utf8').split(/\r?\n/).map((line) => parseCsvLine(line)).filter((cells) => cells.some(Boolean));
+    const hasHeader = rows[0]?.[0]?.toLowerCase() === 'topic';
+    const dataRows = hasHeader ? rows.slice(1) : rows;
+    const updates = {};
+    dataRows.slice(0, 100).forEach(([topic, focusKeyword = '', language = 'English', publishAt = '']) => {
+      const cleanTopic = String(topic || '').trim();
+      if (!cleanTopic || cleanTopic.length > 500) return;
+      const parsedPublishAt = publishAt ? new Date(publishAt) : new Date(Date.now() + 60000);
+      if (Number.isNaN(parsedPublishAt.getTime())) return;
+      const key = db.ref('blog_queue').push().key;
+      updates[`blog_queue/${key}`] = { topic: cleanTopic, focusKeyword: String(focusKeyword).trim(), language: String(language).trim() || 'English', publishAt: parsedPublishAt.toISOString(), status: 'pending', createdBy: req.userId, createdAt: Date.now() };
+    });
+    if (!Object.keys(updates).length) return res.status(400).json({ success: false, message: 'No valid topics found in CSV.' });
+    await db.ref().update(updates);
+    return res.status(201).json({ success: true, count: Object.keys(updates).length });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: 'Unable to parse CSV queue.' });
+  }
+};
+
 export const deleteAiBlogQueueItem = async (req, res) => {
   try {
-    await deleteById('aiBlogQueue', req.params.id);
+    await deleteById('blog_queue', req.params.id);
     return res.json({ success: true, message: 'Scheduled topic deleted.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const getAiBlogLogs = async (req, res) => {
+  try {
+    const logs = await findAll('blog_logs');
+    logs.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+    return res.json({ success: true, data: logs.slice(0, 30) });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }

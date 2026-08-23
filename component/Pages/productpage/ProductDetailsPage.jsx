@@ -4,7 +4,8 @@ import { Helmet } from 'react-helmet-async';
 import { 
   FiHeart, FiShoppingCart, FiPlus, FiMinus, FiCheck, FiArrowRight, FiX 
 } from 'react-icons/fi';
-import { getAllProductsAPI, getProductByIdAPI, validateCouponAPI, createProductReviewAPI, deleteProductReviewAPI } from '@/api/authAndAdminApi';
+import { FaWhatsapp } from 'react-icons/fa';
+import { getAllProductsAPI, getProductByIdAPI, getPublicSettingsAPI, validateCouponAPI, createProductReviewAPI, deleteProductReviewAPI } from '@/api/authAndAdminApi';
 import { BsLightningCharge } from 'react-icons/bs';
 import SEO from '../../header/SEO'; 
 import { AiFillStar } from 'react-icons/ai';
@@ -22,6 +23,10 @@ import toast from 'react-hot-toast';
 import ProductPage from './ProductPage';
 import FrequentlyBoughtTogether from './FrequentlyBoughtTogether';
 import NotFound from '../NotFound';
+import { createWhatsAppUrl } from '@/utils/whatsapp';
+import ProductRecommendationWidget from '../../Recommendations/ProductRecommendationWidget';
+import TrustBadges from '../../TrustBadges';
+import WhatsAppEngagementPrompt from '../../WhatsAppEngagementPrompt';
 
 const PLACEHOLDER_IMAGE = "https://placehold.co/600x750?text=No+Image";
 
@@ -113,9 +118,17 @@ const ProductDetailsPage = () => {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviews, setReviews] = useState([]);
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewPhoto, setReviewPhoto] = useState(null);
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false); 
   const [isAdminUser, setIsAdminUser] = useState(false);
   const [openAccordion, setOpenAccordion] = useState(0); 
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+
+  useEffect(() => {
+    getPublicSettingsAPI().then((response) => {
+      if (response.success) setWhatsappNumber(response.data?.AI_BLOGGER_WHATSAPP_NUMBER || '');
+    });
+  }, []);
   
   // Setup React Hook Form for Reviews
   const { register, handleSubmit, setValue, watch, formState: { errors: reviewErrors }, reset: resetReview } = useForm({
@@ -360,6 +373,14 @@ const ProductDetailsPage = () => {
     navigate('/checkout');
   };
 
+  const whatsappOrderUrl = createWhatsAppUrl([
+    `Hello Aaramdehi, I want to order: ${productData?.name}`,
+    `Quantity: ${quantity}`,
+    `Size: ${selectedSize?.label || selectedSize?.name || 'Standard'}`,
+    `Price: INR ${finalPrice}`,
+    `Product link: ${window.location.href}`
+  ].join('\n'), whatsappNumber);
+
   const handleOpenARStudio = () => {
     if (!productData) return;
     const productId = productData.id || productData._id || id;
@@ -401,7 +422,7 @@ const ProductDetailsPage = () => {
     setReviewSubmitting(true);
 
     try {
-      const res = await createProductReviewAPI(productData.id, data);
+      const res = await createProductReviewAPI(productData.id, { ...data, photo: reviewPhoto });
       const savedReview = res?.data;
 
       const newEntry = {
@@ -412,6 +433,7 @@ const ProductDetailsPage = () => {
         rating: savedReview?.rating || data.rating,
         createdAt: savedReview?.createdAt || new Date().toISOString(),
         date: savedReview?.createdAt ? new Date(savedReview.createdAt).toLocaleDateString() : 'Today'
+        ,photoUrl: savedReview?.photoUrl || ''
       };
 
       const updatedReviews = [newEntry, ...reviews];
@@ -422,6 +444,7 @@ const ProductDetailsPage = () => {
       } : prev);
 
       resetReview({ rating: 5, comment: '', userName: '' });
+      setReviewPhoto(null);
       setShowReviewForm(false);
       toast.success('Review posted successfully');
     } catch (err) {
@@ -574,6 +597,9 @@ const ProductDetailsPage = () => {
           isInWishlist={isInWishlist(productData?.id || id)}
           sidebarPromo={
             <div className="space-y-3">
+              <a href={whatsappOrderUrl} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-4 py-4 text-sm font-black text-white shadow-lg shadow-green-100 transition hover:bg-[#1ebe5b]">
+                <FaWhatsapp size={22} /> Chat on WhatsApp to Order
+              </a>
               {!appliedDiscount ? (
                 <button
                   type="button"
@@ -618,6 +644,8 @@ const ProductDetailsPage = () => {
             mainProduct={productData} 
             mainProductPrice={finalPrice} 
         />
+        <ProductRecommendationWidget context={`${productData.name} ${productData.category || ''} ${(productData.tags || []).join(' ')}`} excludeId={productData.id || id} />
+        <div className="mx-auto mt-10 max-w-7xl"><TrustBadges /><WhatsAppEngagementPrompt subject={productData.name} /></div>
 
         {/* ACCORDION INFORMATION */}
         {productData.productInformation && productData.productInformation.length > 0 && (
@@ -698,6 +726,20 @@ const ProductDetailsPage = () => {
                     ></textarea>
                     {reviewErrors.comment && <p className="text-red-500 text-[10px] mt-1">{reviewErrors.comment.message}</p>}
                   </div>
+                  <div>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Add a home setup photo (optional)</label>
+                    <input type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file && file.size > 5 * 1024 * 1024) {
+                        toast.error('Photo must be smaller than 5 MB');
+                        event.target.value = '';
+                        setReviewPhoto(null);
+                        return;
+                      }
+                      setReviewPhoto(file || null);
+                    }} className="w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-xs text-gray-600" />
+                    {reviewPhoto && <p className="mt-1 text-[10px] text-emerald-600">{reviewPhoto.name} selected</p>}
+                  </div>
                   <button type="submit" disabled={reviewSubmitting} className="w-full bg-blue-900 text-white py-4 rounded-xl font-black text-[10px] uppercase active:scale-95 transition-transform disabled:opacity-50">
                     {reviewSubmitting ? 'Posting...' : 'Post Review'}
                   </button>
@@ -723,6 +765,7 @@ const ProductDetailsPage = () => {
                     </div>
                   </div>
                   <p className="text-gray-600 italic leading-relaxed">"{rev.comment}"</p>
+                  {rev.photoUrl && <img src={rev.photoUrl} alt={`Customer setup for ${productData.name}`} loading="lazy" className="max-h-72 w-full rounded-2xl object-cover" />}
                 </div>
               ))}
             </div>

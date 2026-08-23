@@ -16,9 +16,17 @@ const blogImageUpload = multer({
 
 const blogRouter = express.Router();
 
+const adminQueryGuard = (req, res, next) => {
+	if (req.query.admin !== 'true') return next();
+	return verifyToken(req, res, (error) => {
+		if (error) return next(error);
+		return isAdmin(req, res, next);
+	});
+};
+
 // Public Routes
-blogRouter.get('/', getAllBlogs);
-blogRouter.get('/:identifier', getBlogByIdOrSlug);
+blogRouter.get('/', adminQueryGuard, getAllBlogs);
+blogRouter.get('/:identifier', adminQueryGuard, getBlogByIdOrSlug);
 
 // Admin Protected Routes
 blogRouter.post(

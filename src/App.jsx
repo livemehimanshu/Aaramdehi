@@ -8,6 +8,8 @@ import { onAuthStateChanged } from 'firebase/auth'
 // Layouts
 import Header from '../component/header/index.jsx'
 import Footer from '../component/Footer/Footer.jsx'
+import WhatsAppFloatingButton from '../component/WhatsAppFloatingButton.jsx'
+import AaramdehiAIChat from '../component/AaramdehiAIChat.jsx'
 import AdminRoute from '../component/auth/AdminRoute.jsx'
 
 const AdminLayout = lazy(() => import('../component/Admin/AdminLayout.jsx'))
@@ -133,6 +135,8 @@ function AppContent() {
           hideNav={isBlogRoute || location.pathname.startsWith('/checkout') || location.pathname.startsWith('/payment')}
         />
       )}
+      {!shouldHideHeaderFooter && <WhatsAppFloatingButton />}
+      {!shouldHideHeaderFooter && <AaramdehiAIChat />}
 
       <main className={isAccountPage ? "bg-gray-100 min-h-screen pb-10" : ""}>
         <div className={isAccountPage ? "max-w-[1248px] mx-auto flex flex-col md:flex-row py-4 md:py-8 px-2 md:px-4 gap-0 md:gap-4" : ""}>

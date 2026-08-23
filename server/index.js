@@ -43,6 +43,7 @@ import refundRouter from './routes/refund.route.js';
 import settingsRouter from './routes/settings.route.js';
 import teamRouter from './routes/team.route.js';
 import orderRouter from './routes/order.route.js';
+import aiChatRouter from './routes/aiChat.route.js';
 import shopsRouter from './routes/shops.route.js';
 import roomRouter from './routes/room.route.js';
 import newsletterRouter from './routes/newsletter.route.js';
@@ -139,6 +140,7 @@ apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/rooms", roomRouter);
 apiRouter.use('/newsletter', newsletterRouter);
 apiRouter.use("/team", teamRouter);
+apiRouter.use("/ai", aiChatRouter);
 
 app.use("/api", apiRouter);
 app.use("/products", productRouter);

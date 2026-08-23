@@ -70,7 +70,14 @@ export async function analyzeRoomAPI(params) {
 
 export async function createProductReviewAPI(productId, reviewData) {
   try {
-    const res = await api.post(`/products/${productId}/review`, reviewData);
+    const payload = reviewData?.photo ? (() => {
+      const formData = new FormData();
+      formData.append('rating', reviewData.rating);
+      formData.append('comment', reviewData.comment);
+      formData.append('photo', reviewData.photo);
+      return formData;
+    })() : reviewData;
+    const res = await api.post(`/products/${productId}/review`, payload);
     return res.data;
   } catch (e) {
     throw e;
@@ -258,9 +265,9 @@ export async function updateOrderStatusAPI(orderId, status) {
   }
 }
 
-export async function createPaymentOrderAPI(amount) {
+export async function createPaymentOrderAPI(orderItems) {
   try {
-    const res = await api.post('/payments/razorpay/create-order', { amount });
+    const res = await api.post('/payments/razorpay/create-order', { orderItems });
     return res.data;
   } catch (e) {
     throw e;
@@ -721,9 +728,9 @@ export async function deleteNewsletterSubscriberAPI(id) {
   return res.data;
 }
 
-export async function generateAutoBlogAPI(topic = '') {
+export async function generateAutoBlogAPI(topic = '', options = {}) {
   try {
-    const res = await api.post('/settings/ai-blog/generate', { topic });
+    const res = await api.post('/settings/ai-blog/generate', { topic, ...options });
     return res.data;
   } catch (e) {
     return { success: false, message: e.response?.data?.message || e.message };
@@ -735,12 +742,42 @@ export async function getAiBlogQueueAPI() {
   return res.data;
 }
 
-export async function createAiBlogQueueAPI(topic, publishAt) {
-  const res = await api.post('/settings/ai-blog/queue', { topic, publishAt });
+export async function createAiBlogQueueAPI(topic, publishAt, focusKeyword = '', language = 'English') {
+  const res = await api.post('/settings/ai-blog/queue', { topic, publishAt, focusKeyword, language });
+  return res.data;
+}
+
+export async function bulkCreateAiBlogQueueAPI(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await api.post('/settings/ai-blog/queue/bulk', formData);
   return res.data;
 }
 
 export async function deleteAiBlogQueueAPI(id) {
   const res = await api.delete(`/settings/ai-blog/queue/${id}`);
+  return res.data;
+}
+
+export async function getAiBlogLogsAPI() {
+  try {
+    const res = await api.get('/settings/ai-blog/logs');
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [], message: e.response?.data?.message || e.message };
+  }
+}
+
+export async function getPublicSettingsAPI() {
+  try {
+    const res = await api.get('/settings/public');
+    return res.data;
+  } catch (e) {
+    return { success: false, data: {} };
+  }
+}
+
+export async function createCashfreeOrderAPI(orderItems, customer) {
+  const res = await api.post('/payments/cashfree/create-order', { orderItems, ...customer });
   return res.data;
 }

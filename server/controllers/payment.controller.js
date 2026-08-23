@@ -100,10 +100,14 @@ export const updateGatewayConfig = async (req, res) => {
 // 2. Client API: Create Dynamic Razorpay Order
 export const createRazorpayOrder = async (req, res) => {
   try {
-    const { amount, currency } = req.body;
-    if (!amount) {
-      return res.status(400).json({ success: false, message: "Amount is required" });
+    const { orderItems, currency } = req.body;
+    if (!Array.isArray(orderItems) || orderItems.length === 0) {
+      return res.status(400).json({ success: false, message: "Order items are required" });
     }
+    const products = await Promise.all(orderItems.map((item) => findById('products', item.product || item.productId)));
+    if (products.some((product) => !product)) return res.status(400).json({ success: false, message: "One or more products are invalid" });
+    const amount = orderItems.reduce((total, item, index) => total + Number(products[index].sellingPrice || products[index].price || 0) * Math.max(1, Number(item.quantity) || 1), 0);
+    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ success: false, message: "Invalid order total" });
 
     const config = getRazorpayCredentials();
 
@@ -155,10 +159,14 @@ export const verifyRazorpayPayment = async (req, res) => {
 // 3. Client API: Create Dynamic Cashfree Order
 export const createCashfreeOrder = async (req, res) => {
   try {
-    const { amount, customerId, phone, email } = req.body;
-    if (!amount || !phone) {
-      return res.status(400).json({ success: false, message: "Amount and phone are required" });
+    const { orderItems, customerId, phone, email } = req.body;
+    if (!Array.isArray(orderItems) || orderItems.length === 0 || !phone) {
+      return res.status(400).json({ success: false, message: "Order items and phone are required" });
     }
+    const products = await Promise.all(orderItems.map((item) => findById('products', item.product || item.productId)));
+    if (products.some((product) => !product)) return res.status(400).json({ success: false, message: "One or more products are invalid" });
+    const amount = orderItems.reduce((total, item, index) => total + Number(products[index].sellingPrice || products[index].price || 0) * Math.max(1, Number(item.quantity) || 1), 0);
+    if (!Number.isFinite(amount) || amount <= 0) return res.status(400).json({ success: false, message: "Invalid order total" });
 
     const config = getCashfreeCredentials();
 
@@ -237,6 +245,15 @@ export const razorpayWebhook = async (req, res) => {
 export const cashfreeWebhook = async (req, res) => {
   try {
     const rawBody = req.body.toString();
+    const signature = req.headers['x-webhook-signature'];
+    const timestamp = req.headers['x-webhook-timestamp'];
+    const config = getCashfreeCredentials();
+    const expectedSignature = crypto.createHmac('sha256', config.secret_key).update(`${timestamp}${rawBody}`).digest('base64');
+    const receivedSignature = Buffer.from(String(signature || ''));
+    const expectedSignatureBuffer = Buffer.from(expectedSignature);
+    if (!signature || !timestamp || receivedSignature.length !== expectedSignatureBuffer.length || !crypto.timingSafeEqual(expectedSignatureBuffer, receivedSignature)) {
+      return res.status(400).json({ success: false, message: 'Invalid webhook signature' });
+    }
     const payload = JSON.parse(rawBody);
 
     if (payload.type === "PAYMENT_SUCCESS_WEBHOOK") {

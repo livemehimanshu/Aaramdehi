@@ -198,7 +198,7 @@ const PaymentPage = () => {
             }
 
             // Step 1: Create Order on Backend Payment Gateway
-            const paymentOrderData = await createPaymentOrderAPI(totalAmount);
+            const paymentOrderData = await createPaymentOrderAPI(orderPayload.orderItems);
 
             if (!paymentOrderData.success) {
                 setErrors({ global: paymentOrderData.message || "Failed to initialize payment." });

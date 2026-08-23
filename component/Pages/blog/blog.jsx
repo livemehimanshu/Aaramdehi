@@ -1,11 +1,17 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { IoIosArrowForward, IoIosSearch } from "react-icons/io";
 import { FiClock, FiShare2, FiFacebook, FiTwitter, FiLinkedin, FiMail } from 'react-icons/fi';
 import { FaWhatsapp } from 'react-icons/fa';
 import DOMPurify from 'dompurify';
-import { getAllBlogsAPI, getBlogByIdOrSlugAPI, subscribeNewsletterAPI } from '../../../src/api/authAndAdminApi';
+import { getAllBlogsAPI, getBlogByIdOrSlugAPI, getPublicSettingsAPI, subscribeNewsletterAPI } from '../../../src/api/authAndAdminApi';
+import { createWhatsAppUrl } from '../../../src/utils/whatsapp';
+import ProductRecommendationWidget from '../../Recommendations/ProductRecommendationWidget';
+import BlogComfortQuiz from './BlogComfortQuiz';
+import TrustBadges from '../../TrustBadges';
+import WhatsAppEngagementPrompt from '../../WhatsAppEngagementPrompt';
+import useBehaviorTracking from '../../../src/hooks/useBehaviorTracking';
 
 // Helper to calculate reading time
 const calculateReadingTime = (text) => {
@@ -201,6 +207,24 @@ export const BlogDetail = () => {
     const navigate = useNavigate();
     const [blog, setBlog] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [whatsappNumber, setWhatsappNumber] = useState('');
+    const [subscriptionMessage, setSubscriptionMessage] = useState('');
+    const [subscribing, setSubscribing] = useState(false);
+    const { trackInteraction } = useBehaviorTracking(slug, null, { targetType: 'blog', targetContentId: slug });
+    const pageViewTracked = useRef(false);
+
+    useEffect(() => {
+        getPublicSettingsAPI().then((response) => {
+            if (response.success) setWhatsappNumber(response.data?.AI_BLOGGER_WHATSAPP_NUMBER || '');
+        });
+    }, []);
+
+    useEffect(() => {
+        if (blog && !pageViewTracked.current) {
+            pageViewTracked.current = true;
+            trackInteraction('page_view', 1);
+        }
+    }, [blog, trackInteraction]);
 
     useEffect(() => {
         const fetchBlog = async () => {
@@ -377,7 +401,7 @@ export const BlogDetail = () => {
                                 <a href={`https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-[#4267B2] hover:text-white hover:border-[#4267B2] text-gray-600 transition-all group">
                                     <FiFacebook className="group-hover:scale-110 transition-transform" /> <span className="text-xs font-bold">Facebook</span>
                                 </a>
-                                <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(blog.title + " " + currentUrl)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-[#25D366] hover:text-white hover:border-[#25D366] text-gray-600 transition-all group">
+                                <a onClick={() => trackInteraction('share_whatsapp', 2)} href={`https://api.whatsapp.com/send?text=${encodeURIComponent(blog.title + " " + currentUrl)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-[#25D366] hover:text-white hover:border-[#25D366] text-gray-600 transition-all group">
                                     <FaWhatsapp className="group-hover:scale-110 transition-transform" /> <span className="text-xs font-bold">WhatsApp</span>
                                 </a>
                                 <a href={`https://www.linkedin.com/shareArticle?mini=true&url=${currentUrl}&title=${encodeURIComponent(blog.title)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-[#0077b5] hover:text-white hover:border-[#0077b5] text-gray-600 transition-all group">
@@ -435,18 +459,36 @@ export const BlogDetail = () => {
                 </div>
             </div>
 
+            <ProductRecommendationWidget context={`${blog.title} ${blog.category || ''} ${blog.focusKeyword || ''} ${blog.metaKeywords || ''}`} title="Shop the Comfort Behind This Story" />
+            <div className="mx-auto mt-12 max-w-7xl px-4"><BlogComfortQuiz /><TrustBadges /></div>
+            <WhatsAppEngagementPrompt subject="this article" />
+
             {/* Newsletter Injection inside Article Page */}
             <div className="max-w-4xl mx-auto px-4 mt-16 sm:mt-24">
+                <a onClick={() => trackInteraction('whatsapp_inquiry', 3)} href={createWhatsAppUrl(`Hello Aaramdehi, I have a question about this article: ${blog.title}\n${currentUrl}`, whatsappNumber)} target="_blank" rel="noopener noreferrer" className="mb-6 flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-4 text-sm font-black text-white shadow-lg shadow-green-100 transition hover:bg-[#1ebe5b]">
+                    <FaWhatsapp size={22} /> Chat on WhatsApp about this article
+                </a>
                 <div className="bg-[#FDFBF7] border border-[#F0EBE1] rounded-[2rem] p-8 md:p-12 text-center flex flex-col items-center">
                     <div className="w-16 h-16 bg-white rounded-full shadow-sm flex items-center justify-center text-blue-900 mb-6">
                         <FiMail size={24} />
                     </div>
                     <h3 className="text-2xl font-black text-blue-900 mb-2">Did you find this helpful?</h3>
                     <p className="text-gray-500 mb-8 max-w-md text-sm">Join our community of comfort-seekers and get the latest articles delivered straight to your inbox.</p>
-                    <form className="w-full max-w-sm flex flex-col sm:flex-row gap-2" onSubmit={(e) => e.preventDefault()}>
-                        <input type="email" placeholder="Your email address" required className="flex-1 px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 text-sm" />
-                        <button type="submit" className="px-6 py-3 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800 transition-colors">Subscribe</button>
+                    <form className="w-full max-w-sm flex flex-col sm:flex-row gap-2" onSubmit={async (event) => {
+                        event.preventDefault();
+                        const email = event.currentTarget.elements.email.value;
+                        setSubscribing(true);
+                        try {
+                            const response = await subscribeNewsletterAPI(email);
+                            setSubscriptionMessage(response.success ? 'You are subscribed to Aaramdehi tips.' : (response.message || 'Unable to subscribe right now.'));
+                        } finally {
+                            setSubscribing(false);
+                        }
+                    }}>
+                        <input name="email" type="email" placeholder="Your email address" required className="flex-1 px-4 py-3 rounded-xl border border-gray-200 outline-none focus:border-blue-500 text-sm" />
+                        <button type="submit" disabled={subscribing} className="px-6 py-3 bg-blue-900 text-white rounded-xl font-bold text-sm hover:bg-blue-800 disabled:opacity-60 transition-colors">{subscribing ? 'Subscribing...' : 'Subscribe'}</button>
                     </form>
+                    {subscriptionMessage && <p className="mt-3 text-sm text-gray-600" role="status">{subscriptionMessage}</p>}
                 </div>
             </div>
         </article>

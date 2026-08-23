@@ -1045,6 +1045,9 @@ export const addProductReview = async (req, res) => {
 
         const product = await findById(COLLECTION, id);
         if (!product) return res.status(404).json({ success: false, message: "Product not found" });
+        if (req.file && (!req.file.mimetype?.startsWith('image/') || req.file.size > 5 * 1024 * 1024)) {
+            return res.status(400).json({ success: false, message: "Review photo must be an image smaller than 5 MB" });
+        }
 
         const reviews = Array.isArray(product.reviews) ? product.reviews : [];
 
@@ -1062,6 +1065,15 @@ export const addProductReview = async (req, res) => {
             comment,
             createdAt: new Date().toISOString()
         };
+
+        if (req.file) {
+            const uploadResult = await uploadImageCloudinary(req.file.buffer, 'Aaramdehi_Uploads/reviews');
+            if (!uploadResult?.success || !uploadResult.url) {
+                return res.status(400).json({ success: false, message: 'Review photo upload failed' });
+            }
+            review.photoUrl = uploadResult.url;
+            review.photoPublicId = uploadResult.public_id || '';
+        }
 
         reviews.push(review);
 

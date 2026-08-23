@@ -26,7 +26,9 @@ const INTERACTION_POINTS = {
 const BATCH_INTERVAL_MS = 5000; // Batch updates every 5 seconds
 const HOVER_THRESHOLD_MS = 8000; // 8 seconds
 
-const useBehaviorTracking = (productId, userId) => {
+const useBehaviorTracking = (productId, userId, options = {}) => {
+  const targetType = options.targetType || 'product';
+  const targetContentId = options.targetContentId || productId;
   const [sessionId, setSessionId] = useState(null);
   const [intendScore, setIntendScore] = useState(0);
   const [triggeredRule, setTriggeredRule] = useState(null);
@@ -48,7 +50,7 @@ const useBehaviorTracking = (productId, userId) => {
         sessionStorage.setItem('behavior_guest_id', currentUserId);
 
         // Check if session already exists in sessionStorage
-        const existingSessionId = sessionStorage.getItem(`behavior_session_${productId}`);
+        const existingSessionId = sessionStorage.getItem(`behavior_session_${targetType}_${targetContentId}`);
         if (existingSessionId) {
           setSessionId(existingSessionId);
           setIsTracking(true);
@@ -57,7 +59,9 @@ const useBehaviorTracking = (productId, userId) => {
 
         const response = await api.post('/analytics/create-session', {
           userId: currentUserId,
-          targetProductId: productId,
+          targetProductId: targetType === 'product' ? targetContentId : null,
+          targetType,
+          targetContentId,
           selectedColorVariant: null
         });
 
@@ -65,7 +69,7 @@ const useBehaviorTracking = (productId, userId) => {
         
         if (data.success) {
           setSessionId(data.sessionId);
-          sessionStorage.setItem(`behavior_session_${productId}`, data.sessionId);
+          sessionStorage.setItem(`behavior_session_${targetType}_${targetContentId}`, data.sessionId);
           sessionStorage.setItem(`behavior_score_${productId}`, JSON.stringify({
             score: 0,
             interactions: []
@@ -84,7 +88,7 @@ const useBehaviorTracking = (productId, userId) => {
         clearInterval(batchTimerRef.current);
       }
     };
-  }, [productId, userId]);
+  }, [productId, userId, targetType, targetContentId]);
 
   /**
    * Batch send interactions to backend
@@ -104,7 +108,9 @@ const useBehaviorTracking = (productId, userId) => {
           sessionId,
           userId: currentUserId,
           intendScore,
-          targetProductId: productId,
+          targetProductId: targetType === 'product' ? targetContentId : null,
+          targetType,
+          targetContentId,
           selectedColorVariant: localStorage.getItem(`variant_${productId}`),
           interaction
         });
@@ -136,7 +142,7 @@ const useBehaviorTracking = (productId, userId) => {
     } catch (error) {
       console.error('Error flushing batch to backend:', error);
     }
-  }, [sessionId, intendScore, productId]);
+  }, [sessionId, intendScore, productId, targetType, targetContentId]);
 
   /**
    * Start batch timer

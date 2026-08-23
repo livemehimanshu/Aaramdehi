@@ -69,12 +69,12 @@ export const buildSitemapXml = ({ baseUrl, products = [], blogs = [] }) => {
   // Append static pages using their canonical paths.
   staticPages.forEach(appendUrl);
 
-  // 2. Append Dynamic Product URLs. Product slugs are the preferred public IDs.
+  // 2. Append Dynamic Product URLs using the frontend's /product/:id route.
   prodList.forEach((product) => {
     const productId = product?.slug || product?._id || product?.id;
     if (!productId) return;
 
-    const productPath = `/${encodeURIComponent(String(productId))}`;
+    const productPath = `/product/${encodeURIComponent(String(productId))}`;
     const lastmod = toIsoDate(product?.updatedAt || product?.createdAt);
 
     appendUrl({ path: productPath, lastmod, changefreq: 'weekly', priority: '0.9' });

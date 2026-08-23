@@ -15,7 +15,7 @@ import {
 } from '../controllers/user.controller.js'; // loginController is not used here
 
 // ✅ Fix: Named import use kiya hai kyunki auth.middleware.js mein 'export const' hai
-import { isAuthenticatedUser } from '../middleware/auth.middleware.js';
+import { isAuthenticatedUser, isAdmin } from '../middleware/auth.middleware.js';
 
 import { upload } from "../middleware/multer.js";
 import { authLimiter } from '../middleware/rateLimiters.js';
@@ -29,9 +29,9 @@ const userRouter = Router();
 // --- 2. Private Routes (Sirf logged-in users ke liye) ---
 
 // Admin customer management
-userRouter.get('/admin/list', isAuthenticatedUser, listUsersForAdminController);
-userRouter.patch('/admin/toggle-block/:id', isAuthenticatedUser, toggleUserBlockStatusController);
-userRouter.delete('/admin/delete/:id', isAuthenticatedUser, deleteUserByAdmin);
+userRouter.get('/admin/list', isAuthenticatedUser, isAdmin, listUsersForAdminController);
+userRouter.patch('/admin/toggle-block/:id', isAuthenticatedUser, isAdmin, toggleUserBlockStatusController);
+userRouter.delete('/admin/delete/:id', isAuthenticatedUser, isAdmin, deleteUserByAdmin);
 
 // Avatar Image Upload (Multer + Cloudinary)
 // ✅ Fix: 'auth' ki jagah 'isAuthenticatedUser' use kiya gaya hai

@@ -10,6 +10,7 @@ import {
   bulkUpdateSettings,
   resetSetting,
   getPublicSettings,
+  generateAutoBlog,
 } from "../controllers/settings.controller.js";
 
 const router = express.Router();
@@ -25,6 +26,7 @@ router.post("/create", isAuthenticatedUser, isAdmin, createSetting);
 router.put("/:key", isAuthenticatedUser, isAdmin, updateSetting);
 router.put("/:key/reset", isAuthenticatedUser, isAdmin, resetSetting);
 router.post("/bulk/update", isAuthenticatedUser, isAdmin, bulkUpdateSettings);
+router.post("/ai-blog/generate", isAuthenticatedUser, isAdmin, generateAutoBlog);
 router.delete("/:key", isAuthenticatedUser, isAdmin, deleteSetting);
 
 export default router;

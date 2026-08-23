@@ -75,7 +75,7 @@ async function notifyGoogle(url) {
   await google.indexing({ version: 'v3', auth: client }).urlNotifications.publish({ requestBody: { url, type: 'URL_UPDATED' } });
 }
 
-async function run() {
+export async function runAutomation({ topic: requestedTopic = '' } = {}) {
   const [settingsSnapshot, blogsSnapshot] = await Promise.all([settingsRef.once('value'), blogsRef.once('value')]);
   const settings = settingsSnapshot.val() || {};
   const enabled = String(settingValue(settings, 'AI_BLOGGER_ENABLED', 'false')).toLowerCase() === 'true';
@@ -90,7 +90,7 @@ async function run() {
   if (!geminiApiKey) throw new Error('Gemini API key is not configured');
 
   const existingBlogs = blogsSnapshot.val() ? Object.values(blogsSnapshot.val()) : [];
-  const topic = topics[existingBlogs.length % topics.length];
+  const topic = requestedTopic.trim() || topics[existingBlogs.length % topics.length];
   const article = await generateArticle(geminiApiKey, model, topic);
   const slug = slugify(article.slug || article.title);
   if (!slug || !article.title || !article.content) throw new Error('Generated article is missing required fields');
@@ -124,7 +124,10 @@ async function run() {
   console.log(`Published AI blog: ${targetUrl}`);
 }
 
-run().catch((error) => {
-  console.error('AI Blogger failed:', error);
-  process.exitCode = 1;
-});
+const isDirectExecution = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isDirectExecution) {
+  runAutomation().catch((error) => {
+    console.error('AI Blogger failed:', error);
+    process.exitCode = 1;
+  });
+}

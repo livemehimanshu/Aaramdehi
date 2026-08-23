@@ -238,6 +238,31 @@ export const getPublicSettings = async (req, res) => {
   }
 };
 
+let autoBlogRunning = false;
+
+export const generateAutoBlog = async (req, res) => {
+  if (autoBlogRunning) {
+    return res.status(409).json({ success: false, message: 'An AI blog generation is already running.' });
+  }
+
+  const topic = String(req.body.topic || '').trim();
+  if (topic.length > 500) {
+    return res.status(400).json({ success: false, message: 'Topic must be 500 characters or fewer.' });
+  }
+
+  autoBlogRunning = true;
+  try {
+    const { runAutomation } = await import('../scripts/autoBlogger.js');
+    const result = await runAutomation({ topic });
+    return res.status(201).json({ success: true, message: 'AI blog generated and published successfully.', data: result || null });
+  } catch (error) {
+    console.error('AI blog generation failed:', error);
+    return res.status(500).json({ success: false, message: error.message || 'AI blog generation failed.' });
+  } finally {
+    autoBlogRunning = false;
+  }
+};
+
 // Bulk update settings
 export const bulkUpdateSettings = async (req, res) => {
   try {

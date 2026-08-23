@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Bot, Save, ShieldCheck } from 'lucide-react';
+import { Bot, Save, ShieldCheck, WandSparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { adminGetAllSettingsAPI, createSettingAPI, updateSettingAPI } from '../../../src/api/authAndAdminApi';
+import { adminGetAllSettingsAPI, createSettingAPI, updateSettingAPI, generateAutoBlogAPI } from '../../../src/api/authAndAdminApi';
 
 const SETTING_KEYS = {
   geminiApiKey: 'AI_BLOGGER_GEMINI_API_KEY',
@@ -17,6 +17,8 @@ export default function AiBloggerPage() {
   const [existing, setExisting] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [topic, setTopic] = useState('');
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -69,6 +71,21 @@ export default function AiBloggerPage() {
     }
   };
 
+  const handleGenerate = async () => {
+    if (!topic.trim()) return toast.error('Enter a topic for the article');
+    setGenerating(true);
+    try {
+      const response = await generateAutoBlogAPI(topic.trim());
+      if (!response.success) throw new Error(response.message || 'AI blog generation failed');
+      toast.success('AI blog generated and published successfully');
+      setTopic('');
+    } catch (error) {
+      toast.error(error.message || 'AI blog generation failed');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   if (loading) return <div className="p-8 text-slate-400">Loading AI Blogger settings...</div>;
 
   return (
@@ -101,6 +118,17 @@ export default function AiBloggerPage() {
         </label>
         <button disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 font-bold text-[#0F1219] disabled:opacity-60"><Save size={18} />{saving ? 'Saving...' : 'Save AI Settings'}</button>
       </form>
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-[#161B28] p-6 shadow-xl">
+        <div>
+          <h2 className="text-xl font-bold text-white">Generate An Article Now</h2>
+          <p className="mt-1 text-sm text-slate-400">Enter a topic. Gemini will create the SEO article, fetch a cover image, publish it, and notify Google when configured.</p>
+        </div>
+        <textarea value={topic} onChange={(event) => setTopic(event.target.value)} maxLength={500} rows={4} placeholder="Example: How to choose the perfect pillow for side sleepers" className="w-full resize-y rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-xs text-slate-500">{topic.length}/500</span>
+          <button type="button" onClick={handleGenerate} disabled={generating} className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 font-bold text-white disabled:opacity-60"><WandSparkles size={18} />{generating ? 'Generating...' : 'Generate & Publish Now'}</button>
+        </div>
+      </section>
     </div>
   );
 }

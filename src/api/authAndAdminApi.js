@@ -720,3 +720,12 @@ export async function deleteNewsletterSubscriberAPI(id) {
   const res = await api.delete(`/newsletter/subscribers/${id}`);
   return res.data;
 }
+
+export async function generateAutoBlogAPI(topic = '') {
+  try {
+    const res = await api.post('/settings/ai-blog/generate', { topic });
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}

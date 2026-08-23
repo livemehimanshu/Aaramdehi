@@ -729,3 +729,18 @@ export async function generateAutoBlogAPI(topic = '') {
     return { success: false, message: e.response?.data?.message || e.message };
   }
 }
+
+export async function getAiBlogQueueAPI() {
+  const res = await api.get('/settings/ai-blog/queue');
+  return res.data;
+}
+
+export async function createAiBlogQueueAPI(topic, publishAt) {
+  const res = await api.post('/settings/ai-blog/queue', { topic, publishAt });
+  return res.data;
+}
+
+export async function deleteAiBlogQueueAPI(id) {
+  const res = await api.delete(`/settings/ai-blog/queue/${id}`);
+  return res.data;
+}

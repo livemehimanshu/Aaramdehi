@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Bot, Save, ShieldCheck, WandSparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { adminGetAllSettingsAPI, createSettingAPI, updateSettingAPI, generateAutoBlogAPI } from '../../../src/api/authAndAdminApi';
+import { adminGetAllSettingsAPI, createSettingAPI, updateSettingAPI, generateAutoBlogAPI, getAiBlogQueueAPI, createAiBlogQueueAPI, deleteAiBlogQueueAPI } from '../../../src/api/authAndAdminApi';
 
 const SETTING_KEYS = {
   geminiApiKey: 'AI_BLOGGER_GEMINI_API_KEY',
@@ -19,10 +19,15 @@ export default function AiBloggerPage() {
   const [saving, setSaving] = useState(false);
   const [topic, setTopic] = useState('');
   const [generating, setGenerating] = useState(false);
+  const [queue, setQueue] = useState([]);
+  const [scheduledTopic, setScheduledTopic] = useState('');
+  const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduling, setScheduling] = useState(false);
 
   useEffect(() => {
     const loadSettings = async () => {
-      const response = await adminGetAllSettingsAPI();
+      const [response, queueResponse] = await Promise.all([adminGetAllSettingsAPI(), getAiBlogQueueAPI()]);
+      if (queueResponse.success) setQueue(queueResponse.data || []);
       if (response.success) {
         const settings = Object.fromEntries((response.data || []).map((item) => [item.key, item]));
         setExisting(settings);
@@ -88,6 +93,36 @@ export default function AiBloggerPage() {
     }
   };
 
+  const handleSchedule = async (event) => {
+    event.preventDefault();
+    if (!scheduledTopic.trim() || !scheduledAt) return toast.error('Enter a topic and publish date/time');
+    if (new Date(scheduledAt).getTime() <= Date.now()) return toast.error('Choose a future publish time');
+    setScheduling(true);
+    try {
+      const response = await createAiBlogQueueAPI(scheduledTopic.trim(), new Date(scheduledAt).toISOString());
+      if (!response.success) throw new Error(response.message || 'Unable to schedule topic');
+      setQueue((current) => [...current, response.data].sort((a, b) => new Date(a.publishAt) - new Date(b.publishAt)));
+      setScheduledTopic('');
+      setScheduledAt('');
+      toast.success('Topic scheduled successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || 'Unable to schedule topic');
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const handleDeleteSchedule = async (id) => {
+    try {
+      const response = await deleteAiBlogQueueAPI(id);
+      if (!response.success) throw new Error(response.message || 'Unable to delete schedule');
+      setQueue((current) => current.filter((item) => item._id !== id));
+      toast.success('Scheduled topic deleted');
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || 'Unable to delete schedule');
+    }
+  };
+
   if (loading) return <div className="p-8 text-slate-400">Loading AI Blogger settings...</div>;
 
   return (
@@ -129,6 +164,25 @@ export default function AiBloggerPage() {
         <div className="flex items-center justify-between gap-4">
           <span className="text-xs text-slate-500">{topic.length}/500</span>
           <button type="button" onClick={handleGenerate} disabled={generating} className="inline-flex items-center gap-2 rounded-xl bg-blue-500 px-5 py-3 font-bold text-white disabled:opacity-60"><WandSparkles size={18} />{generating ? 'Generating...' : 'Generate & Publish Now'}</button>
+        </div>
+      </section>
+      <section className="space-y-5 rounded-2xl border border-white/10 bg-[#161B28] p-6 shadow-xl">
+        <div>
+          <h2 className="text-xl font-bold text-white">Schedule Multiple Topics</h2>
+          <p className="mt-1 text-sm text-slate-400">Add topics to the queue. The scheduled GitHub Action publishes due topics automatically.</p>
+        </div>
+        <form onSubmit={handleSchedule} className="grid gap-3 md:grid-cols-[1fr_auto_auto]">
+          <input value={scheduledTopic} onChange={(event) => setScheduledTopic(event.target.value)} maxLength={500} placeholder="Article topic" className="rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
+          <input type="datetime-local" value={scheduledAt} onChange={(event) => setScheduledAt(event.target.value)} className="rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" />
+          <button type="submit" disabled={scheduling} className="rounded-xl bg-emerald-500 px-5 py-3 font-bold text-[#0F1219] disabled:opacity-60">{scheduling ? 'Scheduling...' : 'Add To Queue'}</button>
+        </form>
+        <div className="space-y-2">
+          {queue.length === 0 ? <p className="text-sm text-slate-500">No scheduled topics yet.</p> : queue.map((item) => (
+            <div key={item._id} className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[#0F1219] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0"><p className="break-words font-semibold text-white">{item.topic}</p><p className="mt-1 text-xs text-slate-500">{item.status} · {new Date(item.publishAt).toLocaleString('en-IN')}</p></div>
+              {item.status === 'Scheduled' && <button type="button" onClick={() => handleDeleteSchedule(item._id)} className="self-start rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-400/10 sm:self-auto">Delete</button>}
+            </div>
+          ))}
         </div>
       </section>
     </div>

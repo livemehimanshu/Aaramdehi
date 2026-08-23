@@ -263,6 +263,39 @@ export const generateAutoBlog = async (req, res) => {
   }
 };
 
+export const getAiBlogQueue = async (req, res) => {
+  try {
+    const queue = await findAll('aiBlogQueue');
+    queue.sort((a, b) => new Date(a.publishAt || 0) - new Date(b.publishAt || 0));
+    return res.json({ success: true, data: queue });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const createAiBlogQueueItem = async (req, res) => {
+  try {
+    const topic = String(req.body.topic || '').trim();
+    const publishAt = new Date(req.body.publishAt).toISOString();
+    if (!topic || topic.length > 500 || Number.isNaN(new Date(publishAt).getTime())) {
+      return res.status(400).json({ success: false, message: 'Valid topic and publish date are required.' });
+    }
+    const item = await create('aiBlogQueue', { topic, publishAt, status: 'Scheduled', createdBy: req.userId });
+    return res.status(201).json({ success: true, data: item });
+  } catch (error) {
+    return res.status(400).json({ success: false, message: 'Valid topic and publish date are required.' });
+  }
+};
+
+export const deleteAiBlogQueueItem = async (req, res) => {
+  try {
+    await deleteById('aiBlogQueue', req.params.id);
+    return res.json({ success: true, message: 'Scheduled topic deleted.' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Bulk update settings
 export const bulkUpdateSettings = async (req, res) => {
   try {

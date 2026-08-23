@@ -50,6 +50,7 @@ if (!admin.apps.length) {
 const database = admin.database();
 const settingsRef = database.ref('settings');
 const blogsRef = database.ref('blogs');
+const queueRef = database.ref('aiBlogQueue');
 
 const settingValue = (settings, key, fallback = '') => {
   const setting = Object.values(settings || {}).find((item) => item?.key === key);
@@ -100,7 +101,7 @@ async function notifyGoogle(url) {
 }
 
 export async function runAutomation({ topic: requestedTopic = '', force = false } = {}) {
-  const [settingsSnapshot, blogsSnapshot] = await Promise.all([settingsRef.once('value'), blogsRef.once('value')]);
+  const [settingsSnapshot, blogsSnapshot, queueSnapshot] = await Promise.all([settingsRef.once('value'), blogsRef.once('value'), queueRef.once('value')]);
   const settings = settingsSnapshot.val() || {};
   const enabled = String(settingValue(settings, 'AI_BLOGGER_ENABLED', 'false')).toLowerCase() === 'true';
   if (!enabled && !force && process.env.FORCE_AUTO_BLOG !== 'true') {
@@ -114,7 +115,17 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
   if (!geminiApiKey) throw new Error('Gemini API key is not configured');
 
   const existingBlogs = blogsSnapshot.val() ? Object.values(blogsSnapshot.val()) : [];
-  const topic = requestedTopic.trim() || topics[existingBlogs.length % topics.length];
+  const currentTime = Date.now();
+  const dueQueueItems = Object.entries(queueSnapshot.val() || {})
+    .map(([id, item]) => ({ id, ...item }))
+    .filter((item) => item.status === 'Scheduled' && new Date(item.publishAt).getTime() <= currentTime)
+    .sort((a, b) => new Date(a.publishAt) - new Date(b.publishAt));
+  const queueItem = !requestedTopic.trim() && !force ? dueQueueItems[0] : null;
+  if (!requestedTopic.trim() && !force && !queueItem) {
+    console.log('No scheduled AI blog topic is due.');
+    return;
+  }
+  const topic = requestedTopic.trim() || queueItem?.topic || topics[existingBlogs.length % topics.length];
   const article = await generateArticle(geminiApiKey, model, topic);
   const slug = slugify(article.slug || article.title);
   if (!slug || !article.title || !article.content) throw new Error('Generated article is missing required fields');
@@ -143,6 +154,9 @@ export async function runAutomation({ topic: requestedTopic = '', force = false 
 
   const key = blogsRef.push().key;
   await blogsRef.child(key).set(blog);
+  if (queueItem) {
+    await queueRef.child(queueItem.id).update({ status: 'Published', blogId: key, publishedAt: now });
+  }
   const targetUrl = `${process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in'}/blog/${slug}`;
   await notifyGoogle(targetUrl).catch((error) => console.warn('Google Indexing notification skipped:', error.message));
   console.log(`Published AI blog: ${targetUrl}`);

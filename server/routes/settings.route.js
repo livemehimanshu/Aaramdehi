@@ -11,6 +11,9 @@ import {
   resetSetting,
   getPublicSettings,
   generateAutoBlog,
+  getAiBlogQueue,
+  createAiBlogQueueItem,
+  deleteAiBlogQueueItem,
 } from "../controllers/settings.controller.js";
 
 const router = express.Router();
@@ -27,6 +30,9 @@ router.put("/:key", isAuthenticatedUser, isAdmin, updateSetting);
 router.put("/:key/reset", isAuthenticatedUser, isAdmin, resetSetting);
 router.post("/bulk/update", isAuthenticatedUser, isAdmin, bulkUpdateSettings);
 router.post("/ai-blog/generate", isAuthenticatedUser, isAdmin, generateAutoBlog);
+router.get("/ai-blog/queue", isAuthenticatedUser, isAdmin, getAiBlogQueue);
+router.post("/ai-blog/queue", isAuthenticatedUser, isAdmin, createAiBlogQueueItem);
+router.delete("/ai-blog/queue/:id", isAuthenticatedUser, isAdmin, deleteAiBlogQueueItem);
 router.delete("/:key", isAuthenticatedUser, isAdmin, deleteSetting);
 
 export default router;

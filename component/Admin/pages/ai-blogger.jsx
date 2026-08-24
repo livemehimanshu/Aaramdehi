@@ -13,10 +13,11 @@ const SETTING_KEYS = {
   publishingMode: 'AI_BLOGGER_MODE',
   autoPublishEnabled: 'AI_BLOGGER_AUTO_PUBLISH',
   focusKeyword: 'AI_BLOGGER_FOCUS_KEYWORD',
+  customInstructions: 'AI_BLOGGER_CUSTOM_INSTRUCTIONS',
   whatsappNumber: 'AI_BLOGGER_WHATSAPP_NUMBER',
 };
 
-const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-3.6-flash', enabled: 'false', topicList: '', writingTone: 'Cozy & Conversational', publishingMode: 'draft', autoPublishEnabled: 'false', focusKeyword: '', whatsappNumber: '' };
+const defaultValues = { geminiApiKey: '', unsplashApiKey: '', selectedModel: 'gemini-3.6-flash', enabled: 'false', topicList: '', writingTone: 'Cozy & Conversational', publishingMode: 'draft', autoPublishEnabled: 'false', focusKeyword: '', customInstructions: '', whatsappNumber: '' };
 
 const getMinimumScheduleTime = () => {
   const minimum = new Date(Date.now() + 60 * 1000);
@@ -59,6 +60,7 @@ export default function AiBloggerPage() {
           publishingMode: settings[SETTING_KEYS.publishingMode]?.value || defaultValues.publishingMode,
           autoPublishEnabled: settings[SETTING_KEYS.autoPublishEnabled]?.value === true || settings[SETTING_KEYS.autoPublishEnabled]?.value === 'true' ? 'true' : 'false',
           focusKeyword: settings[SETTING_KEYS.focusKeyword]?.value || '',
+          customInstructions: settings[SETTING_KEYS.customInstructions]?.value || '',
           whatsappNumber: settings[SETTING_KEYS.whatsappNumber]?.value || '',
         });
       } else {
@@ -193,6 +195,10 @@ export default function AiBloggerPage() {
         </label>
         <label className="block text-sm font-semibold text-slate-300">Target keyword
           <input value={values.focusKeyword} onChange={(event) => setValues({ ...values, focusKeyword: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" placeholder="anti-slip entrance doormat" />
+        </label>
+        <label className="block text-sm font-semibold text-slate-300">Custom Blog Formatting &amp; Style Instructions
+          <textarea value={values.customInstructions} onChange={(event) => setValues({ ...values, customInstructions: event.target.value })} rows={6} maxLength={4000} className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" placeholder="e.g., Use H2 and H3 headings, add 3 FAQ items at the end, maintain 1% keyword density, use bullet points, and include a clear Call-To-Action." />
+          <span className="mt-1 block text-xs font-normal text-slate-500">These instructions are appended to every instant and scheduled Gemini article prompt.</span>
         </label>
         <label className="block text-sm font-semibold text-slate-300">WhatsApp business number
           <input type="tel" value={values.whatsappNumber} onChange={(event) => setValues({ ...values, whatsappNumber: event.target.value })} className="mt-2 w-full rounded-xl border border-white/10 bg-[#0F1219] px-4 py-3 text-white outline-none focus:border-emerald-400" placeholder="919876543210" />

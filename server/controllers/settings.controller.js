@@ -1,4 +1,4 @@
-import { db, findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
+import { db, firestore, findAll, findById, create, updateById, deleteById, findByQuery } from "../config/db.js";
 
 const AI_CONFIG_KEYS = {
   AI_BLOGGER_GEMINI_API_KEY: 'geminiApiKey',
@@ -7,11 +7,18 @@ const AI_CONFIG_KEYS = {
   AI_BLOGGER_MODE: 'publishingMode',
   AI_BLOGGER_AUTO_PUBLISH: 'autoPublishEnabled',
   AI_BLOGGER_FOCUS_KEYWORD: 'focusKeyword',
+  AI_BLOGGER_CUSTOM_INSTRUCTIONS: 'customInstructions',
 };
 
 const syncAiConfig = async (key, value) => {
   const field = AI_CONFIG_KEYS[key.toUpperCase()];
   if (field) await db.ref(`admin_settings/ai_config/${field}`).set(value);
+  if (key.toUpperCase() === 'AI_BLOGGER_CUSTOM_INSTRUCTIONS') {
+    await firestore.collection('settings').doc('ai_config').set({
+      customInstructions: String(value || ''),
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+  }
   await db.ref('admin_settings/ai_config/updatedAt').set(Date.now());
 };
 
@@ -20,14 +27,28 @@ export const getAllSettings = async (req, res) => {
   try {
     const { category } = req.query;
     let filter = {};
+    const appendFirestoreAiInstructions = async (settings) => {
+      if (settings.some((setting) => setting.key === 'AI_BLOGGER_CUSTOM_INSTRUCTIONS')) return settings;
+      const snapshot = await firestore.collection('settings').doc('ai_config').get();
+      const customInstructions = snapshot.exists ? snapshot.data()?.customInstructions : undefined;
+      if (customInstructions === undefined) return settings;
+      return [...settings, {
+        _id: 'firestore-ai-config-custom-instructions',
+        key: 'AI_BLOGGER_CUSTOM_INSTRUCTIONS',
+        value: String(customInstructions),
+        type: 'string',
+        category: 'ai-blogger',
+        isEditable: true
+      }];
+    };
 
     if (category) {
       const allSettings = await findAll('settings');
-      const settings = allSettings.filter(s => s.category === category);
+      const settings = (await appendFirestoreAiInstructions(allSettings)).filter(s => s.category === category);
       return res.json({ success: true, data: settings });
     }
 
-    const settings = await findAll('settings');
+    const settings = await appendFirestoreAiInstructions(await findAll('settings'));
 
     return res.json({
       success: true,

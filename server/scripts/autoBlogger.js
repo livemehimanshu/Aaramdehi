@@ -48,6 +48,7 @@ if (!admin.apps.length) {
 }
 
 const database = admin.database();
+const firestore = admin.firestore();
 const settingsRef = database.ref('settings');
 const blogsRef = database.ref('blogs');
 const queueRef = database.ref('blog_queue');
@@ -74,11 +75,14 @@ const parseModelJson = (text) => {
 };
 
 async function generateArticle(apiKey, model, topic, config = {}) {
+  const customInstructions = String(config.customInstructions || '').trim().slice(0, 4000);
   const prompt = `You are an expert SEO editor for Aaramdehi, an Indian furniture and home-comfort store. Write an original, useful article about: "${topic}".
 Language: ${config.language || 'English'}. For Hinglish, use natural Hindi and English in Latin script.
 Writing tone: ${config.writingTone || 'Cozy & Conversational'}.
 Primary focus keyword: ${config.focusKeyword || topic}. Include it naturally.
 Category hint: ${config.categoryHint || 'home comfort'}.
+Additional editor instructions: ${customInstructions || 'None provided.'}
+Follow the additional editor instructions when they do not conflict with the required JSON format, safety rules, or factual product constraints.
 Include natural internal links to /category/doormats, /category/pillows, and /category/towels where relevant.
 Return ONLY valid JSON with these keys: title, slug, excerpt, content, metaTitle, metaDescription, metaKeywords, category, author, imageSearchQuery, socialCaption, hashtags. content must be safe HTML using h2, h3, p, ul, li, strong, and a tags. Use no scripts and no JSON fences. Keep the article 700-1000 words, helpful and specific, not repetitive. Make metaTitle under 60 characters and metaDescription under 160 characters.`;
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
@@ -110,9 +114,16 @@ async function notifyGoogle(url) {
 }
 
 export async function runAutomation({ topic: requestedTopic = '', force = false, focusKeyword = '', language = '', categoryHint = '' } = {}) {
-  const [settingsSnapshot, configSnapshot, blogsSnapshot, queueSnapshot] = await Promise.all([settingsRef.once('value'), database.ref('admin_settings/ai_config').once('value'), blogsRef.once('value'), queueRef.once('value')]);
+  const [settingsSnapshot, configSnapshot, firestoreConfigSnapshot, blogsSnapshot, queueSnapshot] = await Promise.all([
+    settingsRef.once('value'),
+    database.ref('admin_settings/ai_config').once('value'),
+    firestore.collection('settings').doc('ai_config').get().catch(() => null),
+    blogsRef.once('value'),
+    queueRef.once('value')
+  ]);
   const settings = settingsSnapshot.val() || {};
   const aiConfig = configSnapshot.val() || {};
+  const firestoreConfig = firestoreConfigSnapshot?.exists ? firestoreConfigSnapshot.data() : {};
   const enabled = String(settingValue(settings, 'AI_BLOGGER_ENABLED', 'false')).toLowerCase() === 'true';
   if (!enabled && !force && process.env.FORCE_AUTO_BLOG !== 'true') {
     console.log('AI Blogger is disabled. Enable it from /admin/ai-blogger or set FORCE_AUTO_BLOG=true.');
@@ -146,6 +157,7 @@ export async function runAutomation({ topic: requestedTopic = '', force = false,
     focusKeyword: focusKeyword || queueItem?.focusKeyword || aiConfig.focusKeyword,
     language: language || queueItem?.language || aiConfig.language,
     categoryHint: categoryHint || queueItem?.categoryHint || aiConfig.categoryHint,
+    customInstructions: firestoreConfig.customInstructions || aiConfig.customInstructions,
   });
   const slug = slugify(article.slug || article.title);
   if (!slug || !article.title || !article.content) throw new Error('Generated article is missing required fields');

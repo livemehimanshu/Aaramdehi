@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   IoCloseOutline, 
   IoBagHandleOutline, 
@@ -21,7 +21,7 @@ import {
 import { CiHeart } from "react-icons/ci";
 
 const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
-
+  const navigate = useNavigate();
 
   return (
     <>
@@ -36,7 +36,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
       )}
 
       {/* --- Sidebar Container (Slide from Left) --- */}
-      <div className={`${isStatic ? 'relative w-full h-full border border-gray-100 rounded-[30px] hidden md:flex' : 'fixed top-0 left-0 bottom-0 w-[85%] max-w-[320px] z-[1001] md:hidden transition-transform duration-300'} bg-white flex flex-col ${
+      <div className={`${isStatic ? 'relative w-full h-full border border-gray-100 rounded-[30px] hidden md:flex' : 'fixed top-0 left-0 bottom-0 w-[85%] max-w-[320px] z-[2000] md:hidden transition-transform duration-300'} bg-white flex flex-col ${
         !isStatic && !isOpen ? '-translate-x-full' : 'translate-x-0'
       } shadow-2xl overflow-hidden`}>
         
@@ -209,7 +209,7 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
           {user ? (
             <button 
               onClick={async () => {
-                await handleLogout();
+                if (typeof handleLogout === 'function') await handleLogout();
                 onClose?.();
               }}
               className="w-full flex items-center justify-center gap-3 py-4 bg-rose-50 text-rose-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-rose-600 hover:text-white transition-all active:scale-95"
@@ -217,13 +217,16 @@ const Sidebar = ({ isOpen, onClose, user, handleLogout, isStatic = false }) => {
               <IoLogOutOutline size={20} /> Logout
             </button>
           ) : (
-            <Link 
-              to="/login"
-              onClick={onClose}
+            <button
+              type="button"
+              onClick={() => {
+                onClose?.();
+                navigate('/login');
+              }}
               className="w-full flex items-center justify-center gap-3 py-4 bg-blue-900 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-800 transition-all active:scale-95"
             >
               <IoPersonOutline size={20} /> Login / Register
-            </Link>
+            </button>
           )}
         </div>
       </div>

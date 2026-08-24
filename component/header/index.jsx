@@ -120,8 +120,7 @@ const Header = ({ hideNav = false }) => {
     } finally {
       try {
         const envApiUrl = import.meta.env.VITE_API_URL;
-        const isProd = import.meta.env.PROD;
-        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api')).replace(/\/$/, "");
+        const apiBase = (import.meta.env.PROD ? '/api' : (envApiUrl || '/api')).replace(/\/$/, "");
         await fetch(`${apiBase}/user/logout`, { method: 'GET', credentials: 'include' });
       } catch (error) {
         console.error("Backend logout error:", error);
@@ -152,8 +151,7 @@ const Header = ({ hideNav = false }) => {
     const checkBackendSession = async () => {
       try {
         const envApiUrl = import.meta.env.VITE_API_URL;
-        const isProd = import.meta.env.PROD;
-        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api')).replace(/\/$/, "");
+        const apiBase = (import.meta.env.PROD ? '/api' : (envApiUrl || '/api')).replace(/\/$/, "");
         const response = await fetch(`${apiBase}/auth/me`, { credentials: 'include' });
         if ((response.status === 401 || response.status === 403) && localStorage.getItem('userData')) {
           localStorage.removeItem('userData');
@@ -233,8 +231,7 @@ const Header = ({ hideNav = false }) => {
     const fetchSettings = async () => {
       try {
         const envApiUrl = import.meta.env.VITE_API_URL;
-        const isProd = import.meta.env.PROD;
-        const apiBase = (envApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api')).replace(/\/$/, "");
+        const apiBase = (import.meta.env.PROD ? '/api' : (envApiUrl || '/api')).replace(/\/$/, "");
         const response = await fetch(`${apiBase}/settings/public`, {
           signal: AbortSignal.timeout(5000) // Reduced to 5s
         });

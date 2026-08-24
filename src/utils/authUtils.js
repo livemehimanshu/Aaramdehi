@@ -13,7 +13,7 @@ const envApiUrl = import.meta.env.VITE_API_URL;
 const isProd = import.meta.env.PROD;
 const normalizedEnvApiUrl = envApiUrl ? envApiUrl.replace(/\/$/, '') : '';
 
-const apiBaseURL = normalizedEnvApiUrl || (isProd ? 'https://aaramdehi.onrender.com/api' : '/api');
+const apiBaseURL = isProd ? '/api' : (normalizedEnvApiUrl || '/api');
 
 export const api = axios.create({
   baseURL: apiBaseURL,

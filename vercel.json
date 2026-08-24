@@ -100,7 +100,7 @@
     },
     {
       "source": "/api/:path*",
-      "destination": "https://aaramdehi.onrender.com/:path*"
+      "destination": "https://aaramdehi.onrender.com/api/:path*"
     },
     {
       "source": "/settings/:path*",

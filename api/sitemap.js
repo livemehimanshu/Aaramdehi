@@ -9,6 +9,11 @@ const safeFindAll = async (findAll, collectionName) => {
   }
 };
 
+const hasFirebaseCredentials = () => Boolean(
+  process.env.FIREBASE_CONFIG_JSON ||
+  (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY)
+);
+
 export default async function handler(req, res) {
   const baseUrl = process.env.FRONTEND_URL || 'https://www.aaramdehi.co.in';
   const sendXml = (xml, status = 200) => {
@@ -26,6 +31,11 @@ export default async function handler(req, res) {
 
   try {
     if (req.method === 'HEAD') return sendXml('', 200);
+    if (!hasFirebaseCredentials()) {
+      console.warn('Sitemap data unavailable: Firebase credentials are not configured. Serving fallback sitemap.');
+      return sendXml(buildFallbackSitemapXml(baseUrl));
+    }
+
     const { findAll } = await import('../server/config/db.js');
     const [products, blogs] = await Promise.all([
       safeFindAll(findAll, 'products'),
@@ -34,7 +44,7 @@ export default async function handler(req, res) {
     const xml = buildSitemapXml({ baseUrl, products, blogs });
     return sendXml(xml);
   } catch (error) {
-    console.error('Vercel sitemap generation failed:', error);
+    console.warn('Vercel sitemap data fetch failed. Serving fallback sitemap:', error?.message || error);
     return sendXml(buildFallbackSitemapXml(baseUrl));
   }
 }

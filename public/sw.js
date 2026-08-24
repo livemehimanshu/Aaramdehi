@@ -2,7 +2,18 @@ const CACHE_NAME = 'aaramdehi-static-v2';
 const APP_SHELL = ['/', '/index.html', '/manifest.json', '/logo.png'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then(async (cache) => {
+    await Promise.all(APP_SHELL.map(async (asset) => {
+      try {
+        const response = await fetch(asset, { cache: 'no-store' });
+        if (response.ok && !(response.headers.get('content-type') || '').includes('text/html') || asset === '/') {
+          await cache.put(asset, response);
+        }
+      } catch {
+        // A missing optional shell asset must not block service-worker activation.
+      }
+    }));
+  }));
   self.skipWaiting();
 });
 

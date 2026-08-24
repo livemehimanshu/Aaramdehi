@@ -33,6 +33,7 @@ env/
 !package-lock.json
 !vercel.json
 !eslint.config.js
+!public/manifest.json
 server/aaramdehi-*.json
 server/config/serviceAccountKey.json
 .env*.local

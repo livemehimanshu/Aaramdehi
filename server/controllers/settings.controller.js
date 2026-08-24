@@ -14,10 +14,14 @@ const syncAiConfig = async (key, value) => {
   const field = AI_CONFIG_KEYS[key.toUpperCase()];
   if (field) await db.ref(`admin_settings/ai_config/${field}`).set(value);
   if (key.toUpperCase() === 'AI_BLOGGER_CUSTOM_INSTRUCTIONS') {
-    await firestore.collection('settings').doc('ai_config').set({
-      customInstructions: String(value || ''),
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    try {
+      await firestore.collection('settings').doc('ai_config').set({
+        customInstructions: String(value || ''),
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    } catch (error) {
+      console.warn('[AI Blogger] Firestore mirror unavailable; RTDB setting saved:', error.message);
+    }
   }
   await db.ref('admin_settings/ai_config/updatedAt').set(Date.now());
 };
@@ -29,8 +33,14 @@ export const getAllSettings = async (req, res) => {
     let filter = {};
     const appendFirestoreAiInstructions = async (settings) => {
       if (settings.some((setting) => setting.key === 'AI_BLOGGER_CUSTOM_INSTRUCTIONS')) return settings;
-      const snapshot = await firestore.collection('settings').doc('ai_config').get();
-      const customInstructions = snapshot.exists ? snapshot.data()?.customInstructions : undefined;
+      let customInstructions;
+      try {
+        const snapshot = await firestore.collection('settings').doc('ai_config').get();
+        customInstructions = snapshot.exists ? snapshot.data()?.customInstructions : undefined;
+      } catch (error) {
+        console.warn('[AI Blogger] Firestore settings fallback unavailable:', error.message);
+        return settings;
+      }
       if (customInstructions === undefined) return settings;
       return [...settings, {
         _id: 'firestore-ai-config-custom-instructions',

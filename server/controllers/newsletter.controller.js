@@ -7,6 +7,7 @@ const COLLECTION = 'newsletterSubscribers';
 export const subscribeNewsletter = async (req, res) => {
   try {
     const email = String(req.body.email || '').trim().toLowerCase();
+    const source = String(req.body.source || 'newsletter').trim().slice(0, 50);
 
     if (!email) {
       return res.status(400).json({ success: false, message: 'Email is required.' });
@@ -24,6 +25,8 @@ export const subscribeNewsletter = async (req, res) => {
     const newSubscriber = await create(COLLECTION, {
       email,
       subscribedAt: new Date().toISOString(),
+      status: 'active',
+      source,
     });
 
     return res.status(201).json({
@@ -39,7 +42,7 @@ export const subscribeNewsletter = async (req, res) => {
 
 export const getNewsletterSubscribers = async (req, res) => {
   try {
-    const subscribers = await findAll(COLLECTION);
+    const subscribers = (await findAll(COLLECTION)).filter((subscriber) => subscriber.status !== 'unsubscribed');
     const sorted = subscribers.sort((a, b) => new Date(b.subscribedAt) - new Date(a.subscribedAt));
     return res.json({ success: true, data: sorted });
   } catch (error) {

@@ -456,9 +456,9 @@ export async function getAdminDetailsAPI() {
    NEWSLETTER API
    ========================================================================== */
 
-export async function subscribeNewsletterAPI(email) {
+export async function subscribeNewsletterAPI(email, source = 'newsletter') {
   try {
-    const res = await api.post('/newsletter/subscribe', { email });
+    const res = await api.post('/newsletter/subscribe', { email, source });
     return res.data;
   } catch (e) {
     return e.response?.data || { success: false, message: e.message };
@@ -777,7 +777,17 @@ export async function getPublicSettingsAPI() {
   }
 }
 
+export async function saveAbandonedCartAPI(email, items) {
+  try {
+    const res = await api.post('/abandoned-cart', { email, items });
+    return res.data;
+  } catch (e) {
+    return { success: false, message: e.response?.data?.message || e.message };
+  }
+}
+
 export async function createCashfreeOrderAPI(orderItems, customer) {
   const res = await api.post('/payments/cashfree/create-order', { orderItems, ...customer });
   return res.data;
 }
+

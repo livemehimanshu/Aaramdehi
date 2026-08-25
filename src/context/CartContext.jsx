@@ -1,4 +1,5 @@
 import React, { createContext, useEffect, useState, useContext } from 'react';
+import { saveAbandonedCartAPI } from '../api/authAndAdminApi';
 
 export const CartContext = createContext(null);
 
@@ -23,6 +24,19 @@ export const CartProvider = ({ children }) => {
   // Sync state to LocalStorage
   useEffect(() => {
     try { localStorage.setItem('cart', JSON.stringify(cart)); } catch {}
+    if (!cart.length) return undefined;
+
+    let email = localStorage.getItem('userEmail') || '';
+    try {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      email = userData.email || email;
+    } catch {}
+    if (!email) return undefined;
+
+    const timer = window.setTimeout(() => {
+      saveAbandonedCartAPI(email, cart).catch(() => {});
+    }, 1000);
+    return () => window.clearTimeout(timer);
   }, [cart]);
 
   useEffect(() => {

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import SEO from '../../header/SEO'; // SEO Component Import Kiya
 import JsonLdSchema from '../../../server/routes/JsonLdSchema.jsx';
 import { getAllProductsAPI, validateCouponAPI } from '../../../src/api/authAndAdminApi';
+import { useCart } from '../../../src/context/CartContext';
 import { BsLightningCharge } from 'react-icons/bs';
 import toast from 'react-hot-toast'; // ✅ Import toast
 import { FiShoppingCart } from 'react-icons/fi';
@@ -10,11 +11,10 @@ import { FiShoppingCart } from 'react-icons/fi';
 const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { addToCart, setIsCartOpen } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedThickness, setSelectedThickness] = useState('5 inch');
-
   const [couponInput, setCouponInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState({ type: '', text: '' });
@@ -41,7 +41,7 @@ const ProductPage = () => {
   const handleApplyCoupon = async () => {
     if (!couponInput) return setCouponMessage({ type: 'error', text: 'Please enter a code' });
     try {
-      const res = await validateCouponAPI(couponInput);
+      const res = await validateCouponAPI({ code: couponInput, orderAmount: selectedSize?.price || product?.sellingPrice || 0 });
       if (res.success) {
         setAppliedDiscount(res.data.discount);
         setCouponMessage({ type: 'success', text: `Success! ${res.data.discount}% Discount Applied` });
@@ -49,7 +49,7 @@ const ProductPage = () => {
         setAppliedDiscount(0);
         setCouponMessage({ type: 'error', text: res.message || 'Invalid Coupon' });
       }
-    } catch (err) {
+    } catch {
       setCouponMessage({ type: 'error', text: 'Validation failed' });
     }
   };
@@ -58,6 +58,30 @@ const ProductPage = () => {
     const basePrice = selectedSize?.price || product?.sellingPrice || 0;
     return appliedDiscount > 0 ? basePrice - (basePrice * appliedDiscount / 100) : basePrice;
   }, [selectedSize, product, appliedDiscount]);
+
+  const handleAddToCart = () => {
+    const productId = product._id || product.id || id;
+    addToCart({
+      ...product,
+      id: productId,
+      _id: productId,
+      quantity: 1,
+      price: finalPrice,
+      sellingPrice: finalPrice,
+      originalPrice: selectedSize?.price || product.sellingPrice || product.price || 0,
+      selectedSize: selectedSize?.label || 'Standard',
+      appliedCoupon: appliedDiscount > 0 ? couponInput : null,
+      discountAmount: appliedDiscount,
+      image: product.thumbnail || product.images?.[0]?.url || product.image || '',
+    });
+    setIsCartOpen(true);
+    toast.success(`${product.name} added to cart`);
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    navigate('/checkout');
+  };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-[5px] animate-pulse">Loading Product...</div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product Not Found</div>;
@@ -147,7 +171,7 @@ const ProductPage = () => {
                 </button>
               )) || (
                 <button className="px-4 py-2 border border-blue-600 text-blue-600 bg-blue-50 rounded font-bold">Standard</button>
-              ))}
+              )}
             </div>
           </div>
 
@@ -166,11 +190,12 @@ const ProductPage = () => {
 
           {/* Buttons */}
           <div className="mt-10 flex gap-4">
-            <button className="flex-1 bg-orange-500 text-white py-4 rounded font-bold text-lg shadow-md hover:bg-orange-600 transition">
+            <button onClick={handleAddToCart} className="flex-1 bg-orange-500 text-white py-4 rounded font-bold text-lg shadow-md hover:bg-orange-600 transition">
+              <FiShoppingCart className="mr-2 inline" />
               ADD TO CART
-              ADD TO CART {/* ✅ Add to cart logic here */}
             </button>
-            <button className="flex-1 bg-yellow-400 text-gray-900 py-4 rounded font-bold text-lg shadow-md hover:bg-yellow-500 transition">
+            <button onClick={handleBuyNow} className="flex-1 bg-yellow-400 text-gray-900 py-4 rounded font-bold text-lg shadow-md hover:bg-yellow-500 transition">
+              <BsLightningCharge className="mr-2 inline" />
               BUY NOW
             </button>
           </div>

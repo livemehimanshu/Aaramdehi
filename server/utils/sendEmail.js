@@ -23,3 +23,23 @@ export const sendOrderEmail = async (userEmail, orderData) => {
         console.error("Error in sendOrderEmail utility:", error);
     }
 };
+
+export const sendOrderStatusEmail = async (userEmail, orderData, status) => {
+    if (!userEmail || !status) return;
+    await sendEmail({
+        sendTo: userEmail,
+        subject: `Order ${status}: ${orderData.orderNumber} - Aaramdehi`,
+        html: orderEmailTemplate({ ...orderData, orderStatus: status }, "CUSTOMER")
+    });
+};
+
+export const sendLowStockAlert = async (products) => {
+    const recipient = process.env.EMAIL_USER;
+    if (!recipient || !products.length) return;
+    const rows = products.map((product) => `<li><strong>${product.name}</strong>: ${product.stock} remaining</li>`).join('');
+    await sendEmail({
+        sendTo: recipient,
+        subject: `Low stock alert: ${products.length} product(s) - Aaramdehi`,
+        html: `<h2>Aaramdehi low stock alert</h2><p>The following products need attention:</p><ul>${rows}</ul>`
+    });
+};

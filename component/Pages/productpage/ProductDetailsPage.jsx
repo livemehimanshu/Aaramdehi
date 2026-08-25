@@ -508,6 +508,7 @@ const ProductDetailsPage = () => {
           keywords={productKeywords}
           ogImage={selectedImage || PLACEHOLDER_IMAGE}
           ogUrl={window.location.href}
+          ogType="product"
           schemaType="Product"
           schemaData={{
             "@context": "https://schema.org/",
@@ -524,7 +525,7 @@ const ProductDetailsPage = () => {
               "url": window.location.href,
               "priceCurrency": "INR",
               "price": finalPrice,
-              "availability": "https://schema.org/InStock",
+              "availability": (productData.stock == null && productData.quantity == null) || Number(productData.stock ?? productData.quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
               "itemCondition": "https://schema.org/NewCondition"
             }
           }}

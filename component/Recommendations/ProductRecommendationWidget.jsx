@@ -21,11 +21,25 @@ export default function ProductRecommendationWidget({ context = '', excludeId = 
       if (!active) return;
       const source = response?.data || (Array.isArray(response) ? response : []);
       const terms = String(context).toLowerCase().split(/\s+/).filter((term) => term.length > 3);
+      const readSignals = (key) => {
+        try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+      };
+      const behaviorSignals = [
+        ...readSignals('recentlyViewed'),
+        ...readSignals('wishlist'),
+        ...readSignals('cart'),
+      ].flatMap((item) => [item.name, item.category, ...(item.tags || [])])
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .split(/\s+/)
+        .filter((term) => term.length > 3);
+      const allTerms = [...new Set([...terms, ...behaviorSignals])];
       const ranked = source
         .filter((product) => String(product._id || product.id) !== String(excludeId))
         .map((product) => {
           const text = getProductText(product);
-          const score = terms.reduce((total, term) => total + (text.includes(term) ? 1 : 0), 0);
+          const score = allTerms.reduce((total, term) => total + (text.includes(term) ? 1 : 0), 0);
           return { product, score };
         })
         .sort((left, right) => right.score - left.score || Number(right.product.views || 0) - Number(left.product.views || 0))

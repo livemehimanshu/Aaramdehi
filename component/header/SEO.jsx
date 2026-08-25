@@ -24,7 +24,7 @@ const getNormalizedUrl = (url, siteUrl) => {
  * @param {string} path - Path/Route of current page (e.g. "/products")
  * @param {string} ogUrl - Optional absolute or relative canonical URL override
  */
-const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaType, schemaData, noindex = false, is404 = false }) => {
+const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, ogType = 'website', schemaType, schemaData, noindex = false, is404 = false }) => {
   const siteName = "Aaramdehi - Comfort Redefined";
   const siteUrl = "https://www.aaramdehi.co.in";
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
@@ -36,6 +36,7 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
 
   const currentPath = path || (typeof window !== 'undefined' ? window.location.pathname : '/');
   const cleanCanonical = getNormalizedUrl(ogUrl || currentPath, siteUrl);
+  const absoluteImage = ogImage ? new URL(ogImage, siteUrl).href : `${siteUrl}/aaramdehi-logo.svg`;
 
   return (
     <Helmet>
@@ -53,17 +54,18 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
       <link rel="canonical" href={cleanCanonical} />
 
       {/* Open Graph / Facebook */}
-      <meta property="og:type" content="website" />
+      <meta property="og:type" content={ogType} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description || defaultDescription} />
-      <meta property="og:image" content={ogImage || "/aaramdehi-logo.svg"} />
+      <meta property="og:image" content={absoluteImage} />
+      <meta property="og:image:alt" content={title || 'Aaramdehi'} />
       <meta property="og:url" content={cleanCanonical} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description || defaultDescription} />
-      <meta name="twitter:image" content={ogImage || "/aaramdehi-logo.svg"} />
+      <meta name="twitter:image" content={absoluteImage} />
 
       {/* JSON-LD Structured Data */}
       {schemaData && schemaType && (

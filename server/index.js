@@ -47,6 +47,7 @@ import aiChatRouter from './routes/aiChat.route.js';
 import shopsRouter from './routes/shops.route.js';
 import roomRouter from './routes/room.route.js';
 import newsletterRouter from './routes/newsletter.route.js';
+import abandonedCartRouter from './routes/abandonedCart.route.js';
 import behavioralTrackingRouter from './routes/behavioralTrackingRoutes.js';
 import blogRouter from './routes/blog.route.js';
 import { getAdminAnalytics } from './controllers/analytics.controller.js';
@@ -149,6 +150,7 @@ apiRouter.use("/refunds", refundRouter);
 apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/rooms", roomRouter);
 apiRouter.use('/newsletter', newsletterRouter);
+apiRouter.use('/abandoned-cart', abandonedCartRouter);
 apiRouter.use("/team", teamRouter);
 apiRouter.use("/ai", aiChatRouter);
 

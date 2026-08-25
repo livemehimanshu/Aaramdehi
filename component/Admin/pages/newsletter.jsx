@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, Users, Send, Search, Download, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getNewsletterSubscribersAPI, updateNewsletterSubscriberAPI, deleteNewsletterSubscriberAPI } from '../../../src/api/authAndAdminApi';
+import { getNewsletterSubscribersAPI, updateNewsletterSubscriberAPI, deleteNewsletterSubscriberAPI, sendNewsletterAPI } from '../../../src/api/authAndAdminApi';
 
 const formatDateTime = (value) => {
   if (!value) return 'Unknown';
@@ -36,6 +36,9 @@ export default function NewsletterPage() {
   const [hasMore, setHasMore] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [subject, setSubject] = useState('Aaramdehi Daily Comfort Update');
+  const [message, setMessage] = useState('Discover today\'s comfort tips, fresh products, and special offers from Aaramdehi.');
+  const [sending, setSending] = useState(false);
 
   const loadSubscribers = async (reset = false) => {
     try {
@@ -114,6 +117,22 @@ export default function NewsletterPage() {
     toast.success('CSV export ready.');
   };
 
+  const handleSendNewsletter = async (event) => {
+    event.preventDefault();
+    if (!subject.trim() || !message.trim()) return toast.error('Subject and message are required.');
+    if (!subscribers.some((subscriber) => subscriber.status !== 'unsubscribed')) return toast.error('No active subscribers available.');
+    try {
+      setSending(true);
+      const response = await sendNewsletterAPI({ subject: subject.trim(), message: message.trim() });
+      if (!response.success) throw new Error(response.message || 'Unable to send newsletter.');
+      toast.success(response.message || 'Newsletter sent successfully.');
+    } catch (error) {
+      toast.error(error.message || 'Unable to send newsletter.');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 bg-gray-950 min-h-screen text-gray-200">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
@@ -166,6 +185,23 @@ export default function NewsletterPage() {
           </div>
         </div>
       </div>
+
+      <form onSubmit={handleSendNewsletter} className="mb-6 rounded-3xl border border-gray-800 bg-gray-900 p-6 shadow-xl">
+        <div className="mb-5 flex items-center gap-3">
+          <Send className="text-emerald-400" size={20} />
+          <div>
+            <h2 className="text-xl font-bold text-white">Send Daily Newsletter</h2>
+            <p className="mt-1 text-sm text-gray-500">Email will be sent only to active subscribers.</p>
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Email subject" className="rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-emerald-400" />
+          <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={3} placeholder="Write your newsletter message..." className="rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-emerald-400 md:row-span-2" />
+        </div>
+        <button type="submit" disabled={sending} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 font-bold text-gray-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60">
+          <Send size={16} /> {sending ? 'Sending...' : 'Send to Active Subscribers'}
+        </button>
+      </form>
 
       <div className="overflow-x-auto rounded-3xl border border-gray-800 bg-gray-900 shadow-xl">
         <table className="min-w-full text-left">

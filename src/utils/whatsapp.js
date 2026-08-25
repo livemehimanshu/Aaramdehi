@@ -1,7 +1,7 @@
-const whatsappNumber = String(import.meta.env.VITE_WHATSAPP_NUMBER || '').replace(/\D/g, '');
+const whatsappNumber = String(import.meta.env.VITE_WHATSAPP_NUMBER || '918006594734').replace(/\D/g, '');
 
 export const createWhatsAppUrl = (message, configuredNumber = whatsappNumber) => {
   const number = String(configuredNumber || '').replace(/\D/g, '');
-  const baseUrl = number ? `https://wa.me/${number}` : 'https://wa.me/';
-  return `${baseUrl}?text=${encodeURIComponent(message)}`;
+  if (!number) return '';
+  return `https://api.whatsapp.com/send?phone=${number}&text=${encodeURIComponent(message)}`;
 };

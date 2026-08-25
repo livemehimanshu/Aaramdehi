@@ -1,5 +1,6 @@
 import { create, findAll, findById, updateById, findByQuery, db } from '../config/db.js';
-import { sendOrderEmail } from '../utils/sendEmail.js';
+import { sendOrderEmail, sendOrderStatusEmail, sendLowStockAlert } from '../utils/sendEmail.js';
+import { recoverAbandonedCartsForEmail } from './abandonedCart.controller.js';
 import { updateProductRelations } from '../utils/recommendationEngine.js';
 
 const COLLECTION = 'orders';
@@ -145,6 +146,14 @@ export const createOrder = async (req, res) => {
         // EXECUTE BATCH UPDATE
         await db.ref().update(updates);
 
+        const lowStockProducts = [];
+        for (const item of validatedOrderItems) {
+            const product = await findById(PRODUCT_COLLECTION, item.product || item.productId);
+            const remainingStock = Number(product?.stock || 0);
+            if (product && remainingStock <= 5) lowStockProducts.push({ name: product.name, stock: Math.max(0, remainingStock) });
+        }
+        sendLowStockAlert(lowStockProducts).catch((error) => console.error('Low stock alert failed:', error.message));
+
         const orderData = { _id: orderId, ...updates[`${COLLECTION}/${orderId}`] };
 
         updateProductRelations(validatedOrderItems).catch((error) => {
@@ -160,6 +169,9 @@ export const createOrder = async (req, res) => {
             sendOrderEmail(targetEmail, orderData).catch(err => 
                 console.error("❌ [Background Email Error]:", err.message)
             );
+            recoverAbandonedCartsForEmail(targetEmail).catch((error) => {
+                console.error('Abandoned cart recovery update failed:', error.message);
+            });
         } else {
             console.warn("⚠️ Email skipped: No email found in User profile or Shipping address.");
         }
@@ -276,10 +288,10 @@ export const updateOrderStatus = async (req, res) => {
 
         // ✅ Send Status Update Email
         const user = await findById(USERS_COLLECTION, order.userId);
-        if (user && user.email && (status === 'Shipped' || status === 'Delivered')) {
-            // Yahan aap status specific template use kar sakte hain
-            console.log(`Sending ${status} email to ${user.email}`);
-            // sendStatusUpdateEmail(user.email, order, status); 
+        if (user?.email && ['Confirmed', 'Processing', 'Packed', 'Shipped', 'Delivered'].includes(status)) {
+            sendOrderStatusEmail(user.email, { ...order, ...updated }, status).catch((error) => {
+                console.error(`Order ${status} email failed:`, error.message);
+            });
         }
 
         return res.json({ success: true, message: "Status updated", data: updated });

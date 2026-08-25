@@ -124,7 +124,7 @@ export async function runAutomation({ topic: requestedTopic = '', force = false,
   const settings = settingsSnapshot.val() || {};
   const aiConfig = configSnapshot.val() || {};
   const firestoreConfig = firestoreConfigSnapshot?.exists ? firestoreConfigSnapshot.data() : {};
-  const enabled = String(settingValue(settings, 'AI_BLOGGER_ENABLED', 'false')).toLowerCase() === 'true';
+  const enabled = String(settingValue(settings, 'AI_BLOGGER_ENABLED', aiConfig.enabled ?? 'false')).toLowerCase() === 'true';
   if (!enabled && !force && process.env.FORCE_AUTO_BLOG !== 'true') {
     console.log('AI Blogger is disabled. Enable it from /admin/ai-blogger or set FORCE_AUTO_BLOG=true.');
     return;
@@ -136,7 +136,7 @@ export async function runAutomation({ topic: requestedTopic = '', force = false,
   if (!geminiApiKey) throw new Error('Gemini API key is not configured');
 
   const existingBlogs = blogsSnapshot.val() ? Object.values(blogsSnapshot.val()) : [];
-  const configuredTopics = String(settingValue(settings, 'AI_BLOGGER_TOPIC_LIST', '') || '')
+  const configuredTopics = String(settingValue(settings, 'AI_BLOGGER_TOPIC_LIST', aiConfig.topicList || '') || '')
     .split(/\r?\n/)
     .map((item) => item.trim())
     .filter(Boolean);

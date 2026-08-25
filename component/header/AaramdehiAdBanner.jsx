@@ -63,10 +63,9 @@ const AaramdehiAdBanner = () => {
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-2">
             <img
-              src={siteLogo || LOGO_PLACEHOLDER}
-              onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+              src="/aaramdehi-logo.svg"
               alt="Aaramdehi"
-              className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 aspect-square object-contain"
+              className="h-16 w-16 shrink-0 aspect-square object-contain sm:h-20 sm:w-20"
             />
           </Link>
         </div>

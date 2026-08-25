@@ -72,7 +72,7 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
             
             {/* Left: Logo */}
             <Link to="/" className="flex-shrink-0">
-              <img src="/aaramdehi-logo.svg" alt="Aaramdehi" className="h-12 w-12 shrink-0 aspect-square object-contain" />
+              <img src="/aaramdehi-logo.svg" alt="Aaramdehi" className="h-14 w-14 shrink-0 aspect-square object-contain md:h-16 md:w-16" />
             </Link>
 
             {/* Center: Search Bar (Hidden on small screens) */}

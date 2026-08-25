@@ -87,10 +87,9 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
             {/* Left: Logo */}
             <Link to="/" className="flex-shrink-0">
               <img
-                src={siteLogo || LOGO_PLACEHOLDER}
-                onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+                src="/aaramdehi-logo.svg"
                 alt="Aaramdehi"
-                className="h-12 w-12 shrink-0 aspect-square object-contain"
+                className="h-14 w-14 shrink-0 aspect-square object-contain md:h-16 md:w-16"
               />
             </Link>
 

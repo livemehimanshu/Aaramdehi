@@ -68,10 +68,9 @@ const Header = () => {
         {/* Logo */}
         <Link to="/" className="shrink-0">
           <img
-            src={siteLogo || LOGO_PLACEHOLDER}
-            onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+            src="/aaramdehi-logo.svg"
             alt="Aaramdehi"
-            className="h-12 w-12 md:h-14 md:w-14 shrink-0 aspect-square object-contain"
+            className="h-14 w-14 shrink-0 aspect-square object-contain md:h-[4.5rem] md:w-[4.5rem]"
           />
         </Link>
 

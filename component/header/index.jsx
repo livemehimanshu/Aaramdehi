@@ -294,8 +294,8 @@ const Header = ({ hideNav = false }) => {
         </div>
 
         {/* --- MAIN HEADER --- */}
-        <div className="header py-2 md:py-4 border-b border-gray-100">
-          <div className="container mx-auto px-2 md:px-4 flex items-center justify-between gap-2 md:gap-4">
+        <div className="header min-h-20 py-2 md:min-h-24 md:py-3 border-b border-gray-100">
+          <div className="container mx-auto px-2 md:px-4 flex min-h-16 items-center justify-between gap-2 md:min-h-20 md:gap-4">
             
             {/* Mobile Hamburger Menu Icon */}
             <div className="md:hidden flex-shrink-0">
@@ -312,10 +312,9 @@ const Header = ({ hideNav = false }) => {
             <div className="flex-shrink-0">
               <Link to="/" aria-label="Aaramdehi Homepage" className="flex items-center gap-2 group/logo select-none">
                 <img
-                  src={siteLogo || LOGO_PLACEHOLDER}
-                  onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+                  src="/aaramdehi-logo.svg"
                   alt="Aaramdehi"
-                  className="h-12 w-12 md:h-14 md:w-14 shrink-0 aspect-square object-contain transition-transform duration-300 group-hover/logo:scale-105"
+                  className="h-14 w-14 shrink-0 aspect-square object-contain transition-transform duration-300 group-hover/logo:scale-105 md:h-[4.5rem] md:w-[4.5rem]"
                 />
               </Link>
             </div>

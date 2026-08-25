@@ -3,6 +3,8 @@ import { db, firestore, findAll, findById, create, updateById, deleteById, findB
 const AI_CONFIG_KEYS = {
   AI_BLOGGER_GEMINI_API_KEY: 'geminiApiKey',
   AI_BLOGGER_MODEL: 'selectedModel',
+  AI_BLOGGER_ENABLED: 'enabled',
+  AI_BLOGGER_TOPIC_LIST: 'topicList',
   AI_BLOGGER_TONE: 'writingTone',
   AI_BLOGGER_MODE: 'publishingMode',
   AI_BLOGGER_AUTO_PUBLISH: 'autoPublishEnabled',

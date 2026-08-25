@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, User, ChevronDown, MapPin, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
-const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
+const LOGO_PLACEHOLDER = "/aaramdehi-logo.svg";
 import Search from '../search/index'; // ✅ Search component import kiya
 import { getSettingsAPI } from '../../src/api/authAndAdminApi';
 
@@ -67,15 +67,12 @@ const Header = () => {
       <div className="container mx-auto px-4 md:px-10 py-4 flex items-center justify-between gap-4 md:gap-8">
         {/* Logo */}
         <Link to="/" className="shrink-0">
-          {siteLogo ? (
-            <img 
-              src={siteLogo} 
-              onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
-              alt="Logo" 
-              className="h-8 md:h-10 object-contain brightness-0 invert" />
-          ) : (
-            <span className="text-2xl font-black text-white tracking-tighter italic">Aaramdehi<span className="text-yellow-500">+</span></span>
-          )}
+          <img
+            src={siteLogo || LOGO_PLACEHOLDER}
+            onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+            alt="Aaramdehi"
+            className="h-12 w-12 md:h-14 md:w-14 shrink-0 aspect-square object-contain"
+          />
         </Link>
 
         {/* Search Bar */}

@@ -95,7 +95,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         {/* Logo Section */}
         <div className="p-8 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 bg-emerald-400 rounded-xl flex items-center justify-center text-[#0F1219] font-black shadow-lg shadow-emerald-400/20">AD</div>
+             <img src="/aaramdehi-logo.svg" alt="Aaramdehi" className="w-12 h-12 shrink-0 aspect-square rounded-full object-contain shadow-lg" />
              <div>
                 <h1 className="text-xl font-black text-white uppercase tracking-tighter">Aaramdehi</h1>
                 <p className="text-[10px] text-emerald-500 font-bold tracking-widest uppercase">Admin Panel</p>

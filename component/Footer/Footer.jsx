@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { FiTruck, FiRotateCcw, FiShield, FiGift, FiHeadphones } from 'react-icons/fi';
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
@@ -8,6 +8,24 @@ const NewsletterFooter = () => {
   const [email, setEmail] = useState('');
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [siteLogo, setSiteLogo] = useState(null);
+
+  useEffect(() => {
+    const fetchSiteLogo = async () => {
+      try {
+        const apiBase = (import.meta.env.PROD ? '/api' : (import.meta.env.VITE_API_URL || '/api')).replace(/\/$/, '');
+        const response = await fetch(`${apiBase}/settings/public`, { signal: AbortSignal.timeout(5000) });
+        if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) return;
+
+        const result = await response.json();
+        setSiteLogo(result?.data?.logo || result?.data?.LOGO || null);
+      } catch (error) {
+        console.warn('Unable to load footer logo:', error);
+      }
+    };
+
+    fetchSiteLogo();
+  }, []);
 
   const isValidEmail = (value) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
@@ -85,13 +103,20 @@ const NewsletterFooter = () => {
           
           {/* Brand & Contact Info */}
           <div className="space-y-6">
-            <h3 className="text-[20px] font-serif tracking-tight">AARAMDEHI</h3>
+            <img
+              src={siteLogo || '/aaramdehi-logo.svg'}
+              alt="Aaramdehi"
+              className="h-20 w-20 shrink-0 aspect-square object-contain object-center sm:h-24 sm:w-24"
+              onError={(event) => {
+                event.currentTarget.src = '/aaramdehi-logo.svg';
+              }}
+            />
             <p className="text-white/70 text-sm leading-relaxed font-light">
               Discover premium furniture and home decor designed for comfort and elegance.
             </p>
             <div className="space-y-2">
               <p className="text-white/80 text-sm font-medium">sales@aaramdehi.com</p>
-              <p className="text-[#FAF9F6] text-lg font-semibold tracking-wide">(+91) 9876-543-210</p>
+              <p className="text-[#FAF9F6] text-lg font-semibold tracking-wide">(+91) 800-659-4734</p>
             </div>
             <div className="flex items-center gap-4 mt-6">
                <div className="w-10 h-10 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#1A365D] transition-all duration-300 cursor-pointer"><FaFacebookF size={14} /></div>

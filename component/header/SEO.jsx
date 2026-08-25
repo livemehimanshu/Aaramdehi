@@ -56,14 +56,14 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, schemaTy
       <meta property="og:type" content="website" />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description || defaultDescription} />
-      <meta property="og:image" content={ogImage || "/logo.png"} />
+      <meta property="og:image" content={ogImage || "/aaramdehi-logo.svg"} />
       <meta property="og:url" content={cleanCanonical} />
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description || defaultDescription} />
-      <meta name="twitter:image" content={ogImage || "/logo.png"} />
+      <meta name="twitter:image" content={ogImage || "/aaramdehi-logo.svg"} />
 
       {/* JSON-LD Structured Data */}
       {schemaData && schemaType && (

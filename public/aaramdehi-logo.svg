@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768" role="img" aria-labelledby="title desc">
+  <title id="title">Aaramdehi</title>
+  <desc id="desc">Aaramdehi - The Comfort Provider</desc>
+  <circle cx="384" cy="384" r="376" fill="#faf8f5" stroke="#07356f" stroke-width="10"/>
+  <g fill="none" stroke="#07356f" stroke-width="3">
+    <path d="M285 320c55-35 102-53 143-55 47-2 66 34 111 34 20 0 37-6 53-16-22 24-52 35-83 34-43-2-67-30-111-29-37 1-75 12-113 32z" fill="#0876b9" stroke="none"/>
+    <path d="M392 323c36-20 66-24 93-15 27 9 51 24 77 23 14 0 26-4 38-11-17 21-43 29-67 27-34-3-58-20-84-24-18-3-37-1-57 6z" fill="#0876b9" stroke="none"/>
+  </g>
+  <text x="384" y="432" text-anchor="middle" fill="#092f68" font-family="Georgia, 'Times New Roman', serif" font-size="91" letter-spacing="-4">Aaramdehi</text>
+  <g fill="#092f68">
+    <rect x="63" y="474" width="77" height="3"/>
+    <rect x="628" y="474" width="77" height="3"/>
+  </g>
+  <text x="384" y="488" text-anchor="middle" fill="#092f68" font-family="Arial, sans-serif" font-size="25" letter-spacing="6">THE COMFORT PROVIDER</text>
+</svg>

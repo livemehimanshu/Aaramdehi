@@ -6,7 +6,7 @@ import { styled } from '@mui/material/styles';
 import IconButton from '@mui/material/IconButton';
 import { getSettingsAPI } from '../../src/api/authAndAdminApi';
 
-const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
+const LOGO_PLACEHOLDER = "/aaramdehi-logo.svg";
 
 // Badge styling for cart count
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -86,15 +86,12 @@ const MinimalCheckoutHeader = ({ currentStep = 2 }) => {
             
             {/* Left: Logo */}
             <Link to="/" className="flex-shrink-0">
-              {siteLogo ? (
-                <img 
-                  src={siteLogo} 
-                  onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
-                  alt="Logo" 
-                  className="h-8 object-contain" />
-              ) : (
-                <h1 className="text-2xl font-black text-red-500 uppercase tracking-tighter">Aaramdehi</h1>
-              )}
+              <img
+                src={siteLogo || LOGO_PLACEHOLDER}
+                onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+                alt="Aaramdehi"
+                className="h-12 w-12 shrink-0 aspect-square object-contain"
+              />
             </Link>
 
             {/* Center: Search Bar (Hidden on small screens) */}

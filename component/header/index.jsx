@@ -38,7 +38,7 @@ import { getActiveCategoriesAPI } from '../../src/api/authAndAdminApi';
 // Yeh top header hai jismein logo, search, login, cart, wishlist sab dikhta hai
 // Ismein CartDrawer open/close logic bhi hai
 
-const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
+const LOGO_PLACEHOLDER = "/aaramdehi-logo.svg";
 
 // Badge ka style customize - cart icon pe red circle number show karne ke liye
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -311,32 +311,12 @@ const Header = ({ hideNav = false }) => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link to="/" aria-label="Aaramdehi Homepage" className="flex items-center gap-2 group/logo select-none">
-                {siteLogo ? (
-                  <div className="relative overflow-hidden rounded">
-                    <img 
-                      src={siteLogo} 
-                      onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
-                      alt="Aaramdehi" 
-                      className="h-8 md:h-10 object-contain transition-transform duration-300 group-hover/logo:scale-105" 
-                    />
-                    {/* Amazon-style shimmer highlight effect on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover/logo:animate-[shimmer_1s_ease-in-out]" />
-                  </div>
-                ) : (
-                  <div className="flex flex-col -space-y-0.5">
-                    <h1 className="text-lg md:text-2xl font-black uppercase tracking-tighter leading-none text-slate-800 transition-colors duration-300 group-hover/logo:text-[#1A365D]">
-                      Aaram<span className="text-red-600 transition-colors duration-300 group-hover/logo:text-red-500">dehi</span>
-                    </h1>
-                    <div className="flex items-center gap-0.5">
-                      <p className="text-[8px] md:text-[9px] font-extrabold tracking-wider text-gray-500 italic">
-                        Explore <span className="text-yellow-500 group-hover/logo:text-yellow-400 transition-colors duration-300">Luxe</span>
-                      </p>
-                      <span className="text-yellow-500 text-[10px] md:text-[11px] animate-pulse group-hover/logo:rotate-[360deg] group-hover/logo:scale-125 transition-all duration-700 inline-block origin-center">
-                        ✦
-                      </span>
-                    </div>
-                  </div>
-                )}
+                <img
+                  src={siteLogo || LOGO_PLACEHOLDER}
+                  onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+                  alt="Aaramdehi"
+                  className="h-12 w-12 md:h-14 md:w-14 shrink-0 aspect-square object-contain transition-transform duration-300 group-hover/logo:scale-105"
+                />
               </Link>
             </div>
 

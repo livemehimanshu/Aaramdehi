@@ -234,7 +234,7 @@ const AuthPage = () => {
                 {view === 'login' && (
                     <div className="animate-in fade-in duration-500">
                         <div className="text-center mb-8">
-                            <h1 className="text-4xl font-black text-red-500">Aaramdehi</h1>
+                            <img src="/aaramdehi-logo.svg" alt="Aaramdehi" className="mx-auto h-20 w-20 rounded-full object-cover" />
                             <p className="text-slate-400 mt-2 font-medium">Welcome back, login to continue</p>
                             <p className="text-slate-500 text-sm mt-1">AES-256 Encryption Active</p>
                         </div>

@@ -19,7 +19,7 @@ const Home = () => {
         title="Premium Furniture & Home Decor | Aaramdehi"
         description="Discover premium furniture, beds, sofas, and home decor at Aaramdehi. Shop modern and timeless designs curated for comfort and style."
         keywords="furniture, home decor, beds, sofas, premium furniture, aaramdehi"
-        ogImage="/logo.png"
+        ogImage="/aaramdehi-logo.svg"
         ogUrl={canonicalUrl}
         path="/"
       />

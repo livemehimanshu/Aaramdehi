@@ -1,5 +1,5 @@
 const CACHE_NAME = 'aaramdehi-static-v2';
-const APP_SHELL = ['/', '/index.html', '/manifest.json', '/logo.png'];
+const APP_SHELL = ['/', '/index.html', '/manifest.json', '/aaramdehi-logo.svg'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then(async (cache) => {

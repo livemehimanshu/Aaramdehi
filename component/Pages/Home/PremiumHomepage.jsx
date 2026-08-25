@@ -43,7 +43,7 @@ export default function PremiumHomepage() {
     <div className="bg-[#FAF9F6] min-h-screen font-sans text-[#2D2D2D]">
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="text-xl font-bold tracking-wider text-[#1A365D]">AARAMDEHI</div>
+          <img src="/aaramdehi-logo.svg" alt="Aaramdehi" className="h-12 w-12 shrink-0 aspect-square object-contain" />
           <div className="hidden md:flex space-x-8 text-sm font-medium tracking-wide text-gray-600">
             <a href="#shop" className="hover:text-[#1A365D]">Shop</a>
             <a href="#collections" className="hover:text-[#1A365D]">Collections</a>

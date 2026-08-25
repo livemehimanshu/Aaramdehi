@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getSettingsAPI, getProductByIdAPI } from '../../src/api/authAndAdminApi';
 
-const LOGO_PLACEHOLDER = "https://placehold.co/200x100?text=Aaramdehi";
+const LOGO_PLACEHOLDER = "/aaramdehi-logo.svg";
 
 const AaramdehiAdBanner = () => {
   const [siteLogo, setSiteLogo] = useState(null);
@@ -62,17 +62,12 @@ const AaramdehiAdBanner = () => {
         {/* Brand Logo / Name */}
         <div className="flex-shrink-0">
           <Link to="/" className="flex items-center gap-2">
-            {siteLogo ? (
-              <img 
-                src={siteLogo} 
-                onError={(e) => { e.target.src = LOGO_PLACEHOLDER; }}
-                alt="Logo" 
-                className="h-8 sm:h-10 object-contain" />
-            ) : (
-              <span className="text-2xl font-extrabold tracking-wider text-slate-800 uppercase sm:text-3xl">
-                Aaram<span className="text-indigo-600">dehi</span>
-              </span>
-            )}
+            <img
+              src={siteLogo || LOGO_PLACEHOLDER}
+              onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
+              alt="Aaramdehi"
+              className="h-14 w-14 sm:h-16 sm:w-16 shrink-0 aspect-square object-contain"
+            />
           </Link>
         </div>
 

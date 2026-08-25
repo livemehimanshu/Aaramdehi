@@ -33,7 +33,7 @@ const GiftCards = () => {
                     </div>
                     <div className="w-80 bg-blue-600 rounded-xl p-6 text-white relative overflow-hidden h-48">
                         <div className="flex justify-between items-start">
-                            <p className="font-bold text-xl italic tracking-widest">Aaramdehi</p>
+                            <img src="/aaramdehi-logo.svg" alt="Aaramdehi" className="h-12 w-12 shrink-0 aspect-square rounded-full object-contain" />
                         </div>
                         <div className="mt-12">
                             <p className="text-xs opacity-80 uppercase">Gift Card Value</p>

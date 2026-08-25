@@ -74,7 +74,7 @@ const ProductPage = () => {
         title={productTitle}
         description={productDescription}
         keywords={productKeywords}
-        ogImage={product.thumbnail || '/logo.png'}
+        ogImage={product.thumbnail || '/aaramdehi-logo.svg'}
         ogUrl={window.location.href}
       />
       <JsonLdSchema product={product} />

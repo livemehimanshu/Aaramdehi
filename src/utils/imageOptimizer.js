@@ -7,9 +7,13 @@ export const optimizeImage = (url, width = 800) => {
 
   // Cloudinary image optimization
   if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
-    // Avoid double transformation if already optimized
-    if (url.includes('f_auto') || url.includes('q_auto')) return url;
-    return url.replace('/upload/', `/upload/f_auto,q_auto,w_${width}/`);
+    const uploadMarker = '/upload/';
+    const uploadIndex = url.indexOf(uploadMarker);
+    const afterUpload = url.slice(uploadIndex + uploadMarker.length);
+    const segments = afterUpload.split('/');
+    const hasTransformations = /^(?:f_auto|q_auto|w_\d+|c_limit|c_fill)(?:,|$)/.test(segments[0]);
+    if (hasTransformations) segments.shift();
+    return `${url.slice(0, uploadIndex + uploadMarker.length)}f_auto,q_auto,c_limit,w_${width}/${segments.join('/')}`;
   }
 
   // Unsplash image optimization
@@ -33,17 +37,14 @@ export const getResponsiveImageAttributes = (url, widths = [500, 800, 1200], siz
   if (!url || typeof url !== 'string') return { src: url, srcSet: undefined, sizes: undefined };
 
   if (url.includes('res.cloudinary.com') && url.includes('/upload/')) {
-    if (url.includes('f_auto') || url.includes('q_auto')) {
-      return { src: url, srcSet: undefined, sizes: undefined }; // Already optimized, avoid double logic
-    }
     const srcSet = widths.map(w => {
       const transform = isThumbnail ? `c_limit,w_${w},f_auto,q_auto` : `f_auto,q_auto,w_${w}`;
-      return `${url.replace('/upload/', `/upload/${transform}/`)} ${w}w`;
+      return `${buildCloudinaryUrl(url, transform)} ${w}w`;
     }).join(', ');
     
     // Default src uses the middle or largest width
     const defaultTransform = isThumbnail ? `c_limit,w_${widths[0]},f_auto,q_auto` : `f_auto,q_auto,w_${widths[0]}`;
-    const src = url.replace('/upload/', `/upload/${defaultTransform}/`);
+    const src = buildCloudinaryUrl(url, defaultTransform);
 
     return { src, srcSet, sizes };
   }
@@ -63,4 +64,13 @@ export const getResponsiveImageAttributes = (url, widths = [500, 800, 1200], siz
   }
 
   return { src: url, srcSet: undefined, sizes: undefined };
+};
+
+const buildCloudinaryUrl = (url, transform) => {
+  const uploadMarker = '/upload/';
+  const uploadIndex = url.indexOf(uploadMarker);
+  const afterUpload = url.slice(uploadIndex + uploadMarker.length);
+  const segments = afterUpload.split('/');
+  if (/^(?:f_auto|q_auto|w_\d+|c_limit|c_fill)(?:,|$)/.test(segments[0])) segments.shift();
+  return `${url.slice(0, uploadIndex + uploadMarker.length)}${transform}/${segments.join('/')}`;
 };

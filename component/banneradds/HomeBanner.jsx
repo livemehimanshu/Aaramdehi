@@ -138,11 +138,11 @@ const HomeBanner = ({ section = 'hero' }) => {
                                             <video
                                                 src={mediaSrc}
                                                 poster={banner.poster || banner.thumbnail || DEFAULT_HERO[0].image}
-                                                autoPlay={!isFirst}
+                                                autoPlay
                                                 muted
                                                 loop
                                                 playsInline
-                                                preload={isFirst ? 'none' : 'metadata'}
+                                                preload="metadata"
                                                 className="h-full w-full object-cover"
                                             />
                                         ) : (

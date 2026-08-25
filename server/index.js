@@ -18,13 +18,13 @@ import fs from 'fs';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
-import rateLimit from 'express-rate-limit';
 import morgan from "morgan";
 import helmet from "helmet";
 import http from 'node:http';
 import https from 'node:https';
 import { URL } from 'node:url';
 import securityHeaders from './middleware/securityHeaders.js';
+import { apiLimiter } from './middleware/rateLimiters.js';
 
 // Payment Credentials Listener Import
 import { initPaymentGatewaySync } from './config/paymentConfig.js';
@@ -124,6 +124,7 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(securityHeaders);
 app.use(helmet({ crossOriginResourcePolicy: false }));
+app.use('/api', apiLimiter);
 
 const apiRouter = express.Router();
 

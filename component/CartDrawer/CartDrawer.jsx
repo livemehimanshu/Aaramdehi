@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IoCloseOutline, IoTrashOutline, IoAddOutline, IoRemoveOutline } from "react-icons/io5";
 import { Link } from 'react-router-dom';
 import { useCart } from '../../src/hooks/useCart';
@@ -55,7 +55,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   <div>
                     <div className="flex justify-between items-start gap-2">
                       <h3 className="text-[13px] font-semibold text-gray-700 leading-tight">{item.name}</h3>
-                      <button onClick={() => removeFromCart(item._id || item.id)} className="text-gray-500 hover:text-red-500">
+                      <button onClick={() => removeFromCart(item)} className="text-gray-500 hover:text-red-500">
                         <IoTrashOutline size={18} />
                       </button>
                     </div>
@@ -65,9 +65,9 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   {/* Quantity Selector */}
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center border border-gray-200 rounded">
-                      <button onClick={() => updateQty(item._id || item.id, -1)} className="p-1 hover:bg-gray-100"><IoRemoveOutline size={14} /></button>
+                      <button onClick={() => updateQty(item, -1)} className="p-1 hover:bg-gray-100"><IoRemoveOutline size={14} /></button>
                         <span className="px-3 text-sm font-bold">{item.quantity}</span>
-                      <button onClick={() => updateQty(item._id || item.id, 1)} className="p-1 hover:bg-gray-100"><IoAddOutline size={14} /></button>
+                      <button onClick={() => updateQty(item, 1)} className="p-1 hover:bg-gray-100"><IoAddOutline size={14} /></button>
                     </div>
                   </div>
                 </div>

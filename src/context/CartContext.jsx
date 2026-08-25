@@ -11,6 +11,15 @@ export const useCart = () => {
 };
 
 export const CartProvider = ({ children }) => {
+  const getCartItemKey = (product) => {
+    const productId = String(product._id || product.id || '');
+    const size = String(product.selectedSize || product.size?.label || product.size?.name || product.size || '');
+    const color = typeof product.color === 'object'
+      ? String(product.color.label || product.color.name || product.color.value || '')
+      : String(product.color || '');
+    return `${productId}::${size}::${color}`;
+  };
+
   const [cart, setCart] = useState(() => {
     try { return JSON.parse(localStorage.getItem('cart')) || []; } catch { return []; }
   });
@@ -70,9 +79,10 @@ export const CartProvider = ({ children }) => {
       quantity: product.quantity || 1,
       image: product.image || product.thumbnail || (product.images && product.images[0]?.url) || ''
     };
+    normalizedProduct.cartKey = getCartItemKey(normalizedProduct);
 
     setCart(prev => {
-      const idx = prev.findIndex(p => String(p._id || p.id) === targetId);
+      const idx = prev.findIndex(p => (p.cartKey || getCartItemKey(p)) === normalizedProduct.cartKey);
       if (idx !== -1) {
         const copy = [...prev];
         copy[idx] = { 
@@ -87,9 +97,9 @@ export const CartProvider = ({ children }) => {
 
   // ✅ 2. UPDATE QUANTITY (Fixes string/number ID comparison)
   const updateQty = (id, delta) => {
-    const targetId = String(id);
+    const targetKey = typeof id === 'object' ? (id.cartKey || getCartItemKey(id)) : String(id);
     setCart(prev => prev.map(item => 
-      String(item._id || item.id) === targetId 
+      (typeof id === 'object' ? (item.cartKey || getCartItemKey(item)) === targetKey : String(item._id || item.id) === targetKey)
         ? { ...item, quantity: Math.max(1, (item.quantity || 1) + delta) } 
         : item
     ));
@@ -97,8 +107,10 @@ export const CartProvider = ({ children }) => {
 
   // ✅ 3. REMOVE FROM CART (Fixes ID mismatch bug)
   const removeFromCart = (id) => {
-    const targetId = String(id);
-    setCart(prev => prev.filter(p => String(p._id || p.id) !== targetId));
+    const targetKey = typeof id === 'object' ? (id.cartKey || getCartItemKey(id)) : String(id);
+    setCart(prev => prev.filter(p => typeof id === 'object'
+      ? (p.cartKey || getCartItemKey(p)) !== targetKey
+      : String(p._id || p.id) !== targetKey));
   };
 
   // ✅ 4. WISHLIST FUNCTIONS

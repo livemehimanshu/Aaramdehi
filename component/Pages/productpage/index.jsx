@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SEO from '../../header/SEO'; // SEO Component Import Kiya
 import JsonLdSchema from '../../../server/routes/JsonLdSchema.jsx';
-import { getAllProductsAPI, validateCouponAPI } from '../../../src/api/authAndAdminApi';
+import { getProductByIdAPI, validateCouponAPI } from '../../../src/api/authAndAdminApi';
 import { useCart } from '../../../src/context/CartContext';
 import { BsLightningCharge } from 'react-icons/bs';
 import toast from 'react-hot-toast'; // ✅ Import toast
@@ -14,23 +14,33 @@ const ProductPage = () => {
   const { addToCart, setIsCartOpen } = useCart();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedImage, setSelectedImage] = useState('');
   const [couponInput, setCouponInput] = useState("");
   const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [couponMessage, setCouponMessage] = useState({ type: '', text: '' });
+  const [pincode, setPincode] = useState('');
+  const [pincodeMessage, setPincodeMessage] = useState('');
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const res = await getAllProductsAPI();
-        const found = res.data?.find(p => String(p._id || p.id) === String(id));
+        setFetchError('');
+        const res = await getProductByIdAPI(id);
+        const found = res.data;
         if (found) {
           setProduct(found);
+          setSelectedImage(found.thumbnail || found.images?.[0]?.url || found.images?.[0] || '');
           setSelectedSize(found.sizes?.[0] || { label: 'Standard', price: found.sellingPrice || found.price });
+        } else {
+          setProduct(null);
         }
       } catch (err) {
-        console.error("Error:", err);
+        console.error("Error fetching product:", err);
+        setFetchError(err.response?.status === 404 ? '' : 'Unable to load this product. Please try again.');
+        setProduct(null);
       } finally {
         setLoading(false);
       }
@@ -52,6 +62,19 @@ const ProductPage = () => {
     } catch {
       setCouponMessage({ type: 'error', text: 'Validation failed' });
     }
+  };
+
+  const handleSizeChange = (size) => {
+    setSelectedSize(size);
+    setAppliedDiscount(0);
+    setCouponMessage({ type: '', text: '' });
+  };
+
+  const handleCheckPincode = () => {
+    const normalizedPincode = pincode.trim();
+    setPincodeMessage(/^\d{6}$/.test(normalizedPincode)
+      ? 'Pincode format is valid. Delivery availability will be confirmed at checkout.'
+      : 'Enter a valid 6-digit pincode.');
   };
 
   const finalPrice = useMemo(() => {
@@ -84,6 +107,7 @@ const ProductPage = () => {
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-[5px] animate-pulse">Loading Product...</div>;
+  if (fetchError) return <div className="min-h-screen flex flex-col items-center justify-center gap-4"><p role="alert">{fetchError}</p><button onClick={() => window.location.reload()} className="border px-4 py-2 rounded font-bold">Retry</button></div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product Not Found</div>;
 
   const productTitle = `${product.name} | Aaramdehi`;
@@ -108,14 +132,14 @@ const ProductPage = () => {
         <div className="w-full md:w-1/2 flex flex-col gap-4">
           <div className="sticky top-8">
             <div className="aspect-[4/5] bg-gray-100 rounded-lg overflow-hidden border">
-              <img src={product.thumbnail || (product.images?.[0]?.url)} alt={product.name} className="w-full h-full object-cover" />
+              <img src={selectedImage || product.thumbnail || product.images?.[0]?.url} alt={product.name} className="w-full h-full object-cover" />
             </div>
             {/* Thumbnail Row */}
             <div className="flex gap-2 mt-4 overflow-x-auto">
               {product.images?.map((img, i) => (
-                <div key={i} className="w-20 h-20 border rounded cursor-pointer hover:border-blue-500 shrink-0">
-                   <img src={img.url || img} alt="thumb" className="w-full h-full object-cover" />
-                </div>
+                 <button type="button" key={i} onClick={() => setSelectedImage(img.url || img)} aria-label={`View product image ${i + 1}`} className="w-20 h-20 border rounded cursor-pointer hover:border-blue-500 shrink-0">
+                   <img src={img.url || img} alt="" loading="lazy" className="w-full h-full object-cover" />
+                 </button>
               ))}
             </div>
           </div>
@@ -142,10 +166,10 @@ const ProductPage = () => {
 
           {/* ✅ COUPON INPUT SECTION */}
           <div className="mt-6 pt-6 border-t border-gray-100">
-            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Apply Coupon</p>
+            <label htmlFor="product-coupon" className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 block">Apply Coupon</label>
             <div className="flex gap-2">
               <input 
-                type="text" value={couponInput}
+                id="product-coupon" type="text" value={couponInput}
                 onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                 placeholder="ENTER CODE"
                 className="flex-1 bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-black outline-none focus:border-blue-900 transition-all"
@@ -164,28 +188,29 @@ const ProductPage = () => {
               {product.sizes?.map((size) => (
                 <button
                   key={size.label}
-                  onClick={() => setSelectedSize(size)}
+                  onClick={() => handleSizeChange(size)}
                   className={`px-4 py-2 border rounded font-bold ${selectedSize?.label === size.label ? 'border-blue-600 text-blue-600 bg-blue-50' : 'border-gray-300'}`}
                 >
                   {size.label}
                 </button>
               )) || (
-                <button className="px-4 py-2 border border-blue-600 text-blue-600 bg-blue-50 rounded font-bold">Standard</button>
+                <button type="button" className="px-4 py-2 border border-blue-600 text-blue-600 bg-blue-50 rounded font-bold">Standard</button>
               )}
             </div>
           </div>
 
           {/* Delivery Check */}
           <div className="mt-8 p-4 border rounded-lg bg-gray-50">
-            <p className="font-medium text-gray-700">Delivery Details</p>
+            <label htmlFor="product-pincode" className="font-medium text-gray-700">Delivery Details</label>
             <div className="flex gap-2 mt-2">
               <input 
-                type="text" 
+                id="product-pincode" type="text" inputMode="numeric" maxLength={6} value={pincode} onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
                 placeholder="Enter Pincode" 
                 className="border p-2 rounded flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-              <button className="text-blue-600 font-bold px-4">Check</button>
+              <button type="button" onClick={handleCheckPincode} className="text-blue-600 font-bold px-4">Check</button>
             </div>
+            {pincodeMessage && <p role="status" className="text-xs mt-2 text-gray-600">{pincodeMessage}</p>}
           </div>
 
           {/* Buttons */}

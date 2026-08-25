@@ -115,7 +115,7 @@ const NewsletterFooter = () => {
               Discover premium furniture and home decor designed for comfort and elegance.
             </p>
             <div className="space-y-2">
-              <p className="text-white/80 text-sm font-medium">sales@aaramdehi.com</p>
+              <p className="text-white/80 text-sm font-medium">aaramdehi.co.in</p>
               <p className="text-[#FAF9F6] text-lg font-semibold tracking-wide">(+91) 800-659-4734</p>
             </div>
             <div className="flex items-center gap-4 mt-6">

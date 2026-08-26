@@ -93,7 +93,7 @@ const NewsletterFooter = () => {
             </p>
             <div className="space-y-2">
               <p className="text-white/80 text-sm font-medium">sales@aaramdehi.com</p>
-              <p className="text-[#FAF9F6] text-lg font-semibold tracking-wide">(+91) 9876-543-210</p>
+              <p className="text-[#FAF9F6] text-lg font-semibold tracking-wide">(+91) 800-6594-734</p>
             </div>
             <div className="flex items-center gap-4 mt-6">
                <div className="w-10 h-10 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#1A365D] transition-all duration-300 cursor-pointer"><FaFacebookF size={14} /></div>

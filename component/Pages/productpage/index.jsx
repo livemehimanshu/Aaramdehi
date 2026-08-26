@@ -110,9 +110,11 @@ const ProductPage = () => {
   if (fetchError) return <div className="min-h-screen flex flex-col items-center justify-center gap-4"><p role="alert">{fetchError}</p><button onClick={() => window.location.reload()} className="border px-4 py-2 rounded font-bold">Retry</button></div>;
   if (!product) return <div className="min-h-screen flex items-center justify-center">Product Not Found</div>;
 
-  const productTitle = product.name;
-  const productDescription = (product.shortDescription || product.description || `Shop ${product.name} at Aaramdehi for premium quality, comfort, and timeless style.`).replace(/\s+/g, ' ').trim();
-  const productKeywords = [product.category, product.brand, product.name, 'Aaramdehi', 'furniture', 'home decor']
+  const productTitle = product.seoTitle || product.name;
+  const productDescription = (product.seoDescription || product.shortDescription || product.description || `Shop ${product.name} at Aaramdehi for premium quality, comfort, and timeless style.`).replace(/\s+/g, ' ').trim();
+  const productKeywords = (Array.isArray(product.seoKeywords) && product.seoKeywords.length > 0
+    ? product.seoKeywords
+    : [product.category, product.brand, product.name, 'Aaramdehi', 'furniture', 'home decor'])
     .filter(Boolean)
     .join(', ');
 

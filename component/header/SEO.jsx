@@ -31,6 +31,10 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, ogType =
     ? (/aaramdehi/i.test(title) ? title : `${title} | ${siteName}`)
     : siteName;
   const defaultDescription = "Aaramdehi offers premium furniture and home decor. Redefine your comfort with our curated collection.";
+  const normalizedDescription = String(description || defaultDescription).replace(/\s+/g, ' ').trim();
+  const normalizedKeywords = Array.isArray(keywords)
+    ? keywords.filter(Boolean).join(', ')
+    : String(keywords || "furniture, luxury bedding, home decor, Aaramdehi");
   
   // Only callers that explicitly mark a page as non-indexable receive noindex.
   // is404 remains supported for existing callers that identify a real missing resource.
@@ -44,8 +48,8 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, ogType =
     <Helmet>
       {/* Standard metadata tags */}
       <title>{fullTitle}</title>
-      <meta name='description' content={description || defaultDescription} />
-      <meta name='keywords' content={keywords || "furniture, luxury bedding, home decor, Aaramdehi"} />
+      <meta name='description' content={normalizedDescription} />
+      <meta name='keywords' content={normalizedKeywords} />
       {shouldNoindex ? (
         <meta name='robots' content='noindex,nofollow' />
       ) : (
@@ -58,7 +62,7 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, ogType =
       {/* Open Graph / Facebook */}
       <meta property="og:type" content={ogType} />
       <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description || defaultDescription} />
+      <meta property="og:description" content={normalizedDescription} />
       <meta property="og:image" content={absoluteImage} />
       <meta property="og:image:alt" content={title || 'Aaramdehi'} />
       <meta property="og:url" content={cleanCanonical} />
@@ -66,7 +70,7 @@ const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, ogType =
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description || defaultDescription} />
+      <meta name="twitter:description" content={normalizedDescription} />
       <meta name="twitter:image" content={absoluteImage} />
 
       {/* JSON-LD Structured Data */}

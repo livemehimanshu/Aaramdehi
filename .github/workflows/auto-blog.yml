@@ -36,3 +36,4 @@ jobs:
           UNSPLASH_API_KEY: ${{ secrets.UNSPLASH_API_KEY }}
           GEMINI_MODEL: ${{ secrets.GEMINI_MODEL }}
           FRONTEND_URL: https://www.aaramdehi.co.in
+          FORCE_AUTO_BLOG: true

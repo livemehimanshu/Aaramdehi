@@ -97,6 +97,11 @@ const normalizeProductPayload = (found) => {
     reviews: Array.isArray(source.reviews) ? source.reviews : [],
     category: source.category || '',
     tags: source.tags || [],
+    seoTitle: source.seoTitle || '',
+    seoDescription: source.seoDescription || '',
+    seoKeywords: Array.isArray(source.seoKeywords)
+      ? source.seoKeywords
+      : (typeof source.seoKeywords === 'string' ? source.seoKeywords.split(',').map((keyword) => keyword.trim()).filter(Boolean) : []),
     productInformation: Array.isArray(source.productInformation) ? source.productInformation : []
   };
 };
@@ -286,7 +291,11 @@ const ProductDetailsPage = () => {
       const amount = parsePrice(selectedSize?.price);
       const rawUserData = localStorage.getItem('userData');
       let userData = null;
-      try { userData = rawUserData ? JSON.parse(rawUserData) : null; } catch {}
+      try {
+        userData = rawUserData ? JSON.parse(rawUserData) : null;
+      } catch (error) {
+        console.warn('Unable to parse stored user data:', error);
+      }
       const activeUserId = userData?._id || userData?.id;
 
       const res = await validateCouponAPI({ 
@@ -395,7 +404,9 @@ const ProductDetailsPage = () => {
 
   const productKeywords = useMemo(() => {
     if (!productData) return '';
-    const keywordsArray = [productData.name, productData.brand, productData.category, ...(productData.tags || [])];
+    const keywordsArray = productData.seoKeywords?.length
+      ? productData.seoKeywords
+      : [productData.name, productData.brand, productData.category, ...(productData.tags || [])];
     return keywordsArray.filter(Boolean).join(', ');
   }, [productData]);
 
@@ -503,8 +514,8 @@ const ProductDetailsPage = () => {
       {/* SEO Component */}
       {productData && (
         <SEO
-          title={productData.name}
-          description={productData.description}
+          title={productData.seoTitle || productData.name}
+          description={productData.seoDescription || productData.description}
           keywords={productKeywords}
           ogImage={selectedImage || PLACEHOLDER_IMAGE}
           ogUrl={window.location.href}

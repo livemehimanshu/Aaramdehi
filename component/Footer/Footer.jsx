@@ -63,7 +63,7 @@ const NewsletterFooter = () => {
   };
 
   return (
-    <div className="bg-[#1A365D] text-white border-t border-gray-100">
+    <footer className="bg-[#1A365D] text-white border-t border-gray-100">
       
       {/* 1. Premium Service Badges Section */}
       <div className="max-w-7xl mx-auto px-4 py-16">
@@ -178,7 +178,7 @@ const NewsletterFooter = () => {
           </div>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };
 

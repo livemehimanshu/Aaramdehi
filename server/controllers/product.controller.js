@@ -788,8 +788,8 @@ export const updateProduct = async (req, res) => {
             stock: stock !== undefined ? Number(stock) : undefined,
             sku,
             isActive: isActive !== undefined ? (isActive === 'true' || isActive === true) : undefined,
-            seoTitle: seoTitle || name,
-            seoDescription
+            seoTitle: seoTitle !== undefined ? seoTitle : (existingProduct.seoTitle || name),
+            seoDescription: seoDescription !== undefined ? seoDescription : existingProduct.seoDescription,
         };
 
         if (sizes !== undefined) {
@@ -886,7 +886,7 @@ export const updateProduct = async (req, res) => {
 
         if (tags) updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
 
-        const searchKeywordsRaw = req.body.seoKeywords || req.body.searchKeywords;
+        const searchKeywordsRaw = seoKeywords || req.body.searchKeywords;
         if (searchKeywordsRaw) {
             updateData.seoKeywords = (typeof searchKeywordsRaw === 'string' && searchKeywordsRaw.trim())
                 ? searchKeywordsRaw.replace(/\[|\]|"/g, '').split(',').map(k => k.trim()).filter(Boolean)

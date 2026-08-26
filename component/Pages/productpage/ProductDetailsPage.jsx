@@ -526,7 +526,7 @@ const ProductDetailsPage = () => {
             "@type": "Product",
             "name": productData.name,
             "image": selectedImage || productData.images?.[0]?.url || productData.images?.[0],
-            "description": productData.description,
+            "description": productData.seoDescription || productData.description,
             "brand": {
               "@type": "Brand",
               "name": productData.brand || "Aaramdehi"
@@ -578,9 +578,6 @@ const ProductDetailsPage = () => {
           <meta property="og:site_name" content="Aaramdehi Luxe" />
           <meta property="product:price:amount" content={finalPrice} />
           <meta property="product:price:currency" content="INR" />
-          <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={`Buy ${productData.name} - Aaramdehi`} />
-          <meta name="twitter:image" content={selectedImage || productData.images?.[0]?.url || productData.images?.[0]} />
         </Helmet>
       )}
 

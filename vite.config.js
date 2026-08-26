@@ -2,19 +2,21 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
+const localApiTarget = process.env.VITE_DEV_API_TARGET || 'https://aaramdehi.onrender.com'
+
 export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
       // 1. Auth routes (login/register) ko backend par bhejne ke liye
       '/auth': {
-        target: 'http://localhost:8000',
+        target: localApiTarget,
         changeOrigin: true,
         secure: false,
       },
       // 2. Baki normal API routes ke liye
       '/api': {
-        target: 'http://localhost:8000',
+        target: localApiTarget,
         changeOrigin: true,
         secure: false,
       },

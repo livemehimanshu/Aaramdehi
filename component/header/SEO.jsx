@@ -27,7 +27,9 @@ const getNormalizedUrl = (url, siteUrl) => {
 const SEO = ({ title, description, keywords, ogImage, path = '', ogUrl, ogType = 'website', schemaType, schemaData, noindex = false, is404 = false }) => {
   const siteName = "Aaramdehi - Comfort Redefined";
   const siteUrl = "https://www.aaramdehi.co.in";
-  const fullTitle = title ? `${title} | ${siteName}` : siteName;
+  const fullTitle = title
+    ? (/aaramdehi/i.test(title) ? title : `${title} | ${siteName}`)
+    : siteName;
   const defaultDescription = "Aaramdehi offers premium furniture and home decor. Redefine your comfort with our curated collection.";
   
   // Only callers that explicitly mark a page as non-indexable receive noindex.

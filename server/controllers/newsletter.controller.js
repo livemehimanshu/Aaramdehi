@@ -75,7 +75,7 @@ export const deleteNewsletterSubscriber = async (req, res) => {
 
 export const sendNewsletter = async (req, res) => {
   try {
-    const { subject, message } = req.body;
+    const { subject, message, recipients } = req.body;
 
     if (!subject || !subject.trim()) {
       return res.status(400).json({ success: false, message: 'Subject is required.' });
@@ -85,8 +85,18 @@ export const sendNewsletter = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Message is required.' });
     }
 
-    const subscribers = await findAll(COLLECTION);
-    if (!subscribers.length) {
+    const storedSubscribers = (await findAll(COLLECTION)).filter((subscriber) => subscriber.status !== 'unsubscribed');
+    const requestedRecipients = Array.isArray(recipients)
+      ? [...new Set(recipients.map((email) => String(email).trim().toLowerCase()).filter((email) => validateEmail(email)))]
+      : [];
+    if (requestedRecipients.length > 5000) {
+      return res.status(400).json({ success: false, message: 'A maximum of 5,000 recipients can be emailed at once.' });
+    }
+
+    const recipientEmails = requestedRecipients.length > 0
+      ? requestedRecipients
+      : storedSubscribers.map((subscriber) => subscriber.email).filter((email) => validateEmail(email));
+    if (!recipientEmails.length) {
       return res.status(400).json({ success: false, message: 'No subscribers available to send newsletter.' });
     }
 
@@ -100,13 +110,13 @@ export const sendNewsletter = async (req, res) => {
       </div>
     `;
 
-    const sendPromises = subscribers.map((subscriber) =>
+    const sendPromises = recipientEmails.map((email) =>
       sendEmail({
-        sendTo: subscriber.email,
+        sendTo: email,
         subject: subject.trim(),
-        html: template(subscriber.email),
-      }).then((result) => ({ email: subscriber.email, success: result.success }))
-        .catch((error) => ({ email: subscriber.email, success: false, error: error.message }))
+        html: template(email),
+      }).then((result) => ({ email, success: result.success }))
+        .catch((error) => ({ email, success: false, error: error.message }))
     );
 
     const results = await Promise.allSettled(sendPromises);
@@ -115,8 +125,8 @@ export const sendNewsletter = async (req, res) => {
 
     return res.json({
       success: true,
-      message: `Newsletter has been queued for ${sent} subscriber(s). ${failed ? `${failed} delivery(s) failed.` : ''}`,
-      stats: { sent, failed },
+      message: `Newsletter has been sent to ${sent} recipient(s). ${failed ? `${failed} delivery(s) failed.` : ''}`,
+      stats: { sent, failed, total: recipientEmails.length, source: requestedRecipients.length > 0 ? 'csv' : 'subscribers' },
     });
   } catch (error) {
     console.error('❌ [Send Newsletter Error]:', error);

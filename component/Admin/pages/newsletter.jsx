@@ -39,6 +39,9 @@ export default function NewsletterPage() {
   const [subject, setSubject] = useState('Aaramdehi Daily Comfort Update');
   const [message, setMessage] = useState('Discover today\'s comfort tips, fresh products, and special offers from Aaramdehi.');
   const [sending, setSending] = useState(false);
+  const [csvRecipients, setCsvRecipients] = useState([]);
+  const [csvFileName, setCsvFileName] = useState('');
+  const [csvErrors, setCsvErrors] = useState([]);
 
   const loadSubscribers = async (reset = false) => {
     try {
@@ -120,10 +123,12 @@ export default function NewsletterPage() {
   const handleSendNewsletter = async (event) => {
     event.preventDefault();
     if (!subject.trim() || !message.trim()) return toast.error('Subject and message are required.');
-    if (!subscribers.some((subscriber) => subscriber.status !== 'unsubscribed')) return toast.error('No active subscribers available.');
+    const activeCount = subscribers.filter((subscriber) => subscriber.status !== 'unsubscribed').length;
+    if (!csvRecipients.length && !activeCount) return toast.error('No active subscribers available.');
+    if (!window.confirm(`Send this newsletter to ${csvRecipients.length || activeCount} recipient(s)?`)) return;
     try {
       setSending(true);
-      const response = await sendNewsletterAPI({ subject: subject.trim(), message: message.trim() });
+      const response = await sendNewsletterAPI({ subject: subject.trim(), message: message.trim(), recipients: csvRecipients.length ? csvRecipients : undefined });
       if (!response.success) throw new Error(response.message || 'Unable to send newsletter.');
       toast.success(response.message || 'Newsletter sent successfully.');
     } catch (error) {
@@ -131,6 +136,30 @@ export default function NewsletterPage() {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleCsvUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setCsvFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const values = String(reader.result || '').split(/[\r\n,;]+/).map((value) => value.trim().replace(/^['"]|['"]$/g, '').toLowerCase()).filter(Boolean);
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const valid = [...new Set(values.filter((value) => emailPattern.test(value)))].slice(0, 5000);
+      const invalid = [...new Set(values.filter((value) => !emailPattern.test(value)))].slice(0, 10);
+      setCsvRecipients(valid);
+      setCsvErrors(invalid);
+      if (!valid.length) toast.error('No valid email addresses found in this CSV.');
+      else toast.success(`${valid.length} email address(es) ready for sending.`);
+    };
+    reader.readAsText(file);
+  };
+
+  const clearCsv = () => {
+    setCsvRecipients([]);
+    setCsvErrors([]);
+    setCsvFileName('');
   };
 
   return (
@@ -198,8 +227,22 @@ export default function NewsletterPage() {
           <input value={subject} onChange={(event) => setSubject(event.target.value)} placeholder="Email subject" className="rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-emerald-400" />
           <textarea value={message} onChange={(event) => setMessage(event.target.value)} rows={3} placeholder="Write your newsletter message..." className="rounded-xl border border-gray-800 bg-gray-950 px-4 py-3 text-white outline-none focus:border-emerald-400 md:row-span-2" />
         </div>
+        <div className="mt-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-white">Send to CSV email list</p>
+              <p className="mt-1 text-xs text-gray-400">Upload one email per line, or a CSV with an Email column. CSV recipients override the saved subscriber list.</p>
+            </div>
+            <label className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-blue-500 px-4 py-3 text-xs font-bold text-white hover:bg-blue-400">
+              <Mail size={15} /> Choose CSV
+              <input type="file" accept=".csv,text/csv" onChange={handleCsvUpload} className="hidden" />
+            </label>
+          </div>
+          {csvFileName && <div className="mt-3 flex flex-wrap items-center gap-3 text-xs"><span className="text-blue-200">{csvFileName}: {csvRecipients.length} valid recipient(s)</span><button type="button" onClick={clearCsv} className="text-rose-300 hover:text-rose-200">Clear CSV</button></div>}
+          {csvErrors.length > 0 && <p className="mt-2 text-xs text-amber-300">Skipped invalid values: {csvErrors.join(', ')}</p>}
+        </div>
         <button type="submit" disabled={sending} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-3 font-bold text-gray-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60">
-          <Send size={16} /> {sending ? 'Sending...' : 'Send to Active Subscribers'}
+          <Send size={16} /> {sending ? 'Sending...' : csvRecipients.length ? `Send to CSV (${csvRecipients.length})` : 'Send to Active Subscribers'}
         </button>
       </form>
 

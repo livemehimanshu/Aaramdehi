@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllProductsAPI, updateProductAPI, getProductSeoAPI, publishProductSeoAPI } from '../../../src/api/authAndAdminApi';
-import { Search, Edit, Save, Loader2, Info, Globe, Send, ShieldCheck } from 'lucide-react';
+import { getAllProductsAPI, updateProductAPI, getProductSeoAPI, publishProductSeoAPI, suggestProductSeoAPI } from '../../../src/api/authAndAdminApi';
+import { Search, Edit, Save, Loader2, Info, Globe, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import SEO from '../../header/SEO';
 import toast from 'react-hot-toast';
 
@@ -19,8 +19,30 @@ const ProductSeoEditor = () => {
     });
     const [isSaving, setIsSaving] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
+    const [isSuggesting, setIsSuggesting] = useState(false);
+    const [suggestion, setSuggestion] = useState(null);
     const [seoStatus, setSeoStatus] = useState('draft');
     const [validation, setValidation] = useState({ valid: false, errors: [], warnings: [], score: 0 });
+
+    const getSeoValidation = (data, product) => {
+        const title = String(data.seoTitle || '').toLowerCase();
+        const description = String(data.seoDescription || '').trim();
+        const keywords = String(data.seoKeywords || '').split(',').map((keyword) => keyword.trim()).filter(Boolean);
+        const tokens = (value) => String(value || '').toLowerCase().match(/[a-z0-9]+/g) || [];
+        const titleTokens = new Set(tokens(title));
+        const nameTokens = tokens(product?.name).filter((token) => token.length > 2);
+        const errors = [];
+        const warnings = [];
+        if (!title) errors.push('SEO title is required.');
+        if (title.length < 30 || title.length > 60) errors.push('SEO title must be between 30 and 60 characters.');
+        if (!description) errors.push('SEO description is required.');
+        if (description.length < 120 || description.length > 160) errors.push('SEO description must be between 120 and 160 characters.');
+        if (keywords.length === 0) errors.push('At least one focus keyword is required.');
+        if (keywords.length > 10) errors.push('Use no more than 10 focus keywords.');
+        if (nameTokens.length > 0 && !nameTokens.some((token) => titleTokens.has(token))) warnings.push('SEO title does not contain the product name.');
+        if (keywords.length > 0 && !keywords.some((keyword) => tokens(keyword).some((token) => titleTokens.has(token)))) warnings.push('SEO title does not contain any focus keyword.');
+        return { valid: errors.length === 0, errors, warnings, score: Math.max(0, Math.round(((4 - errors.length) / 4) * 100)) };
+    };
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
@@ -71,15 +93,39 @@ const ProductSeoEditor = () => {
                 });
                 setSeoStatus(p.status || 'draft');
                 setValidation(p.validation || { valid: false, errors: [], warnings: [], score: 0 });
+                setSuggestion(null);
+                setIsSuggesting(true);
+                try {
+                    const suggestionResponse = await suggestProductSeoAPI(productId);
+                    if (suggestionResponse.success) setSuggestion(suggestionResponse.data);
+                } catch (suggestionError) {
+                    toast.error(suggestionError.response?.data?.message || 'Gemini SEO suggestion unavailable.');
+                } finally {
+                    setIsSuggesting(false);
+                }
             }
         } catch {
             toast.error("Error loading product SEO details.");
         }
     };
 
+    const applySuggestion = () => {
+        if (!suggestion) return;
+        const nextData = {
+            seoTitle: suggestion.seoTitle,
+            seoDescription: suggestion.seoDescription,
+            seoKeywords: suggestion.seoKeywords.join(', ')
+        };
+        setSeoData(nextData);
+        setValidation(getSeoValidation(nextData, selectedProduct));
+        toast.success('Gemini suggestion applied as draft. Review before saving.');
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setSeoData(prev => ({ ...prev, [name]: value }));
+        const nextData = { ...seoData, [name]: value };
+        setSeoData(nextData);
+        if (selectedProduct) setValidation(getSeoValidation(nextData, selectedProduct));
     };
 
     const handleSaveSeo = async (e) => {
@@ -224,6 +270,24 @@ const ProductSeoEditor = () => {
                                     </span>
                                     <span className="text-gray-500">Quality score: {validation.score || 0}%</span>
                                 </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 space-y-4">
+                                <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                        <h4 className="flex items-center gap-2 text-sm font-black uppercase tracking-wider text-emerald-300"><Sparkles size={16} /> Gemini SEO Suggestions</h4>
+                                        <p className="mt-1 text-xs text-gray-400">Generated from this product's description. Nothing is published automatically.</p>
+                                    </div>
+                                    {suggestion && <button type="button" onClick={applySuggestion} className="shrink-0 rounded-xl bg-emerald-500 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-gray-950 hover:bg-emerald-400">Use Suggestion</button>}
+                                </div>
+                                {isSuggesting ? <p className="flex items-center gap-2 text-xs text-emerald-300"><Loader2 className="animate-spin" size={14} /> Analysing product description...</p> : suggestion ? (
+                                    <div className="space-y-3 text-xs">
+                                        <p><strong className="text-gray-500">Suggested title:</strong> <span className="text-white">{suggestion.seoTitle}</span></p>
+                                        <p><strong className="text-gray-500">Suggested description:</strong> <span className="text-gray-300">{suggestion.seoDescription}</span></p>
+                                        <div className="flex flex-wrap gap-2">{suggestion.seoKeywords.map((keyword) => <span key={keyword} className="rounded-full border border-emerald-500/20 px-2 py-1 text-emerald-300">{keyword}</span>)}</div>
+                                        {suggestion.reasoning && <p className="text-gray-500">{suggestion.reasoning}</p>}
+                                    </div>
+                                ) : <p className="text-xs text-gray-500">No suggestion available. Check Gemini configuration and try selecting the product again.</p>}
                             </div>
 
                             <div className="space-y-6">

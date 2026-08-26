@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-const localApiTarget = process.env.VITE_DEV_API_TARGET || 'https://aaramdehi.onrender.com'
+const localApiTarget = process.env.VITE_DEV_API_TARGET || 'http://127.0.0.1:8000'
 
 export default defineConfig({
   plugins: [react()],

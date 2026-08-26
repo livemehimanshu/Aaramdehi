@@ -56,6 +56,11 @@ export async function publishProductSeoAPI(id) {
   return res.data;
 }
 
+export async function suggestProductSeoAPI(id) {
+  const res = await api.post(`/products/${id}/seo/suggest`);
+  return res.data;
+}
+
 export async function deleteProductAPI(id) {
   try {
     const res = await api.delete(`/products/${id}`);

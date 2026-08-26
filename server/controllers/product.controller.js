@@ -10,11 +10,22 @@ const parseSeoKeywords = (value) => {
     return String(value).replace(/\[|\]|"/g, '').split(',').map((keyword) => keyword.trim()).filter(Boolean);
 };
 
+const seoTokens = (value) => String(value || '').toLowerCase().match(/[a-z0-9]+/g) || [];
+
+const parseGeminiJson = (text) => {
+    const cleaned = String(text || '').replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start < 0 || end <= start) return null;
+    try { return JSON.parse(cleaned.slice(start, end + 1)); } catch { return null; }
+};
+
 const validateSeoDraft = ({ name, seoTitle, seoDescription, seoKeywords }) => {
     const title = String(seoTitle || '').trim();
     const description = String(seoDescription || '').trim();
     const keywords = parseSeoKeywords(seoKeywords);
-    const normalizedName = String(name || '').toLowerCase();
+    const titleTokens = new Set(seoTokens(title));
+    const nameTokens = seoTokens(name).filter((token) => token.length > 2);
     const errors = [];
     const warnings = [];
 
@@ -24,10 +35,14 @@ const validateSeoDraft = ({ name, seoTitle, seoDescription, seoKeywords }) => {
     if (description.length < 120 || description.length > 160) errors.push('SEO description must be between 120 and 160 characters.');
     if (keywords.length === 0) errors.push('At least one focus keyword is required.');
     if (keywords.length > 10) errors.push('Use no more than 10 focus keywords.');
-    if (title && normalizedName && !title.toLowerCase().includes(normalizedName)) {
+    if (title && nameTokens.length > 0 && !nameTokens.some((token) => titleTokens.has(token))) {
         warnings.push('SEO title does not contain the product name.');
     }
-    if (keywords.length > 0 && !keywords.some((keyword) => title.toLowerCase().includes(keyword.toLowerCase()))) {
+    const hasKeywordMatch = keywords.some((keyword) => {
+        const keywordTokens = seoTokens(keyword).filter((token) => token.length > 2);
+        return keywordTokens.some((token) => titleTokens.has(token));
+    });
+    if (keywords.length > 0 && !hasKeywordMatch) {
         warnings.push('SEO title does not contain any focus keyword.');
     }
 
@@ -1276,13 +1291,16 @@ export const getProductSeo = async (req, res) => {
     try {
         const product = await findById(COLLECTION, req.params.id);
         if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
-        const draft = {
+        const currentDraft = {
             seoTitle: product.seoDraftTitle || product.seoTitle || product.name || '',
             seoDescription: product.seoDraftDescription || product.seoDescription || product.shortDescription || '',
-            seoKeywords: product.seoDraftKeywords || product.seoKeywords || [],
+            seoKeywords: product.seoDraftKeywords || product.seoKeywords || []
+        };
+        const draft = {
+            ...currentDraft,
             status: product.seoStatus || 'published',
             publishedAt: product.seoPublishedAt || null,
-            validation: product.seoValidation || validateSeoDraft({ name: product.name, seoTitle: product.seoTitle, seoDescription: product.seoDescription, seoKeywords: product.seoKeywords })
+            validation: validateSeoDraft({ name: product.name, ...currentDraft })
         };
         return res.json({ success: true, data: draft });
     } catch (error) {
@@ -1326,5 +1344,47 @@ export const publishProductSeo = async (req, res) => {
         return res.json({ success: true, message: 'SEO published successfully.', data: updatedProduct, validation });
     } catch (error) {
         return res.status(500).json({ success: false, message: 'Failed to publish product SEO', error: error.message });
+    }
+};
+
+export const suggestProductSeo = async (req, res) => {
+    try {
+        const product = await findById(COLLECTION, req.params.id);
+        if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+        const settings = await findAll('settings');
+        const configSnapshot = await db.ref('admin_settings/ai_config').once('value');
+        const aiConfig = configSnapshot.val() || {};
+        const apiKey = process.env.GEMINI_API_KEY || settings.find((setting) => setting.key === 'AI_BLOGGER_GEMINI_API_KEY')?.value || aiConfig.geminiApiKey;
+        if (!apiKey) return res.status(503).json({ success: false, message: 'Gemini is not configured. Add the key in AI Blogger settings.' });
+        const model = process.env.GEMINI_MODEL || aiConfig.selectedModel || settings.find((setting) => setting.key === 'AI_BLOGGER_MODEL')?.value || 'gemini-3.6-flash';
+        const productContext = {
+            name: product.name || product.title || '',
+            brand: product.brand || 'Aaramdehi',
+            category: product.category || '',
+            description: String(product.description || '').slice(0, 5000),
+            shortDescription: String(product.shortDescription || '').slice(0, 1000),
+            existingKeywords: product.seoDraftKeywords || product.seoKeywords || []
+        };
+        const prompt = `You are an expert ecommerce SEO editor for Aaramdehi. Use only the supplied product facts. Do not invent material, benefits, sizes, certifications, prices or claims. Create a natural SEO title of 30-60 characters containing the product name's most important words, a useful meta description of 120-160 characters, and 3-8 relevant focus keyword phrases. Return only JSON: {"seoTitle":"","seoDescription":"","seoKeywords":[""],"reasoning":"brief explanation"}. Product: ${JSON.stringify(productContext)}`;
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2, responseMimeType: 'application/json' } })
+        });
+        const data = await response.json();
+        if (!response.ok) return res.status(response.status === 429 ? 429 : 502).json({ success: false, message: data.error?.message || 'Gemini suggestion request failed.' });
+        const suggestion = parseGeminiJson(data.candidates?.[0]?.content?.parts?.[0]?.text);
+        if (!suggestion?.seoTitle || !suggestion?.seoDescription || !Array.isArray(suggestion.seoKeywords)) {
+            return res.status(502).json({ success: false, message: 'Gemini returned an incomplete SEO suggestion.' });
+        }
+        return res.json({ success: true, data: {
+            seoTitle: String(suggestion.seoTitle).trim(),
+            seoDescription: String(suggestion.seoDescription).trim(),
+            seoKeywords: suggestion.seoKeywords.map((keyword) => String(keyword).trim()).filter(Boolean).slice(0, 10),
+            reasoning: String(suggestion.reasoning || '').trim()
+        } });
+    } catch (error) {
+        console.error('Product SEO suggestion failed:', error.message);
+        return res.status(500).json({ success: false, message: 'Unable to generate SEO suggestions right now.' });
     }
 };

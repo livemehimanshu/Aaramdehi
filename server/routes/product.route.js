@@ -12,6 +12,7 @@ import {
     deleteProductReview
     ,getProductSeo
     ,publishProductSeo
+    ,suggestProductSeo
 } from '../controllers/product.controller.js';
 
 // ✅ Protected Middleware
@@ -36,6 +37,7 @@ productRouter.post('/create', isAuthenticatedUser, isAdmin, upload.any(), create
 productRouter.put('/:id', isAuthenticatedUser, isAdmin, upload.any(), updateProduct);
 productRouter.get('/:id/seo', isAuthenticatedUser, isAdmin, getProductSeo);
 productRouter.post('/:id/seo/publish', isAuthenticatedUser, isAdmin, publishProductSeo);
+productRouter.post('/:id/seo/suggest', isAuthenticatedUser, isAdmin, suggestProductSeo);
 
 // Delete product
 productRouter.delete('/:id', isAuthenticatedUser, isAdmin, deleteProduct);

@@ -63,6 +63,7 @@ export const otpLimiter = rateLimit({
 export const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // 100 requests per window
+  skip: (req) => req.method === 'GET' || req.method === 'HEAD',
   message: {
     success: false,
     message: 'Too many requests. Please try again later.',

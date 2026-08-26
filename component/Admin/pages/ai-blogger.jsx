@@ -257,7 +257,7 @@ export default function AiBloggerPage() {
           {queue.length === 0 ? <p className="text-sm text-slate-500">No scheduled topics yet.</p> : queue.map((item) => (
             <div key={item._id} className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[#0F1219] p-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0"><p className="break-words font-semibold text-white">{item.topic}</p><p className="mt-1 text-xs text-slate-500">{item.status} · {item.language || 'English'} · {new Date(item.publishAt).toLocaleString('en-IN')}</p></div>
-              {['pending', 'Scheduled'].includes(item.status) && <button type="button" onClick={() => handleDeleteSchedule(item._id)} className="self-start rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-400/10 sm:self-auto">Delete</button>}
+              {['pending', 'Pending', 'scheduled', 'Scheduled'].includes(item.status) && <button type="button" onClick={() => handleDeleteSchedule(item._id)} className="self-start rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-400/10 sm:self-auto">Delete</button>}
             </div>
           ))}
         </div>

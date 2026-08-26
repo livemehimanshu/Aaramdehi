@@ -341,7 +341,7 @@ export const createAiBlogQueueItem = async (req, res) => {
     if (!topic || topic.length > 500 || Number.isNaN(new Date(publishAt).getTime())) {
       return res.status(400).json({ success: false, message: 'Valid topic and publish date are required.' });
     }
-    const item = await create('blog_queue', { topic, focusKeyword, language, publishAt, status: 'pending', createdBy: req.userId });
+    const item = await create('blog_queue', { topic, focusKeyword, language, publishAt, status: 'scheduled', createdBy: req.userId });
     return res.status(201).json({ success: true, data: item });
   } catch (error) {
     return res.status(400).json({ success: false, message: 'Valid topic and publish date are required.' });
@@ -376,7 +376,7 @@ export const bulkCreateAiBlogQueue = async (req, res) => {
       const parsedPublishAt = publishAt ? new Date(publishAt) : new Date(Date.now() + 60000);
       if (Number.isNaN(parsedPublishAt.getTime())) return;
       const key = db.ref('blog_queue').push().key;
-      updates[`blog_queue/${key}`] = { topic: cleanTopic, focusKeyword: String(focusKeyword).trim(), language: String(language).trim() || 'English', publishAt: parsedPublishAt.toISOString(), status: 'pending', createdBy: req.userId, createdAt: Date.now() };
+      updates[`blog_queue/${key}`] = { topic: cleanTopic, focusKeyword: String(focusKeyword).trim(), language: String(language).trim() || 'English', publishAt: parsedPublishAt.toISOString(), status: 'scheduled', createdBy: req.userId, createdAt: Date.now() };
     });
     if (!Object.keys(updates).length) return res.status(400).json({ success: false, message: 'No valid topics found in CSV.' });
     await db.ref().update(updates);

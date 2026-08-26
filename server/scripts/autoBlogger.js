@@ -113,7 +113,7 @@ async function notifyGoogle(url) {
   await google.indexing({ version: 'v3', auth: client }).urlNotifications.publish({ requestBody: { url, type: 'URL_UPDATED' } });
 }
 
-export async function runAutomation({ topic: requestedTopic = '', force = false, focusKeyword = '', language = '', categoryHint = '' } = {}) {
+export async function runAutomation({ topic: requestedTopic = '', force = false, focusKeyword = '', language = '', categoryHint = '', queueOnly = false } = {}) {
   const [settingsSnapshot, configSnapshot, firestoreConfigSnapshot, blogsSnapshot, queueSnapshot] = await Promise.all([
     settingsRef.once('value'),
     database.ref('admin_settings/ai_config').once('value'),
@@ -143,28 +143,34 @@ export async function runAutomation({ topic: requestedTopic = '', force = false,
   const currentTime = Date.now();
   const dueQueueItems = Object.entries(queueSnapshot.val() || {})
     .map(([id, item]) => ({ id, ...item }))
-    .filter((item) => ['pending', 'Scheduled'].includes(item.status) && new Date(item.publishAt).getTime() <= currentTime)
+    .filter((item) => {
+      const status = String(item.status || '').toLowerCase();
+      const isStaleProcessing = status === 'processing' && currentTime - new Date(item.startedAt || 0).getTime() > 10 * 60 * 1000;
+      return (['pending', 'scheduled'].includes(status) || isStaleProcessing) && new Date(item.publishAt).getTime() <= currentTime;
+    })
     .sort((a, b) => new Date(a.publishAt) - new Date(b.publishAt));
   const queueItem = !requestedTopic.trim() && !force ? dueQueueItems[0] : null;
-  if (!requestedTopic.trim() && !force && !queueItem && configuredTopics.length === 0) {
+  if (!requestedTopic.trim() && !force && !queueItem && (queueOnly || configuredTopics.length === 0)) {
     console.log('No scheduled AI blog topic is due.');
     return;
   }
   const topicPool = configuredTopics.length > 0 ? configuredTopics : topics;
   const topic = requestedTopic.trim() || queueItem?.topic || topicPool[existingBlogs.length % topicPool.length];
-  const article = await generateArticle(geminiApiKey, model, topic, {
+  const now = new Date().toISOString();
+  if (queueItem) await queueRef.child(queueItem.id).update({ status: 'processing', startedAt: now });
+  try {
+    const article = await generateArticle(geminiApiKey, model, topic, {
     writingTone: aiConfig.writingTone,
     focusKeyword: focusKeyword || queueItem?.focusKeyword || aiConfig.focusKeyword,
     language: language || queueItem?.language || aiConfig.language,
     categoryHint: categoryHint || queueItem?.categoryHint || aiConfig.categoryHint,
     customInstructions: firestoreConfig.customInstructions || aiConfig.customInstructions,
-  });
+    });
   const slug = slugify(article.slug || article.title);
   if (!slug || !article.title || !article.content) throw new Error('Generated article is missing required fields');
   if (existingBlogs.some((blog) => blog.slug === slug)) throw new Error(`Blog slug already exists: ${slug}`);
 
   const image = await fetchCoverImage(unsplashApiKey, article.imageSearchQuery || topic);
-  const now = new Date().toISOString();
   const articleWordCount = countWords(article.content);
   const readTimeMinutes = Math.max(1, Math.ceil(articleWordCount / 200));
   const articleLanguage = language || queueItem?.language || aiConfig.language || 'English';
@@ -206,11 +212,27 @@ export async function runAutomation({ topic: requestedTopic = '', force = false,
   await logsRef.push({ title: article.title, topic, status: 'success', mode: shouldPublish ? 'publish' : 'draft', timestamp: now, blogId: key });
   console.log(`${shouldPublish ? 'Published' : 'Saved draft'} AI blog: ${targetUrl}`);
   return { blogId: key, title: article.title, status: blog.status, mode: publishingMode };
+  } catch (error) {
+    if (queueItem) await queueRef.child(queueItem.id).update({ status: 'failed', failedAt: new Date().toISOString(), error: error.message });
+    throw error;
+  }
 }
 
 const isDirectExecution = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isDirectExecution) {
-  runAutomation().catch((error) => {
+  const runDueQueue = async () => {
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      let result;
+      try {
+        result = await runAutomation({ queueOnly: true });
+      } catch (error) {
+        console.error('Scheduled AI blog failed; continuing with the next due topic:', error.message);
+        continue;
+      }
+      if (!result) break;
+    }
+  };
+  runDueQueue().catch((error) => {
     console.error('AI Blogger failed:', error);
     process.exitCode = 1;
   });

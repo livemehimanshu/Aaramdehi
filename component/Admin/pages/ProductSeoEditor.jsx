@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllProductsAPI, updateProductAPI, getProductByIdAPI } from '../../../src/api/authAndAdminApi';
-import { Search, Edit, Save, Loader2, Info, Globe } from 'lucide-react';
+import { getAllProductsAPI, updateProductAPI, getProductSeoAPI, publishProductSeoAPI } from '../../../src/api/authAndAdminApi';
+import { Search, Edit, Save, Loader2, Info, Globe, Send, ShieldCheck } from 'lucide-react';
 import SEO from '../../header/SEO';
 import toast from 'react-hot-toast';
 
@@ -18,6 +18,9 @@ const ProductSeoEditor = () => {
         seoKeywords: ''
     });
     const [isSaving, setIsSaving] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
+    const [seoStatus, setSeoStatus] = useState('draft');
+    const [validation, setValidation] = useState({ valid: false, errors: [], warnings: [], score: 0 });
 
     const fetchProducts = useCallback(async () => {
         setLoading(true);
@@ -58,16 +61,18 @@ const ProductSeoEditor = () => {
         setSelectedProduct(product);
         try {
             const productId = product._id || product.id;
-            const res = await getProductByIdAPI(productId);
+            const res = await getProductSeoAPI(productId);
             if (res.success) {
                 const p = res.data;
                 setSeoData({
-                    seoTitle: p.seoTitle || p.name || '',
-                    seoDescription: p.seoDescription || p.shortDescription || '',
+                    seoTitle: p.seoTitle || '',
+                    seoDescription: p.seoDescription || '',
                     seoKeywords: Array.isArray(p.seoKeywords) ? p.seoKeywords.join(', ') : (p.seoKeywords || '')
                 });
+                setSeoStatus(p.status || 'draft');
+                setValidation(p.validation || { valid: false, errors: [], warnings: [], score: 0 });
             }
-        } catch (err) {
+        } catch {
             toast.error("Error loading product SEO details.");
         }
     };
@@ -92,15 +97,40 @@ const ProductSeoEditor = () => {
             const productId = selectedProduct._id || selectedProduct.id;
             const res = await updateProductAPI(productId, formData);
             if (res.success) {
-                toast.success("SEO details updated successfully!");
+                setSeoStatus('draft');
+                setValidation(res.data?.seoValidation || validation);
+                toast.success("SEO draft saved for review.");
                 fetchProducts(); // Refresh list
             } else {
                 toast.error(res.message || "Failed to update SEO.");
             }
-        } catch (err) {
+        } catch {
             toast.error("Server connection error.");
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handlePublishSeo = async () => {
+        if (!selectedProduct) return;
+        setIsPublishing(true);
+        try {
+            const productId = selectedProduct._id || selectedProduct.id;
+            const res = await publishProductSeoAPI(productId);
+            if (!res.success) {
+                setValidation(res.validation || validation);
+                toast.error(res.message || 'SEO cannot be published yet.');
+                return;
+            }
+            setSeoStatus('published');
+            setValidation(res.validation || validation);
+            toast.success('SEO published after validation.');
+            fetchProducts();
+        } catch (err) {
+            setValidation(err.response?.data?.validation || validation);
+            toast.error(err.response?.data?.message || 'Publishing failed.');
+        } finally {
+            setIsPublishing(false);
         }
     };
 
@@ -188,6 +218,12 @@ const ProductSeoEditor = () => {
                             <div>
                                 <h3 className="text-2xl font-black text-white tracking-tighter uppercase mb-1">Optimizing: {selectedProduct.name}</h3>
                                 <p className="text-blue-500 text-[10px] font-black uppercase tracking-[0.3em]">ID: {selectedProduct._id}</p>
+                                <div className="mt-4 flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest">
+                                    <span className={`px-3 py-1 rounded-full ${seoStatus === 'published' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`}>
+                                        {seoStatus === 'published' ? 'Published' : 'Draft Review'}
+                                    </span>
+                                    <span className="text-gray-500">Quality score: {validation.score || 0}%</span>
+                                </div>
                             </div>
 
                             <div className="space-y-6">
@@ -249,14 +285,23 @@ const ProductSeoEditor = () => {
                                 </div>
                             </div>
 
-                            <button 
-                                type="submit" 
-                                disabled={isSaving}
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50"
-                            >
-                                {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                                {isSaving ? 'Updating SEO...' : 'Save & Publish SEO Data'}
-                            </button>
+                            {(validation.errors?.length > 0 || validation.warnings?.length > 0) && (
+                                <div className="rounded-2xl border border-gray-800 bg-gray-950 p-5 space-y-2 text-xs">
+                                    {validation.errors?.map((item) => <p key={item} className="text-rose-400">{item}</p>)}
+                                    {validation.warnings?.map((item) => <p key={item} className="text-amber-400">{item}</p>)}
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <button type="submit" disabled={isSaving || isPublishing} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-600/20 active:scale-95 disabled:opacity-50">
+                                    {isSaving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
+                                    {isSaving ? 'Saving Draft...' : 'Save Draft'}
+                                </button>
+                                <button type="button" onClick={handlePublishSeo} disabled={isSaving || isPublishing} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-5 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-lg shadow-emerald-600/20 active:scale-95 disabled:opacity-50">
+                                    {isPublishing ? <Loader2 className="animate-spin" size={20} /> : (validation.valid ? <Send size={20} /> : <ShieldCheck size={20} />)}
+                                    {isPublishing ? 'Publishing...' : 'Validate & Publish'}
+                                </button>
+                            </div>
                         </form>
                     )}
                 </div>

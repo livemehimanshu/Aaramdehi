@@ -46,6 +46,16 @@ export async function updateProductAPI(id, formData) {
   }
 }
 
+export async function getProductSeoAPI(id) {
+  const res = await api.get(`/products/${id}/seo`);
+  return res.data;
+}
+
+export async function publishProductSeoAPI(id) {
+  const res = await api.post(`/products/${id}/seo/publish`);
+  return res.data;
+}
+
 export async function deleteProductAPI(id) {
   try {
     const res = await api.delete(`/products/${id}`);

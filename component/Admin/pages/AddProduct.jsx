@@ -298,7 +298,7 @@ const AddProduct = () => {
       const res = await createProductAPI(data);
 
       if (res.success) {
-        setMessage({ type: 'success', text: 'Product published successfully! 🎉' });
+        setMessage({ type: 'success', text: 'Product created. SEO draft is ready for manual review.' });
         setTimeout(() => navigate('/admin/products'), 2000);
       } else {
         throw new Error(res.message || 'Failed to add product.');

@@ -4,6 +4,36 @@ import { MultiversalEngine } from "../utils/MultiversalEngine.js";
 
 const COLLECTION = 'products';
 
+const parseSeoKeywords = (value) => {
+    if (Array.isArray(value)) return value.map((keyword) => String(keyword).trim()).filter(Boolean);
+    if (!value) return [];
+    return String(value).replace(/\[|\]|"/g, '').split(',').map((keyword) => keyword.trim()).filter(Boolean);
+};
+
+const validateSeoDraft = ({ name, seoTitle, seoDescription, seoKeywords }) => {
+    const title = String(seoTitle || '').trim();
+    const description = String(seoDescription || '').trim();
+    const keywords = parseSeoKeywords(seoKeywords);
+    const normalizedName = String(name || '').toLowerCase();
+    const errors = [];
+    const warnings = [];
+
+    if (!title) errors.push('SEO title is required.');
+    if (title.length < 30 || title.length > 60) errors.push('SEO title must be between 30 and 60 characters.');
+    if (!description) errors.push('SEO description is required.');
+    if (description.length < 120 || description.length > 160) errors.push('SEO description must be between 120 and 160 characters.');
+    if (keywords.length === 0) errors.push('At least one focus keyword is required.');
+    if (keywords.length > 10) errors.push('Use no more than 10 focus keywords.');
+    if (title && normalizedName && !title.toLowerCase().includes(normalizedName)) {
+        warnings.push('SEO title does not contain the product name.');
+    }
+    if (keywords.length > 0 && !keywords.some((keyword) => title.toLowerCase().includes(keyword.toLowerCase()))) {
+        warnings.push('SEO title does not contain any focus keyword.');
+    }
+
+    return { valid: errors.length === 0, errors, warnings, score: Math.max(0, Math.round(((4 - errors.length) / 4) * 100)) };
+};
+
 // In-memory cache for products to avoid fetching entire collection on every request
 let _productsCache = {
     items: null,
@@ -535,9 +565,14 @@ export const createProduct = async (req, res) => {
             specifications: parsedSpecs,
             specs: parsedSpecs,
             features: parsedFeatures,
-            seoTitle: seoTitle || name,
-            seoDescription: seoDescription || shortDescription || "",
-            seoKeywords: (typeof seoKeywords === 'string' && seoKeywords.trim()) ? seoKeywords.split(',').map(k => k.trim()) : [],
+            seoTitle: name,
+            seoDescription: shortDescription || "",
+            seoKeywords: [],
+            seoDraftTitle: seoTitle || name,
+            seoDraftDescription: seoDescription || shortDescription || "",
+            seoDraftKeywords: parseSeoKeywords(seoKeywords),
+            seoStatus: 'draft',
+            seoPublishedAt: null,
             slug,
             createdBy: userId || null
         };
@@ -788,8 +823,8 @@ export const updateProduct = async (req, res) => {
             stock: stock !== undefined ? Number(stock) : undefined,
             sku,
             isActive: isActive !== undefined ? (isActive === 'true' || isActive === true) : undefined,
-            seoTitle: seoTitle !== undefined ? seoTitle : (existingProduct.seoTitle || name),
-            seoDescription: seoDescription !== undefined ? seoDescription : existingProduct.seoDescription,
+            seoTitle: seoTitle !== undefined ? existingProduct.seoTitle : undefined,
+            seoDescription: seoDescription !== undefined ? existingProduct.seoDescription : undefined,
         };
 
         if (sizes !== undefined) {
@@ -886,11 +921,18 @@ export const updateProduct = async (req, res) => {
 
         if (tags) updateData.tags = (typeof tags === 'string' && tags.trim()) ? tags.split(',').map(t => t.trim()) : tags;
 
-        const searchKeywordsRaw = seoKeywords || req.body.searchKeywords;
-        if (searchKeywordsRaw) {
-            updateData.seoKeywords = (typeof searchKeywordsRaw === 'string' && searchKeywordsRaw.trim())
-                ? searchKeywordsRaw.replace(/\[|\]|"/g, '').split(',').map(k => k.trim()).filter(Boolean)
-                : searchKeywordsRaw;
+        const searchKeywordsRaw = seoKeywords !== undefined ? seoKeywords : req.body.searchKeywords;
+        if (searchKeywordsRaw !== undefined || seoTitle !== undefined || seoDescription !== undefined) {
+            updateData.seoDraftTitle = seoTitle !== undefined ? String(seoTitle).trim() : (existingProduct.seoDraftTitle || existingProduct.seoTitle || existingProduct.name);
+            updateData.seoDraftDescription = seoDescription !== undefined ? String(seoDescription).trim() : (existingProduct.seoDraftDescription || existingProduct.seoDescription || '');
+            updateData.seoDraftKeywords = parseSeoKeywords(searchKeywordsRaw !== undefined ? searchKeywordsRaw : (existingProduct.seoDraftKeywords || existingProduct.seoKeywords));
+            updateData.seoStatus = 'draft';
+            updateData.seoValidation = validateSeoDraft({
+                name: existingProduct.name || name,
+                seoTitle: updateData.seoDraftTitle,
+                seoDescription: updateData.seoDraftDescription,
+                seoKeywords: updateData.seoDraftKeywords
+            });
         }
 
         if (specifications && typeof specifications === 'string') {
@@ -1023,6 +1065,21 @@ export const updateProduct = async (req, res) => {
         }
 
         const updatedProduct = await updateById(COLLECTION, id, updateData);
+
+        if (updateData.seoDraftTitle !== undefined || updateData.seoDraftDescription !== undefined || updateData.seoDraftKeywords !== undefined) {
+            await create('seo_audit', {
+                productId: id,
+                action: 'save_draft',
+                actorId: req.userId || req.user?._id || req.user?.id || null,
+                snapshot: {
+                    seoTitle: updateData.seoDraftTitle,
+                    seoDescription: updateData.seoDraftDescription,
+                    seoKeywords: updateData.seoDraftKeywords,
+                    validation: updateData.seoValidation
+                },
+                createdAt: new Date().toISOString()
+            });
+        }
 
         return res.json({ success: true, message: "Updated successfully", data: updatedProduct });
     } catch (error) {
@@ -1212,5 +1269,62 @@ export const getDashboardStats = async (req, res) => {
         });
     } catch (error) {
         return res.status(500).json({ success: false, error: error.message });
+    }
+};
+
+export const getProductSeo = async (req, res) => {
+    try {
+        const product = await findById(COLLECTION, req.params.id);
+        if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+        const draft = {
+            seoTitle: product.seoDraftTitle || product.seoTitle || product.name || '',
+            seoDescription: product.seoDraftDescription || product.seoDescription || product.shortDescription || '',
+            seoKeywords: product.seoDraftKeywords || product.seoKeywords || [],
+            status: product.seoStatus || 'published',
+            publishedAt: product.seoPublishedAt || null,
+            validation: product.seoValidation || validateSeoDraft({ name: product.name, seoTitle: product.seoTitle, seoDescription: product.seoDescription, seoKeywords: product.seoKeywords })
+        };
+        return res.json({ success: true, data: draft });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Failed to load product SEO', error: error.message });
+    }
+};
+
+export const publishProductSeo = async (req, res) => {
+    try {
+        const product = await findById(COLLECTION, req.params.id);
+        if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+        const draft = {
+            seoTitle: product.seoDraftTitle || product.seoTitle || product.name,
+            seoDescription: product.seoDraftDescription || product.seoDescription || product.shortDescription || '',
+            seoKeywords: product.seoDraftKeywords || product.seoKeywords || []
+        };
+        const validation = validateSeoDraft({ name: product.name, ...draft });
+        if (!validation.valid) {
+            return res.status(422).json({ success: false, message: 'SEO draft needs correction before publishing.', validation });
+        }
+
+        const now = new Date().toISOString();
+        const updatedProduct = await updateById(COLLECTION, req.params.id, {
+            seoTitle: draft.seoTitle,
+            seoDescription: draft.seoDescription,
+            seoKeywords: draft.seoKeywords,
+            seoStatus: 'published',
+            seoPublishedAt: now,
+            seoPublishedBy: req.userId || req.user?._id || req.user?.id,
+            seoValidation: validation
+        });
+        await create('seo_audit', {
+            productId: req.params.id,
+            action: 'publish',
+            actorId: req.userId || req.user?._id || req.user?.id || null,
+            snapshot: draft,
+            createdAt: now
+        });
+
+        return res.json({ success: true, message: 'SEO published successfully.', data: updatedProduct, validation });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Failed to publish product SEO', error: error.message });
     }
 };

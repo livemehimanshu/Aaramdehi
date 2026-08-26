@@ -48,7 +48,7 @@ const ContactUs = () => {
               </div>
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Email</p>
-                <p className="text-[#1A365D] font-bold">support@aaramdehi.co.in</p>
+                <p className="text-[#1A365D] font-bold">sales@aaramdehi.com</p>
               </div>
             </div>
 
@@ -58,7 +58,7 @@ const ContactUs = () => {
               </div>
               <div>
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Phone</p>
-                <p className="text-[#1A365D] font-bold">+91 98765 43210</p>
+                <p className="text-[#1A365D] font-bold">(+91) 9876-543-210</p>
               </div>
             </div>
 

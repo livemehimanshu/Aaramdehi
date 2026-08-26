@@ -117,7 +117,7 @@ const verifyEmailTemplate = ({ name, url }) => {
             </div>
 
             <div class="footer">
-                <p>You received this email because you signed up on aaramdehi.com</p>
+                <p>You received this email because you signed up on aaramdehi.co.in</p>
                 <div class="social-links">
                     <a href="#">Facebook</a> | <a href="#">Instagram</a> | <a href="#">Twitter</a>
                 </div>

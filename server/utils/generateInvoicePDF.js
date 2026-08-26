@@ -26,7 +26,7 @@ export const generateInvoicePDF = (order) => {
   doc.setTextColor(100);
   doc.setFont("helvetica", "normal");
   doc.text("Premium Home Decor & Furniture", 14, 26);
-  doc.text("www.aaramdehi.com", 14, 31);
+  doc.text("www.aaramdehi.co.in", 14, 31);
 
   // --- Invoice Info ---
   doc.setFontSize(18);

@@ -80,7 +80,7 @@ export const orderEmailTemplate = (order, type = "CUSTOMER") => {
             <div style="background-color: #f7fafc; padding: 20px; text-align: center; border-top: 1px solid #edf2f7;">
                 <p style="color: #a0aec0; font-size: 11px; margin: 0;">&copy; ${new Date().getFullYear()} Aaramdehi. All rights reserved.</p>
                 <div style="margin-top: 10px;">
-                    <a href="https://aaramdehi.com/orders" style="color: #1e3a8a; font-weight: bold; font-size: 11px; text-decoration: none; text-transform: uppercase;">Track My Order</a>
+                    <a href="https://www.aaramdehi.co.in/orders" style="color: #1e3a8a; font-weight: bold; font-size: 11px; text-decoration: none; text-transform: uppercase;">Track My Order</a>
                 </div>
             </div>
         </div>

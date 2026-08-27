@@ -26,6 +26,7 @@ export default function ShopsPage() {
         city: '',
         state: '',
         pincode: '',
+        creditLimit: 50000,
     });
     const [paymentData, setPaymentData] = useState({
         amount: '',
@@ -35,6 +36,8 @@ export default function ShopsPage() {
         productId: '',
         quantity: 1,
         price: '',
+        name: '',
+        size: '',
     });
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [submitting, setSubmitting] = useState(false);
@@ -88,6 +91,7 @@ export default function ShopsPage() {
                     city: '',
                     state: '',
                     pincode: '',
+                    creditLimit: 50000,
                 });
                 setShowAddModal(false);
                 alert('Shop added successfully!');
@@ -163,6 +167,7 @@ export default function ShopsPage() {
             city: shop.city,
             state: shop.state,
             pincode: shop.pincode,
+            creditLimit: shop.creditLimit ?? 50000,
         });
         setShowEditModal(true);
     };
@@ -227,7 +232,9 @@ export default function ShopsPage() {
             setOrderData(prev => ({
                 ...prev,
                 [name]: value,
-                price: price
+                price: price,
+                name: selectedProduct?.name || '',
+                size: ''
             }));
         } else {
             setOrderData(prev => ({
@@ -246,6 +253,7 @@ export default function ShopsPage() {
         const selectedProduct = products.find(p => p._id === orderData.productId);
         const price = parseFloat(orderData.price) || 0;
         const quantity = parseInt(orderData.quantity);
+        const displayName = orderData.name.trim() || selectedProduct?.name || 'Product';
 
         // Check if product already exists in selected list
         const existingIndex = selectedProducts.findIndex(p => p.productId === orderData.productId);
@@ -255,12 +263,15 @@ export default function ShopsPage() {
             const updated = [...selectedProducts];
             updated[existingIndex].quantity += quantity;
             updated[existingIndex].totalPrice = updated[existingIndex].price * updated[existingIndex].quantity;
+            updated[existingIndex].name = displayName;
+            updated[existingIndex].size = orderData.size.trim();
             setSelectedProducts(updated);
         } else {
             // Add new product
             setSelectedProducts([...selectedProducts, {
                 productId: orderData.productId,
-                name: selectedProduct?.name,
+                name: displayName,
+                size: orderData.size.trim(),
                 quantity: quantity,
                 price: price,
                 image: selectedProduct?.thumbnail || (selectedProduct?.images?.[0]?.url),
@@ -269,7 +280,7 @@ export default function ShopsPage() {
         }
 
         // Clear form
-        setOrderData({ productId: '', quantity: 1, price: '' });
+        setOrderData({ productId: '', quantity: 1, price: '', name: '', size: '' });
     };
 
     const handleRemoveProductFromOrder = (productId) => {
@@ -284,10 +295,12 @@ export default function ShopsPage() {
                 return;
             }
 
-            // FEATURE 4: Credit Limit Guard (₹50,000)
+            // Prevent orders above the admin-configured Khata limit.
             const subtotal = selectedProducts.reduce((sum, p) => sum + p.totalPrice, 0);
-            if ((selectedShop.outstandingBalance + subtotal) > 50000) {
-                alert(`ORDER BLOCKED: This shop has exceeded its credit limit of ₹50,000. Current Balance: ₹${selectedShop.outstandingBalance}`);
+            const outstandingBalance = Number(selectedShop.outstandingBalance || 0);
+            const creditLimit = Number(selectedShop.creditLimit ?? 50000);
+            if ((outstandingBalance + subtotal) > creditLimit) {
+                alert(`ORDER BLOCKED: This shop's Khata limit is ₹${creditLimit.toLocaleString('en-IN')}. Current Balance: ₹${outstandingBalance.toLocaleString('en-IN')}`);
                 return;
             }
 
@@ -297,6 +310,7 @@ export default function ShopsPage() {
                 orderItems: selectedProducts.map(p => ({
                     productId: p.productId,
                     name: p.name,
+                    size: p.size,
                     quantity: p.quantity,
                     price: p.price,
                     image: p.image
@@ -451,6 +465,7 @@ export default function ShopsPage() {
                                 <p className={`text-xl font-black ${shop.outstandingBalance > 0 ? 'text-rose-500' : 'text-emerald-500'}`}>
                                     ₹{Number(shop.outstandingBalance || 0).toLocaleString('en-IN')}
                                 </p>
+                                <p className="text-[10px] text-gray-500 mt-1">Limit: ₹{Number(shop.creditLimit ?? 50000).toLocaleString('en-IN')}</p>
                             </div>
                         </div>
 
@@ -676,6 +691,12 @@ export default function ShopsPage() {
                                 </div>
                             </div>
 
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Khata Credit Limit (₹)</label>
+                                <input type="number" name="creditLimit" min="0" step="1" value={formData.creditLimit} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-emerald-500 transition-all" placeholder="50000" />
+                                <p className="text-[11px] text-gray-500 mt-1">Maximum outstanding amount allowed for this shop.</p>
+                            </div>
+
                             <div className="flex gap-3 pt-4">
                                 <button 
                                     type="button"
@@ -727,6 +748,10 @@ export default function ShopsPage() {
                             <div>
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Address</label>
                                 <input type="text" name="address" value={formData.address} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-emerald-500 outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Khata Credit Limit (₹)</label>
+                                <input type="number" name="creditLimit" min="0" step="1" value={formData.creditLimit} onChange={handleInputChange} className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:border-emerald-500 outline-none" placeholder="50000" />
                             </div>
                             <div className="flex gap-3 pt-4">
                                 <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 bg-gray-800 text-white py-2 rounded-lg font-bold">Cancel</button>
@@ -815,7 +840,7 @@ export default function ShopsPage() {
                                 onClick={() => {
                                     setShowOrderModal(false);
                                     setSelectedProducts([]);
-                                    setOrderData({ productId: '', quantity: 1 });
+                                    setOrderData({ productId: '', quantity: 1, price: '', name: '', size: '' });
                                 }}
                                 className="p-2 hover:bg-gray-800 rounded-lg transition-all"
                             >
@@ -829,13 +854,15 @@ export default function ShopsPage() {
                                 <p className="text-xs text-blue-400 uppercase font-bold mb-1">Shop</p>
                                 <p className="text-lg font-bold text-white">{selectedShop.name}</p>
                                 <p className="text-sm text-gray-500">Owner: {selectedShop.owner}</p>
+                                <p className="text-sm font-bold text-gray-300 mt-2">Khata Limit: <span className="text-blue-400">₹{Number(selectedShop.creditLimit ?? 50000).toLocaleString('en-IN')}</span></p>
                             </div>
 
                             {/* Add Product Form */}
-                            <div className="space-y-4 bg-gray-800/30 p-4 rounded-lg border border-gray-800">
+                            <div className="space-y-4 bg-gray-800/30 p-4 sm:p-5 rounded-lg border border-gray-800">
                                 <p className="text-xs font-bold text-gray-300 uppercase">Add Products to Order</p>
                                 
-                                <div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="sm:col-span-2">
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Product *</label>
                                     <select 
                                         name="productId"
@@ -850,6 +877,31 @@ export default function ShopsPage() {
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Khata Product Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={orderData.name}
+                                        onChange={handleOrderChange}
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-emerald-500 transition-all"
+                                        placeholder="Name for this Khata order"
+                                    />
+                                    <p className="text-[11px] text-gray-500 mt-1">This will not change the catalog product.</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Size</label>
+                                    <input
+                                        type="text"
+                                        name="size"
+                                        value={orderData.size}
+                                        onChange={handleOrderChange}
+                                        className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-emerald-500 transition-all"
+                                        placeholder="e.g. King, 6x4 ft"
+                                    />
                                 </div>
 
                                 <div>
@@ -883,6 +935,7 @@ export default function ShopsPage() {
                                         </p>
                                     )}
                                 </div>
+                                </div>
 
                                 <button 
                                     type="button"
@@ -901,7 +954,8 @@ export default function ShopsPage() {
                                         {selectedProducts.map((product, index) => (
                                             <div key={index} className="bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex items-start justify-between">
                                                 <div className="flex-1">
-                                                    <p className="font-bold text-white text-sm">{product.name}</p>
+                                                    <p className="font-bold text-white text-sm break-words">{product.name}</p>
+                                                    {product.size && <p className="text-xs text-blue-400 mt-1">Size: {product.size}</p>}
                                                     <p className="text-xs text-gray-500 mt-1">
                                                         Qty: <span className="font-bold">{product.quantity}</span> × ₹{Number(product.price).toLocaleString('en-IN')} = <span className="text-emerald-400 font-bold">₹{Number(product.totalPrice).toLocaleString('en-IN')}</span>
                                                     </p>
@@ -934,7 +988,7 @@ export default function ShopsPage() {
                                     onClick={() => {
                                         setShowOrderModal(false);
                                         setSelectedProducts([]);
-                                        setOrderData({ productId: '', quantity: 1 });
+                                        setOrderData({ productId: '', quantity: 1, price: '', name: '', size: '' });
                                     }}
                                     className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg font-bold transition-all"
                                 >

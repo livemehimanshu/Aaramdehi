@@ -134,7 +134,15 @@ export const createOrder = async (req, res) => {
         if (cleanShopId && (paymentMethod === 'Shop Credit' || paymentMethod === 'Khata')) {
             const shop = await findById(SHOP_COLLECTION, cleanShopId);
             if (shop) {
-                updates[`${SHOP_COLLECTION}/${cleanShopId}/outstandingBalance`] = (Number(shop.outstandingBalance || 0)) + finalAmount;
+                const outstandingBalance = Number(shop.outstandingBalance || 0);
+                const creditLimit = Number(shop.creditLimit ?? 50000);
+                if (outstandingBalance + finalAmount > creditLimit) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `Khata credit limit exceeded. Available limit: ₹${Math.max(0, creditLimit - outstandingBalance).toLocaleString('en-IN')}.`
+                    });
+                }
+                updates[`${SHOP_COLLECTION}/${cleanShopId}/outstandingBalance`] = outstandingBalance + finalAmount;
             }
         }
 

@@ -76,7 +76,7 @@ export const getShopById = async (req, res) => {
  */
 export const createShop = async (req, res) => {
   try {
-    const { name, owner, phone, address, city, state, pincode, balance = 0 } = req.body;
+    const { name, owner, phone, address, city, state, pincode, balance = 0, creditLimit = 50000 } = req.body;
 
     // Validation
     if (!name || !owner) {
@@ -95,6 +95,7 @@ export const createShop = async (req, res) => {
       state: state || '',
       pincode: pincode || '',
       balance: parseFloat(balance) || 0,
+      creditLimit: Math.max(0, parseFloat(creditLimit) || 0),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -120,7 +121,7 @@ export const createShop = async (req, res) => {
 export const updateShop = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, owner, phone, address, city, state, pincode, balance } = req.body;
+    const { name, owner, phone, address, city, state, pincode, balance, creditLimit } = req.body;
 
     const shop = await findById(COLLECTION, id);
 
@@ -141,6 +142,7 @@ export const updateShop = async (req, res) => {
       state: state !== undefined ? state : shop.state,
       pincode: pincode !== undefined ? pincode : shop.pincode,
       balance: balance !== undefined ? parseFloat(balance) : shop.balance,
+      creditLimit: creditLimit !== undefined ? Math.max(0, parseFloat(creditLimit) || 0) : (shop.creditLimit ?? 50000),
       updatedAt: new Date().toISOString(),
     };
 
@@ -214,14 +216,14 @@ export const updateShopBalance = async (req, res) => {
       });
     }
 
-    const currentBalance = shop.balance || 0;
+    const currentBalance = Number(shop.outstandingBalance || 0);
     const newBalance = type === 'credit'
-      ? currentBalance + parseFloat(amount)
-      : currentBalance - parseFloat(amount);
+      ? Math.max(0, currentBalance - parseFloat(amount))
+      : currentBalance + parseFloat(amount);
 
     const updatedShop = {
       ...shop,
-      balance: newBalance,
+      outstandingBalance: newBalance,
       updatedAt: new Date().toISOString(),
     };
 

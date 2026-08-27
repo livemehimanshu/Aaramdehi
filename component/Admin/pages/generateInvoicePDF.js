@@ -195,10 +195,23 @@ export const generateInvoicePDF = async (order) => {
 // ✅ Fallback function if autoTable is not available
 const generateSimpleInvoice = (order, doc, logoDataUrl) => {
   const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+  const address = order.shippingAddress || order.address || {};
+  const customer = typeof order.userId === 'object' ? order.userId : {};
+  const customerName = address.fullName || address.name || customer.name || order.customerName || 'Customer';
+  const customerPhone = address.mobile || address.phone || customer.mobile || order.mobile || order.phone || 'N/A';
+  const customerEmail = address.email || customer.email || order.email || 'N/A';
+  const addressText = [
+    address.address || address.detail || address.addressLine1 || address.street,
+    address.addressLine2 || address.locality || address.landmark,
+    address.city,
+    address.state,
+    address.postalCode || address.pincode
+  ].filter(Boolean).join(', ');
+  const money = (value) => `INR ${(Number(value) || 0).toLocaleString('en-IN')}`;
 
   // --- Header ---
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', 14, 16, 58, 13);
+    doc.addImage(logoDataUrl, 'PNG', 14, 16, 58, 14.4);
   } else {
     doc.setFontSize(22);
     doc.setTextColor(239, 68, 68);
@@ -206,64 +219,76 @@ const generateSimpleInvoice = (order, doc, logoDataUrl) => {
     doc.text("AARAMDEHI", 14, 20);
   }
 
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.setFont("helvetica", "normal");
-  doc.text("Premium Home Decor & Furniture", 14, 26);
-
   // --- Invoice Title ---
-  doc.setFontSize(18);
-  doc.setTextColor(59, 130, 246);
-  doc.text("INVOICE", 150, 20);
+  doc.setFontSize(24);
+  doc.setTextColor(25, 25, 25);
+  doc.setFont("helvetica", "normal");
+  doc.text("INVOICE", 196, 22, { align: "right" });
   
-  doc.setFontSize(10);
-  doc.setTextColor(0);
-  doc.text(`Invoice #: ${order.orderNumber || order.orderId || 'N/A'}`, 150, 28);
-  doc.text(`Date: ${date}`, 150, 35);
+  doc.setFontSize(9);
+  doc.text(`Invoice number: ${order.orderNumber || order.orderId || 'N/A'}`, 196, 29, { align: "right" });
+  doc.text(`Invoice date: ${date}`, 196, 34, { align: "right" });
+  doc.setDrawColor(215, 215, 215);
+  doc.line(14, 43, 196, 43);
 
   // --- Bill To ---
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text("Bill To:", 14, 50);
+  doc.text("BILLED TO", 14, 53);
   doc.setFont("helvetica", "normal");
-  doc.text(order.shippingAddress?.fullName || order.address?.name || "Customer", 14, 56);
-  doc.text(order.shippingAddress?.city || order.address?.city || '', 14, 62);
+  doc.text(customerName, 14, 59);
+  const wrappedAddress = doc.splitTextToSize(addressText || 'Address pending', 94);
+  doc.text(wrappedAddress, 14, 64, { lineHeightFactor: 1.25 });
+  const contactY = 64 + (wrappedAddress.length * 4.5) + 3;
+  doc.text(`Phone: ${customerPhone}`, 14, contactY);
+  doc.text(`Email: ${customerEmail}`, 14, contactY + 5);
+
+  doc.setFont("helvetica", "bold");
+  doc.text("PAYMENT DETAILS", 125, 53);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Method: ${order.paymentMethod || 'Online Payment'}`, 125, 59);
+  doc.text(`Payment status: ${order.paymentStatus || 'Pending'}`, 125, 64);
+  doc.text(`Order status: ${order.orderStatus || 'Processing'}`, 125, 69);
 
   // --- Items (Simple Table) ---
-  let yPos = 75;
+  let yPos = Math.max(87, contactY + 14);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9);
-  doc.text("Item", 14, yPos);
-  doc.text("Qty", 80, yPos);
-  doc.text("Price", 110, yPos);
-  doc.text("Subtotal", 150, yPos);
-
-  // --- Draw line ---
-  doc.setDrawColor(150);
-  doc.line(14, yPos + 2, 200, yPos + 2);
+  const columns = [14, 27, 113, 147, 180, 196];
+  const headers = ['#', 'Description', 'Unit Price', 'Qty', 'Amount'];
+  doc.setFillColor(86, 24, 92);
+  doc.setTextColor(255, 255, 255);
+  doc.rect(14, yPos - 5, 182, 8, 'F');
+  headers.forEach((header, index) => doc.text(header, columns[index] + 2, yPos));
 
   // --- Items rows ---
-  yPos += 8;
+  yPos += 3;
   doc.setFont("helvetica", "normal");
+  doc.setTextColor(25, 25, 25);
   const items = order.orderItems?.length > 0 ? order.orderItems : 
                 order.items?.length > 0 ? order.items : 
                 [{ name: "Product", quantity: 1, price: order.totalAmount || 0 }];
 
   items.forEach((item) => {
-    const itemName = (item.name || item.productName || "Product").substring(0, 40);
-    doc.text(itemName, 14, yPos);
-    doc.text(String(item.quantity || 1), 80, yPos);
-    doc.text(`₹${(item.price || 0).toLocaleString()}`, 110, yPos);
-    doc.text(`₹${((item.price || 0) * (item.quantity || 1)).toLocaleString()}`, 150, yPos);
-    yPos += 7;
+    const quantity = item.quantity || item.qty || 1;
+    const price = item.price || item.sellingPrice || 0;
+    const itemName = doc.splitTextToSize(item.name || item.productName || 'Product', 82);
+    doc.setDrawColor(215, 215, 215);
+    doc.rect(14, yPos - 5, 182, Math.max(8, itemName.length * 4.5), 'S');
+    doc.text(String(items.indexOf(item) + 1), 16, yPos);
+    doc.text(itemName, 27, yPos, { lineHeightFactor: 1.25 });
+    doc.text(money(price), 115, yPos);
+    doc.text(String(quantity), 151, yPos);
+    doc.text(money(price * quantity), 194, yPos, { align: 'right' });
+    yPos += Math.max(8, itemName.length * 4.5);
   });
 
   // --- Total ---
-  doc.setDrawColor(150);
-  doc.line(14, yPos, 200, yPos);
   yPos += 8;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.text(`Total: ₹${(order.totalAmount || 0).toLocaleString()}`, 150, yPos);
+  doc.setFontSize(12);
+  doc.text("TOTAL:", 145, yPos);
+  doc.text(money(order.totalAmount || order.totalPrice || order.amount), 196, yPos, { align: 'right' });
 
   // --- Save ---
   const finalId = order.orderNumber || order.orderId || 'XXXXX';

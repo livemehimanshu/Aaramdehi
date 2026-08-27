@@ -1,15 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getSettingsAPI, getProductByIdAPI } from '../../src/api/authAndAdminApi';
+import { getAllProductsAPI, getSettingsAPI, getProductByIdAPI } from '../../src/api/authAndAdminApi';
 
 const LOGO_PLACEHOLDER = "/aaramdehi-logo.svg";
 
 const AaramdehiAdBanner = ({ products = [], categoryName = 'All' }) => {
   const [bannerImage, setBannerImage] = useState('/images/luxury-pillow.webp');
+  const [fallbackProducts, setFallbackProducts] = useState([]);
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        if (products.length === 0) {
+          const productResult = await getAllProductsAPI();
+          const productData = productResult?.data?.data || productResult?.data || productResult;
+          if (Array.isArray(productData)) setFallbackProducts(productData);
+        }
+
         const result = await getSettingsAPI();
         // Check for a featured product id or explicit banner image in public settings
         if (result.success && result.data) {
@@ -43,9 +50,10 @@ const AaramdehiAdBanner = ({ products = [], categoryName = 'All' }) => {
       }
     };
     fetchSettings();
-  }, []);
+  }, [products.length]);
 
-  const categoryProduct = products.find((product) => product?.thumbnail || product?.image || product?.images?.length) || products[0];
+  const availableProducts = products.length > 0 ? products : fallbackProducts;
+  const categoryProduct = availableProducts.find((product) => product?.thumbnail || product?.image || product?.images?.length) || availableProducts[0];
   const productImage = categoryProduct?.thumbnail || categoryProduct?.image || categoryProduct?.images?.[0]?.url;
   const productId = categoryProduct?._id || categoryProduct?.id;
   const adImage = productImage || bannerImage;
@@ -58,13 +66,13 @@ const AaramdehiAdBanner = ({ products = [], categoryName = 'All' }) => {
         
         {/* Brand Logo / Name */}
         <div className="flex-shrink-0">
-          <Link to="/" className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <img
               src="/aaramdehi-logo.svg"
               alt="Aaramdehi"
               className="h-16 w-16 shrink-0 aspect-square object-contain sm:h-20 sm:w-20"
             />
-          </Link>
+          </div>
         </div>
 
         {/* Catchy Hook & CTA */}

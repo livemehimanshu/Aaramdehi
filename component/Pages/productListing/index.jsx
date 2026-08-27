@@ -339,7 +339,7 @@ const ProductListing = ({ forcedCategory }) => {
         <HomeBanner section="category" />
 
         {/* ✅ Dynamic Ad Banner */}
-        <AaramdehiAdBanner />
+        <AaramdehiAdBanner products={filteredData} categoryName={selectedCategory} />
 
         {/* ✅ Breadcrumbs */}
         <nav className="flex items-center gap-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">

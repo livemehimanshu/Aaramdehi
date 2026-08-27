@@ -4,21 +4,13 @@ import { getSettingsAPI, getProductByIdAPI } from '../../src/api/authAndAdminApi
 
 const LOGO_PLACEHOLDER = "/aaramdehi-logo.svg";
 
-const AaramdehiAdBanner = () => {
-  const [siteLogo, setSiteLogo] = useState(null);
-  const [loading, setLoading] = useState(true);
+const AaramdehiAdBanner = ({ products = [], categoryName = 'All' }) => {
   const [bannerImage, setBannerImage] = useState('/images/luxury-pillow.webp');
 
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         const result = await getSettingsAPI();
-        if (result.success && result.data && result.data.LOGO) {
-          setSiteLogo(result.data.LOGO);
-        } else if (result.success && result.data && result.data.logo) {
-          setSiteLogo(result.data.logo);
-        }
-
         // Check for a featured product id or explicit banner image in public settings
         if (result.success && result.data) {
           const data = result.data;
@@ -48,15 +40,20 @@ const AaramdehiAdBanner = () => {
         }
       } catch (error) {
         console.error("Error fetching logo for banner:", error);
-      } finally {
-        setLoading(false);
       }
     };
     fetchSettings();
   }, []);
 
+  const categoryProduct = products.find((product) => product?.thumbnail || product?.image || product?.images?.length) || products[0];
+  const productImage = categoryProduct?.thumbnail || categoryProduct?.image || categoryProduct?.images?.[0]?.url;
+  const productId = categoryProduct?._id || categoryProduct?.id;
+  const adImage = productImage || bannerImage;
+  const adTitle = categoryProduct?.name || (categoryName !== 'All' ? `${categoryName} essentials` : 'Ultimate pillow for restful sleep');
+  const productPath = productId ? `/product/${productId}` : '/products';
+
   return (
-    <div className="w-full bg-white border border-gray-100 shadow-sm rounded-xl overflow-hidden my-6">
+    <Link to={productPath} className="block w-full bg-white border border-gray-100 shadow-sm rounded-xl overflow-hidden my-6 hover:shadow-md transition-shadow">
       <div className="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 relative">
         
         {/* Brand Logo / Name */}
@@ -73,19 +70,19 @@ const AaramdehiAdBanner = () => {
         {/* Catchy Hook & CTA */}
         <div className="text-center flex-1 max-w-xl">
           <h3 className="text-lg font-medium text-gray-900 sm:text-xl md:text-2xl tracking-tight">
-            Ultimate pillow for restful sleep
+            {adTitle}
           </h3>
-          <Link to="/products" className="mt-2 inline-block text-base font-bold text-indigo-600 hover:text-indigo-500 transition-colors duration-200 underline underline-offset-4">
+          <span className="mt-2 inline-block text-base font-bold text-indigo-600 transition-colors duration-200 underline underline-offset-4">
             Shop now &rarr;
-          </Link>
+          </span>
         </div>
 
         {/* Product Image & Ad Badge */}
         <div className="relative w-40 h-24 sm:w-48 sm:h-28 flex items-center justify-center">
           <span className="absolute top-0 right-0 bg-gray-200 text-gray-600 text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wider scale-90">Ad</span>
           <img
-            src={bannerImage || '/images/luxury-pillow.webp'}
-            alt="Pillow"
+            src={adImage || '/images/luxury-pillow.webp'}
+            alt={adTitle}
             loading="lazy"
             decoding="async"
             onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = 'https://placehold.co/400x400?text=Pillow'; }}
@@ -93,7 +90,7 @@ const AaramdehiAdBanner = () => {
           />
         </div>
       </div>
-    </div>
+    </Link>
   );
 };
 

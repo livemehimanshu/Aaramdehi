@@ -270,7 +270,7 @@ const generateSimpleInvoice = (order, doc, logoDataUrl) => {
   headers.forEach((header, index) => doc.text(header, columns[index] + 2, yPos));
 
   // --- Items rows ---
-  yPos += 3;
+  yPos += 11;
   doc.setFont("helvetica", "normal");
   doc.setTextColor(25, 25, 25);
   const items = order.orderItems?.length > 0 ? order.orderItems : 

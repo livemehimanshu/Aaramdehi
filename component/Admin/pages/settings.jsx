@@ -16,6 +16,8 @@ export default function SettingsPage() {
         <Settings size={28} className="text-emerald-500" /> Settings
       </h1>
 
+      <LogoEditor />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Store Profile Section */}
         <div className="bg-gray-900 p-6 md:p-8 rounded-2xl border border-gray-800 shadow-xl">
@@ -64,8 +66,6 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <LogoEditor />
-      
       {/* Featured Banner Setting */}
       <div className="mt-8 bg-gray-900 p-6 md:p-8 rounded-2xl border border-gray-800 shadow-xl max-w-3xl">
         <h2 className="text-lg font-bold mb-4 text-white">Featured Banner (Admin)</h2>

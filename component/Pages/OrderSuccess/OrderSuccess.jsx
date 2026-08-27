@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { IoCheckmarkCircleOutline, IoDownloadOutline, IoMailOutline } from "react-icons/io5";
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import axios from 'axios';
 import Header from '../../header';
 import api from '../../../src/utils/authUtils'; // Import the configured API instance
 
@@ -58,6 +57,17 @@ const OrderSuccess = () => {
     const displayAmount = Number(orderData?.totalAmount || orderData?.amount || orderData?.totalPrice || 0);
     const displayMethod = (orderData?.paymentMethod || orderData?.method || 'CARD').toString().toUpperCase();
     const displayAddress = orderData?.shippingAddress || orderData?.address || {};
+    const displayCustomer = typeof orderData?.userId === 'object' ? orderData.userId : {};
+    const customerName = displayAddress.fullName || displayAddress.name || displayCustomer.fullName || displayCustomer.name || 'Customer';
+    const customerPhone = displayAddress.mobile || displayAddress.phone || displayCustomer.mobile || displayCustomer.phone || 'N/A';
+    const customerEmail = displayAddress.email || displayCustomer.email || orderData?.email || 'N/A';
+    const addressLine = [
+        displayAddress.address || displayAddress.detail || displayAddress.street,
+        displayAddress.city,
+        displayAddress.state,
+        displayAddress.pincode || displayAddress.postalCode
+    ].filter(Boolean).join(', ');
+    const orderItems = orderData?.orderItems || orderData?.items || [];
     const displayDiscount = Number(orderData?.discountAmount || 0);
     const displayShipping = Number(orderData?.deliveryFee || orderData?.shippingPrice || (orderData?.totalAmount > 0 ? 50 : 0));
 
@@ -96,8 +106,8 @@ const OrderSuccess = () => {
     return (
         <>
             <Header hideNav={true} />
-            <section className="min-h-screen bg-gradient-to-b from-green-50 to-white py-12 px-4 print:bg-white print:py-0">
-                <div className="container mx-auto max-w-2xl">
+            <section className="min-h-screen bg-gradient-to-b from-green-50 to-white py-12 px-4 print:bg-white print:min-h-0 print:py-0 print:px-0">
+                <div className="container mx-auto max-w-4xl print:max-w-none">
                     
                     {fetchError && (
                         <div className="mb-4 bg-amber-50 text-amber-800 p-3 rounded-xl text-xs font-semibold print:hidden">
@@ -117,16 +127,44 @@ const OrderSuccess = () => {
                     </div>
 
                     {/* Order Details Card */}
-                    <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-50 mb-8 print:shadow-none print:border-none">
+                    <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-50 mb-8 print:rounded-none print:shadow-none print:border print:border-gray-200 print:p-6 print:mb-0">
                         
                         {/* Order ID Section */}
-                        <div className="mb-6 pb-6 border-b border-gray-100">
+                        <div className="mb-6 pb-6 border-b border-gray-100 flex items-end justify-between print:mb-4 print:pb-4">
                             <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px]">Order ID</p>
                             <p className="text-2xl font-black text-gray-900 mt-1 tracking-tighter">{displayOrderId}</p>
                         </div>
 
-                        {/* Amount & Pricing Calculation (Correctly Placed in Return Block) */}
-                        <div className="space-y-4 mb-6 pb-6 border-b border-gray-100">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-7 pb-7 border-b border-gray-100 print:gap-5 print:mb-5 print:pb-5">
+                            <div>
+                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px] mb-3">Billed To</p>
+                                <p className="font-black text-gray-900">{customerName}</p>
+                                <p className="text-sm text-gray-500 mt-1">{addressLine || 'Address pending'}</p>
+                                <p className="text-sm text-gray-500 mt-1">Phone: {customerPhone}</p>
+                                <p className="text-sm text-gray-500 mt-1 break-all">Email: {customerEmail}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px] mb-3">Payment Details</p>
+                                <p className="text-sm text-gray-600">Method: <strong>{displayMethod === 'COD' ? 'Cash on Delivery' : displayMethod}</strong></p>
+                                <p className="text-sm text-gray-600 mt-1">Payment status: <strong>{orderData?.paymentStatus || 'Pending'}</strong></p>
+                                <p className="text-sm text-gray-600 mt-1">Order status: <strong>{orderData?.orderStatus || 'Processing'}</strong></p>
+                            </div>
+                        </div>
+
+                        <div className="mb-7 pb-7 border-b border-gray-100 print:mb-5 print:pb-5">
+                            <div className="grid grid-cols-[1fr_auto_auto] gap-4 bg-blue-900 text-white px-4 py-3 text-[10px] font-black uppercase tracking-widest">
+                                <span>Product</span><span>Qty</span><span>Amount</span>
+                            </div>
+                            {orderItems.map((item, index) => {
+                                const quantity = Number(item.quantity || item.qty || 1);
+                                const price = Number(item.price || item.sellingPrice || 0);
+                                return <div key={`${item.productId || item.product || item.name}-${index}`} className="grid grid-cols-[1fr_auto_auto] gap-4 items-start border-x border-b border-gray-200 px-4 py-3 text-sm text-gray-700">
+                                    <span className="font-semibold">{item.name || item.productName || 'Product'}</span><span>{quantity}</span><span className="font-bold">₹{(price * quantity).toLocaleString('en-IN')}</span>
+                                </div>;
+                            })}
+                        </div>
+
+                        <div className="space-y-4 mb-6 pb-6 border-b border-gray-100 md:ml-auto md:max-w-sm print:space-y-2 print:mb-4 print:pb-4">
                             <div className="flex justify-between items-center">
                                 <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Subtotal (Products)</span>
                                 <span className="font-bold text-gray-900">₹{displaySubtotal.toLocaleString('en-IN')}</span>
@@ -150,24 +188,6 @@ const OrderSuccess = () => {
                             </div>
                         </div>
 
-                        {/* Payment Method Badge */}
-                        <div className="mb-6 pb-6 border-b border-gray-100">
-                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px] mb-2">Payment Method</p>
-                            <div className="inline-block bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold text-xs uppercase tracking-wider">
-                                {displayMethod === 'COD' ? 'Cash On Delivery' : 
-                                 displayMethod === 'UPI' ? 'UPI / NetBanking' : 'Credit / Debit Card'}
-                            </div>
-                        </div>
-
-                        {/* Delivery Address Layout */}
-                        <div className="mb-2">
-                            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[3px] mb-2">Delivery Address</p>
-                            <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                                <p className="font-black text-gray-900 text-sm">{displayAddress.name || 'Customer'}</p>
-                                <p className="text-xs text-gray-500 mt-1 leading-relaxed">{displayAddress.address || displayAddress.street || 'Address pending...'}</p>
-                                <p className="text-xs text-gray-500 mt-1 font-semibold">Phone: {displayAddress.phone || 'N/A'}</p>
-                            </div>
-                        </div>
                     </div>
 
                     {/* Operational Action Buttons */}

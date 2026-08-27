@@ -42,6 +42,13 @@ export const createOrder = async (req, res) => {
                 message: 'This payment method requires an authenticated account.'
             });
         }
+
+        if (String(paymentMethod).toUpperCase() === 'EMI' && Number(totalAmount) < 2000) {
+            return res.status(400).json({
+                success: false,
+                message: 'EMI is available only for orders of INR 2000 or more.'
+            });
+        }
         
         // Atomic Updates Object
         const updates = {};

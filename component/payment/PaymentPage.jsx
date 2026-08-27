@@ -58,6 +58,7 @@ const PaymentPage = () => {
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const isGuest = !localStorage.getItem('userData');
+    const isEmiEligible = Number(totalAmount) >= 2000;
 
     const paymentMethods = [
         { id: 'card', name: 'Credit / Debit / ATM Card', icon: IoCardOutline },
@@ -65,7 +66,11 @@ const PaymentPage = () => {
         { id: 'netbanking', name: 'Net Banking', icon: IoBusiness },
         { id: 'cod', name: 'Cash on Delivery', icon: IoWalletOutline },
         { id: 'upi', name: 'UPI', icon: IoLogoUsd },
-    ].filter(method => !isGuest || method.id !== 'cod');
+    ].filter(method => {
+        if (isGuest && method.id === 'cod') return false;
+        if (!isEmiEligible && method.id === 'emi') return false;
+        return true;
+    });
 
     const banks = [
         'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'SBI Bank', 'PNB Bank', 'Kotak Bank', 'Yes Bank'

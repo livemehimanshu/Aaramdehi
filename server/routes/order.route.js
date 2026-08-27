@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { createOrder, getMyOrders, getFrequentlyBoughtTogether, getOrderById, getAllOrders, updateOrderStatus, getOrdersByShopId } from '../controllers/order.controller.js';
-import { isAuthenticatedUser, isAdmin } from '../middleware/auth.middleware.js';
+import { isAuthenticatedUser, isAdmin, optionalAuthenticatedUser } from '../middleware/auth.middleware.js';
 
 const orderRouter = Router();
 
@@ -8,7 +8,7 @@ const orderRouter = Router();
 orderRouter.get('/recommendations/:productId', getFrequentlyBoughtTogether);
 
 // Other routes
-orderRouter.post('/', isAuthenticatedUser, createOrder);
+orderRouter.post('/', optionalAuthenticatedUser, createOrder);
 orderRouter.get('/', isAuthenticatedUser, isAdmin, getAllOrders);
 orderRouter.get('/my-orders', isAuthenticatedUser, getMyOrders); 
 orderRouter.get('/shop/:shopId', isAuthenticatedUser, isAdmin, getOrdersByShopId);

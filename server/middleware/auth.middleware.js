@@ -43,6 +43,29 @@ export const isAuthenticatedUser = async (req, res, next) => {
     }
 };
 
+export const optionalAuthenticatedUser = async (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        const token = (authHeader && authHeader.startsWith('Bearer '))
+            ? authHeader.split(' ')[1]
+            : req.cookies?.accessToken;
+
+        if (!token) return next();
+        const decoded = jwt.verify(token, process.env.SECRET_KEY_ACCESS_TOKEN);
+        const userId = decoded?.id || decoded?._id;
+        if (userId) {
+            const user = await findById('users', userId);
+            if (user) {
+                req.user = user;
+                req.userId = userId;
+            }
+        }
+        return next();
+    } catch (error) {
+        return next();
+    }
+};
+
 // 2. Admin Check Middleware
 export const isAdmin = async (req, res, next) => {
     try {

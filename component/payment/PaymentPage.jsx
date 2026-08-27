@@ -170,13 +170,6 @@ const PaymentPage = () => {
         setErrors({});
 
         try {
-            if (!localStorage.getItem('userData')) {
-                setErrors({ global: "Your session has expired. Please log in again." });
-                setLoading(false);
-                navigate('/login');
-                return;
-            }
-
             // 🟢 Handle Cash On Delivery (COD) Directly
             if (selectedMethod === 'cod') {
                 const finalOrderPayload = {

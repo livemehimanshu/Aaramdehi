@@ -27,7 +27,9 @@ const CheckoutPage = () => {
         phone: '+1 (555) 123-4567',
         addressType: 'Home',
         city: 'Saharanpur',
-        postalCode: '247001'
+        postalCode: '247001',
+        email: '',
+        state: 'UP'
     });
 
     const [showAddressModal, setShowAddressModal] = useState(false);
@@ -43,8 +45,8 @@ const CheckoutPage = () => {
             phone: userAddress.phone.replace(/[^0-9]/g, '').slice(-10),
             city: userAddress.city,
             postalCode: userAddress.postalCode,
-            email: 'user@example.com',
-            state: 'UP'
+            email: userAddress.email,
+            state: userAddress.state
         }
     });
 
@@ -57,8 +59,8 @@ const CheckoutPage = () => {
                 phone: userAddress.phone.replace(/[^0-9]/g, '').slice(-10),
                 city: userAddress.city,
                 postalCode: userAddress.postalCode,
-                email: 'user@example.com',
-                state: 'UP'
+                email: userAddress.email,
+                state: userAddress.state
             });
         }
     }, [showAddressModal, userAddress, reset]);
@@ -72,6 +74,13 @@ const CheckoutPage = () => {
             const rawUserData = localStorage.getItem('userData');
             const userData = rawUserData ? JSON.parse(rawUserData) : {};
             setUserPoints(userData.loyaltyPoints || 0);
+            const savedAddress = JSON.parse(localStorage.getItem('checkoutAddress') || 'null');
+            setUserAddress(previous => ({
+                ...previous,
+                ...(savedAddress || {}),
+                name: savedAddress?.fullName || savedAddress?.name || userData.name || previous.name,
+                email: savedAddress?.email || userData.email || previous.email
+            }));
         } catch (err) {
             console.warn('Invalid userData in localStorage:', err);
             setUserPoints(0);
@@ -236,8 +245,11 @@ const CheckoutPage = () => {
             address: data.address,
             phone: data.phone,
             city: data.city,
-            postalCode: data.postalCode
+            postalCode: data.postalCode,
+            email: data.email,
+            state: data.state
         }));
+        localStorage.setItem('checkoutAddress', JSON.stringify(data));
         setShowAddressModal(false);
         toast.success("Address updated successfully!");
     };
@@ -254,9 +266,9 @@ const CheckoutPage = () => {
             return;
         }
 
-        if (!localStorage.getItem('userData')) {
-            toast.error("Please log in to place an order.");
-            navigate('/login');
+        if (!userAddress.name || !userAddress.address || !userAddress.phone || !userAddress.email) {
+            toast.error("Please enter your name, address, phone and email.");
+            setShowAddressModal(true);
             return;
         }
 
@@ -280,9 +292,11 @@ const CheckoutPage = () => {
                 fullName: userAddress.name || 'Anonymous',
                 address: userAddress.address,
                 city: userAddress.city || 'N/A',
+                state: userAddress.state || 'UP',
                 pincode: String(userAddress.postalCode || '000000'),
                 postalCode: userAddress.postalCode || '000000',
-                mobile: userAddress.phone
+                mobile: userAddress.phone,
+                email: userAddress.email
             },
             paymentInfo: { id: "n/a", status: "pending" },
             paymentMethod: "COD",
@@ -340,7 +354,9 @@ const CheckoutPage = () => {
                                         <h3 className="font-bold text-gray-900">Delivery Address</h3>
                                         <p className="text-sm text-gray-600 mt-2"><span className="font-bold">{userAddress.name}</span></p>
                                         <p className="text-sm text-gray-600 mt-1">{userAddress.address}</p>
+                                        <p className="text-sm text-gray-600 mt-1">{userAddress.city}, {userAddress.postalCode}</p>
                                         <p className="text-sm text-gray-600 mt-1">Phone: {userAddress.phone}</p>
+                                        {userAddress.email && <p className="text-sm text-gray-600 mt-1">Email: {userAddress.email}</p>}
                                         <span className="inline-block text-xs font-bold bg-gray-100 text-gray-700 px-3 py-1 rounded mt-2">{userAddress.addressType}</span>
                                     </div>
                                 </div>
@@ -547,6 +563,11 @@ const CheckoutPage = () => {
                                     className={`w-full border rounded px-3 py-2 text-sm focus:outline-none ${errors.phone ? 'border-red-500' : 'border-gray-300'}`}
                                 />
                                 {errors.phone && <p className="text-red-500 text-[10px] mt-1">{errors.phone.message}</p>}
+                            </div>
+                            <div>
+                                <label className="text-sm font-bold text-gray-700 block mb-1">Email</label>
+                                <input type="email" {...register('email')} className={`w-full border rounded px-3 py-2 text-sm focus:outline-none ${errors.email ? 'border-red-500' : 'border-gray-300'}`} />
+                                {errors.email && <p className="text-red-500 text-[10px] mt-1">{errors.email.message}</p>}
                             </div>
                             <div className="flex gap-2 pt-2">
                                 <button type="button" onClick={() => setShowAddressModal(false)} className="flex-1 bg-gray-200 text-gray-800 py-2 rounded font-bold text-sm">Cancel</button>

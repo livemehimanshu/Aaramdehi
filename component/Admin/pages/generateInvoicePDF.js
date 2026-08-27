@@ -23,51 +23,55 @@ export const generateInvoicePDF = (order) => {
     console.log("✅ autoTable is available - proceeding with full invoice");
 
   const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+  const address = order.shippingAddress || order.address || {};
+  const customer = typeof order.userId === 'object' ? order.userId : {};
+  const customerName = address.fullName || address.name || customer.name || order.customerName || "Customer";
+  const customerEmail = address.email || customer.email || order.email || "N/A";
+  const customerPhone = address.mobile || address.phone || customer.mobile || order.mobile || order.phone || "N/A";
+  const addressLines = [address.address || address.detail, address.city, address.state, address.postalCode || address.pincode]
+    .filter(Boolean);
+  const paymentMethodDisplay = order.paymentMethod?.toUpperCase() === 'COD' ? "Cash on Delivery" : order.paymentMethod || "Online Payment";
+  const money = (value) => `INR ${(Number(value) || 0).toLocaleString('en-IN')}`;
 
-  // --- Header & Branding ---
-  doc.setFontSize(22);
-  doc.setTextColor(239, 68, 68); // Red-500
+  doc.setFillColor(86, 24, 92);
+  doc.roundedRect(14, 14, 42, 22, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("AARAMDEHI", 14, 20);
-
-  doc.setFontSize(10);
-  doc.setTextColor(100);
+  doc.text("AARAMDEHI", 18, 24);
+  doc.setFontSize(7);
   doc.setFont("helvetica", "normal");
-  doc.text("Premium Home Decor & Furniture", 14, 26);
-  doc.text("www.aaramdehi.com", 14, 31);
+  doc.text("PREMIUM HOME DECOR", 18, 30);
 
-  // --- Invoice Info ---
-  doc.setFontSize(18);
-  doc.setTextColor(59, 130, 246); // Blue-500
-  doc.text("INVOICE", 150, 20);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(0);
-  doc.text(`Invoice #: ${order.orderNumber || order.orderId || 'N/A'}`, 150, 28);
-  doc.text(`Date: ${date}`, 150, 33);
+  doc.setTextColor(25, 25, 25);
+  doc.setFontSize(24);
+  doc.setFont("helvetica", "normal");
+  doc.text("INVOICE", 196, 22, { align: "right" });
+  doc.setFontSize(9);
+  doc.text(`Invoice number: ${order.orderNumber || order.orderId || 'N/A'}`, 196, 29, { align: "right" });
+  doc.text(`Invoice date: ${date}`, 196, 34, { align: "right" });
 
-  // --- Horizontal Line ---
-  doc.setDrawColor(230);
-  doc.line(14, 40, 196, 40);
+  doc.setDrawColor(215, 215, 215);
+  doc.line(14, 43, 196, 43);
 
-  // --- Customer & Payment Details ---
+  doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
-  doc.text("Bill To:", 14, 50);
+  doc.text("BILLED TO", 14, 53);
   doc.setFont("helvetica", "normal");
-  doc.text(order.shippingAddress?.fullName || order.address?.name || order.customerName || "Customer", 14, 56);
-  doc.text(order.shippingAddress?.address || order.address?.address || order.shippingAddress?.detail || "Address pending...", 14, 61);
-  doc.text(`${order.shippingAddress?.city || order.address?.city || ''}, ${order.shippingAddress?.postalCode || order.address?.postalCode || order.address?.pincode || ''}`, 14, 66);
-  doc.text(`Phone: ${order.shippingAddress?.mobile || order.shippingAddress?.phone || order.mobile || order.phone || order.address?.mobile || 'N/A'}`, 14, 71);
+  doc.text(customerName, 14, 59);
+  doc.text(addressLines[0] || "Address pending", 14, 64);
+  doc.text(addressLines.slice(1).join(', ') || "", 14, 69);
+  doc.text(`Phone: ${customerPhone}`, 14, 74);
+  doc.text(`Email: ${customerEmail}`, 14, 79);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Payment Information:", 120, 50);
+  doc.text("PAYMENT DETAILS", 125, 53);
   doc.setFont("helvetica", "normal");
-  const paymentMethodDisplay = order.paymentMethod?.toUpperCase() === 'COD' ? "Cash on Delivery" : "Credit/Debit Card";
-  doc.text(`Method: ${paymentMethodDisplay}`, 120, 56);
-  doc.text(`Status: ${order.paymentStatus || 'Pending'}`, 120, 61);
+  doc.text(`Method: ${paymentMethodDisplay}`, 125, 59);
+  doc.text(`Payment status: ${order.paymentStatus || 'Pending'}`, 125, 64);
+  doc.text(`Order status: ${order.orderStatus || 'Processing'}`, 125, 69);
 
-  // --- Items Table ---
-  const tableColumn = ["Product Name", "Qty", "Price", "Subtotal"];
+  const tableColumn = ["#", "Description", "Unit Price", "Qty", "Amount"];
   const tableRows = [];
 
   // Handle various item array formats and provide a fallback row if empty
@@ -81,51 +85,67 @@ export const generateInvoicePDF = (order) => {
                 }];
 
   items.forEach(item => {
-    const rowData = [
-      item.name || item.productName || "Product",
-      item.quantity || item.qty || 1,
-      `INR ${(item.price || item.sellingPrice || 0).toLocaleString()}`,
-      `INR ${((item.price || item.sellingPrice || 0) * (item.quantity || item.qty || 1)).toLocaleString()}`
-    ];
+    const quantity = item.quantity || item.qty || 1;
+    const price = item.price || item.sellingPrice || 0;
+    const rowData = [tableRows.length + 1, item.name || item.productName || "Product", money(price), quantity, money(price * quantity)];
     tableRows.push(rowData);
   });
 
   doc.autoTable({
-    startY: 80,
+    startY: 87,
     head: [tableColumn],
     body: tableRows,
-    theme: 'striped',
-    headStyles: { fillColor: [59, 130, 246] }, // Blue Header
-    styles: { fontSize: 9 },
+    theme: 'grid',
+    headStyles: { fillColor: [86, 24, 92], textColor: [255, 255, 255], fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: [248, 245, 248] },
+    styles: { fontSize: 8, cellPadding: 3, lineColor: [210, 210, 210], lineWidth: 0.2 },
     columnStyles: {
-      0: { cellWidth: 80 },
-      1: { halign: 'center' },
+      0: { cellWidth: 10, halign: 'center' },
+      1: { cellWidth: 82 },
       2: { halign: 'right' },
-      3: { halign: 'right' },
+      3: { cellWidth: 16, halign: 'center' },
+      4: { halign: 'right' },
     }
   });
 
   // --- Summary Section ---
-  let currentY = 85;
+  let currentY = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : 87) + 10;
   
   // ✅ Safe check for autoTable results
-  if (doc.lastAutoTable && doc.lastAutoTable.finalY) {
-    currentY = doc.lastAutoTable.finalY + 10;
+  const summaryX = 132;
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(65, 65, 65);
+  doc.text("Subtotal:", summaryX, currentY);
+  doc.text(money(order.itemsPrice || tableRows.reduce((sum, row) => sum + (Number(String(row[4]).replace(/[^0-9.-]/g, '')) || 0), 0)), 196, currentY, { align: "right" });
+  currentY += 6;
+  if (Number(order.shippingPrice) > 0) {
+    doc.text("Shipping:", summaryX, currentY);
+    doc.text(money(order.shippingPrice), 196, currentY, { align: "right" });
+    currentY += 6;
   }
-
-  // Show Discount row ONLY if a coupon was used
   if (order.couponCode || (order.discountAmount && order.discountAmount > 0)) {
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
     doc.setTextColor(22, 163, 74); // Green for discount
-    doc.text(`Coupon Discount (${order.couponCode || 'Promo'}): -INR ${order.discountAmount.toLocaleString()}`, 140, currentY);
-    currentY += 7;
+    doc.text(`Discount (${order.couponCode || 'Promo'}):`, summaryX, currentY);
+    doc.text(`-${money(order.discountAmount)}`, 196, currentY, { align: "right" });
+    currentY += 6;
   }
 
-  doc.setTextColor(0);
+  doc.setDrawColor(100, 100, 100);
+  doc.line(summaryX, currentY, 196, currentY);
+  currentY += 8;
+  doc.setTextColor(25, 25, 25);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text(`Total Payable: INR ${(order.totalAmount || order.totalPrice || order.amount || 0).toLocaleString()}`, 140, currentY);
+  doc.text("TOTAL:", summaryX, currentY);
+  doc.text(money(order.totalAmount || order.totalPrice || order.amount), 196, currentY, { align: "right" });
+
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("PLEASE MAKE PAYMENT TO", 14, currentY + 18);
+  doc.setFont("helvetica", "normal");
+  doc.text("Aaramdehi Home Decor & Furniture", 14, currentY + 24);
+  doc.text("Thank you for choosing Aaramdehi.", 14, currentY + 30);
 
   // --- Footer ---
   doc.setFontSize(8);

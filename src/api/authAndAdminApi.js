@@ -37,6 +37,15 @@ export async function getProductByIdAPI(id) {
   }
 }
 
+export async function getFrequentlyBoughtTogetherAPI(productId) {
+  try {
+    const res = await api.get(`/orders/recommendations/${productId}`);
+    return res.data;
+  } catch (e) {
+    return { success: false, data: [] };
+  }
+}
+
 export async function updateProductAPI(id, formData) {
   try {
     const res = await api.put(`/products/${id}`, formData);

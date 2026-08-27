@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { addressSchema } from '../../src/schemas/validationSchemas';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { getFrequentlyBoughtTogetherAPI } from '../../src/api/authAndAdminApi';
 
 const CheckoutPage = () => {
     const navigate = useNavigate();
@@ -31,6 +32,7 @@ const CheckoutPage = () => {
 
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [wishlistItems, setWishlistItems] = useState([]);
+    const [comboProduct, setComboProduct] = useState(null);
 
     // React Hook Form Setup
     const { register, handleSubmit, formState: { errors }, reset } = useForm({
@@ -90,6 +92,30 @@ const CheckoutPage = () => {
         };
     }, []);
 
+    useEffect(() => {
+        let active = true;
+        const sourceProduct = cartItems[0];
+        if (!sourceProduct) {
+            setComboProduct(null);
+            return () => { active = false; };
+        }
+
+        const cartIds = new Set(cartItems.map(item => String(item._id || item.id)));
+        getFrequentlyBoughtTogetherAPI(sourceProduct._id || sourceProduct.id)
+            .then(response => {
+                const recommendations = Array.isArray(response?.data) ? response.data : [];
+                const recommended = recommendations.find(product =>
+                    product && !cartIds.has(String(product._id || product.id)) && Number(product.stock ?? 1) > 0
+                );
+                if (active) setComboProduct(recommended || null);
+            })
+            .catch(error => {
+                if (active) setComboProduct(null);
+                console.warn('Smart combo recommendation unavailable:', error.message);
+            });
+        return () => { active = false; };
+    }, [cartItems]);
+
     const syncWishlist = () => {
         const savedWishlist = JSON.parse(localStorage.getItem("wishlist")) || [];
         setWishlistItems(savedWishlist);
@@ -127,6 +153,22 @@ const CheckoutPage = () => {
         localStorage.setItem("cart", JSON.stringify(updatedCart));
         setCartItems(updatedCart);
         window.dispatchEvent(new Event("cartUpdated"));
+    };
+
+    const handleAddCombo = () => {
+        if (!comboProduct) return toast.error('Combo product is unavailable right now.');
+        const productId = comboProduct._id || comboProduct.id;
+        const existing = cartItems.find(item => String(item._id || item.id) === String(productId));
+        const updatedCart = existing
+            ? cartItems.map(item => String(item._id || item.id) === String(productId)
+                ? { ...item, quantity: (item.quantity || item.qty || 1) + 1, qty: (item.quantity || item.qty || 1) + 1 }
+                : item)
+            : [...cartItems, { ...comboProduct, quantity: 1, qty: 1 }];
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        setCartItems(updatedCart);
+        setQuantities(previous => ({ ...previous, [productId]: (existing?.quantity || existing?.qty || 0) + 1 }));
+        window.dispatchEvent(new Event('cartUpdated'));
+        toast.success('Pillow added to your cart.');
     };
 
     // Toggle Wishlist
@@ -312,32 +354,32 @@ const CheckoutPage = () => {
                         </div>
 
                         {/* Smart Combo Offer */}
-                        <div className="bg-orange-50 rounded-xl p-6 border border-orange-200 shadow-sm relative overflow-hidden">
+                        {comboProduct && <div className="bg-orange-50 rounded-xl p-6 border border-orange-200 shadow-sm relative overflow-hidden">
                             <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-100 rounded-full opacity-50"></div>
                             <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
                                 <div className="w-20 h-20 bg-white rounded-lg p-2 shadow-sm flex-shrink-0">
                                     <img
-                                        src="https://rukminim2.flixcart.com/image/1086/1086/xif0q/pillow/t/v/v/17-white-soft-microfiber-pillow-pack-of-2-17-27-2-p-2-m-p-2-original-imahfzhgzff9ay8h.jpeg?q=90"
-                                        alt="Pillow Suggestion"
+                                        src={comboProduct.thumbnail || comboProduct.images?.[0]?.url || PLACEHOLDER}
+                                        alt={comboProduct.name || 'Pillow Suggestion'}
                                         className="w-full h-full object-contain"
                                     />
                                 </div>
                                 <div className="flex-1 text-center md:text-left">
                                     <h4 className="font-black text-gray-900 text-sm uppercase">Smart Combo Offer! 🛋️</h4>
                                     <p className="text-xs text-gray-600 mt-1">
-                                        Add <span className="font-bold text-gray-800">Premium Memory Foam Pillow</span> for just
-                                        <span className="text-red-600 font-black ml-1 text-sm">₹499</span>
-                                        <span className="text-gray-500 line-through ml-1 text-[10px]">₹699</span>
+                                        Add <span className="font-bold text-gray-800">{comboProduct.name}</span> for just
+                                        <span className="text-red-600 font-black ml-1 text-sm">₹{comboProduct.sellingPrice || comboProduct.price}</span>
+                                        <span className="text-gray-500 line-through ml-1 text-[10px]">₹{comboProduct.mrp || comboProduct.originalPrice}</span>
                                     </p>
                                 </div>
                                 <button
-                                    onClick={() => toast.success("Pillow added to your combo!")}
+                                    onClick={handleAddCombo}
                                     className="bg-gray-900 text-white px-6 py-2.5 rounded-lg font-black text-[10px] uppercase tracking-widest hover:bg-red-600 transition-all shadow-md shadow-gray-900/20"
                                 >
                                     + Add to Cart
                                 </button>
                             </div>
-                        </div>
+                        </div>}
 
                         {/* Products List */}
                         <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100">

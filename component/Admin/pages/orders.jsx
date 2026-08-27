@@ -181,7 +181,7 @@ const Orders = () => {
                                         className="text-left text-sm font-bold text-gray-300 hover:text-blue-400 transition-colors"
                                         aria-expanded={expandedCustomerId === order._id}
                                     >
-                                        <span>{order.userId?.name || order.shippingAddress?.fullName || 'Unknown User'}</span>
+                                        <span>{order.userId?.name || order.shippingAddress?.fullName || 'Guest Customer'}</span>
                                         <span className="block text-[10px] text-blue-400 uppercase tracking-widest mt-1">
                                             {expandedCustomerId === order._id ? 'Hide details' : 'View details'}
                                         </span>

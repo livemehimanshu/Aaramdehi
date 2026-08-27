@@ -115,6 +115,15 @@ export const verifyEmailController = async (req, res) => {
             forgot_password_expiry: null 
         });
 
+        const guestOrders = await findAll('orders');
+        const orderUpdates = {};
+        guestOrders
+            .filter(order => !order.userId && String(order.shippingAddress?.email || '').toLowerCase() === user.email.toLowerCase())
+            .forEach(order => {
+                orderUpdates[`orders/${order._id}/userId`] = user._id;
+            });
+        if (Object.keys(orderUpdates).length > 0) await db.ref().update(orderUpdates);
+
         const accessToken = await generatedAccessToken(user._id);
         const refreshToken = await generatedRefreshToken(user._id);
 

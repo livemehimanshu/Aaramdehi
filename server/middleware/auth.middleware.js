@@ -62,7 +62,10 @@ export const optionalAuthenticatedUser = async (req, res, next) => {
         }
         return next();
     } catch (error) {
-        return next();
+        return res.status(401).json({
+            success: false,
+            message: error.name === 'TokenExpiredError' ? 'Session expired. Please login again.' : 'Unauthorized'
+        });
     }
 };
 

@@ -78,6 +78,7 @@ const EditBlog = lazy(() => import('../component/Admin/pages/EditBlog.jsx'))
 const CheckoutPage = lazy(() => import('../component/checkout/CheckoutPage.jsx'))
 const PaymentPage = lazy(() => import('../component/payment/PaymentPage.jsx'))
 const OrderSuccess = lazy(() => import('../component/Pages/OrderSuccess/OrderSuccess.jsx'))
+const GuestOrderTracking = lazy(() => import('../component/Pages/GuestOrderTracking.jsx'))
 const ARStudio = lazy(() => import('../component/Pages/ARStudio.jsx'))
 const NotFound = lazy(() => import('../component/Pages/NotFound.jsx'))
 
@@ -220,6 +221,7 @@ function AppContent() {
                 <Route path="/account/pan" element={<PanCardInfo />} />
                 <Route path="/orders" element={<MyOrders />} />
                 <Route path="/order-details/:id" element={<OrderDetailsPage />} />
+                <Route path="/track-order" element={<GuestOrderTracking />} />
                 <Route path="/payments/giftcards" element={<GiftCards />} />
                 <Route path="/payments/upi" element={<PageWrapper title="Saved UPI" />} />
                 <Route path="/payments/cards" element={<PageWrapper title="Saved Cards" />} />

@@ -10,14 +10,15 @@ const storage = multer.memoryStorage();
 
 // 2. File Filter: Allow images, 3D models (.glb/.gltf), and Videos (.mp4/.webm/.mov/etc.)
 const fileFilter = (req, file, cb) => {
-    // Check Extension
-    const allowedFileTypes = /jpeg|jpg|png|webp|glb|gltf|mp4|webm|mkv|avi|mov/;
-    
-    // Check MimeType
-    const allowedMimeTypes = /jpeg|jpg|png|webp|model\/gltf\+binary|model\/gltf\+json|application\/octet-stream|video\/mp4|video\/webm|video\/x-matroska|video\/quicktime|video\/x-msvideo/;
-    
-    const extname = allowedFileTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = file.mimetype ? allowedMimeTypes.test(file.mimetype.toLowerCase()) : false;
+    const allowedExtensions = new Set(['.jpeg', '.jpg', '.png', '.webp', '.glb', '.gltf', '.mp4', '.webm', '.mkv', '.avi', '.mov']);
+    const allowedMimeTypes = new Set([
+        'image/jpeg', 'image/png', 'image/webp',
+        'model/gltf+binary', 'model/gltf+json', 'application/octet-stream',
+        'video/mp4', 'video/webm', 'video/x-matroska', 'video/quicktime', 'video/x-msvideo'
+    ]);
+
+    const extname = allowedExtensions.has(path.extname(file.originalname || '').toLowerCase());
+    const mimetype = allowedMimeTypes.has((file.mimetype || '').toLowerCase());
 
     if (extname && mimetype) {
         return cb(null, true);

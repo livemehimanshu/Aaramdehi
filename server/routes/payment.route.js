@@ -1,6 +1,6 @@
 import express from "express";
 import rateLimit from "express-rate-limit";
-import { isAuthenticatedUser, isAdmin } from "../middleware/auth.middleware.js";
+import { isAuthenticatedUser, isAdmin, optionalAuthenticatedUser } from "../middleware/auth.middleware.js";
 import {
   getAllPayments,
   getPaymentById,
@@ -67,20 +67,20 @@ router.get(
 // Client/User Routes: Order create karne ke liye
 router.post(
   "/razorpay/create-order",
-  isAuthenticatedUser,
+  optionalAuthenticatedUser,
   createOrderLimiter,
   createRazorpayOrder
 );
 
 router.post(
   "/razorpay/verify",
-  isAuthenticatedUser,
+  optionalAuthenticatedUser,
   verifyRazorpayPayment
 );
 
 router.post(
   "/cashfree/create-order",
-  isAuthenticatedUser,
+  optionalAuthenticatedUser,
   createOrderLimiter,
   createCashfreeOrder
 );

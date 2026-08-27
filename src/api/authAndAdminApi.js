@@ -262,6 +262,15 @@ export async function getOrderDetailsAPI(orderId) {
   }
 }
 
+export async function trackGuestOrderAPI(credentials) {
+  try {
+    const res = await api.post('/orders/guest-track', credentials);
+    return res.data;
+  } catch (e) {
+    return e.response?.data || { success: false, message: e.message };
+  }
+}
+
 export async function getAllOrdersAdminAPI() {
   try {
     const res = await api.get('/orders');

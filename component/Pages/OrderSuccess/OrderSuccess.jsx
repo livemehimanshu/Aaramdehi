@@ -178,7 +178,7 @@ const OrderSuccess = () => {
                         >
                             <IoDownloadOutline size={18} /> Download Invoice
                         </button>
-                        <button className="flex items-center justify-center gap-2 bg-blue-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-lg">
+                        <button onClick={() => navigate('/track-order')} className="flex items-center justify-center gap-2 bg-blue-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-lg">
                             <IoMailOutline size={18} /> Track Order
                         </button>
                         <button 
@@ -188,6 +188,12 @@ const OrderSuccess = () => {
                             Continue Shopping
                         </button>
                     </div>
+                    {!localStorage.getItem('userData') && (
+                        <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 text-center print:hidden">
+                            <p className="font-bold text-blue-900">Create an account to track orders faster</p>
+                            <button onClick={() => navigate('/signup')} className="mt-3 text-sm font-bold text-blue-700 hover:underline">Create Account</button>
+                        </div>
+                    )}
                 </div>
             </section>
         </>

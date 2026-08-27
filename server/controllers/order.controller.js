@@ -35,6 +35,13 @@ export const createOrder = async (req, res) => {
         const userId = req.userId || req.user?._id || req.user?.id;
         const cleanShopId = shopId ? String(shopId._id || shopId.id || shopId) : null;
         const timestamp = new Date().toISOString();
+
+        if ((paymentMethod === 'COD' || paymentMethod === 'Shop Credit' || paymentMethod === 'Khata') && !userId) {
+            return res.status(401).json({
+                success: false,
+                message: 'This payment method requires an authenticated account.'
+            });
+        }
         
         // Atomic Updates Object
         const updates = {};
@@ -435,5 +442,48 @@ export const getFrequentlyBoughtTogether = async (req, res) => {
     } catch (error) {
         console.error("❌ [Recommendations Error]:", error);
         return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const trackGuestOrder = async (req, res) => {
+    try {
+        const orderNumber = String(req.body?.orderNumber || '').trim();
+        const email = String(req.body?.email || '').trim().toLowerCase();
+        const mobile = String(req.body?.mobile || '').replace(/\D/g, '').slice(-10);
+
+        if (!orderNumber || (!email && !mobile)) {
+            return res.status(400).json({ success: false, message: 'Order number and email or mobile are required.' });
+        }
+
+        const orders = await findByQuery(COLLECTION, 'orderNumber', orderNumber);
+        const order = orders?.[0];
+        if (!order || order.userId) {
+            return res.status(404).json({ success: false, message: 'Order not found or credentials do not match.' });
+        }
+
+        const savedEmail = String(order.shippingAddress?.email || '').trim().toLowerCase();
+        const savedMobile = String(order.shippingAddress?.mobile || order.shippingAddress?.phone || '').replace(/\D/g, '').slice(-10);
+        const matches = (email && savedEmail === email) || (mobile && savedMobile === mobile);
+        if (!matches) {
+            return res.status(404).json({ success: false, message: 'Order not found or credentials do not match.' });
+        }
+
+        const { paymentInfo, userId, ...safeOrder } = order;
+        return res.json({
+            success: true,
+            data: {
+                ...safeOrder,
+                userId: null,
+                orderItems: (order.orderItems || []).map(item => ({
+                    name: item.name || item.productName || 'Product',
+                    quantity: item.quantity || item.qty || 1,
+                    price: Number(item.price || item.sellingPrice || 0),
+                    image: item.image || item.thumbnail
+                }))
+            }
+        });
+    } catch (error) {
+        console.error('Guest order tracking error:', error.message);
+        return res.status(500).json({ success: false, message: 'Unable to track this order right now.' });
     }
 };

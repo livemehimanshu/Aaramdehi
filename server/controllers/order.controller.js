@@ -239,6 +239,17 @@ export const getAllOrders = async (req, res) => {
         const orders = await findAll(COLLECTION);
         orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
+        const userIds = [...new Set(orders.map(order => order.userId).filter(Boolean))];
+        const users = await Promise.all(userIds.map(id => findById(USERS_COLLECTION, id)));
+        const userMap = users.filter(Boolean).reduce((acc, user) => {
+            acc[String(user._id || user.id)] = {
+                name: user.name || '',
+                email: user.email || '',
+                mobile: user.mobile || user.phone || ''
+            };
+            return acc;
+        }, {});
+
         // ✅ Optimization: Fetch products related to these orders for name/image enrichment
         const productIds = [...new Set(orders.flatMap(order => 
             (order.orderItems || []).map(item => item.productId || item.product)
@@ -253,6 +264,11 @@ export const getAllOrders = async (req, res) => {
 
         const enrichedOrders = orders.map(order => ({
             ...order,
+            userId: userMap[String(order.userId)] || (typeof order.userId === 'object' ? {
+                name: order.userId.name || '',
+                email: order.userId.email || '',
+                mobile: order.userId.mobile || order.userId.phone || ''
+            } : null),
             orderItems: (order.orderItems || []).map(item => {
                 const p = productMap[item.productId || item.product];
                 return {

@@ -15,6 +15,7 @@ const Orders = () => {
     const [error, setError] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
+    const [expandedCustomerId, setExpandedCustomerId] = useState(null);
 
     // 1. Database से सभी ऑर्डर्स लोड करें
     const fetchOrders = async () => {
@@ -65,9 +66,11 @@ const Orders = () => {
 
     const filteredOrders = orders.filter(order => {
         const orderNum = order.orderNumber || '';
-        const userName = order.userId?.name || '';
+        const userName = order.userId?.name || order.shippingAddress?.fullName || '';
+        const userEmail = order.userId?.email || order.shippingAddress?.email || '';
         const matchesSearch = orderNum.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                             userName.toLowerCase().includes(searchTerm.toLowerCase());
+                     userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                     userEmail.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'All' || order.orderStatus === statusFilter;
         return matchesSearch && matchesStatus;
     });
@@ -171,7 +174,31 @@ const Orders = () => {
                                         <IoCalendarOutline /> {new Date(order.createdAt).toLocaleDateString('en-GB')}
                                     </div>
                                 </td>
-                                <td className="p-4 text-sm font-bold text-gray-300">{order.userId?.name || 'Unknown User'}</td>
+                                <td className="p-4 align-top">
+                                    <button
+                                        type="button"
+                                        onClick={() => setExpandedCustomerId(currentId => currentId === order._id ? null : order._id)}
+                                        className="text-left text-sm font-bold text-gray-300 hover:text-blue-400 transition-colors"
+                                        aria-expanded={expandedCustomerId === order._id}
+                                    >
+                                        <span>{order.userId?.name || order.shippingAddress?.fullName || 'Unknown User'}</span>
+                                        <span className="block text-[10px] text-blue-400 uppercase tracking-widest mt-1">
+                                            {expandedCustomerId === order._id ? 'Hide details' : 'View details'}
+                                        </span>
+                                    </button>
+                                    {expandedCustomerId === order._id && (
+                                        <div className="mt-3 min-w-[220px] rounded-xl border border-gray-700 bg-gray-950 p-3 text-xs text-gray-300 space-y-2">
+                                            <p><span className="text-gray-500">Mobile:</span> {order.userId?.mobile || order.shippingAddress?.mobile || order.shippingAddress?.phone || 'N/A'}</p>
+                                            <p className="break-all"><span className="text-gray-500">Email:</span> {order.userId?.email || order.shippingAddress?.email || 'N/A'}</p>
+                                            <p><span className="text-gray-500">Address:</span> {[
+                                                order.shippingAddress?.address || order.shippingAddress?.detail,
+                                                order.shippingAddress?.city,
+                                                order.shippingAddress?.state,
+                                                order.shippingAddress?.postalCode || order.shippingAddress?.pincode
+                                            ].filter(Boolean).join(', ') || 'Address pending'}</p>
+                                        </div>
+                                    )}
+                                </td>
                                 <td className="p-4 text-sm text-gray-300 max-w-[320px]">
                                     <div className="space-y-2">
                                         {(order.orderItems || []).slice(0, 2).map((item, idx) => (

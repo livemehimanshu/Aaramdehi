@@ -187,6 +187,7 @@ export const updateSetting = async (req, res) => {
     }
 
     if (value !== undefined) setting.value = value;
+    if (setting.key === 'LOGO_URL') setting.isPublic = true;
     if (label !== undefined) setting.label = label;
     if (description !== undefined) setting.description = description;
     if (isEditable !== undefined) setting.isEditable = isEditable;

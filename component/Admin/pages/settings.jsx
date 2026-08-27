@@ -63,6 +63,8 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      <LogoEditor />
       
       {/* Featured Banner Setting */}
       <div className="mt-8 bg-gray-900 p-6 md:p-8 rounded-2xl border border-gray-800 shadow-xl max-w-3xl">
@@ -252,6 +254,85 @@ function FeaturedBannerEditor() {
         <div className="flex gap-3 mt-3">
           <button onClick={handleUploadBanner} disabled={uploadProcessing} className="bg-blue-600 px-4 py-2 rounded-xl text-white font-semibold">{uploadProcessing ? 'Uploading...' : 'Upload & Use'}</button>
           <button onClick={() => { setUploadPreview(null); setUploadFile(null); setMessage(null); }} className="px-4 py-2 rounded-xl border border-gray-800 text-slate-300">Clear</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LogoEditor() {
+  const [logoUrl, setLogoUrl] = useState('/aaramdehi-logo.svg');
+  const [logoFile, setLogoFile] = useState(null);
+  const [preview, setPreview] = useState('/aaramdehi-logo.svg');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+
+  useEffect(() => {
+    adminGetAllSettingsAPI().then((response) => {
+      const setting = response?.data?.find(item => item.key === 'LOGO_URL');
+      if (setting?.value) {
+        setLogoUrl(setting.value);
+        setPreview(setting.value);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const handleFileChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setMessage({ type: 'error', text: 'Please select an image file.' });
+      return;
+    }
+    setLogoFile(file);
+    setPreview(URL.createObjectURL(file));
+    setMessage(null);
+  };
+
+  const handleSave = async () => {
+    if (!logoFile) return setMessage({ type: 'error', text: 'Select a logo image first.' });
+    setLoading(true);
+    setMessage(null);
+    try {
+      const formData = new FormData();
+      formData.append('title', 'Store Logo');
+      formData.append('description', 'Uploaded from admin settings');
+      formData.append('category', 'branding');
+      formData.append('position', 0);
+      formData.append('image', logoFile);
+      const uploadResponse = await createBannerAPI(formData);
+      const uploadedUrl = uploadResponse?.data?.image;
+      if (!uploadResponse?.success || !uploadedUrl) throw new Error(uploadResponse?.message || 'Logo upload failed.');
+
+      const settingsResponse = await adminGetAllSettingsAPI();
+      const existing = settingsResponse?.data?.find(item => item.key === 'LOGO_URL');
+      const saveResponse = existing
+        ? await updateSettingAPI('LOGO_URL', uploadedUrl)
+        : await createSettingAPI({ key: 'LOGO_URL', value: uploadedUrl, type: 'url', category: 'branding', isPublic: true });
+      if (!saveResponse?.success) throw new Error(saveResponse?.message || 'Logo setting could not be saved.');
+      setLogoUrl(uploadedUrl);
+      setPreview(uploadedUrl);
+      setLogoFile(null);
+      setMessage({ type: 'success', text: 'Logo updated successfully.' });
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || 'Logo update failed.' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-8 bg-gray-900 p-6 md:p-8 rounded-2xl border border-gray-800 shadow-xl max-w-3xl">
+      <h2 className="text-lg font-bold mb-2 text-white">Store Logo</h2>
+      <p className="text-sm text-slate-400 mb-5">Upload the logo used on the website and generated invoices.</p>
+      <div className="flex flex-wrap items-center gap-5">
+        <img src={preview || logoUrl} alt="Store logo preview" className="h-24 w-24 rounded-full object-contain bg-white p-1" />
+        <div className="flex-1 min-w-[220px] space-y-3">
+          <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" onChange={handleFileChange} className="block w-full text-sm text-gray-300" />
+          <button type="button" onClick={handleSave} disabled={loading || !logoFile} className="bg-emerald-600 disabled:opacity-50 text-white px-5 py-2.5 rounded-xl font-semibold">
+            {loading ? 'Uploading...' : 'Update Logo'}
+          </button>
+          {message && <p className={message.type === 'success' ? 'text-emerald-400 text-sm' : 'text-rose-400 text-sm'}>{message.text}</p>}
         </div>
       </div>
     </div>

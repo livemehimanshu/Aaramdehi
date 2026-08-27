@@ -7,14 +7,22 @@ import "jspdf-autotable";
  */
 const loadLogoDataUrl = async () => {
   try {
-    const response = await fetch('/logo.png');
-    if (!response.ok) return null;
-    const blob = await response.blob();
+    const settingsResponse = await fetch('/api/settings/public');
+    const settings = settingsResponse.ok ? await settingsResponse.json() : null;
+    const logoUrl = settings?.data?.LOGO_URL || '/aaramdehi-logo.svg';
+    const image = await new Promise((resolve, reject) => {
+      const element = new Image();
+      element.onload = () => resolve(element);
+      element.onerror = reject;
+      element.src = logoUrl;
+    });
     return await new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result);
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+      const canvas = document.createElement('canvas');
+      const size = 600;
+      canvas.width = size;
+      canvas.height = size;
+      canvas.getContext('2d').drawImage(image, 0, 0, size, size);
+      resolve(canvas.toDataURL('image/png'));
     });
   } catch (error) {
     console.warn('Invoice logo could not be loaded:', error.message);
@@ -57,7 +65,7 @@ export const generateInvoicePDF = async (order) => {
 
   const logoDataUrl = await loadLogoDataUrl();
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', 14, 16, 58, 13);
+    doc.addImage(logoDataUrl, 'PNG', 14, 13, 30, 30);
   } else {
     doc.setTextColor(239, 68, 68);
     doc.setFontSize(18);
@@ -211,7 +219,7 @@ const generateSimpleInvoice = (order, doc, logoDataUrl) => {
 
   // --- Header ---
   if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', 14, 16, 58, 14.4);
+    doc.addImage(logoDataUrl, 'PNG', 14, 13, 30, 30);
   } else {
     doc.setFontSize(22);
     doc.setTextColor(239, 68, 68);

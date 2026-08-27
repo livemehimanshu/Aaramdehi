@@ -5,7 +5,24 @@ import "jspdf-autotable";
  * Generates a professional PDF invoice for Aaramdehi
  * @param {Object} order - The order data object
  */
-export const generateInvoicePDF = (order) => {
+const loadLogoDataUrl = async () => {
+  try {
+    const response = await fetch('/logo.png');
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (error) {
+    console.warn('Invoice logo could not be loaded:', error.message);
+    return null;
+  }
+};
+
+export const generateInvoicePDF = async (order) => {
   try {
     if (!order) {
       throw new Error("Order data is missing or null");
@@ -17,7 +34,7 @@ export const generateInvoicePDF = (order) => {
     // ✅ Check if autoTable is available
     if (!doc.autoTable) {
       console.warn("⚠️ autoTable not available, using fallback simple table");
-      generateSimpleInvoice(order, doc);
+      generateSimpleInvoice(order, doc, await loadLogoDataUrl());
       return;
     }
     console.log("✅ autoTable is available - proceeding with full invoice");
@@ -28,20 +45,28 @@ export const generateInvoicePDF = (order) => {
   const customerName = address.fullName || address.name || customer.name || order.customerName || "Customer";
   const customerEmail = address.email || customer.email || order.email || "N/A";
   const customerPhone = address.mobile || address.phone || customer.mobile || order.mobile || order.phone || "N/A";
-  const addressLines = [address.address || address.detail, address.city, address.state, address.postalCode || address.pincode]
-    .filter(Boolean);
+  const addressText = [
+    address.address || address.detail || address.addressLine1 || address.street,
+    address.addressLine2 || address.locality || address.landmark,
+    address.city,
+    address.state,
+    address.postalCode || address.pincode
+  ].filter(Boolean).join(', ');
   const paymentMethodDisplay = order.paymentMethod?.toUpperCase() === 'COD' ? "Cash on Delivery" : order.paymentMethod || "Online Payment";
   const money = (value) => `INR ${(Number(value) || 0).toLocaleString('en-IN')}`;
 
-  doc.setFillColor(86, 24, 92);
-  doc.roundedRect(14, 14, 42, 22, 2, 2, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("AARAMDEHI", 18, 24);
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "normal");
-  doc.text("PREMIUM HOME DECOR", 18, 30);
+  const logoDataUrl = await loadLogoDataUrl();
+  if (logoDataUrl) {
+    doc.addImage(logoDataUrl, 'PNG', 14, 16, 58, 13);
+  } else {
+    doc.setTextColor(239, 68, 68);
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("AARAMDEHI", 14, 25);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("PREMIUM HOME DECOR", 14, 31);
+  }
 
   doc.setTextColor(25, 25, 25);
   doc.setFontSize(24);
@@ -59,10 +84,11 @@ export const generateInvoicePDF = (order) => {
   doc.text("BILLED TO", 14, 53);
   doc.setFont("helvetica", "normal");
   doc.text(customerName, 14, 59);
-  doc.text(addressLines[0] || "Address pending", 14, 64);
-  doc.text(addressLines.slice(1).join(', ') || "", 14, 69);
-  doc.text(`Phone: ${customerPhone}`, 14, 74);
-  doc.text(`Email: ${customerEmail}`, 14, 79);
+  const wrappedAddress = doc.splitTextToSize(addressText || "Address pending", 94);
+  doc.text(wrappedAddress, 14, 64, { lineHeightFactor: 1.25 });
+  const contactY = 64 + (wrappedAddress.length * 4.5) + 3;
+  doc.text(`Phone: ${customerPhone}`, 14, contactY);
+  doc.text(`Email: ${customerEmail}`, 14, contactY + 5);
 
   doc.setFont("helvetica", "bold");
   doc.text("PAYMENT DETAILS", 125, 53);
@@ -92,7 +118,7 @@ export const generateInvoicePDF = (order) => {
   });
 
   doc.autoTable({
-    startY: 87,
+    startY: Math.max(87, contactY + 14),
     head: [tableColumn],
     body: tableRows,
     theme: 'grid',
@@ -167,14 +193,18 @@ export const generateInvoicePDF = (order) => {
 };
 
 // ✅ Fallback function if autoTable is not available
-const generateSimpleInvoice = (order, doc) => {
+const generateSimpleInvoice = (order, doc, logoDataUrl) => {
   const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
 
   // --- Header ---
-  doc.setFontSize(22);
-  doc.setTextColor(239, 68, 68);
-  doc.setFont("helvetica", "bold");
-  doc.text("AARAMDEHI", 14, 20);
+  if (logoDataUrl) {
+    doc.addImage(logoDataUrl, 'PNG', 14, 16, 58, 13);
+  } else {
+    doc.setFontSize(22);
+    doc.setTextColor(239, 68, 68);
+    doc.setFont("helvetica", "bold");
+    doc.text("AARAMDEHI", 14, 20);
+  }
 
   doc.setFontSize(10);
   doc.setTextColor(100);

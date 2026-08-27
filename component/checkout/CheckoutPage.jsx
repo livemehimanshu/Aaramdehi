@@ -486,11 +486,21 @@ const CheckoutPage = () => {
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 block mb-1">City</label>
-                                    <input type="text" {...register('city')} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+                                    <input
+                                        type="text"
+                                        {...register('city')}
+                                        className={`w-full border rounded px-3 py-2 text-sm focus:outline-none ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+                                    />
+                                    {errors.city && <p className="text-red-500 text-[10px] mt-1">{errors.city.message}</p>}
                                 </div>
                                 <div>
                                     <label className="text-sm font-bold text-gray-700 block mb-1">Pincode</label>
-                                    <input type="text" {...register('postalCode')} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+                                    <input
+                                        type="text"
+                                        {...register('postalCode')}
+                                        className={`w-full border rounded px-3 py-2 text-sm focus:outline-none ${errors.postalCode ? 'border-red-500' : 'border-gray-300'}`}
+                                    />
+                                    {errors.postalCode && <p className="text-red-500 text-[10px] mt-1">{errors.postalCode.message}</p>}
                                 </div>
                             </div>
                             <div>

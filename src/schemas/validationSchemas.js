@@ -23,10 +23,13 @@ export const resetPasswordSchema = z.object({
 });
 
 export const addressSchema = z.object({
-  name: z.string().min(1),
-  address: z.string().min(1),
-  city: z.string().min(1),
-  pincode: z.string().min(3)
+  fullName: z.string().trim().min(1, 'Full name is required'),
+  address: z.string().trim().min(1, 'Address is required'),
+  city: z.string().trim().min(1, 'City is required'),
+  postalCode: z.string().trim().min(3, 'Pincode must be at least 3 characters'),
+  phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
+  email: z.string().email('Enter a valid email address'),
+  state: z.string().trim().min(1, 'State is required')
 });
 
 export const reviewSchema = z.object({

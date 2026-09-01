@@ -71,12 +71,83 @@ export const BlogList = () => {
         blog.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    // ✅ Generate BreadcrumbList Schema
+    const breadcrumbSchema = useMemo(() => ({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://www.aaramdehi.co.in"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://www.aaramdehi.co.in/blog"
+        },
+        ...(selectedCat !== 'All' ? [{
+          "@type": "ListItem",
+          "position": 3,
+          "name": selectedCat,
+          "item": `https://www.aaramdehi.co.in/blog?category=${encodeURIComponent(selectedCat)}`
+        }] : [])
+      ]
+    }), [selectedCat]);
+
+    // ✅ Generate BlogPosting ItemList Schema
+    const blogListSchema = useMemo(() => {
+      if (filteredBlogs.length === 0) return null;
+      
+      return {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": "Aaramdehi Journal",
+        "description": "Read our latest tips on cushions, pillows, home decor styling, and how to maximize your comfort with Aaramdehi.",
+        "url": "https://www.aaramdehi.co.in/blog",
+        "blogPost": filteredBlogs.slice(0, visibleCount).map((blog, index) => ({
+          "@type": "BlogPosting",
+          "position": index + 1,
+          "headline": blog.title,
+          "description": blog.excerpt || blog.title,
+          "image": blog.image || "https://www.aaramdehi.co.in/aaramdehi-logo.svg",
+          "url": `https://www.aaramdehi.co.in/blog/${blog.slug}`,
+          "datePublished": new Date(blog.publishedAt || blog.createdAt).toISOString(),
+          "dateModified": new Date(blog.updatedAt || blog.publishedAt || blog.createdAt).toISOString(),
+          "author": {
+            "@type": "Person",
+            "name": blog.author || "Aaramdehi"
+          },
+          "publisher": {
+            "@type": "Organization",
+            "name": "Aaramdehi",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://www.aaramdehi.co.in/aaramdehi-logo.svg"
+            }
+          },
+          "articleBody": DOMPurify.sanitize(blog.content, { ALLOWED_TAGS: [] })
+        }))
+      };
+    }, [filteredBlogs, visibleCount]);
+
+    // ✅ Combine schemas using @graph
+    const combinedSchemas = useMemo(() => ({
+      "@context": "https://schema.org",
+      "@graph": [breadcrumbSchema, blogListSchema].filter(Boolean)
+    }), [breadcrumbSchema, blogListSchema]);
+
     return (
         <div className="bg-[#FDFBF7] min-h-screen pb-20">
             <Helmet>
                 <title>Aaramdehi Journal | Comfort & Decor Blog</title>
                 <meta name="description" content="Read our latest tips on cushions, pillows, home decor styling, and how to maximize your comfort with Aaramdehi." />
                 <link rel="canonical" href="https://www.aaramdehi.co.in/blog" />
+                <script type="application/ld+json">
+                  {JSON.stringify(combinedSchemas)}
+                </script>
             </Helmet>
 
             {/* Header Section */}
@@ -295,6 +366,68 @@ export const BlogDetail = () => {
     const publishDate = new Date(blog.publishedAt || blog.createdAt).toISOString();
     const currentUrl = window.location.href;
 
+    // ✅ BreadcrumbList Schema for navigation
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://www.aaramdehi.co.in"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://www.aaramdehi.co.in/blog"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": blog.category || "Article",
+          "item": `https://www.aaramdehi.co.in/blog?category=${encodeURIComponent(blog.category || '')}`
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": blog.title,
+          "item": currentUrl
+        }
+      ]
+    };
+
+    // ✅ Enhanced BlogPosting Schema (more detailed than Article)
+    const blogPostingSchema = {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": currentUrl
+      },
+      "headline": blog.metaTitle || blog.title,
+      "description": blog.metaDescription || blog.excerpt,
+      "image": blog.image || "https://www.aaramdehi.co.in/aaramdehi-logo.svg",
+      "author": {
+        "@type": "Person",
+        "name": blog.author || "Aaramdehi"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Aaramdehi",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.aaramdehi.co.in/logo.png"
+        }
+      },
+      "datePublished": publishDate,
+      "dateModified": blog.updatedAt ? new Date(blog.updatedAt).toISOString() : publishDate,
+      "articleBody": DOMPurify.sanitize(blog.content, { ALLOWED_TAGS: [] }),
+      "keywords": blog.metaKeywords || blog.category,
+      "articleSection": blog.category || "Lifestyle"
+    };
+
     return (
         <article className="bg-white min-h-screen pb-20">
             {/* Enterprise SEO Injection */}
@@ -318,32 +451,11 @@ export const BlogDetail = () => {
 
                 <link rel="canonical" href={currentUrl} />
 
-                {/* Article JSON-LD Schema */}
+                {/* BreadcrumbList + BlogPosting JSON-LD Schema using @graph */}
                 <script type="application/ld+json">
                     {JSON.stringify({
-                        "@context": "https://schema.org",
-                        "@type": "Article",
-                        "mainEntityOfPage": {
-                            "@type": "WebPage",
-                            "@id": currentUrl
-                        },
-                        "headline": blog.metaTitle || blog.title,
-                        "description": blog.metaDescription || blog.excerpt,
-                        "image": blog.image,
-                        "author": {
-                            "@type": "Person",
-                            "name": blog.author
-                        },
-                        "publisher": {
-                            "@type": "Organization",
-                            "name": "Aaramdehi",
-                            "logo": {
-                                "@type": "ImageObject",
-                                "url": "https://www.aaramdehi.co.in/logo.png"
-                            }
-                        },
-                        "datePublished": publishDate,
-                        "dateModified": blog.updatedAt ? new Date(blog.updatedAt).toISOString() : publishDate
+                      "@context": "https://schema.org",
+                      "@graph": [breadcrumbSchema, blogPostingSchema]
                     })}
                 </script>
             </Helmet>

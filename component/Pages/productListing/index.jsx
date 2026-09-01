@@ -303,15 +303,96 @@ const ProductListing = ({ forcedCategory }) => {
     .filter(Boolean)
     .join(', ');
 
+  // ✅ Generate BreadcrumbList Schema for navigation
+  const breadcrumbSchema = useMemo(() => {
+    const breadcrumbs = [
+      { position: 1, name: 'Home', item: 'https://www.aaramdehi.co.in' },
+      { position: 2, name: 'Products', item: 'https://www.aaramdehi.co.in/products' }
+    ];
+    
+    if (selectedCategory && selectedCategory !== 'All') {
+      breadcrumbs.push({
+        position: 3,
+        name: selectedCategory,
+        item: `https://www.aaramdehi.co.in/products?category=${encodeURIComponent(selectedCategory)}`
+      });
+    }
+    
+    return {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": breadcrumbs.map(b => ({
+        "@type": "ListItem",
+        "position": b.position,
+        "name": b.name,
+        "item": b.item
+      }))
+    };
+  }, [selectedCategory]);
+
+  // ✅ Generate ItemList + CollectionPage Schema for search results
+  const collectionSchema = useMemo(() => {
+    if (filteredData.length === 0) return null;
+    
+    return {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": pageTitle,
+      "description": pageDescription,
+      "url": `https://www.aaramdehi.co.in/products${searchParam ? `?search=${encodeURIComponent(searchParam)}` : categoryParam ? `?category=${encodeURIComponent(categoryParam)}` : ''}`,
+      "mainEntity": {
+        "@type": "ItemList",
+        "itemListElement": currentItems.map((product, index) => ({
+          "@type": "Product",
+          "position": index + 1,
+          "name": product.name,
+          "description": product.description || product.shortDescription || '',
+          "image": product.thumbnail || product.images?.[0]?.url || product.image || '',
+          "url": `https://www.aaramdehi.co.in/product/${product.slug || product._id || product.id}`,
+          "brand": {
+            "@type": "Brand",
+            "name": product.brand || "Aaramdehi"
+          },
+          "offers": {
+            "@type": "Offer",
+            "price": product.sellingPrice || product.price || 0,
+            "priceCurrency": "INR",
+            "availability": (product.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+          },
+          ...(product.ratings?.average || product.rating) && {
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": product.ratings?.average || product.rating || 5,
+              "ratingCount": Array.isArray(product.reviews) ? product.reviews.length : 0,
+              "bestRating": "5",
+              "worstRating": "1"
+            }
+          }
+        }))
+      }
+    };
+  }, [filteredData, currentItems, pageTitle, pageDescription, searchParam, categoryParam]);
+
+  // ✅ Combine BreadcrumbList + CollectionPage schemas using @graph
+  const allSchemas = useMemo(() => {
+    if (!collectionSchema) return breadcrumbSchema;
+    return {
+      "@context": "https://schema.org",
+      "@graph": [breadcrumbSchema, collectionSchema]
+    };
+  }, [breadcrumbSchema, collectionSchema]);
+
   return (
     <div className="flex bg-[#f4f7f9] min-h-screen p-4 lg:p-8 gap-8 mt-20">
-      {/* ✅ SEO Optimizer implementation with canonical URL */}
+      {/* ✅ SEO Optimizer implementation with canonical URL + Schema markup */}
       <SEO 
         title={pageTitle}
         description={pageDescription}
         keywords={pageKeywords}
         ogUrl={`https://www.aaramdehi.co.in/products${searchParam ? `?search=${encodeURIComponent(searchParam)}` : categoryParam ? `?category=${encodeURIComponent(categoryParam)}` : ''}`}
         path="/products"
+        schemaType="Schema.org Collection"
+        schemaData={allSchemas}
       />
 
       <aside className="hidden lg:block w-[280px] sticky top-24 h-fit">

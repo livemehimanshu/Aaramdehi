@@ -524,7 +524,7 @@ const ProductDetailsPage = () => {
           schemaData={{
             "@context": "https://schema.org/",
             "@type": "Product",
-            "name": productData.name,
+            "name": String(productData.name || '').substring(0, 150).trim(),
             "image": selectedImage || productData.images?.[0]?.url || productData.images?.[0],
             "description": productData.seoDescription || productData.description,
             "brand": {
@@ -537,7 +537,43 @@ const ProductDetailsPage = () => {
               "priceCurrency": "INR",
               "price": finalPrice,
               "availability": (productData.stock == null && productData.quantity == null) || Number(productData.stock ?? productData.quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-              "itemCondition": "https://schema.org/NewCondition"
+              "itemCondition": "https://schema.org/NewCondition",
+              "shippingDetails": {
+                "@type": "ShippingDeliveryTime",
+                "shippingRate": {
+                  "@type": "PriceSpecification",
+                  "priceCurrency": "INR",
+                  "price": "0"
+                },
+                "shippingDestination": {
+                  "@type": "DeliveryArea",
+                  "areaServed": "IN"
+                },
+                "deliveryTime": {
+                  "@type": "ShippingDeliveryTime",
+                  "handlingTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 1,
+                    "maxValue": 2,
+                    "unitCode": "DAY"
+                  },
+                  "transitTime": {
+                    "@type": "QuantitativeValue",
+                    "minValue": 3,
+                    "maxValue": 5,
+                    "unitCode": "DAY"
+                  }
+                }
+              },
+              "hasMerchantReturnPolicy": {
+                "@type": "MerchantReturnPolicy",
+                "applicableCountry": "IN",
+                "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+                "merchantReturnDays": 30,
+                "returnMethod": "https://schema.org/ReturnByMail",
+                "returnFees": "https://schema.org/FreeReturn",
+                "returnableByMerchant": true
+              }
             }
           }}
         />

@@ -345,7 +345,7 @@ const ProductListing = ({ forcedCategory }) => {
         "itemListElement": currentItems.map((product, index) => ({
           "@type": "Product",
           "position": index + 1,
-          "name": product.name,
+          "name": String(product.name || '').substring(0, 150).trim(),
           "description": product.description || product.shortDescription || '',
           "image": product.thumbnail || product.images?.[0]?.url || product.image || '',
           "url": `https://www.aaramdehi.co.in/product/${product.slug || product._id || product.id}`,
@@ -357,7 +357,43 @@ const ProductListing = ({ forcedCategory }) => {
             "@type": "Offer",
             "price": product.sellingPrice || product.price || 0,
             "priceCurrency": "INR",
-            "availability": (product.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+            "availability": (product.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            "shippingDetails": {
+              "@type": "ShippingDeliveryTime",
+              "shippingRate": {
+                "@type": "PriceSpecification",
+                "priceCurrency": "INR",
+                "price": "0"
+              },
+              "shippingDestination": {
+                "@type": "DeliveryArea",
+                "areaServed": "IN"
+              },
+              "deliveryTime": {
+                "@type": "ShippingDeliveryTime",
+                "handlingTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 1,
+                  "maxValue": 2,
+                  "unitCode": "DAY"
+                },
+                "transitTime": {
+                  "@type": "QuantitativeValue",
+                  "minValue": 3,
+                  "maxValue": 5,
+                  "unitCode": "DAY"
+                }
+              }
+            },
+            "hasMerchantReturnPolicy": {
+              "@type": "MerchantReturnPolicy",
+              "applicableCountry": "IN",
+              "returnPolicyCategory": "https://schema.org/MerchantReturnFiniteReturnWindow",
+              "merchantReturnDays": 30,
+              "returnMethod": "https://schema.org/ReturnByMail",
+              "returnFees": "https://schema.org/FreeReturn",
+              "returnableByMerchant": true
+            }
           },
           ...(Array.isArray(product.reviews) && product.reviews.length > 0) && {
             "aggregateRating": {

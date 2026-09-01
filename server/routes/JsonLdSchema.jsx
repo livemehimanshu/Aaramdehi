@@ -27,11 +27,11 @@ const JsonLdSchema = ({ product }) => {
       "availability": stock == null || Number(stock) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "itemCondition": "https://schema.org/NewCondition"
     },
-    ...(rating && {
+    ...(reviewCount > 0 && {
       "aggregateRating": {
         "@type": "AggregateRating",
         "ratingValue": rating,
-        "ratingCount": Math.max(reviewCount, 1),
+        "ratingCount": reviewCount,
         "bestRating": "5",
         "worstRating": "1"
       }

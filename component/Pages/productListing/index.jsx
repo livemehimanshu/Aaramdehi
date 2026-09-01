@@ -359,11 +359,11 @@ const ProductListing = ({ forcedCategory }) => {
             "priceCurrency": "INR",
             "availability": (product.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
           },
-          ...(product.ratings?.average || product.rating) && {
+          ...(Array.isArray(product.reviews) && product.reviews.length > 0) && {
             "aggregateRating": {
               "@type": "AggregateRating",
               "ratingValue": product.ratings?.average || product.rating || 5,
-              "ratingCount": Array.isArray(product.reviews) ? product.reviews.length : 0,
+              "ratingCount": product.reviews.length,
               "bestRating": "5",
               "worstRating": "1"
             }

@@ -126,7 +126,16 @@ const AuthPage = () => {
             setView('otp');
             toast.success("OTP sent to your email!");
         } catch (error) {
-            toast.error(error.response?.data?.message || "Signup failed. Please check your details.");
+            const errorData = error.response?.data || {};
+            if (error.response?.status === 403 && errorData.needsVerification) {
+                setForgotEmail((data.email || '').toLowerCase().trim());
+                setOtpFlow('signup');
+                setOtp('');
+                setView('otp');
+                toast.success(errorData.message || 'OTP resent. Please verify your email.');
+            } else {
+                toast.error(errorData.message || "Signup failed. Please check your details.");
+            }
         } finally {
             setLoading(false);
         }

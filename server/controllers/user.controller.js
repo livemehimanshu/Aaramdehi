@@ -26,8 +26,19 @@ const setAuthCookies = (res, accessToken, refreshToken) => {
 
 export const registerUserController = async (req, res) => {
     try {
-        const { name, email, password, mobile } = req.body;
-        const lowerEmail = email.toLowerCase();
+        const name = typeof req.body?.name === 'string' ? req.body.name.trim() : '';
+        const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+        const password = typeof req.body?.password === 'string' ? req.body.password : '';
+        const mobile = typeof req.body?.mobile === 'string' ? req.body.mobile.trim() : '';
+
+        if (!name || !email || password.length < 6 || !/^[0-9]{10}$/.test(mobile)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please provide a valid name, email, 10-digit mobile number, and password of at least 6 characters.'
+            });
+        }
+
+        const lowerEmail = email;
         const existingUsers = await findByQuery(COLLECTION, 'email', lowerEmail);
 
         if (existingUsers.length > 0) {

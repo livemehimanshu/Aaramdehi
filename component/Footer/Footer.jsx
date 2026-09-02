@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { FiTruck, FiRotateCcw, FiShield, FiGift, FiHeadphones } from 'react-icons/fi';
+import { FiTruck, FiRotateCcw, FiShield, FiGift, FiHeadphones, FiDownload } from 'react-icons/fi';
 import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube } from 'react-icons/fa';
 import { subscribeNewsletterAPI } from '../../src/api/authAndAdminApi';
 
@@ -10,6 +10,33 @@ const NewsletterFooter = () => {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [siteLogo, setSiteLogo] = useState(null);
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    const standaloneMedia = window.matchMedia('(display-mode: standalone)');
+    const checkInstalled = () => setIsInstalled(standaloneMedia.matches || window.navigator.standalone === true);
+    const handleInstallPrompt = (event) => {
+      event.preventDefault();
+      setInstallPrompt(event);
+    };
+    const handleAppInstalled = () => {
+      setInstallPrompt(null);
+      setIsInstalled(true);
+      toast.success('Aaramdehi app installed successfully.');
+    };
+
+    checkInstalled();
+    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    standaloneMedia.addEventListener?.('change', checkInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+      standaloneMedia.removeEventListener?.('change', checkInstalled);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchSiteLogo = async () => {
@@ -62,6 +89,20 @@ const NewsletterFooter = () => {
     }
   };
 
+  const handleInstallApp = async () => {
+    if (installPrompt) {
+      await installPrompt.prompt();
+      await installPrompt.userChoice;
+      setInstallPrompt(null);
+      return;
+    }
+
+    const isIOS = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    toast(isIOS
+      ? 'Safari mein Share button dabakar "Add to Home Screen" choose karein.'
+      : 'Browser menu se "Install Aaramdehi" ya "Add to Home Screen" choose karein.');
+  };
+
   return (
     <footer className="bg-[#1A365D] text-white border-t border-gray-100">
       
@@ -95,6 +136,17 @@ const NewsletterFooter = () => {
               <p className="text-white/80 text-sm font-medium">sales@aaramdehi.com</p>
               <p className="text-[#FAF9F6] text-lg font-semibold tracking-wide">(+91) 800-6594-734</p>
             </div>
+            {!isInstalled && (
+              <button
+                type="button"
+                onClick={handleInstallApp}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-white hover:text-[#1A365D] sm:w-auto"
+                aria-label="Install Aaramdehi app"
+              >
+                <FiDownload size={17} aria-hidden="true" />
+                Install App
+              </button>
+            )}
             <div className="flex items-center gap-4 mt-6">
                <div className="w-10 h-10 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#1A365D] transition-all duration-300 cursor-pointer"><FaFacebookF size={14} /></div>
                <div className="w-10 h-10 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#1A365D] transition-all duration-300 cursor-pointer"><FaTwitter size={14} /></div>

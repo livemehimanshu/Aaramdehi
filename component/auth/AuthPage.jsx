@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { IoMailOutline, IoLockClosedOutline, IoEyeOutline, IoEyeOffOutline, IoArrowBack, IoCallOutline, IoPersonOutline } from 'react-icons/io5';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, signupSchema, forgotPasswordSchema, resetPasswordSchema } from '../../src/schemas/validationSchemas';
@@ -9,21 +9,13 @@ import { loginAPI, signupAPI, forgotPasswordAPI, verifyOTPAPI, resetPasswordAPI 
 
 const AuthPage = () => {
     const navigate = useNavigate();
-    const location = useLocation();
-    const [view, setView] = useState('login'); // login, signup, forgot, otp, reset
+    const [view, setView] = useState(() => {
+        const path = window.location.pathname.toLowerCase();
+        return path.includes('/signup') || path.includes('/register') ? 'signup' : 'login';
+    }); // login, signup, forgot, otp, reset
     const [showPassword, setShowPassword] = useState(false);
-    const [showNewPassword, setShowNewPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [otpFlow, setOtpFlow] = useState('signup'); // 'signup' ya 'forgot-password'
-
-    useEffect(() => {
-        const path = location.pathname.toLowerCase();
-        if (path.includes('/signup') || path.includes('/register')) {
-            setView('signup');
-        } else if (path.includes('/login')) {
-            setView('login');
-        }
-    }, [location.pathname]);
 
     // --- States ---
     const [forgotEmail, setForgotEmail] = useState('');
@@ -42,8 +34,7 @@ const AuthPage = () => {
     const { 
         register: signupRegister, 
         handleSubmit: handleSignupSubmit, 
-        formState: { errors: signupErrors },
-        getValues: getSignupValues
+        formState: { errors: signupErrors }
     } = useForm({
         resolver: zodResolver(signupSchema)
     });
@@ -106,9 +97,9 @@ const AuthPage = () => {
             setLoading(true);
             // Ensure all required backend fields are present and valid
             const payload = {
-                name: (data.fullName || "").trim(),
+                name: data.fullName.trim(),
                 email: (data.email || "").toLowerCase().trim(),
-                mobile: (data.phone || "0000000000").trim(),
+                mobile: data.phone.trim(),
                 password: data.password,
                 confirmPassword: data.confirmPassword
             };
@@ -146,7 +137,7 @@ const AuthPage = () => {
         try {
             setLoading(true);
             const email = data.email.toLowerCase().trim();
-            const response = await forgotPasswordAPI({ email });
+            await forgotPasswordAPI({ email });
             setForgotEmail(email);
             setOtpFlow('forgot-password');
             setView('otp');
@@ -295,19 +286,19 @@ const AuthPage = () => {
 
                             <div className="relative">
                                 <IoCallOutline className="absolute left-4 top-4 text-slate-400" size={20} />
-                                <input type="tel" placeholder="Mobile Number" {...signupRegister('phone')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.phone ? 'border-red-500' : 'border-slate-700'}`} />
+                                <input type="tel" inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="Mobile Number" {...signupRegister('phone', { setValueAs: (value) => String(value || '').replace(/\D/g, '').slice(0, 10) })} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.phone ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.phone && <p className="text-red-500 text-[10px] font-bold">{signupErrors.phone.message}</p>}
 
                             <div className="relative">
                                 <IoLockClosedOutline className="absolute left-4 top-4 text-slate-400" size={20} />
-                                <input type="password" placeholder="Create Password" {...signupRegister('password')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.password ? 'border-red-500' : 'border-slate-700'}`} />
+                                <input type="password" autoComplete="new-password" placeholder="Create Password" {...signupRegister('password')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.password ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.password && <p className="text-red-500 text-[10px] font-bold">{signupErrors.password.message}</p>}
 
                             <div className="relative">
                                 <IoLockClosedOutline className="absolute left-4 top-4 text-slate-400" size={20} />
-                                <input type="password" placeholder="Confirm Password" {...signupRegister('confirmPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.confirmPassword ? 'border-red-500' : 'border-slate-700'}`} />
+                                <input type="password" autoComplete="new-password" placeholder="Confirm Password" {...signupRegister('confirmPassword')} className={`w-full pl-12 pr-4 py-3.5 border rounded-xl focus:ring-2 focus:ring-red-500 outline-none text-white bg-slate-800 ${signupErrors.confirmPassword ? 'border-red-500' : 'border-slate-700'}`} />
                             </div>
                             {signupErrors.confirmPassword && <p className="text-red-500 text-[10px] font-bold">{signupErrors.confirmPassword.message}</p>}
 
@@ -337,7 +328,7 @@ const AuthPage = () => {
                         {view === 'otp' && (
                             <div className="space-y-4">
                                 <p className="text-sm text-slate-400">OTP sent to: {forgotEmail}</p>
-                                <input type="text" maxLength="6" placeholder="6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value)} className="w-full p-4 text-center text-2xl tracking-[1rem] font-bold border rounded-xl outline-none bg-slate-800 text-white border-slate-700" />
+                                <input type="text" inputMode="numeric" autoComplete="one-time-code" maxLength="6" placeholder="6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} className="w-full p-4 text-center text-2xl tracking-[1rem] font-bold border rounded-xl outline-none bg-slate-800 text-white border-slate-700" />
                                 <button onClick={handleVerifyOTP} disabled={loading} className="w-full bg-red-500 text-white py-3.5 rounded-xl font-bold hover:bg-red-600 shadow-lg shadow-red-200 transition-all">
                                     {loading ? 'Verifying...' : 'Verify OTP'}
                                 </button>

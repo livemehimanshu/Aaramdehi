@@ -6,11 +6,14 @@ export const loginSchema = z.object({
 });
 
 export const signupSchema = z.object({
-  fullName: z.string().min(1),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  password: z.string().min(6),
-  confirmPassword: z.string().min(6)
+  fullName: z.string().trim().min(2, 'Enter your full name'),
+  email: z.string().trim().email('Enter a valid email address'),
+  phone: z.string().trim().regex(/^[0-9]{10}$/, 'Enter a valid 10-digit mobile number'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Confirm your password')
+}).refine((data) => data.password === data.confirmPassword, {
+  path: ['confirmPassword'],
+  message: 'Passwords do not match'
 });
 
 export const forgotPasswordSchema = z.object({

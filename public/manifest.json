@@ -2,9 +2,11 @@
   "name": "Aaramdehi | Premium Furniture & Home Decor",
   "short_name": "Aaramdehi",
   "description": "Premium furniture and home decor designed for comfort and modern living.",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#1A365D",
   "icons": [
@@ -12,13 +14,13 @@
       "src": "/aaramdehi-logo.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/aaramdehi-logo.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }

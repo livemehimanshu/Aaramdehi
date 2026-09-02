@@ -118,11 +118,14 @@ export const registerUserController = async (req, res) => {
                 forgot_password_expiry: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
             });
 
-            await sendEmail({
+            const emailResult = await sendEmail({
                 sendTo: lowerEmail,
                 subject: "Verify your email - Aaramdehi",
                 html: verifyEmailTemplate({ name: existingUser.name || name, url: otp })
             });
+            if (!emailResult?.success) {
+                return res.status(503).json({ success: false, message: 'Email service is temporarily unavailable. Please try again later.' });
+            }
 
             return res.status(403).json({
                 success: false,
@@ -150,11 +153,14 @@ export const registerUserController = async (req, res) => {
 
         const userId = await create(COLLECTION, userData);
         
-        await sendEmail({
+        const emailResult = await sendEmail({
             sendTo: lowerEmail,
             subject: "Verify your email - Aaramdehi",
             html: verifyEmailTemplate({ name, url: otp })
         });
+        if (!emailResult?.success) {
+            return res.status(503).json({ success: false, message: 'Email service is temporarily unavailable. Please try again later.' });
+        }
 
         return res.status(201).json({ success: true, message: "User registered. Please verify OTP." });
     } catch (error) {
@@ -236,11 +242,14 @@ export const loginController = async (req, res) => {
                 forgot_password_otp: otp, 
                 forgot_password_expiry: new Date(Date.now() + 10 * 60 * 1000).toISOString() 
             });
-            await sendEmail({
+            const emailResult = await sendEmail({
                 sendTo: user.email,
                 subject: "Verify your email - Aaramdehi",
                 html: verifyEmailTemplate({ name: user.name, url: otp })
             });
+            if (!emailResult?.success) {
+                return res.status(503).json({ success: false, needsVerification: true, message: 'Email service is temporarily unavailable. Please try again later.' });
+            }
             console.log(`🛡️ [Verification Needed]: ${email} | New OTP sent. Returning 403.`);
             return res.status(403).json({ success: false, needsVerification: true, message: "Please verify your email" });
         }
@@ -279,11 +288,14 @@ export const forgotPasswordController = async (req, res) => {
             forgot_password_expiry: new Date(Date.now() + 10 * 60 * 1000).toISOString() 
         });
 
-        await sendEmail({
+        const emailResult = await sendEmail({
             sendTo: email,
             subject: "Reset your password - Aaramdehi",
             html: forgotPasswordTemplate({ name: user.name, otp })
         });
+        if (!emailResult?.success) {
+            return res.status(503).json({ success: false, message: 'Email service is temporarily unavailable. Please try again later.' });
+        }
 
         return res.json({ success: true, message: "OTP sent to email" });
     } catch (error) {

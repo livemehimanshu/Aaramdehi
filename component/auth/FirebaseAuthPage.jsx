@@ -156,8 +156,21 @@ const FirebaseAuthPage = ({ onClose }) => {
 
   const createRecaptcha = () => {
     if (!auth || recaptchaRef.current) return recaptchaRef.current;
-    recaptchaRef.current = new RecaptchaVerifier(auth, 'phone-recaptcha', { size: 'invisible' });
+    recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'normal' });
     return recaptchaRef.current;
+  };
+
+  const getPhoneAuthError = (authError) => {
+    const messages = {
+      'auth/operation-not-allowed': 'Phone sign-in is disabled in Firebase Console. Enable Phone provider.',
+      'auth/unauthorized-domain': 'This website domain is not authorized in Firebase Authentication.',
+      'auth/captcha-check-failed': 'reCAPTCHA verification failed. Please try again.',
+      'auth/invalid-app-credential': 'Firebase reCAPTCHA setup is invalid. Check the authorized domain.',
+      'auth/quota-exceeded': 'SMS quota exceeded. Please try again later.',
+      'auth/too-many-requests': 'Too many attempts. Please wait and try again.',
+      'auth/invalid-phone-number': 'Enter a valid mobile number.'
+    };
+    return messages[authError.code] || 'OTP could not be sent. Please try again.';
   };
 
   const handleSendOtp = async (event) => {
@@ -175,11 +188,10 @@ const FirebaseAuthPage = ({ onClose }) => {
       setPhone(normalizedPhone);
       setStep('otp');
     } catch (authError) {
+      console.error('Phone authentication failed:', authError.code);
       recaptchaRef.current?.clear();
       recaptchaRef.current = null;
-      setError(authError.code === 'auth/invalid-phone-number'
-        ? 'Enter a valid mobile number.'
-        : 'OTP could not be sent. Please try again.');
+      setError(getPhoneAuthError(authError));
     } finally {
       setAction('');
     }
@@ -296,7 +308,7 @@ const FirebaseAuthPage = ({ onClose }) => {
       )}
 
       {user && (step === 'profile' || step === 'profile-check') && <button type="button" onClick={handleSignOut} className="mt-4 w-full text-center text-xs font-semibold text-slate-500 hover:text-white">Use a different account</button>}
-      <div id="phone-recaptcha" />
+      <div id="recaptcha-container" className="mt-3 flex justify-center overflow-hidden rounded-lg" />
     </AuthShell>
   );
 };

@@ -16,10 +16,7 @@ const NewsletterFooter = () => {
   useEffect(() => {
     const standaloneMedia = window.matchMedia('(display-mode: standalone)');
     const checkInstalled = () => setIsInstalled(standaloneMedia.matches || window.navigator.standalone === true);
-    const handleInstallPrompt = (event) => {
-      event.preventDefault();
-      setInstallPrompt(event);
-    };
+    const handleInstallPrompt = () => setInstallPrompt(window.__deferredInstallPrompt);
     const handleAppInstalled = () => {
       setInstallPrompt(null);
       setIsInstalled(true);
@@ -27,12 +24,13 @@ const NewsletterFooter = () => {
     };
 
     checkInstalled();
-    window.addEventListener('beforeinstallprompt', handleInstallPrompt);
+    handleInstallPrompt();
+    window.addEventListener('pwaInstallAvailable', handleInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
     standaloneMedia.addEventListener?.('change', checkInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
+      window.removeEventListener('pwaInstallAvailable', handleInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
       standaloneMedia.removeEventListener?.('change', checkInstalled);
     };
@@ -90,6 +88,11 @@ const NewsletterFooter = () => {
   };
 
   const handleInstallApp = async () => {
+    if (isInstalled) {
+      toast.success('Aaramdehi app is already installed.');
+      return;
+    }
+
     if (installPrompt) {
       await installPrompt.prompt();
       await installPrompt.userChoice;
@@ -136,17 +139,15 @@ const NewsletterFooter = () => {
               <p className="text-white/80 text-sm font-medium">sales@aaramdehi.com</p>
               <p className="text-[#FAF9F6] text-lg font-semibold tracking-wide">(+91) 800-6594-734</p>
             </div>
-            {!isInstalled && (
-              <button
-                type="button"
-                onClick={handleInstallApp}
-                className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-white hover:text-[#1A365D] sm:w-auto"
-                aria-label="Install Aaramdehi app"
-              >
-                <FiDownload size={17} aria-hidden="true" />
-                Install App
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleInstallApp}
+              className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-white/30 bg-white/10 px-4 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-white hover:text-[#1A365D] sm:w-auto"
+              aria-label={isInstalled ? 'Aaramdehi app installed' : 'Install Aaramdehi app'}
+            >
+              <FiDownload size={17} aria-hidden="true" />
+              {isInstalled ? 'App Installed' : 'Install App'}
+            </button>
             <div className="flex items-center gap-4 mt-6">
                <div className="w-10 h-10 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#1A365D] transition-all duration-300 cursor-pointer"><FaFacebookF size={14} /></div>
                <div className="w-10 h-10 border border-white/30 rounded-full flex items-center justify-center text-white hover:bg-white hover:text-[#1A365D] transition-all duration-300 cursor-pointer"><FaTwitter size={14} /></div>

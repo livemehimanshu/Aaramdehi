@@ -8,6 +8,17 @@ import { Toaster } from 'react-hot-toast'
 const CHUNK_RECOVERY_KEY = 'aaramdehi-chunk-recovery';
 
 if (typeof window !== 'undefined') {
+  window.__deferredInstallPrompt = null;
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    window.__deferredInstallPrompt = event;
+    window.dispatchEvent(new Event('pwaInstallAvailable'));
+  });
+
+  window.addEventListener('appinstalled', () => {
+    window.__deferredInstallPrompt = null;
+  });
+
   window.addEventListener('error', (event) => {
     const message = String(event.message || '');
     if (!/failed to fetch dynamically imported module|expected a javascript|mime type of 'text\/html'/i.test(message)) return;

@@ -437,6 +437,15 @@ export async function signupAPI(userData) {
   }
 }
 
+export async function createFirebaseSessionAPI(idToken) {
+  try {
+    const res = await api.post('/auth/firebase-session', { idToken });
+    return res.data;
+  } catch (e) {
+    throw e;
+  }
+}
+
 export async function loginAPI(emailOrData, password) {
   const payload = typeof emailOrData === 'string' ? { email: emailOrData, password } : emailOrData;
   try {

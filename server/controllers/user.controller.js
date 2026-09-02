@@ -1,4 +1,4 @@
-import { findById, updateById, db, findByQuery, create, findAll } from '../config/db.js';
+import { admin, findById, updateById, db, findByQuery, create, findAll } from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import generatedOtp from '../utils/generatedOtp.js';
 import sendEmail from '../config/sendEmail.js';
@@ -23,6 +23,57 @@ const setAuthCookies = (res, accessToken, refreshToken) => {
 };
 
 // --- AUTH CONTROLLERS ---
+
+export const createFirebaseSessionController = async (req, res) => {
+    try {
+        const { idToken } = req.body || {};
+        if (typeof idToken !== 'string' || !idToken.trim()) {
+            return res.status(400).json({ success: false, message: 'Firebase ID token is required.' });
+        }
+
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const firebaseUid = decodedToken.uid;
+        const email = String(decodedToken.email || '').trim().toLowerCase();
+        const usersByUid = await findByQuery(COLLECTION, 'firebaseUid', firebaseUid);
+        const usersByEmail = email ? await findByQuery(COLLECTION, 'email', email) : [];
+        let user = usersByUid[0] || usersByEmail[0];
+
+        if (user) {
+            user = await updateById(COLLECTION, user._id, {
+                firebaseUid,
+                email: email || user.email || '',
+                name: user.name || decodedToken.name || email.split('@')[0] || 'Aaramdehi User',
+                mobile: user.mobile || decodedToken.phone_number || '',
+                isVerified: true
+            });
+        } else {
+            user = await create(COLLECTION, {
+                firebaseUid,
+                email,
+                name: decodedToken.name || email.split('@')[0] || 'Aaramdehi User',
+                mobile: decodedToken.phone_number || '',
+                role: 'USER',
+                isVerified: true,
+                authProvider: decodedToken.firebase?.sign_in_provider || 'firebase'
+            });
+        }
+
+        const accessToken = await generatedAccessToken(user._id);
+        const refreshToken = await generatedRefreshToken(user._id);
+        if (!accessToken || !refreshToken) {
+            return res.status(500).json({ success: false, message: 'Authentication service unavailable.' });
+        }
+
+        setAuthCookies(res, accessToken, refreshToken);
+        return res.json({
+            success: true,
+            user: { _id: user._id, name: user.name, email: user.email, mobile: user.mobile, role: user.role }
+        });
+    } catch (error) {
+        console.error('Firebase session verification failed:', error.message);
+        return res.status(401).json({ success: false, message: 'Firebase session could not be verified.' });
+    }
+};
 
 export const registerUserController = async (req, res) => {
     try {

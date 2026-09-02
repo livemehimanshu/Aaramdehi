@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { 
     registerUserController, 
+    createFirebaseSessionController,
     verifyEmailController, 
     loginController, 
     forgotPasswordController, 
@@ -16,6 +17,8 @@ const authRouter = Router();
 authRouter.route('/register')
     .post(validateRequest, authLimiter, validateRequestBody(['name', 'email', 'password']), registerUserController)
     .all((req, res) => res.status(405).json({ success: false, message: "Method Not Allowed. Use POST for registration." }));
+
+authRouter.post('/firebase-session', validateRequest, validateRequestBody(['idToken']), createFirebaseSessionController);
 
 authRouter.route('/login')
     .post(validateRequest, authLimiter, loginController)

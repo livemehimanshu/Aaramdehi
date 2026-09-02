@@ -14,6 +14,7 @@ import {
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { FiArrowLeft, FiCheck, FiLoader, FiMail, FiPhone, FiUser, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import { createFirebaseSessionAPI } from '../../src/api/authAndAdminApi';
 import { auth, firestore } from '../../src/api/firebase.js';
 
 const DEFAULT_COUNTRY_CODE = '+91';
@@ -56,7 +57,13 @@ const FirebaseAuthPage = ({ onClose }) => {
     navigate(-1);
   };
 
-  const finishAuthentication = (authenticatedUser) => {
+  const finishAuthentication = async (authenticatedUser) => {
+    try {
+      const sessionResponse = await createFirebaseSessionAPI(await authenticatedUser.getIdToken());
+      if (!sessionResponse?.success) throw new Error('Backend session was not created.');
+    } catch {
+      toast.error('Signed in, but account services are temporarily unavailable.');
+    }
     setUser(authenticatedUser);
     setProfile({
       fullName: authenticatedUser.displayName || '',
@@ -133,8 +140,7 @@ const FirebaseAuthPage = ({ onClose }) => {
     setAction('google');
     setError('');
     try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      finishAuthentication(result.user);
+      await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (authError) {
       if (authError.code !== 'auth/popup-closed-by-user') {
         setError('Google sign-in failed. Please try again.');
@@ -185,8 +191,7 @@ const FirebaseAuthPage = ({ onClose }) => {
     setAction('otp');
     setError('');
     try {
-      const result = await confirmationRef.current.confirm(otp);
-      finishAuthentication(result.user);
+      await confirmationRef.current.confirm(otp);
     } catch {
       setError('Invalid or expired OTP. Please try again.');
     } finally {

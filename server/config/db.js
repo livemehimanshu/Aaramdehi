@@ -42,6 +42,8 @@ if (!admin.apps.length) {
   });
 }
 
+export { admin };
+
 export const db = admin.database();
 export const firestore = admin.firestore();
 

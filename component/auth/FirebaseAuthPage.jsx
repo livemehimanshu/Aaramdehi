@@ -11,11 +11,10 @@ import {
   signInWithPopup,
   signOut
 } from 'firebase/auth';
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { FiArrowLeft, FiCheck, FiLoader, FiMail, FiPhone, FiUser, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import { createFirebaseSessionAPI } from '../../src/api/authAndAdminApi';
-import { auth, firestore } from '../../src/api/firebase.js';
+import { createFirebaseSessionAPI, saveFirebaseProfileAPI } from '../../src/api/authAndAdminApi';
+import { auth } from '../../src/api/firebase.js';
 
 const DEFAULT_COUNTRY_CODE = '+91';
 
@@ -44,10 +43,11 @@ const FirebaseAuthPage = ({ onClose }) => {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [user, setUser] = useState(null);
+  const [backendSession, setBackendSession] = useState(null);
   const [profile, setProfile] = useState({ fullName: '', email: '' });
-  const [loading, setLoading] = useState(() => Boolean(auth && firestore));
+  const [loading, setLoading] = useState(() => Boolean(auth));
   const [action, setAction] = useState('');
-  const [error, setError] = useState(() => auth && firestore ? '' : 'Authentication is temporarily unavailable. Please try again later.');
+  const [error, setError] = useState(() => auth ? '' : 'Authentication is temporarily unavailable. Please try again later.');
 
   const closeOrGoBack = () => {
     if (onClose) {
@@ -61,6 +61,7 @@ const FirebaseAuthPage = ({ onClose }) => {
     try {
       const sessionResponse = await createFirebaseSessionAPI(await authenticatedUser.getIdToken());
       if (!sessionResponse?.success) throw new Error('Backend session was not created.');
+      setBackendSession(sessionResponse);
     } catch {
       toast.error('Signed in, but account services are temporarily unavailable.');
     }
@@ -73,7 +74,7 @@ const FirebaseAuthPage = ({ onClose }) => {
   };
 
   useEffect(() => {
-    if (!auth || !firestore) {
+    if (!auth) {
       return undefined;
     }
 
@@ -107,21 +108,24 @@ const FirebaseAuthPage = ({ onClose }) => {
   }, []);
 
   useEffect(() => {
-    if (step !== 'profile-check' || !user || !firestore) return;
+    if (step !== 'profile-check' || !user || !backendSession) return;
 
     let active = true;
     const loadProfile = async () => {
       setLoading(true);
       setError('');
       try {
-        const profileSnapshot = await getDoc(doc(firestore, 'users', user.uid));
         if (!active) return;
-        if (profileSnapshot.exists()) {
-          localStorage.setItem('userData', JSON.stringify({ uid: user.uid, ...profileSnapshot.data() }));
+        if (backendSession.profileExists) {
+          localStorage.setItem('userData', JSON.stringify({ uid: user.uid, ...(backendSession.profile || {}) }));
           window.dispatchEvent(new Event('userDataUpdated'));
           toast.success('Welcome back to Aaramdehi!');
           navigate(getReturnPath(location), { replace: true });
         } else {
+          setProfile((currentProfile) => ({
+            fullName: backendSession.profile?.fullName || currentProfile.fullName,
+            email: backendSession.profile?.email || currentProfile.email
+          }));
           setStep('profile');
         }
       } catch {
@@ -133,7 +137,7 @@ const FirebaseAuthPage = ({ onClose }) => {
 
     loadProfile();
     return () => { active = false; };
-  }, [step, user, location, navigate]);
+  }, [step, user, backendSession, location, navigate]);
 
   const handleGoogleSignIn = async () => {
     if (!auth) return;
@@ -211,18 +215,13 @@ const FirebaseAuthPage = ({ onClose }) => {
     setAction('profile');
     setError('');
     try {
-      const profileData = {
-        uid: user.uid,
+      const response = await saveFirebaseProfileAPI({
+        idToken: await user.getIdToken(),
         fullName,
-        email,
-        phoneNumber: user.phoneNumber || '',
-        photoURL: user.photoURL || '',
-        provider: user.providerData?.[0]?.providerId || 'firebase',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      };
-      await setDoc(doc(firestore, 'users', user.uid), profileData, { merge: true });
-      localStorage.setItem('userData', JSON.stringify({ ...profileData, uid: user.uid }));
+        email
+      });
+      if (!response?.success) throw new Error('Profile save failed.');
+      localStorage.setItem('userData', JSON.stringify({ ...response.profile, uid: user.uid }));
       window.dispatchEvent(new Event('userDataUpdated'));
       toast.success('Welcome to Aaramdehi!');
       navigate(getReturnPath(location), { replace: true });

@@ -1,4 +1,4 @@
-import { admin, findById, updateById, db, findByQuery, create, findAll } from '../config/db.js';
+import { admin, firestore, findById, updateById, db, findByQuery, create, findAll } from '../config/db.js';
 import bcrypt from 'bcryptjs';
 import generatedOtp from '../utils/generatedOtp.js';
 import sendEmail from '../config/sendEmail.js';
@@ -34,6 +34,8 @@ export const createFirebaseSessionController = async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const firebaseUid = decodedToken.uid;
         const email = String(decodedToken.email || '').trim().toLowerCase();
+        const profileRef = firestore.collection('users').doc(firebaseUid);
+        const profileSnapshot = await profileRef.get();
         const usersByUid = await findByQuery(COLLECTION, 'firebaseUid', firebaseUid);
         const usersByEmail = email ? await findByQuery(COLLECTION, 'email', email) : [];
         let user = usersByUid[0] || usersByEmail[0];
@@ -67,6 +69,8 @@ export const createFirebaseSessionController = async (req, res) => {
         setAuthCookies(res, accessToken, refreshToken);
         return res.json({
             success: true,
+            profileExists: profileSnapshot.exists,
+            profile: profileSnapshot.exists ? profileSnapshot.data() : null,
             user: { _id: user._id, name: user.name, email: user.email, mobile: user.mobile, role: user.role }
         });
     } catch (error) {
@@ -530,5 +534,39 @@ export const deleteUserByAdmin = async (req, res) => {
         return res.json({ success: true, message: "Customer deleted successfully" });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const saveFirebaseProfileController = async (req, res) => {
+    try {
+        const { idToken, fullName, email } = req.body || {};
+        if (typeof idToken !== 'string' || !idToken.trim()) {
+            return res.status(400).json({ success: false, message: 'Firebase ID token is required.' });
+        }
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        const normalizedName = typeof fullName === 'string' ? fullName.trim() : '';
+        const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+        if (normalizedName.length < 2 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+            return res.status(400).json({ success: false, message: 'A valid full name and email are required.' });
+        }
+
+        const profileData = {
+            uid: decodedToken.uid,
+            fullName: normalizedName,
+            email: normalizedEmail,
+            phoneNumber: decodedToken.phone_number || '',
+            photoURL: decodedToken.picture || '',
+            provider: decodedToken.firebase?.sign_in_provider || 'firebase',
+            updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        };
+        const profileRef = firestore.collection('users').doc(decodedToken.uid);
+        const existingProfile = await profileRef.get();
+        if (!existingProfile.exists) profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
+        await profileRef.set(profileData, { merge: true });
+
+        return res.json({ success: true, profile: { ...profileData, uid: decodedToken.uid } });
+    } catch (error) {
+        console.error('Firebase profile save failed:', error.message);
+        return res.status(401).json({ success: false, message: 'Firebase profile could not be saved.' });
     }
 };

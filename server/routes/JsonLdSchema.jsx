@@ -9,8 +9,9 @@ const JsonLdSchema = ({ product }) => {
   const reviews = Array.isArray(product.reviews) ? product.reviews : [];
   const reviewCount = reviews.length;
 
-  // ✅ Truncate product name to 150 characters (Google Search Console requirement)
-  const truncatedName = String(product.name || '').substring(0, 150).trim();
+  const truncatedName = String(product.name || product.title || product.productName || 'Aaramdehi Product')
+    .substring(0, 150)
+    .trim();
 
   const schemaData = {
     "@context": "https://schema.org/",
@@ -29,17 +30,16 @@ const JsonLdSchema = ({ product }) => {
       "price": product.sellingPrice,
       "availability": stock == null || Number(stock) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       "itemCondition": "https://schema.org/NewCondition",
-      // ✅ Merchant shipping details (reduces Google Search Console warnings)
       "shippingDetails": {
-        "@type": "ShippingDeliveryTime",
+        "@type": "OfferShippingDetails",
         "shippingRate": {
-          "@type": "PriceSpecification",
-          "priceCurrency": "INR",
-          "price": "0"
+          "@type": "MonetaryAmount",
+          "value": 0,
+          "currency": "INR"
         },
         "shippingDestination": {
-          "@type": "DeliveryArea",
-          "areaServed": "IN"
+          "@type": "DefinedRegion",
+          "addressCountry": "IN"
         },
         "deliveryTime": {
           "@type": "ShippingDeliveryTime",
@@ -57,7 +57,6 @@ const JsonLdSchema = ({ product }) => {
           }
         }
       },
-      // ✅ Merchant return policy (reduces Google Search Console warnings)
       "hasMerchantReturnPolicy": {
         "@type": "MerchantReturnPolicy",
         "applicableCountry": "IN",

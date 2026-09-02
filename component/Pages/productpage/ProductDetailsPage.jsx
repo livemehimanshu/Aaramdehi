@@ -524,7 +524,7 @@ const ProductDetailsPage = () => {
           schemaData={{
             "@context": "https://schema.org/",
             "@type": "Product",
-            "name": String(productData.name || '').substring(0, 150).trim(),
+            "name": String(productData.name || productData.title || productData.productName || 'Aaramdehi Product').substring(0, 150).trim(),
             "image": selectedImage || productData.images?.[0]?.url || productData.images?.[0],
             "description": productData.seoDescription || productData.description,
             "brand": {
@@ -539,15 +539,15 @@ const ProductDetailsPage = () => {
               "availability": (productData.stock == null && productData.quantity == null) || Number(productData.stock ?? productData.quantity) > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
               "itemCondition": "https://schema.org/NewCondition",
               "shippingDetails": {
-                "@type": "ShippingDeliveryTime",
+                "@type": "OfferShippingDetails",
                 "shippingRate": {
-                  "@type": "PriceSpecification",
-                  "priceCurrency": "INR",
-                  "price": "0"
+                  "@type": "MonetaryAmount",
+                  "value": 0,
+                  "currency": "INR"
                 },
                 "shippingDestination": {
-                  "@type": "DeliveryArea",
-                  "areaServed": "IN"
+                  "@type": "DefinedRegion",
+                  "addressCountry": "IN"
                 },
                 "deliveryTime": {
                   "@type": "ShippingDeliveryTime",

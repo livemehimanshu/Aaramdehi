@@ -345,7 +345,7 @@ const ProductListing = ({ forcedCategory }) => {
         "itemListElement": currentItems.map((product, index) => ({
           "@type": "Product",
           "position": index + 1,
-          "name": String(product.name || '').substring(0, 150).trim(),
+          "name": String(product.name || product.title || product.productName || 'Aaramdehi Product').substring(0, 150).trim(),
           "description": product.description || product.shortDescription || '',
           "image": product.thumbnail || product.images?.[0]?.url || product.image || '',
           "url": `https://www.aaramdehi.co.in/product/${product.slug || product._id || product.id}`,
@@ -355,19 +355,20 @@ const ProductListing = ({ forcedCategory }) => {
           },
           "offers": {
             "@type": "Offer",
+            "url": `https://www.aaramdehi.co.in/product/${product.slug || product._id || product.id}`,
             "price": product.sellingPrice || product.price || 0,
             "priceCurrency": "INR",
             "availability": (product.stock > 0) ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
             "shippingDetails": {
-              "@type": "ShippingDeliveryTime",
+              "@type": "OfferShippingDetails",
               "shippingRate": {
-                "@type": "PriceSpecification",
-                "priceCurrency": "INR",
-                "price": "0"
+                "@type": "MonetaryAmount",
+                "value": 0,
+                "currency": "INR"
               },
               "shippingDestination": {
-                "@type": "DeliveryArea",
-                "areaServed": "IN"
+                "@type": "DefinedRegion",
+                "addressCountry": "IN"
               },
               "deliveryTime": {
                 "@type": "ShippingDeliveryTime",

@@ -29,6 +29,7 @@ import { CiHeart } from "react-icons/ci";
 import { auth } from '../../src/api/firebase.js';
 import { onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "firebase/auth";
 import Tooltip from '@mui/material/Tooltip';
+import { User } from 'lucide-react';
 const CartDrawer = lazy(() => import('../CartDrawer/CartDrawer'));
 const WishlistDrawer = lazy(() => import('../WishlistDrawer/WishlistDrawer')); 
 const SidebarMenu = lazy(() => import('../sidebar/Sidebar')); // ✅ Sidebar Menu import
@@ -340,18 +341,21 @@ const Header = ({ hideNav = false }) => {
                   <button 
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     aria-label="User account profile menu"
-                    className='flex items-center gap-2 hover:text-red-600 transition'
+                    className='flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/60 px-2 py-1.5 transition hover:border-blue-200 hover:bg-blue-50 hover:text-red-600'
                   >
                     {user.avatar ? (
                       <img 
                         src={user.avatar} 
-                        onError={(e) => { e.target.src = "https://placehold.co/32x32?text=👤"; }}
+                        onError={(e) => { e.currentTarget.src = LOGO_PLACEHOLDER; }}
                         alt="Profile" 
                         className='w-8 h-8 rounded-full object-cover' />
                     ) : (
                       <IoPersonOutline size={24} className='text-gray-700' />
                     )}
-                    <span className='text-[13px] font-bold hidden sm:inline'>{user.name?.split(' ')[0]}</span>
+                    <span className='flex h-7 w-7 items-center justify-center rounded-full border border-blue-200 bg-white text-blue-900' aria-hidden="true">
+                      <User size={16} strokeWidth={2.25} />
+                    </span>
+                    <span className='hidden text-[13px] font-bold sm:inline'>{user.name?.split(' ')[0]}</span>
                   </button>
                 </div>
               )}

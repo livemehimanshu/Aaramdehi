@@ -86,10 +86,10 @@ export const registerUserController = async (req, res) => {
         const password = typeof req.body?.password === 'string' ? req.body.password : '';
         const mobile = typeof req.body?.mobile === 'string' ? req.body.mobile.trim() : '';
 
-        if (!name || !email || password.length < 6 || !/^[0-9]{10}$/.test(mobile)) {
+        if (!name || !email || password.length < 6 || (mobile && !/^[0-9]{10}$/.test(mobile))) {
             return res.status(400).json({
                 success: false,
-                message: 'Please provide a valid name, email, 10-digit mobile number, and password of at least 6 characters.'
+            message: 'Please provide a valid name, email, and password of at least 6 characters.'
             });
         }
 

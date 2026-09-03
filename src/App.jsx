@@ -122,7 +122,8 @@ function AppContent() {
   };
 
   const isAdminRoute = location.pathname.startsWith('/admin')
-  const hideHeaderRoutes = ['/order-success', '/ar-studio', '/signup', '/register']
+  const authOnlyRoutes = ['/login', '/signup', '/register']
+  const hideHeaderRoutes = ['/order-success', '/ar-studio', ...authOnlyRoutes]
   const shouldHideHeaderFooter = isAdminRoute || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
   const isBlogRoute = location.pathname === '/blog' || location.pathname.startsWith('/blog/')
 

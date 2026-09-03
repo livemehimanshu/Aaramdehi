@@ -72,7 +72,8 @@ export const optionalAuthenticatedUser = async (req, res, next) => {
 // 2. Admin Check Middleware
 export const isAdmin = async (req, res, next) => {
     try {
-        if (!req.user || req.user.role !== "ADMIN") {
+        const role = String(req.user?.role || '').toUpperCase();
+        if (!req.user || !['ADMIN', 'SUPER ADMIN'].includes(role)) {
             return res.status(403).json({
                 success: false,
                 message: "Access Denied: Admin privileges required."

@@ -49,10 +49,29 @@ const FirebaseAuthPage = ({ onClose }) => {
 
   const finishAuthentication = async (authenticatedUser) => {
     try {
-      const sessionResponse = await createFirebaseSessionAPI(await authenticatedUser.getIdToken());
+      const idToken = await authenticatedUser.getIdToken();
+      const sessionResponse = await createFirebaseSessionAPI(idToken);
       if (!sessionResponse?.success) throw new Error('Backend session was not created.');
+
       setBackendSession(sessionResponse);
+      localStorage.setItem('userData', JSON.stringify({
+        uid: authenticatedUser.uid,
+        name: sessionResponse.user?.name || authenticatedUser.displayName || authenticatedUser.email?.split('@')[0] || 'Aaramdehi User',
+        email: sessionResponse.user?.email || authenticatedUser.email || '',
+        role: sessionResponse.user?.role || 'USER',
+        avatar: authenticatedUser.photoURL || ''
+      }));
+      window.dispatchEvent(new Event('userDataUpdated'));
     } catch {
+      const fallbackUser = {
+        uid: authenticatedUser.uid,
+        name: authenticatedUser.displayName || authenticatedUser.email?.split('@')[0] || 'Aaramdehi User',
+        email: authenticatedUser.email || '',
+        role: 'USER',
+        avatar: authenticatedUser.photoURL || ''
+      };
+      localStorage.setItem('userData', JSON.stringify(fallbackUser));
+      window.dispatchEvent(new Event('userDataUpdated'));
       toast.error('Signed in, but account services are temporarily unavailable.');
     }
     setUser(authenticatedUser);
@@ -130,10 +149,15 @@ const FirebaseAuthPage = ({ onClose }) => {
     setAction('google');
     setError('');
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithPopup(auth, provider);
     } catch (authError) {
       if (authError.code !== 'auth/popup-closed-by-user') {
-        setError('Google sign-in failed. Please try again.');
+        const message = authError.code === 'auth/popup-blocked'
+          ? 'Google sign-in popup was blocked. Please allow popups and try again.'
+          : 'Google sign-in failed. Please try again.';
+        setError(message);
       }
     } finally {
       setAction('');
@@ -263,19 +287,7 @@ const FirebaseAuthPage = ({ onClose }) => {
             {action === 'google' ? <FiLoader className="animate-spin" /> : <span className="text-lg font-black">G</span>}
             Continue with Google
           </button>
-          <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-slate-500"><span className="h-px flex-1 bg-slate-700" />or<span className="h-px flex-1 bg-slate-700" /></div>
-          <form onSubmit={handleEmailAuth} className="space-y-3">
-            {authMode === 'signup' && <><label htmlFor="full-name" className="text-sm font-semibold text-slate-300">Full Name</label><div className="relative"><FiUser className="absolute left-4 top-4 text-slate-500" /><input id="full-name" type="text" autoComplete="name" value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Your full name" className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3.5 pl-11 pr-4 text-white outline-none transition focus:border-red-400" /></div></>}
-            <label htmlFor="email-address" className="text-sm font-semibold text-slate-300">Email Address</label>
-            <div className="relative"><FiMail className="absolute left-4 top-4 text-slate-500" /><input id="email-address" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3.5 pl-11 pr-4 text-white outline-none transition focus:border-red-400" /></div>
-            <label htmlFor="email-password" className="text-sm font-semibold text-slate-300">Password</label>
-            <div className="relative"><FiLock className="absolute left-4 top-4 text-slate-500" /><input id="email-password" type="password" autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 6 characters" className="w-full rounded-xl border border-slate-700 bg-slate-800 py-3.5 pl-11 pr-4 text-white outline-none transition focus:border-red-400" /></div>
-            <button type="submit" disabled={Boolean(action)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-3.5 font-bold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-60">
-              {action === 'email' && <FiLoader className="animate-spin" />} {authMode === 'signup' ? 'Create Account & Get OTP' : 'Login with Email'}
-            </button>
-          </form>
-          <button type="button" onClick={() => { setAuthMode(authMode === 'signup' ? 'login' : 'signup'); setError(''); }} className="w-full pt-2 text-center text-sm font-semibold text-slate-400 hover:text-white">{authMode === 'signup' ? 'Already have an account? Login' : 'New to Aaramdehi? Create account'}</button>
-          <p className="pt-2 text-center text-xs leading-5 text-slate-500">By continuing, you agree to Aaramdehi&apos;s terms and privacy policy.</p>
+          <p className="text-center text-xs leading-5 text-slate-500">Use your Google account to sign in or create your Aaramdehi account.</p>
         </div>
       )}
 

@@ -58,6 +58,19 @@ export default function UsersPage() {
     }
   };
 
+  const updateUserRole = async (id, nextRole) => {
+    const normalizedRole = nextRole === 'ADMIN' ? 'ADMIN' : 'USER';
+    try {
+      const res = await api.patch(`/user/admin/update-role/${id}`, { role: normalizedRole });
+      if (res?.data?.success) {
+        setUsers((prev) => prev.map((user) => user.id === id ? { ...user, role: normalizedRole } : user));
+        setError('');
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Unable to update customer role');
+    }
+  };
+
   return (
     <div className="p-4 md:p-8 bg-gray-950 min-h-screen text-gray-200">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
@@ -84,6 +97,7 @@ export default function UsersPage() {
               <tr>
                 <th className="p-4">Customer</th>
                 <th className="p-4">Email</th>
+                <th className="p-4">Role</th>
                 <th className="p-4">Orders</th>
                 <th className="p-4">Status</th>
                 <th className="p-4 text-center">Actions</th>
@@ -113,6 +127,16 @@ export default function UsersPage() {
                       </td>
                       <td className="p-4 text-gray-500 flex items-center gap-2 text-xs md:text-sm">
                         <Mail size={14} className="shrink-0" /> {user.email}
+                      </td>
+                      <td className="p-4">
+                        <select
+                          value={user.role === 'ADMIN' ? 'ADMIN' : 'USER'}
+                          onChange={(e) => updateUserRole(user.id, e.target.value)}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-950 px-2 py-2 text-xs font-bold text-white outline-none focus:border-emerald-500"
+                        >
+                          <option value="USER">User</option>
+                          <option value="ADMIN">Admin</option>
+                        </select>
                       </td>
                       <td className="p-4 font-semibold">{user.orders}</td>
                       <td className="p-4">

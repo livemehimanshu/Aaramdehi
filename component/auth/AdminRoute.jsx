@@ -11,7 +11,8 @@ const AdminRoute = ({ children }) => {
                 // ✅ Backend se admin details fetch karein
                 const response = await getAdminDetailsAPI(); 
 
-                if (response.success && response.user.role.toUpperCase() === 'ADMIN') {
+                const role = String(response?.user?.role || '').toUpperCase();
+                if (response.success && ['ADMIN', 'SUPER ADMIN'].includes(role)) {
                     setStatus('authorized');
                 } else {
                     console.error("⛔ Unauthorized: User is not an ADMIN or session invalid.");

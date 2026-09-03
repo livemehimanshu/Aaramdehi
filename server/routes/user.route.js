@@ -11,7 +11,8 @@ import {
     deleteAccount,
     listUsersForAdminController,
     toggleUserBlockStatusController,
-    deleteUserByAdmin
+    deleteUserByAdmin,
+    updateUserRoleController
 } from '../controllers/user.controller.js'; // loginController is not used here
 
 // ✅ Fix: Named import use kiya hai kyunki auth.middleware.js mein 'export const' hai
@@ -30,6 +31,7 @@ const userRouter = Router();
 
 // Admin customer management
 userRouter.get('/admin/list', isAuthenticatedUser, isAdmin, listUsersForAdminController);
+userRouter.patch('/admin/update-role/:id', isAuthenticatedUser, isAdmin, updateUserRoleController);
 userRouter.patch('/admin/toggle-block/:id', isAuthenticatedUser, isAdmin, toggleUserBlockStatusController);
 userRouter.delete('/admin/delete/:id', isAuthenticatedUser, isAdmin, deleteUserByAdmin);
 

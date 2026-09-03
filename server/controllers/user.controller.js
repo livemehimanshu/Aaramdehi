@@ -34,8 +34,6 @@ export const createFirebaseSessionController = async (req, res) => {
         const decodedToken = await admin.auth().verifyIdToken(idToken);
         const firebaseUid = decodedToken.uid;
         const email = String(decodedToken.email || '').trim().toLowerCase();
-        const profileRef = firestore.collection('users').doc(firebaseUid);
-        const profileSnapshot = await profileRef.get();
         const usersByUid = await findByQuery(COLLECTION, 'firebaseUid', firebaseUid);
         const usersByEmail = email ? await findByQuery(COLLECTION, 'email', email) : [];
         let user = usersByUid[0] || usersByEmail[0];
@@ -46,7 +44,8 @@ export const createFirebaseSessionController = async (req, res) => {
                 email: email || user.email || '',
                 name: user.name || decodedToken.name || email.split('@')[0] || 'Aaramdehi User',
                 mobile: user.mobile || decodedToken.phone_number || '',
-                isVerified: true
+                isVerified: true,
+                authProvider: decodedToken.firebase?.sign_in_provider || user.authProvider || 'firebase'
             });
         } else {
             user = await create(COLLECTION, {
@@ -69,8 +68,8 @@ export const createFirebaseSessionController = async (req, res) => {
         setAuthCookies(res, accessToken, refreshToken);
         return res.json({
             success: true,
-            profileExists: profileSnapshot.exists,
-            profile: profileSnapshot.exists ? profileSnapshot.data() : null,
+            profileExists: true,
+            profile: user,
             user: { _id: user._id, name: user.name, email: user.email, mobile: user.mobile, role: user.role }
         });
     } catch (error) {
@@ -383,6 +382,26 @@ export const toggleUserBlockStatusController = async (req, res) => {
     }
 };
 
+export const updateUserRoleController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { role } = req.body || {};
+        const normalizedRole = String(role || '').toUpperCase();
+
+        if (!['USER', 'ADMIN'].includes(normalizedRole)) {
+            return res.status(400).json({ success: false, message: 'Role must be USER or ADMIN.' });
+        }
+
+        const user = await findById(COLLECTION, id);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        const updatedUser = await updateById(COLLECTION, id, { role: normalizedRole });
+        return res.json({ success: true, message: 'User role updated', data: updatedUser });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export const uploadAvatarController = async (req, res) => {
     try {
         const userId = req.userId || req.user?._id;
@@ -562,6 +581,9 @@ export const saveFirebaseProfileController = async (req, res) => {
             return res.status(400).json({ success: false, message: 'A valid full name and email are required.' });
         }
 
+        const profileMatches = await findByQuery(COLLECTION, 'firebaseUid', decodedToken.uid);
+        const currentUser = profileMatches[0] || (normalizedEmail ? (await findByQuery(COLLECTION, 'email', normalizedEmail))[0] : null);
+
         const profileData = {
             uid: decodedToken.uid,
             fullName: normalizedName,
@@ -575,6 +597,16 @@ export const saveFirebaseProfileController = async (req, res) => {
         const existingProfile = await profileRef.get();
         if (!existingProfile.exists) profileData.createdAt = admin.firestore.FieldValue.serverTimestamp();
         await profileRef.set(profileData, { merge: true });
+
+        if (currentUser) {
+            await updateById(COLLECTION, currentUser._id, {
+                firebaseUid: decodedToken.uid,
+                name: normalizedName,
+                email: normalizedEmail,
+                isVerified: true,
+                authProvider: decodedToken.firebase?.sign_in_provider || currentUser.authProvider || 'firebase'
+            });
+        }
 
         return res.json({ success: true, profile: { ...profileData, uid: decodedToken.uid } });
     } catch (error) {

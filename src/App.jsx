@@ -123,8 +123,9 @@ function AppContent() {
 
   const isAdminRoute = location.pathname.startsWith('/admin')
   const authOnlyRoutes = ['/login', '/signup', '/register']
-  const hideHeaderRoutes = ['/order-success', '/ar-studio', ...authOnlyRoutes]
-  const shouldHideHeaderFooter = isAdminRoute || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
+  const isAuthPage = authOnlyRoutes.some((route) => location.pathname === route || location.pathname.startsWith(`${route}/`))
+  const hideHeaderRoutes = ['/order-success', '/ar-studio']
+  const shouldHideHeaderFooter = isAdminRoute || isAuthPage || hideHeaderRoutes.some(route => location.pathname.startsWith(route))
   const isBlogRoute = location.pathname === '/blog' || location.pathname.startsWith('/blog/')
 
   const accountPaths = ['/account/profile', '/account/addresses', '/account/pan', '/orders', '/order-details', '/payments/giftcards', '/payments/upi', '/payments/cards', '/coupons', '/reviews', '/wishlist']
